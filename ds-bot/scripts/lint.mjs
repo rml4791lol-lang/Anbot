@@ -17,7 +17,14 @@ try {
 // without a shell.
 const bin = candidates.filter(Boolean).map(dir => join(dir, 'node_modules', 'oxlint', 'bin', 'oxlint')).find(existsSync)
 if (!bin) {
-  console.error('lint: no oxlint found; run npm run harness, or set DSH_HARNESS to a deepseek-harness checkout')
+  // Exit 2 means "could not run", never "found problems": a window that stopped on this
+  // message must not read it as a lint failure. Say what was searched and how to fix it.
+  console.error([
+    'lint: SKIPPED — no oxlint installed, nothing was checked. This is not a lint failure.',
+    `  searched: ${[...new Set(candidates.filter(Boolean))].map(dir => join(dir, 'node_modules/oxlint')).join(', ')}`,
+    '  fix: npm run harness   (installs the DSH packages and oxlint into ds-bot/dev/harness)',
+    '       or: DSH_HARNESS=/path/to/deepseek-harness npm run lint',
+  ].join('\n'))
   process.exit(2)
 }
 const result = spawnSync(process.execPath, [bin, '-c', '.oxlintrc.json', ...process.argv.slice(2), 'plugin.js', 'index.js', 'web-search.js', 'src', 'dev', 'scripts', 'test'], { cwd: plugin, stdio: 'inherit' })
