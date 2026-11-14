@@ -15,11 +15,11 @@ export const allowedCommands = () => {
 
 const allowList = allowedCommands
 
-export function runChecks(row, { cwd = process.cwd(), allow = allowList() } = {}) {
+export function runChecks(row, { cwd = process.cwd(), allow = allowList(), answers = null } = {}) {
   const checks = Array.isArray(row.checks) ? row.checks : []
   const results = []
   for (const check of checks) {
-    const result = runOne(check, cwd, allow)
+    const result = runOne(check, cwd, allow, answers, row.id)
     results.push({ check, ...result })
     if (!result.ok) break
   }
@@ -32,7 +32,7 @@ export function runChecks(row, { cwd = process.cwd(), allow = allowList() } = {}
   }
 }
 
-function runOne(check, cwd, allow) {
+function runOne(check, cwd, allow, answers, id) {
   try {
     if (check.kind === 'file_exists') {
       const target = path.resolve(cwd, check.path)
@@ -50,6 +50,18 @@ function runOne(check, cwd, allow) {
       execFileSync('/bin/sh', ['-c', cmd], { cwd, stdio: 'pipe', timeout: 120_000 })
       return { ok: true }
     }
+    if (check.kind === 'answer_matches') {
+      // Mechanical, not semantic: it only proves the answer addressed the question at all.
+      // Every pattern in `all` must match; the model never sees this check.
+      if (!answers) return { ok: false, detail: 'answers directory not given' }
+      const target = path.join(answers, `${id}.md`)
+      if (!fs.existsSync(target)) return { ok: false, detail: `missing ${target}` }
+      const text = fs.readFileSync(target, 'utf8')
+      for (const pattern of check.all ?? [check.pattern]) {
+        if (!new RegExp(pattern, check.flags ?? '').test(text)) return { ok: false, detail: `no match for ${pattern}` }
+      }
+      return { ok: true }
+    }
     if (check.kind === 'http_ok') {
       return { ok: false, detail: 'http_ok needs the async runner' }
     }
@@ -60,12 +72,12 @@ function runOne(check, cwd, allow) {
 }
 
 // http_ok is the only check that needs the network, so it lives in its own pass.
-export async function runChecksAsync(row, { cwd = process.cwd(), allow = allowList(), timeoutMs = 8000 } = {}) {
+export async function runChecksAsync(row, { cwd = process.cwd(), allow = allowList(), answers = null, timeoutMs = 8000 } = {}) {
   const checks = Array.isArray(row.checks) ? row.checks : []
   const results = []
   for (const check of checks) {
     if (check.kind !== 'http_ok') {
-      const result = runOne(check, cwd, allow)
+      const result = runOne(check, cwd, allow, answers, row.id)
       results.push({ check, ...result })
     } else {
       const started = Date.now()

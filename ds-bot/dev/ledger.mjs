@@ -13,6 +13,7 @@ import os from 'node:os'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import crypto from 'node:crypto'
+import { TEAM_TOOLS } from '../src/host/constants.js'
 
 const args = process.argv.slice(2)
 const arg = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback)
@@ -23,6 +24,16 @@ const dayStart = new Date(`${day}T00:00:00+08:00`).getTime()
 const dayEnd = dayStart + 86_400_000
 
 const state = JSON.parse(fs.readFileSync(path.join(home, 'bot', 'state.json'), 'utf8'))
+const capsOf = new Map()
+for (const bot of Object.values(state.bots ?? {})) {
+  capsOf.set(bot.name ?? bot.id, (bot.capabilities ?? []).map(c => (typeof c === 'string' ? c : c?.name)).filter(Boolean))
+}
+// Offered = the team tools plus whatever the bot mounted. Tools a capability brings
+// beyond its own name are counted by the capability's name; the used[] side stays exact.
+const offeredFor = name => {
+  const extra = capsOf.get(name) ?? []
+  return [...TEAM_TOOLS, ...extra.filter(n => !TEAM_TOOLS.includes(n))]
+}
 const botOf = new Map()
 const roomOf = new Map()
 for (const bot of Object.values(state.bots ?? {})) {
@@ -127,7 +138,7 @@ const lines = fresh.map(r => JSON.stringify({
   turn: r.turn,
   seed: r.seed,
   context: { bytes: Object.values(r.injected).reduce((a, b) => a + b, 0), sources: r.injected },
-  tools: { offered: [], used: r.tools, errors: r.toolErrors ?? 0 },
+  tools: { offered: offeredFor(botOf.get(r.session) ?? ''), used: r.tools, errors: r.toolErrors ?? 0 },
   files: r.files,
   duration_ms: r.end ? r.end - r.start : null,
   final_chars: r.chars,

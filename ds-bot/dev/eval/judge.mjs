@@ -29,7 +29,7 @@ fs.mkdirSync(cacheDir, { recursive: true })
 const SELECTED = rows.filter(r => ids.includes(r.id))
 
 if (has('--checks')) {
-  const results = SELECTED.map(row => runChecks(row, { cwd: process.cwd() }))
+  const results = SELECTED.map(row => runChecks(row, { cwd: process.cwd(), answers: answerDir }))
   const withChecks = results.filter(r => r.total > 0)
   const passed = withChecks.filter(r => r.passed)
   for (const r of results) {
