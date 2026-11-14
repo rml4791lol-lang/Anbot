@@ -165,3 +165,35 @@ test('notes for two Bots never ride together', async (t) => {
   assert.match(textOf(agents.get('a').calls[0][1].content), /for the chief$/)
   assert.match(textOf(agents.get('b').calls[0][1].content), /for the writer$/)
 })
+
+test('twelve waiting notes are read in three rounds of five, five and two', async (t) => {
+  const { agents, ctx, emit, stop } = await start(team())
+  t.after(stop)
+
+  emit('b', 'turn/start', { turn: 1 })
+  for (let index = 1; index <= 12; index += 1) await rt.deliver({ fromId: 'a', toId: 'b', text: `note ${index}`, role: 'request' })
+  await flush(agents, ctx, 'b')
+  assert.match(textOf(agents.get('b').calls[0][1].content), /\nnote 5\n\n另有 4 条并入本轮$/)
+  await flush(agents, ctx, 'b')
+  assert.match(textOf(agents.get('b').calls[1][1].content), /\nnote 10\n\n另有 4 条并入本轮$/)
+  await flush(agents, ctx, 'b')
+  assert.match(textOf(agents.get('b').calls[2][1].content), /\nnote 12\n\n另有 1 条并入本轮$/)
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup', 'followup'])
+  await flush(agents, ctx, 'b')
+  assert.equal(agents.get('b').calls.length, 3)
+})
+
+test('a deferred note is not folded: it goes out as it came', async (t) => {
+  const { agents, ctx, emit, stop } = await start(team())
+  t.after(stop)
+
+  emit('b', 'turn/start', { turn: 1 })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'plain', role: 'request' })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'answer it now', role: 'request', deferred: true })
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
+  assert.match(textOf(agents.get('b').calls[0][1].content), /answer it now$/)
+
+  await flush(agents, ctx, 'b')
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
+  assert.match(textOf(agents.get('b').calls[1][1].content), /\nplain$/)
+})
