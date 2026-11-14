@@ -173,3 +173,30 @@ test('content text drops DSML closing tags from a post or event', () => {
   assert.equal(contentText([{ type: 'text', text: '</DSML invoke>\n</DSML calls>' }]), '')
   assert.equal(contentText([{ type: 'text', text: 'a < b and c > d' }]), 'a < b and c > d')
 })
+
+// #1517: two more shapes reach the chat the same way: a model that wraps its
+// answer in <final>, and the fullwidth-pipe spelling of the DSML tags.
+const OPEN_FINAL = '<' + 'final>'
+const CLOSE_FINAL = '<' + '/final>'
+const PIPE = '｜｜'
+const closeDsml = (name) => '<' + '/' + PIPE + 'DSML' + PIPE + ' ' + name + '>'
+
+test('content text drops a final wrapper and keeps its text', () => {
+  assert.equal(contentText([{ type: 'text', text: OPEN_FINAL + '已经改完了。' + CLOSE_FINAL }]), '已经改完了。')
+  assert.equal(contentText([{ type: 'text', text: OPEN_FINAL + '\n正文\n' + CLOSE_FINAL }]), '正文')
+})
+
+test('content text drops DSML tags written with fullwidth pipes', () => {
+  assert.equal(contentText([{ type: 'text', text: '做到第 3 题。\n' + closeDsml('invoke') + '\n' + closeDsml('calls') }]), '做到第 3 题。')
+  assert.equal(contentText([{ type: 'text', text: '好。\n' + closeDsml('parameter') }]), '好。')
+})
+
+test('content text drops both shapes when they arrive together', () => {
+  assert.equal(contentText([{ type: 'text', text: '好。</DSML invoke></final>' }]), '好。')
+  assert.equal(contentText([{ type: 'text', text: OPEN_FINAL + '好。' + closeDsml('invoke') + CLOSE_FINAL }]), '好。')
+})
+
+test('a fenced block keeps wire tags exactly as written', () => {
+  const code = '```\n' + closeDsml('invoke') + '\n```'
+  assert.equal(contentText([{ type: 'text', text: '看这段：\n' + code }]), '看这段：\n' + code)
+})
