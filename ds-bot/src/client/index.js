@@ -29,6 +29,8 @@ import { FailureCell, TURN_ERROR_CSS } from './turn-error.js'
 import { Overlays } from './overlays.js'
 import { createBotBrowsers, serveBrowserReads } from './bot-browsers.js'
 import { BROWSER_CSS } from './browser-pane.js'
+import { TEAM_BOARD_CSS } from './team-board.js'
+import { TeamBoardHost, openTeamBoard } from './team-board-host.js'
 import { SECRET_CSS, SecretDock } from './secret-card.js'
 import { ConnectorDock, MailDock, CONNECTOR_CSS } from './connectors.js'
 import { CONNECTORS_PAGE_CSS } from './connectors-page.js'
@@ -507,6 +509,7 @@ export function apply(ctx) {
   }
   const actions = {
     ...teamActions({ call, after, partFor, roster, ui, live, cards, heldCards, turnClock, panelFolded }),
+    closeTeamBoard: () => ctx.layout.closeRightbar(),
     learningAnswer: (id, approve) => after(call('learning-answer', { id, approve })),
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
@@ -1089,6 +1092,7 @@ export function apply(ctx) {
     [HANDOFF_CSS, 'handoff'],
     [SIDE_CSS, 'side'],
     [BROWSER_CSS, 'browser'],
+    [TEAM_BOARD_CSS, 'team-board'],
   ]
   // Settings outside Bot mode (Agent mode) brings DS Bot's own rules and colors while it
   // shows; the shell overrides and DSH's tokens stay as Agent mode has them.
@@ -1123,6 +1127,8 @@ export function apply(ctx) {
     () => shadow('shell.overlay', { id: 'bot', order: 50, inject: face }, Overlays),
     () => shadow('shell.overlay', { id: 'bot-signin', order: 55, inject: face }, DeepSeekSignIn),
     () => shadow('shell.overlay', { id: 'bot-toast', order: 60, inject: face }, ErrorToast),
+    () => shadow('rightbar', { id: 'bot-team-board', inject: face }, TeamBoardHost),
+    () => { openTeamBoard(ctx.layout).catch(() => {}); return () => ctx.layout.closeRightbar() },
   ]
   const installConversation = () => [
     () => installCompiledStyles(CONVERSATION_CSS, 'conversation'),

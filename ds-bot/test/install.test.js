@@ -11,22 +11,22 @@ function start(state, { config = {}, services } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-install-'))
   if (state) writeFileSync(join(home, 'state.json'), JSON.stringify(state))
   const ctx = fakeContext({ services })
-  let route
+  const routes = new Map()
   const register = ctx.connection.fetch.register
   ctx.connection.fetch.register = (options) => {
-    route = options
+    routes.set(options.path, options)
     return register(options)
   }
   rt = createRuntime(ctx, { home, ...config })
   const call = async (endpoint, payload) => {
-    const response = await route.fetch(new Request('http://localhost/api/bot', { method: 'POST', body: JSON.stringify({ endpoint, payload }) }))
+    const response = await routes.get('/api/bot').fetch(new Request('http://localhost/api/bot', { method: 'POST', body: JSON.stringify({ endpoint, payload }) }))
     return response.json()
   }
   const stop = async () => {
     await ctx.dispose()
     rmSync(home, { recursive: true, force: true, maxRetries: 5 })
   }
-  return { ctx, call, stop, rt }
+  return { ctx, call, stop, rt, routes }
 }
 
 // Listeners run in registration order; the team tools are not in this list
@@ -127,6 +127,8 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on session/event',
     'effect ds-bot: im',
     'effect ds-bot: phone link',
+    'effect ds-bot: team board config',
+    'route GET /api/bot/team-board.config.json',
     'effect ds-bot: api route',
     'route POST /api/bot',
     'effect ds-bot: load state',
@@ -319,4 +321,26 @@ test('a Bot saved on an old local-agent route moves to the prefixed one', async 
   const routes = (ctx.adapters ?? []).flatMap(entry => entry.routes)
   for (const route of ['local-codex-cli', 'local-opencode', 'local-acp-a1']) assert.ok(routes.includes(route), route)
   assert.ok(!routes.some(route => ['codex-cli', 'opencode', 'acp-a1'].includes(route)))
+})
+
+test('the team board config comes from the Bot home and falls back to defaults', async (t) => {
+  const { routes, stop, rt } = start({
+    version: 1,
+    mainBotId: 'm1',
+    revision: 1,
+    bots: { m1: { id: 'm1', name: 'Chief', role: 'Chief of Staff', instructions: '', createdAt: 1 } },
+    rooms: {},
+  })
+  t.after(stop)
+  const read = async () => {
+    const response = await routes.get('/api/bot/team-board.config.json').fetch(new Request('http://localhost/api/bot/team-board.config.json'))
+    return response.json()
+  }
+  const defaults = { defaultOpen: true, sort: 'section', density: 'two', showHistory: true }
+  assert.deepEqual(await read(), defaults)
+  writeFileSync(join(rt.home, 'team-board.config.json'), JSON.stringify({ defaultOpen: false, sort: 'role' }))
+  assert.deepEqual(await read(), { ...defaults, defaultOpen: false, sort: 'role' })
+  // A broken file is not a broken board.
+  writeFileSync(join(rt.home, 'team-board.config.json'), '{oops')
+  assert.deepEqual(await read(), defaults)
 })
