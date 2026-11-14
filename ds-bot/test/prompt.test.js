@@ -20,7 +20,21 @@ function start() {
   return { ctx, prompt }
 }
 
-test('Bots get a scoped progress rule without changing the private/group prompt prefix', (t) => {
+const SECTION_TITLES = [
+  '### 1. Identity and scope',
+  '### 2. Work loop',
+  '### 3. Evidence',
+  '### 4. Stop rules',
+  '### 5. Delivery',
+  '### 6. Collaboration',
+  '### 7. Memory',
+  '### 8. Failure handling',
+]
+
+// 23 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
+const RULE_COUNTS = { main: 32, worker: 23 }
+
+test('Bots get the eight rule sections in order, with every rule exactly once', (t) => {
   const { ctx, prompt } = start()
   t.after(() => ctx.dispose())
   const rules = [
@@ -30,10 +44,20 @@ test('Bots get a scoped progress rule without changing the private/group prompt 
     '- In a group chat, the group sees what you write while you work, not only your final reply. For work that takes more than a quick look, start with one short sentence on what you will do, in the same response as your first tool call. After that, write only when you find something the group should know or finish a part of the work, in a sentence or two, not at every step. End with the result. Simple answers need no updates.',
   ]
   for (const id of ['main', 'worker']) {
+    const text = prompt(id)
+    const lines = text.split('\n')
     for (const rule of rules) {
-      assert.ok(prompt(id).split('\n').includes(rule))
-      assert.equal(prompt(id).split(rule).length - 1, 1)
+      assert.ok(lines.includes(rule))
+      assert.equal(text.split(rule).length - 1, 1)
     }
+    for (const title of SECTION_TITLES) {
+      assert.equal(lines.filter(line => line === title).length, 1)
+    }
+    const positions = SECTION_TITLES.map(title => lines.indexOf(title))
+    assert.deepEqual(positions, [...positions].sort((a, b) => a - b))
+    const bullets = lines.filter(line => line.startsWith('- '))
+    assert.equal(bullets.length, RULE_COUNTS[id])
+    assert.equal(new Set(bullets).size, bullets.length)
   }
   assert.equal(prompt('group-worker'), prompt('worker'))
 })
