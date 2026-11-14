@@ -229,7 +229,7 @@ export function install(rt) {
 
   // The turn ended, or the batch has waited long enough: the notes that waited go out
   // as one message. The newest one keeps its words; replies before it keep theirs under
-  // their own headers, and the line after it says how many others came along (R59).
+  // their own headers, and only folded requests are counted as unseen (R59).
   async function flushWaiting(sessionId) {
     const queued = waiting.get(sessionId)
     if (queued === undefined || queued.length === 0) {

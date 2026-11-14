@@ -11,8 +11,8 @@ export const BACKLOG_LIMIT = 5
 export const WAITING_QUIET_MS = 2000
 export const WAITING_MAX_MS = 30_000
 
-// The line that says the rest came along. Written after the newest text, so what the
-// recipient reads first is still the message itself, word for word.
+// The line that says how many folded messages the reader cannot see (their words were
+// counted rather than printed). Never says "more" about text that is already above it.
 export const backlogNote = count => `${count} more message${count === 1 ? '' : 's'} came along in this batch.`
 
 // A folded reply keeps its sender and the exchange it answers, so the recipient can
@@ -86,7 +86,10 @@ export function mergeBacklog(entries, limit = BACKLOG_LIMIT) {
       if (entry.role === 'reply') parts.push(`${replyHeader(entry)}\n${entry.text}`)
     }
     parts.push(newest.role === 'reply' ? `${replyHeader(newest)}\n${newest.text}` : newest.text)
-    parts.push(backlogNote(batch.length - 1))
+    // Count only what the reader cannot see above: a request's words are dropped, a
+    // reply's are kept. Saying "2 more" after printing all three reads like a mistake.
+    const hidden = batch.slice(0, -1).filter(entry => entry.role !== 'reply').length
+    if (hidden > 0) parts.push(backlogNote(hidden))
     // Parallel replies answer different requests: say that answering one of them is
     // enough for the one it answers, so nobody feels bound to answer every line.
     const targets = new Set(batch.filter(entry => entry.role === 'reply' && entry.replyTo !== undefined).map(entry => entry.replyTo))

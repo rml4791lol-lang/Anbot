@@ -60,8 +60,6 @@ test('replies keep their words and say which exchange each answers', () => {
     '[Reply from Writer · re r-2 · ex e-2]',
     'second answer',
     '',
-    backlogNote(1),
-    '',
     'Reply only to the exchanges you actually need; the rest are recorded.',
   ].join('\n'))
 })
