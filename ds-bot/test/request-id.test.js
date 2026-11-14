@@ -233,20 +233,29 @@ test('a request with an id takes in the message before it, and a repeat merges n
 
 test('a request with an id that queues, or that answers the user, goes out once', async (t) => {
   const home = tempHome()
-  const { agents, emit, tool, stop } = await boot(home, team())
+  const { agents, ctx, emit, tool, stop } = await boot(home, team())
   t.after(async () => { await stop(); cleanup(home) })
 
-  // Writer is working, so a request that waits for its current work is queued.
+  // Writer is working, so a request that waits for its current work is held for the end
+  // of the turn (R59), not queued as a turn of its own.
   emit('b', 'turn/start', { turn: 1 })
   const queued = await tool('message_bot', { to: 'Writer', message: 'later', when: 'queue', request_id: 'r-1' }, 'a')
   assert.match(queued, /^Queued for Writer/)
-  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), [])
+  // The same request id is still answered with the receipt of the first one.
   assert.equal(await tool('message_bot', { to: 'Writer', message: 'later', when: 'queue', request_id: 'r-1' }, 'a'), queued)
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), [])
 
   const toUser = await tool('message_bot', { to: 'Writer', message: 'tell them', reply_to: 'user', request_id: 'r-2' }, 'a')
   assert.match(toUser, /It will answer the user in its own chat/)
   assert.equal(await tool('message_bot', { to: 'Writer', message: 'tell them', reply_to: 'user', request_id: 'r-2' }, 'a'), toUser)
-  assert.equal(agents.get('b').calls.length, 2)
+  assert.equal(agents.get('b').calls.length, 1)
+
+  // The turn ends: the held request goes out exactly once.
+  for (const listener of ctx.listeners.get('agent/status') ?? []) listener({ agent: agents.get('b'), status: 'idle' })
+  for (let count = 0; count < 200 && agents.get('b').calls.length < 2; count += 1) await delay(5)
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
+  assert.match(agents.get('b').calls[1][1].content[0].text, /\nlater$/)
 })
 
 test('a request with an id in a group calls the member once', async (t) => {

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { HISTORY_TIMEOUT_MS, LONG_HEAD, MESSAGE_INLINE_MAX, READ_LINE_MAX, SOURCE_KIND, TEXT_KEPT, TEXT_SHOW_MAX } from './constants.js'
 import { headOf, stripControlMarkers, textOf } from './text.js'
+import { mergeBacklog, plainRelay } from './backlog.js'
 import { stripWireTags } from '../shared/wire-tags.js'
 
 export function install(rt) {
@@ -14,6 +15,11 @@ export function install(rt) {
     rt.hideBotUnusedTools(resolved.agent)
     return resolved.agent
   }
+
+  // R59: what a Bot was told while it was in the middle of a turn. Plain notes wait here
+  // and are read together when that turn ends, so a burst of notes costs one turn, not one
+  // turn each. Anything with a reply target, an image or a room goes out as it came.
+  const waiting = new Map()
 
   const headerFor = (role, fromName, roomName, audience, note = 'new message', deferred = false, { resumed = false, retried = false, resent = false, abandoned = false, asker } = {}) => {
     // What came back for work another Bot gave this one says where its answer goes.
@@ -141,6 +147,13 @@ export function install(rt) {
       ],
       source,
     })
+    const busy = rt.live.get(targetSessionId)?.turn !== undefined
+    if (busy && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, deferred, resumed, retried, merged, abandoned, images, files })) {
+      const queued = waiting.get(targetSessionId) ?? []
+      queued.push({ text, role, fromName, roomName: room?.name, audience, note, deferred, source, exchangeId, book })
+      waiting.set(targetSessionId, queued)
+      return exchangeId
+    }
     if (steer) agent.steer(message)
     else if (silent) agent.send(message, 'next-turn', false)
     else agent.followup(message)
@@ -165,6 +178,45 @@ export function install(rt) {
     }
     return exchangeId
   }
+
+  // The turn ended: the notes that waited go out as one message. The newest one keeps
+  // its words; the line after it says how many others came along (R59).
+  async function flushWaiting(sessionId) {
+    const queued = waiting.get(sessionId)
+    if (queued === undefined || queued.length === 0) return
+    waiting.delete(sessionId)
+    const folded = mergeBacklog(queued)
+    if (folded === undefined) return
+    if (folded.rest.length > 0) waiting.set(sessionId, folded.rest)
+    const newest = folded.batch[folded.batch.length - 1]
+    const message = createUserMessage({
+      content: [{ type: 'text', text: `${headerFor(newest.role, newest.fromName, newest.roomName, newest.audience, newest.note, newest.deferred)}\n${folded.text}` }],
+      source: newest.source,
+    })
+    let agent
+    try {
+      agent = await resolveAgent(sessionId)
+    } catch (error) {
+      // Not lost: the batch stays queued and is tried again at the Bot's next turn.
+      rt.warn('ds-bot: notes held for %s not delivered: %s', sessionId, error)
+      waiting.set(sessionId, [...folded.batch, ...folded.rest])
+      return
+    }
+    agent.followup(message)
+    await ctx.sessions.flush(agent.session)
+    for (const entry of folded.batch) {
+      if (entry.book === undefined) continue
+      rt.ledger.append(entry.book, { event: 'delivered', id: entry.exchangeId, sessionId, time: Date.now() })
+      await rt.ledger.written(entry.book).catch(() => {})
+    }
+  }
+
+  ctx.on('agent/status', ({ agent, status }) => {
+    if (status !== 'idle') return
+    const sessionId = agent?.session?.id ?? agent?.id
+    if (sessionId === undefined || !waiting.has(sessionId)) return
+    void flushWaiting(sessionId)
+  })
 
   // A message between Bots, whole, from the Session it was delivered to: the message
   // there is its header line, then the text. `whole` is false when only the start could
