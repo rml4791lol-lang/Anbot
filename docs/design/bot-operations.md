@@ -30,7 +30,9 @@
 
 **权限。** Main Bot 可以创建、修改、删除其他 Bot 与群；普通 Bot 只能改自己。能力（MCP/技能包）按 Bot 挂载，改别人的能力需 Main Bot。
 
-## 2. 工具目录（31 个）
+**团队看板 feed。** 写侧一人一文件：每个 Bot 用 `update_team_board` 整份覆盖 `<DSH_ATLAS_STATE_DIR 或 ~/Desktop/Atlas/任务标准规范规则/状态>/board/<bot名>.json`，只动自己那份，别人那份不碰。文件内容是数组（一人多行），单对象也接受（读侧 `Array.isArray ? flatten : [obj]`）；每条 8 键 `bot / kind / what / number / evidence / needs / default / deadline / at`，缺字段存 null，`kind` 只认 `delivery` / `decision` / `blocked`。读侧由宿主提供 `GET /api/bot/team-board.feed.json`（`ROUTE='/api/bot'`，`cache-control: no-store`）：扫目录、按 `at` 倒序、每个 Bot 最多 3 条；坏 JSON 与未知 `kind` 跳过并 `warn`，空目录返回空 feed。外壳成功 `{ ok: true, value: { lines: [...] } }`，失败 `{ ok: false, error }`。浏览器侧尚未消费这条 feed（`client.js` 里 0 处引用），接 UI 属于另一次待批的改动。
+
+## 2. 工具目录（32 个）
 
 ### 团队
 
