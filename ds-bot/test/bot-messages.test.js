@@ -148,20 +148,21 @@ test('message_bot when "queue" waits for the current work, and reply_to "user" a
   emit('b', 'turn/start', { turn: 1 })
   const queued = await tool('message_bot', { to: 'Writer', message: 'later', when: 'queue' }, 'a')
   assert.equal(queued, 'Queued for Writer: it reads your message after its current work. Its reply will arrive later as a new message; do not wait for it. Writer now: working in its own chat for less than a minute, for the user.')
-  // R59: a plain note waits for the turn to end instead of opening one of its own.
-  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), [])
+  // R59: a task is not a note. Folded into a batch it would end up as a counting
+  // line, so it goes out on its own instead of waiting for the end of the turn.
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
+  assert.match(textOf(agents.get('b').calls[0][1].content), /^\[Message from Chief\][^\n]*\nlater$/)
 
   // A message for the user is not a plain relay: it goes out as it came.
   const toUser = await tool('message_bot', { to: 'Writer', message: 'tell them', reply_to: 'user', when: 'now' }, 'a')
   assert.equal(toUser, 'Delivered to Writer. It will answer the user in its own chat; nothing comes back to you, so point the user to Writer\'s chat instead of relaying. Writer now: working in its own chat for less than a minute, for the user; not read yet: 1 from Chief.')
-  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
-  assert.equal(agents.get('b').calls[0][1].source.audience, 'user')
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
+  assert.equal(agents.get('b').calls[1][1].source.audience, 'user')
 
   emit('b', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
   for (const listener of ctx.listeners.get('agent/status') ?? []) listener({ agent: agents.get('b'), status: 'idle' })
-  for (let count = 0; count < 200 && agents.get('b').calls.length < 2; count += 1) await delay(5)
+  for (let count = 0; count < 40; count += 1) await delay(5)
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
-  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Message from Chief\][^\n]*\nlater$/)
 })
 
 test('a Bot busy in a group gets the message in its own chat, and the sender is told', async (t) => {
