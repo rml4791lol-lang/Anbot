@@ -48,6 +48,10 @@ export function answerSender(rt, id, source, text, long) {
   const marker = late === undefined ? '' : LATE_ANSWER
   const body = marker === '' ? (long?.text ?? text) : `${marker}${long?.text ?? text}`
   const length = long === undefined ? undefined : late === undefined ? long.length : (long.length ?? text.length) + marker.length
+  // An answer with nothing in it wakes the asker for nothing: the work above is already
+  // closed with what came back, and the asker reads it at its next turn. A late answer
+  // and one that went as a file still go out.
+  if (late === undefined && long === undefined && body.trim() === '') return
   const exchangeId = randomUUID()
   void rt.deliver({
     fromId: rt.selfOf(id),
