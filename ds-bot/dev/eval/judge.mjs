@@ -6,11 +6,12 @@
 //   node dev/eval/judge.mjs --checks
 //   node dev/eval/judge.mjs --pair-dir answers/candidate --answer-dir answers/base --ids g01,g02
 //   node dev/eval/judge.mjs --ids g01 --runs 1 --out /tmp/judge.json     (single-answer rubric, for triage)
+//   node dev/eval/judge.mjs --ids g01 --runs 3 --no-cache                 (measure run-to-run variance)
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import { runChecks, allowedCommands } from './checks.mjs'
+import { runChecks } from './checks.mjs'
 
 const here = path.dirname(new URL(import.meta.url).pathname)
 const args = process.argv.slice(2)
@@ -23,6 +24,7 @@ const answerDir = path.join(here, arg('--answer-dir', 'answers/base'))
 const pairDir = arg('--pair-dir', '') ? path.join(here, arg('--pair-dir', '')) : ''
 const outFile = arg('--out', '')
 const runs = Number(arg('--runs', '1'))
+const noCache = has('--no-cache')
 const cacheDir = path.join(here, '.judge-cache')
 fs.mkdirSync(cacheDir, { recursive: true })
 
@@ -84,14 +86,14 @@ function parseJson(text) {
 function ask(prompt) {
   const key = crypto.createHash('sha256').update(prompt).digest('hex').slice(0, 32)
   const cacheFile = path.join(cacheDir, `${key}.json`)
-  if (fs.existsSync(cacheFile)) return { ...JSON.parse(fs.readFileSync(cacheFile, 'utf8')), cached: true }
+  if (!noCache && fs.existsSync(cacheFile)) return { ...JSON.parse(fs.readFileSync(cacheFile, 'utf8')), cached: true }
   const started = Date.now()
   const proc = spawnSync('claude', ['-p', '--output-format', 'text'], { input: prompt, encoding: 'utf8', timeout: 240_000, maxBuffer: 16 * 1024 * 1024 })
   const elapsed = Date.now() - started
   if (proc.error || proc.status !== 0) return { error: proc.error?.message || `exit ${proc.status}: ${(proc.stderr || '').slice(-300)}`, elapsed }
   const result = parseJson(proc.stdout)
   const out = result ? { ...result, elapsed, cached: false } : { error: `unparseable: ${proc.stdout.slice(0, 200)}`, elapsed }
-  fs.writeFileSync(cacheFile, JSON.stringify(out))
+  if (!noCache) fs.writeFileSync(cacheFile, JSON.stringify(out))
   return out
 }
 
