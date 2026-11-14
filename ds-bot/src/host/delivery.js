@@ -35,7 +35,9 @@ export function install(rt) {
     if (role === 'continue') return '[Retry after a failed turn]'
     // The editor can be the user or a Bot (its own tool call, or a Main Bot's):
     // the header stays neutral about who changed the profile.
-    if (role === 'update') return '[Your profile was updated — follow the latest version]'
+    // The prompt is rebuilt from the Bot record on its next turn, so this note only
+    // tells a running Bot that the rules changed: it must not cost a turn of its own.
+    if (role === 'update') return '[Your profile was updated — follow the latest version. Do not reply to this note.]'
     if (role === 'secret') return '[Secret card]'
     if (audience === 'user') return `[Message from ${fromName} · the user sees your reply here]`
     return `[Message from ${fromName}]`
@@ -79,8 +81,11 @@ export function install(rt) {
   // which DSH projects for the recipient's model and tools. `length`: the whole message's
   // length when it went as a file (attachLong). `work`: the work (handoffs.js) a
   // result that came back goes on with. `merged`: a request that takes in an earlier
-  // one its recipient had not read, under that one's exchange.
-  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
+  // one its recipient had not read, under that one's exchange. `silent`: a note with no
+  // question in it (a profile update, a stop receipt) is put in the queue and read at the
+  // recipient's next turn instead of waking it; a turn spent acknowledging a note is a turn
+  // the user reads as an answer that never came.
+  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
     const from = rt.botOf(fromId)
     const to = rt.botOf(toId)
     if (to === undefined) throw new Error(`Unknown Bot ${toId}`)
@@ -121,7 +126,9 @@ export function install(rt) {
     await rt.ensureCapabilities(targetSessionId)
     const agent = await resolveAgent(targetSessionId)
     // A steered message cuts into a running turn at its next step; a follow-up
-    // queues for the next turn (see turns.js for how each is routed).
+    // queues for the next turn (see turns.js for how each is routed); a silent note
+    // queues the same way but without waking the Bot, so it is read at its next turn
+    // and costs no turn of its own.
     const message = createUserMessage({
       content: [
         { type: 'text', text: `${headerFor(role, fromName, room?.name, audience, note, deferred, { resumed, retried, resent, abandoned, asker })}\n${text}` },
@@ -131,6 +138,7 @@ export function install(rt) {
       source,
     })
     if (steer) agent.steer(message)
+    else if (silent) agent.send(message, 'next-turn', false)
     else agent.followup(message)
     await ctx.sessions.flush(agent.session)
     if (book !== undefined) {

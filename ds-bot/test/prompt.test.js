@@ -24,7 +24,8 @@ test('Bots get a scoped progress rule without changing the private/group prompt 
   const { ctx, prompt } = start()
   t.after(() => ctx.dispose())
   const rules = [
-    '- Only for a direct user request in your own chat that needs several steps: write one short sentence of normal reply text before your first tool call, and make that tool call in the same response. Never start such a task with tools alone or end it with a promise. On long tasks, give brief factual updates only at meaningful milestones, then keep working.',
+    '- Only for a direct user request in your own chat that needs several steps: make your first tool call in the same response as your text. When the work will take more than a minute or two, open with one short sentence of what you are about to do; when that sentence would only repeat the request or the first command, start with the tool call instead. On long tasks, give brief factual updates only at meaningful milestones, then keep working. Never end with a promise in place of the work.',
+    '- Do not narrate tool mechanics or system notices to the user: exit codes, "no output", "saved", a handoff note, a context or memory injection, a checkpoint, or the label you were given. That is plumbing. Report the result the user can act on, or nothing.',
     '- For "[Message from …]" or "[Reply from …]" messages, do not write plans or progress updates: use tools silently, then reply with the answer. Simple answers do not need progress messages.',
     '- In a group chat, the group sees what you write while you work, not only your final reply. For work that takes more than a quick look, start with one short sentence on what you will do, in the same response as your first tool call. After that, write only when you find something the group should know or finish a part of the work, in a sentence or two, not at every step. End with the result. Simple answers need no updates.',
   ]

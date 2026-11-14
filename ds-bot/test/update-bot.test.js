@@ -41,7 +41,15 @@ function start(team = TEAM) {
       resolveModelInfo: async () => ({}),
     },
     sessionController: {
-      resolveAgent: async sessionId => ({ agent: { session: { id: sessionId, seq: 1 }, followup: message => sent.push({ sessionId, message }) } }),
+      resolveAgent: async sessionId => ({
+        agent: {
+          session: { id: sessionId, seq: 1 },
+          followup: message => sent.push({ sessionId, message }),
+          // A profile notice carries no question: it is queued for the Bot's next turn
+          // instead of waking it (see deliver's `silent`).
+          send: (message, target, wakeup) => sent.push({ sessionId, message, target, wakeup }),
+        },
+      }),
       selectModel: async () => {},
     },
     sessionTitle: { rename: async () => {} },
@@ -102,14 +110,17 @@ test('every Bot sees the update_bot rule in its identity section', async (t) => 
   assert.match(ctx.sections.get('bot-identity').text({ agent: { id: 'm1' } }), /update_bot changes your own settings/)
 })
 
-test('an instructions change lands as a message in the Bot chat', async (t) => {
+test('an instructions change is queued for the Bot chat without waking it', async (t) => {
   const { call, tool, sent, stop } = start()
   t.after(stop)
   assert.equal((await call('update-bot', { id: 'b2', instructions: 'Ship the fix' })).ok, true)
-  // The notice goes out as a follow-up; let the queued delivery run.
+  // The notice is queued behind the Bot's own work and read at its next turn; it does
+  // not open a turn of its own, so a turn is not spent acknowledging it.
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 1)
   assert.equal(sent[0].sessionId, 'b2')
+  assert.equal(sent[0].target, 'next-turn')
+  assert.equal(sent[0].wakeup, false)
   const text = sent[0].message.content[0].text
   assert.match(text, /profile was updated/)
   assert.match(text, /Ship the fix/)
