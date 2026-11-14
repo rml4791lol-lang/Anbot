@@ -134,6 +134,24 @@ test('a correction is the next user message within 10 minutes, not another Bot m
   assert.equal(userCorrections.regex, String(CORRECTION_RE))
 })
 
+test('a burst of Bot replies counts as one reply run', t => {
+  const home = fixture(t)
+  const ledgerDir = path.join(home, 'bot', 'ledger')
+  writeLedger(ledgerDir, ledgerRows)
+  writeChat(home, [
+    { session: 's1', seq: 1, time: at(1), who: 'you', text: 'first' },
+    { session: 's1', seq: 2, time: at(2), who: 'you', text: 'second' },
+    { session: 's1', seq: 3, time: at(3), who: 'user', text: '好的' },
+    { session: 's1', seq: 4, time: at(20), who: 'you', text: 'third' },
+    { session: 's1', seq: 5, time: at(21), who: 'user', text: '不对' }
+  ])
+
+  const { userCorrections } = collectMetrics({ day: DAY, ledgerDir, home })
+  assert.equal(userCorrections.m, 2)
+  assert.equal(userCorrections.n, 1)
+  assert.equal(userCorrections.value, '1/2 (50%)')
+})
+
 test('a day without turns reports n/a everywhere and still prints the regex', t => {
   const home = fixture(t)
   const ledgerDir = path.join(home, 'bot', 'ledger')

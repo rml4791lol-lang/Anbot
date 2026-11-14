@@ -99,8 +99,8 @@ function readUsage(home, start, end, sessions) {
 }
 
 // Proxy for a user correction: the next user message arrives within 10 minutes and matches
-// CORRECTION_RE. The denominator is replies with such a follow-up, not all replies
-// (plan §10); a reply whose next user message comes later is not an opportunity.
+// CORRECTION_RE. A burst of Bot messages before the user speaks is one reply run, and only
+// runs with a user follow-up inside the window are counted (plan §10), never all runs.
 function readCorrections(home, start, end) {
   const result = { n: 0, m: 0, value: 'n/a', windowMinutes: CORRECTION_WINDOW_MS / 60_000, regex: String(CORRECTION_RE) }
   const file = path.join(home, 'bot', 'chat-index.sqlite')
@@ -115,14 +115,23 @@ function readCorrections(home, start, end) {
       else bySession.set(row.session, [row])
     }
     for (const list of bySession.values()) {
-      for (let index = 0; index < list.length; index += 1) {
-        const reply = list[index]
-        if (reply.who !== BOT_REPLY_WHO || reply.time < start || reply.time >= end) continue
-        let next = index + 1
-        while (next < list.length && list[next].who !== USER_WHO) next += 1
-        if (next === list.length) continue
-        const followUp = list[next]
-        const waited = followUp.time - reply.time
+      let index = 0
+      while (index < list.length) {
+        if (list[index].who === USER_WHO) {
+          index += 1
+          continue
+        }
+        // A turn can write more than one answer row, and a burst of Bot turns can run
+        // before the user speaks. The user reacts to the whole burst, so it is one reply.
+        const first = index
+        let last = index
+        while (last + 1 < list.length && list[last + 1].who !== USER_WHO) last += 1
+        index = last + 1
+        const reply = list.slice(first, last + 1).find(row => row.who === BOT_REPLY_WHO)
+        if (!reply || reply.time < start || reply.time >= end) continue
+        if (index === list.length) continue
+        const followUp = list[index]
+        const waited = followUp.time - list[last].time
         if (waited < 0 || waited > CORRECTION_WINDOW_MS) continue
         result.m += 1
         if (CORRECTION_RE.test(followUp.text ?? '')) result.n += 1
@@ -172,7 +181,7 @@ export function renderSummary(metrics) {
     `duration ms: p50 ${metrics.durationMs.p50} · p90 ${metrics.durationMs.p90} (n=${metrics.durationMs.n}) · injected chars p90 ${metrics.injectedChars.p90} (n=${metrics.injectedChars.n})`,
     `skill calls: ${metrics.skillCalls.value}`,
     `tokens: ${tokens}`,
-    `user correction proxy: ${metrics.userCorrections.value} (next user message within ${metrics.userCorrections.windowMinutes} min; ${metrics.userCorrections.m} replies had one)`,
+    `user correction proxy: ${metrics.userCorrections.value} (next user message within ${metrics.userCorrections.windowMinutes} min; ${metrics.userCorrections.m} reply runs had one)`,
     `correction regex: ${metrics.userCorrections.regex}`
   ].join('\n')
 }
