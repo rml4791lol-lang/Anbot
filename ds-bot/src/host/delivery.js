@@ -133,6 +133,22 @@ export function install(rt) {
       rt.ledger.append(book, { id: exchangeId, from: fromId, to: toId, role, text, time: Date.now(), ...(length !== undefined ? { length, files } : {}), ...(replyTo ? { replyTo } : {}), ...(audience === 'user' ? { audience } : {}), ...(roomId ? { roomId } : {}) })
       await rt.ledger.written(book)
     }
+    // The silent notes are the only ones a mailbox keeps: they never open a turn, so
+    // without a record a window that closed before the next turn would drop them. The
+    // routing below is unchanged; a reply or a request still goes to its Session.
+    if (silent) {
+      await rt.inbox.append(toId, {
+        from: fromId ?? null,
+        fromName,
+        role,
+        sessionId: targetSessionId,
+        senderRoomId: fromRoomId ?? null,
+        exchangeId,
+        roomId,
+        text,
+        time: Date.now(),
+      }).catch(error => rt.warn('ds-bot: a silent message to %s was not saved to its mailbox: %s', toId, error?.message ?? error))
+    }
     await rt.ensureCapabilities(targetSessionId)
     const agent = await resolveAgent(targetSessionId)
     // A steered message cuts into a running turn at its next step; a follow-up
