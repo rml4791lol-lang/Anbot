@@ -365,7 +365,7 @@ export function install(rt) {
 
   rt.teamTools.push(defineTool({
     name: 'stop_bot',
-    description: 'Main Bot only. Stop another Bot\'s running turn immediately — when it must not finish a dangerous action and a message_bot warning is not enough. Its queued messages are dropped with the turn. It is then told why in a new turn, whose reply comes back to you.',
+    description: 'Main Bot only. Stop another Bot\'s running turn immediately — when it must not finish a dangerous action and a message_bot warning is not enough. Its queued messages are dropped with the turn. It reads why at its next turn; no turn is spent waking it for a receipt.',
     parameters: {
       bot: { type: 'string', required: true, description: 'Exact Bot name from list_bots' },
       reason: { type: 'string', description: 'Why it was stopped; it reads this afterwards' },
@@ -384,9 +384,9 @@ export function install(rt) {
         const agent = await rt.resolveAgent(sessionId)
         agent.cancel({ kind: 'hook', reason: 'ds-bot/stopped' })
       }
-      const why = String(args.reason ?? '').trim() || 'Stop what you are doing; the previous turn was ended on purpose. Acknowledge briefly.'
-      await rt.deliver({ fromId: sender.id, toId: target.id, text: why, role: 'stopped', ...callerRoom(exec) })
-      return `Stopped ${target.name} in ${running.map(whereOf).join(' and ')}. It is told why in a new turn, whose reply comes back to you.`
+      const why = String(args.reason ?? '').trim() || 'Stop what you are doing; the previous turn was ended on purpose.'
+      await rt.deliver({ fromId: sender.id, toId: target.id, text: why, role: 'stopped', silent: true, ...callerRoom(exec) })
+      return `Stopped ${target.name} in ${running.map(whereOf).join(' and ')}. It reads why at its next turn.`
     },
   }))
 
