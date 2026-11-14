@@ -218,12 +218,12 @@ test('a Session ds-bot does not own sees none of the team tools', async (t) => {
   assert.equal(host.ctx.registeredTools.get('show_view').description, 'global')
 })
 
-test("a group's own Session is scoped to group_relay alone", async (t) => {
+test("a group's own Session is scoped to the relay and its Bot's inbox", async (t) => {
   const host = start()
   t.after(host.stop)
   await host.call('state', {})
   await host.agentCreated('r1')
-  assert.deepEqual(scopedNames(host, 'r1'), ['group_relay'])
+  assert.deepEqual(scopedNames(host, 'r1'), ['read_inbox', 'group_relay'])
 })
 
 test("another plugin's global recall cannot stop ds-bot or shadow its own", async (t) => {
@@ -339,7 +339,7 @@ test('a deleted group loses its relay scope', async (t) => {
   t.after(host.stop)
   await host.call('state', {})
   await host.agentCreated('r1')
-  assert.deepEqual(scopedNames(host, 'r1'), ['group_relay'])
+  assert.deepEqual(scopedNames(host, 'r1'), ['read_inbox', 'group_relay'])
   assert.equal((await host.call('delete-room', { id: 'r1' })).ok, true)
   assert.deepEqual(scopedNames(host, 'r1'), [])
 })
@@ -378,8 +378,8 @@ test("a group Session the creation path missed is scoped at the step's assemble"
   // the scopes — the state a restart left the reporter's group in.
   const agent = host.agentOf('r1')
   const assembled = await assemble(host, agent, { tools: [{ name: 'read' }], sections: [] })
-  assert.deepEqual(scopedNames(host, 'r1'), ['group_relay'])
-  assert.deepEqual(assembled.tools.map(tool => tool.name), ['read', 'group_relay'])
+  assert.deepEqual(scopedNames(host, 'r1'), ['read_inbox', 'group_relay'])
+  assert.deepEqual(assembled.tools.map(tool => tool.name), ['read', 'read_inbox', 'group_relay'])
 })
 
 test("a Bot's own Session the creation path missed gets the whole scope at the assemble", async (t) => {
@@ -424,8 +424,8 @@ test('a Session the load itself scoped still gets its tools into the step\'s lis
   const host = start(TEAM, {}, [], { live: ['r1'] })
   t.after(host.stop)
   const assembled = await assemble(host, host.agentOf('r1'), { tools: [{ name: 'read' }], sections: [] })
-  assert.deepEqual(scopedNames(host, 'r1'), ['group_relay'])
-  assert.deepEqual(assembled.tools.map(tool => tool.name), ['read', 'group_relay'])
+  assert.deepEqual(scopedNames(host, 'r1'), ['read_inbox', 'group_relay'])
+  assert.deepEqual(assembled.tools.map(tool => tool.name), ['read', 'read_inbox', 'group_relay'])
 })
 
 test('a PTC group Session gets its relay scoped but keeps run_code alone in the list', async (t) => {
@@ -436,7 +436,7 @@ test('a PTC group Session gets its relay scoped but keeps run_code alone in the 
   const agent = host.agentOf('r1')
   const assembly = { tools: [{ name: 'run_code' }], sections: [] }
   assert.equal(await assemble(host, agent, assembly), assembly)
-  assert.deepEqual(scopedNames(host, 'r1'), ['group_relay'])
+  assert.deepEqual(scopedNames(host, 'r1'), ['read_inbox', 'group_relay'])
 })
 
 test('a same-named global in the list is replaced by the scoped schema', async (t) => {
@@ -456,7 +456,7 @@ test('the assemble adds the recovered names once, not on every step', async (t) 
   t.after(host.stop)
   const agent = host.agentOf('r1')
   const first = await assemble(host, agent, { tools: [{ name: 'read' }], sections: [] })
-  assert.deepEqual(first.tools.map(tool => tool.name), ['read', 'group_relay'])
+  assert.deepEqual(first.tools.map(tool => tool.name), ['read', 'read_inbox', 'group_relay'])
   const second = { tools: [{ name: 'read' }], sections: [] }
   assert.equal(await assemble(host, agent, second), second)
 })
