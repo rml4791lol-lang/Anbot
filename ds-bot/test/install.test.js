@@ -53,6 +53,7 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: lost hand-offs',
     'on agent/status',
     'effect ds-bot: waiting notes',
+    'effect ds-bot: inbox',
     'on tools/execute',
     'effect ds-bot: identity section',
     'prompt bot-identity 640',
