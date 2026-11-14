@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { HISTORY_TIMEOUT_MS, LONG_HEAD, MESSAGE_INLINE_MAX, READ_LINE_MAX, SOURCE_KIND, TEXT_KEPT, TEXT_SHOW_MAX } from './constants.js'
-import { headOf, textOf } from './text.js'
+import { headOf, stripControlMarkers, textOf } from './text.js'
 
 export function install(rt) {
   const { ctx, state } = rt
@@ -84,6 +84,9 @@ export function install(rt) {
     const from = rt.botOf(fromId)
     const to = rt.botOf(toId)
     if (to === undefined) throw new Error(`Unknown Bot ${toId}`)
+    // A chat template's stop marker is not part of the message: neither the book nor
+    // the recipient sees it (#14).
+    text = stripControlMarkers(text)
     const fromName = senderName ?? from?.name ?? 'You'
     const room = rt.roomOf(roomId)
     const asker = work === undefined ? undefined : rt.botOf(state.works?.[work]?.from)?.name

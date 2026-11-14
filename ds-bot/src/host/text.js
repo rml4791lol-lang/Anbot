@@ -11,6 +11,13 @@ export const splitRef = (ref) => {
   return index > 0 ? { provider: ref.slice(0, index), model: ref.slice(index + 1) } : undefined
 }
 
+// A model with nothing to say can end its answer with its chat template's stop marker
+// (`<｜end▁of▁thinking｜>`, `<｜begin_of▁…｜>`). It is not text the Bot said, so it never
+// reaches a ledger, another Bot, or the user. Both the CJK and ASCII pipe forms match;
+// ordinary text with single `<` and `>` is left alone.
+const CONTROL_MARKER = /<[｜|][^<>\n]{0,80}[｜|]>/g
+export const stripControlMarkers = text => String(text ?? '').replace(CONTROL_MARKER, '').trim()
+
 export const textOf = content => (Array.isArray(content) ? content : [])
   .filter(block => block?.type === 'text' && typeof block.text === 'string')
   .map(block => block.text)
