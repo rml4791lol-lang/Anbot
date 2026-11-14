@@ -1,6 +1,8 @@
 // The Claude Code engine: one process per session, stream-json both ways.
 // stdin takes user/control JSON messages; stdout streams the assistant's
 // events until a `result` ends the turn.
+import { readdirSync, realpathSync } from 'node:fs'
+import { join, sep } from 'node:path'
 import { cleanEnv, spawnAgent } from './discover.js'
 
 // Claude Code tools that only read; the rest may change files or run something.
@@ -10,11 +12,41 @@ const READ_TOOLS = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch
 // on an approval card, and reading a file is not the call worth refusing.
 const READ_ONLY_COMMANDS = ['md5', 'md5sum', 'shasum', 'ffprobe', 'stat', 'wc']
 
+// The team's gate scripts: the checks a review runs on work it did not write
+// (research-gate.sh and its neighbours). Each rule names one file that exists on
+// disk, read from the folder at session start. A shell pattern would also match a
+// path that climbs out of the folder, so no pattern is used.
+export const GATE_SCRIPT_DIRS = [
+  '/Users/an/Desktop/Atlas/内容/bin',
+  '/Users/an/Desktop/Atlas/任务标准规范规则/bin',
+]
+
+const gateScriptsIn = (dir) => {
+  let entries
+  try { entries = readdirSync(dir, { withFileTypes: true }) } catch { return [] }
+  const root = realpathSync(dir)
+  const scripts = []
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.sh') || entry.name.startsWith('.')) continue
+    let path
+    try { path = realpathSync(join(dir, entry.name)) } catch { continue }
+    // A link that leaves the folder is not one of the team's gate scripts.
+    if (path.startsWith(`${root}${sep}`)) scripts.push(path)
+  }
+  return scripts
+}
+
+// Claude Code's prefix rule for one script: `Bash(bash <path>:*)` runs that file
+// with the arguments it is given, and no other command.
+export const gateScriptTools = (dirs = GATE_SCRIPT_DIRS) =>
+  [...new Set(dirs.flatMap(gateScriptsIn))].sort().map(path => `Bash(bash ${path}:*)`)
+
 // Claude Code's prefix rules for those checkers, plus `ffmpeg -i`, which probes
-// its input before any output is named.
-export const readOnlyTools = () => [
+// its input before any output is named, plus the team's gate scripts.
+export const readOnlyTools = (dirs = GATE_SCRIPT_DIRS) => [
   ...READ_ONLY_COMMANDS.map(command => `Bash(${command}:*)`),
   'Bash(ffmpeg -i:*)',
+  ...gateScriptTools(dirs),
 ]
 
 // A refusal must come back as a deny the CLI can parse. `{ behavior: 'deny' }`
