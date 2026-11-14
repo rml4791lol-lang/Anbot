@@ -132,6 +132,8 @@ DoD 必须可检查：写成「≤260 字、按 3.5 字/秒、误差 ≤1 秒」
 | 审查 | `code-review-and-quality`、`zh-code-review` |
 | 运维 | `orca-cli`、`observability-and-instrumentation` |
 
+Orca 的实测命令表与安全分级在 [`docs/design/orca-runbook.md`](orca-runbook.md)：运维 Bot 无人值守只跑只读的发现与诊断命令（`status`、`agent-context`、`skills list/get`、`host list`、`environment list`、`worktree list/current`）；建删 worktree、起 agent、动插件与自动化一律交人。
+
 度量：`turn-economy` 统计每个会话的 `skill` 调用次数；连续 7 天为 0 的 Bot 先改 instructions，再谈加技能。
 
 ## 5. 同步规则
