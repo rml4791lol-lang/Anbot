@@ -12,6 +12,12 @@ export const TEAM_BOARD_CONFIG_URL = '/api/bot/team-board.config.json'
 export const TEAM_BOARD_HOST_CSS = `
 .tbh{position:fixed;top:8px;right:8px;bottom:8px;width:min(380px,92vw);display:flex;flex-direction:column;min-height:0;z-index:45;border:1px solid var(--bt-line);border-radius:12px;background:var(--bt-card);color:var(--bt-ink);box-shadow:0 8px 32px rgba(0,0,0,.12),var(--bt-glass-shadow);overflow:hidden}
 .tbh-toggle{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:45;writing-mode:vertical-rl;border:1px solid var(--bt-line);border-right:none;border-radius:10px 0 0 10px;background:var(--bt-card);color:var(--bt-ink);padding:12px 6px;font:inherit;font-size:12px;cursor:pointer}
+/* Below 520px a floating card leaves the page beside it too narrow to read: the board
+   takes the full width as a sheet across the top instead. */
+@media (max-width:520px){
+.tbh{top:0;left:0;right:0;bottom:auto;width:auto;max-height:46vh;border-width:0 0 1px;border-radius:0 0 12px 12px}
+.tbh-toggle{top:0;right:8px;bottom:auto;transform:none;writing-mode:horizontal-tb;border-radius:0 0 10px 10px;padding:6px 10px}
+}
 `
 
 // Slot injection flattens the injected `hooks` face into one `useXxx` prop per
