@@ -41961,10 +41961,9 @@ var TEAM_BOARD_CSS = `
 // src/client/team-board-host.js
 var import_react68 = require("react");
 var TEAM_BOARD_CONFIG_URL = "/api/bot/team-board.config.json";
-var useSnapshot = (source) => (0, import_react68.useSyncExternalStore)(source.subscribe, () => source.getSnapshot());
-function TeamBoardHost({ actions, hooks }) {
-  const roster = useSnapshot(hooks.roster);
-  const work = useSnapshot(hooks.work);
+function TeamBoardHost({ actions, useRoster, useWork }) {
+  const roster = useRoster((value) => value);
+  const work = useWork((value) => value);
   return (0, import_react68.createElement)(TeamBoard, { roster, work, onClose: actions.closeTeamBoard, configUrl: TEAM_BOARD_CONFIG_URL });
 }
 async function openTeamBoard(layout) {
