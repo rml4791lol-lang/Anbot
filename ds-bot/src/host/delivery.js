@@ -92,7 +92,7 @@ export function install(rt) {
   // question in it (a profile update, a stop receipt) is put in the queue and read at the
   // recipient's next turn instead of waking it; a turn spent acknowledging a note is a turn
   // the user reads as an answer that never came.
-  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
+  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, queue = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
     // #1517: a model that writes its tool call in DSML form leaves wire tags in
     // the text it hands delivery; neither the book nor the recipient sees them.
     text = stripWireTags(text)
@@ -148,7 +148,7 @@ export function install(rt) {
       source,
     })
     const busy = rt.live.get(targetSessionId)?.turn !== undefined
-    if (busy && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, deferred, resumed, retried, merged, abandoned, images, files })) {
+    if (busy && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, queue, deferred, resumed, retried, merged, abandoned, images, files })) {
       const queued = waiting.get(targetSessionId) ?? []
       queued.push({ text, role, fromName, roomName: room?.name, audience, note, deferred, source, exchangeId, book })
       waiting.set(targetSessionId, queued)

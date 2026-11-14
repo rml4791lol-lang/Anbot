@@ -197,3 +197,21 @@ test('a deferred note is not folded: it goes out as it came', async (t) => {
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
   assert.match(textOf(agents.get('b').calls[1][1].content), /\nplain$/)
 })
+
+test('a queued task is never folded: it goes out on its own', async (t) => {
+  const { agents, ctx, emit, stop } = await start(team())
+  t.after(stop)
+
+  emit('b', 'turn/start', { turn: 1 })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'plain one', role: 'request' })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'the task', role: 'request', queue: true })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'plain two', role: 'request' })
+  await rt.deliver({ fromId: 'a', toId: 'b', text: 'plain three', role: 'request' })
+  // The task cannot wait for the end of the turn: it is work to start, not a note.
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
+  assert.match(textOf(agents.get('b').calls[0][1].content), /the task$/)
+
+  await flush(agents, ctx, 'b')
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
+  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Message from Chief\][^\n]*\nplain three\n\n另有 2 条并入本轮$/)
+})

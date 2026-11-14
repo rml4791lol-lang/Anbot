@@ -20,6 +20,9 @@ export function plainRelay(delivery) {
   if (delivery.audience !== undefined) return false
   if (delivery.work !== undefined) return false
   if (delivery.fromRoomId !== undefined) return false
+  // A task is not a note: folded into a batch it would end up as a counting line,
+  // and its content is what the recipient has to work on. It goes on its own.
+  if (delivery.queue === true) return false
   if (delivery.silent === true || delivery.steer === true) return false
   if (delivery.deferred === true || delivery.resumed === true || delivery.retried === true) return false
   if (delivery.merged === true || delivery.abandoned === true) return false
