@@ -115,7 +115,7 @@ test('collects a day, ignoring unrelated ledger files, bad lines and other sessi
   assert.deepEqual(metrics.emptyAnswerRate, { n: 2, m: 4, value: '2/4 (50%)' })
   assert.deepEqual(metrics.durationMs, { p50: 2000, p90: 3000, n: 3 })
   assert.deepEqual(metrics.injectedChars, { p90: 400, n: 4 })
-  assert.deepEqual(metrics.skillCalls, { n: 1, m: 4 })
+  assert.deepEqual(metrics.skillCalls, { n: 1, m: 4, value: '1/4 (25%)' })
   assert.deepEqual(metrics.tokens, { input: 3000, output: 300, calls: 2 })
 })
 
@@ -126,9 +126,9 @@ test('a correction is the next user message within 10 minutes, not another Bot m
   writeChat(home, chatRows)
 
   const { userCorrections } = collectMetrics({ day: DAY, ledgerDir, home })
-  assert.equal(userCorrections.m, 4)
+  assert.equal(userCorrections.m, 3)
   assert.equal(userCorrections.n, 2)
-  assert.equal(userCorrections.value, '2/4 (50%)')
+  assert.equal(userCorrections.value, '2/3 (67%)')
   assert.equal(userCorrections.windowMinutes, 10)
   assert.equal(userCorrections.regex, String(CORRECTION_RE))
 })
@@ -147,6 +147,7 @@ test('a day without turns reports n/a everywhere and still prints the regex', t 
   assert.deepEqual(metrics.durationMs, { p50: 'n/a', p90: 'n/a', n: 0 })
   assert.deepEqual(metrics.injectedChars, { p90: 'n/a', n: 0 })
   assert.deepEqual(metrics.tokens, { input: 'n/a', output: 'n/a', calls: 0 })
+  assert.deepEqual(metrics.skillCalls, { n: 0, m: 0, value: 'n/a' })
   assert.equal(metrics.userCorrections.value, 'n/a')
 
   const output = execFileSync(process.execPath, [METRICS, '--day', '2026-11-13', '--ledger-dir', ledgerDir], {
@@ -172,6 +173,6 @@ test('the CLI prints one JSON object for --json', t => {
   assert.equal(output.trim().split('\n').length, 1)
   const parsed = JSON.parse(output)
   assert.equal(parsed.botTurns, 4)
-  assert.equal(parsed.userCorrections.value, '2/4 (50%)')
+  assert.equal(parsed.userCorrections.value, '2/3 (67%)')
   assert.equal(parsed.userCorrections.regex, String(CORRECTION_RE))
 })

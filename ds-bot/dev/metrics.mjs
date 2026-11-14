@@ -94,10 +94,9 @@ function readUsage(home, start, end, sessions) {
   }
 }
 
-// Proxy for a user correction: the Bot reply has a later user message, and the next user
-// message arrives within 10 minutes and matches CORRECTION_RE. The denominator is replies
-// with a user follow-up, not all replies (plan §10); a follow-up after the window is
-// eligible but not a hit.
+// Proxy for a user correction: the next user message arrives within 10 minutes and matches
+// CORRECTION_RE. The denominator is replies with such a follow-up, not all replies
+// (plan §10); a reply whose next user message comes later is not an opportunity.
 function readCorrections(home, start, end) {
   const result = { n: 0, m: 0, value: 'n/a', windowMinutes: CORRECTION_WINDOW_MS / 60_000, regex: String(CORRECTION_RE) }
   const file = path.join(home, 'bot', 'chat-index.sqlite')
@@ -118,9 +117,11 @@ function readCorrections(home, start, end) {
         let next = index + 1
         while (next < list.length && list[next].who !== USER_WHO) next += 1
         if (next === list.length) continue
-        result.m += 1
         const followUp = list[next]
-        if (followUp.time - reply.time <= CORRECTION_WINDOW_MS && CORRECTION_RE.test(followUp.text ?? '')) result.n += 1
+        const waited = followUp.time - reply.time
+        if (waited < 0 || waited > CORRECTION_WINDOW_MS) continue
+        result.m += 1
+        if (CORRECTION_RE.test(followUp.text ?? '')) result.n += 1
       }
     }
     result.value = share(result.n, result.m)
@@ -151,7 +152,7 @@ export function collectMetrics({ day, ledgerDir, home }) {
     emptyAnswerRate: { n: emptyAnswers, m: turns.length, value: share(emptyAnswers, turns.length) },
     durationMs: { p50: quantile(durations, 0.5), p90: quantile(durations, 0.9), n: durations.length },
     injectedChars: { p90: quantile(injected, 0.9), n: injected.length },
-    skillCalls: { n: skillCalls, m: turns.length },
+    skillCalls: { n: skillCalls, m: turns.length, value: share(skillCalls, turns.length) },
     tokens: readUsage(home, start, end, sessions),
     userCorrections: readCorrections(home, start, end)
   }
@@ -165,7 +166,7 @@ export function renderSummary(metrics) {
     `day ${metrics.day}: ${metrics.botTurns} Bot turns (${metrics.ledgerRows} ledger rows)`,
     `zero-tool ${metrics.zeroTool.value} · tool-error ${metrics.toolErrorRate.value} · empty-answer ${metrics.emptyAnswerRate.value}`,
     `duration ms: p50 ${metrics.durationMs.p50} · p90 ${metrics.durationMs.p90} (n=${metrics.durationMs.n}) · injected chars p90 ${metrics.injectedChars.p90} (n=${metrics.injectedChars.n})`,
-    `skill calls: ${metrics.skillCalls.n} over ${metrics.skillCalls.m} turns`,
+    `skill calls: ${metrics.skillCalls.value}`,
     `tokens: ${tokens}`,
     `user correction proxy: ${metrics.userCorrections.value} (next user message within ${metrics.userCorrections.windowMinutes} min; ${metrics.userCorrections.m} replies had one)`,
     `correction regex: ${metrics.userCorrections.regex}`
