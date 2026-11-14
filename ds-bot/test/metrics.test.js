@@ -93,6 +93,8 @@ test('a ratio with no denominator is n/a, never 0%', () => {
   assert.equal(share(0, 4), '0/4 (0%)')
   assert.equal(share(1, 3), '1/3 (33%)')
   assert.equal(share(1, 237), '1/237 (<1%)')
+  assert.equal(CORRECTION_RE.test('你算的不准'), true)
+  assert.equal(CORRECTION_RE.test('不确定'), false)
   assert.equal(quantile([], 0.5), 'n/a')
   assert.equal(quantile([1, 2, 3], 0.5), 2)
 })
