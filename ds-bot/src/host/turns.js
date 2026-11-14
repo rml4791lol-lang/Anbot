@@ -37,8 +37,9 @@ export const failureLine = failure => `${failure.code}${failure.status ? ` ${fai
 
 // The reply a sender waits for, sent the way a finished turn sends it: the work it was
 // for closes, and the answer goes up to the Bot that asked. `id` is the Session the
-// answer comes from; `source` is the trigger the turn answered.
-export function answerSender(rt, id, source, text, long) {
+// answer comes from; `source` is the trigger the turn answered. A silent reply is one the
+// sender reads at its next turn: it is kept, and no turn is opened for it.
+export function answerSender(rt, id, source, text, long, silent = false) {
   const back = rt.roomOf(source.senderRoomId)?.sessions?.[source.senderSessionId]
   const name = rt.botOf(rt.selfOf(id))?.name ?? 'The other Bot'
   const work = rt.closeWork?.(source.exchangeId, name, text)
@@ -63,6 +64,7 @@ export function answerSender(rt, id, source, text, long) {
     replyTo: source.exchangeId,
     exchangeId,
     ...(work ? { work } : {}),
+    silent,
   }).catch((error) => {
     rt.warn('ds-bot: reply delivery failed: %s', error)
     // The reply never reached the asker: its note goes — the notice below carries
@@ -81,6 +83,7 @@ export function answerSender(rt, id, source, text, long) {
       role: 'reply',
       replyTo: source.exchangeId,
       ...(work ? { work } : {}),
+      silent,
     }).catch(again => rt.warn('ds-bot: reply failure notice not delivered: %s', again))
   })
 }
@@ -470,7 +473,7 @@ export function install(rt) {
   // reply in its Session there while it is still a member. A sender that asked for it
   // while working on another Bot's request goes on with that work when it reads it.
   // `long`: the text as attachLong sends it, when it went as a file.
-  const tellSender = (id, source, text, long) => answerSender(rt, id, source, text, long)
+  const tellSender = (id, source, text, long, silent) => answerSender(rt, id, source, text, long, silent)
 
   // Runs before a deleted Bot leaves the team. Its Sessions stop with it, and the
   // turn/end that follows is no longer the team's, so their activity and turn records go
@@ -1184,7 +1187,14 @@ export function install(rt) {
         // the turn's text (or a stopped-before-answer line), or nothing.
         const name = rt.botOf(rt.selfOf(id))?.name ?? 'The other Bot'
         const answer = (source, reply) => {
-          if (!expectsReply(source) || answersUser(source)) return
+          // A turn that owes this Bot no reply — one opened by a "[Reply from …]", or a
+          // question whose answer is for the user — used to drop its text here. Nothing
+          // said between Bots goes missing (#17): the sender reads it at its next turn,
+          // and no turn is spent on it.
+          if (!expectsReply(source) || answersUser(source)) {
+            if (reply !== '' && source?.kind === SOURCE_KIND && source.senderSessionId !== undefined) tellSender(id, source, reply, undefined, true)
+            return
+          }
           if (failure !== undefined) {
             // The sender was told a reply comes later; without this it would wait forever.
             tellSender(id, source, `${name} could not answer your message: its model call failed (${failureLine(failure)}). Tell the user if it matters; do not retry right away.`)
