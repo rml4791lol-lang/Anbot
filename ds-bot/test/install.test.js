@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -132,6 +132,8 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: phone link',
     'effect ds-bot: team board config',
     'route GET /api/bot/team-board.config.json',
+    'effect ds-bot: team board feed',
+    'route GET /api/bot/team-board.feed.json',
     'effect ds-bot: api route',
     'route POST /api/bot',
     'effect ds-bot: load state',
@@ -346,4 +348,41 @@ test('the team board config comes from the Bot home and falls back to defaults',
   // A broken file is not a broken board.
   writeFileSync(join(rt.home, 'team-board.config.json'), '{oops')
   assert.deepEqual(await read(), defaults)
+})
+
+test('the team board feed merges the one file each Bot owns', async (t) => {
+  const { routes, stop } = start({
+    version: 1,
+    mainBotId: 'm1',
+    revision: 1,
+    bots: { m1: { id: 'm1', name: 'Chief', role: 'Chief of Staff', instructions: '', createdAt: 1 } },
+    rooms: {},
+  })
+  t.after(stop)
+  const state = mkdtempSync(join(tmpdir(), 'ds-bot-board-feed-'))
+  const before = process.env.DSH_ATLAS_STATE_DIR
+  process.env.DSH_ATLAS_STATE_DIR = state
+  t.after(() => {
+    if (before === undefined) delete process.env.DSH_ATLAS_STATE_DIR
+    else process.env.DSH_ATLAS_STATE_DIR = before
+    rmSync(state, { recursive: true, force: true })
+  })
+  const board = join(state, 'board')
+  const read = async () => {
+    const response = await routes.get('/api/bot/team-board.feed.json').fetch(new Request('http://localhost/api/bot/team-board.feed.json'))
+    return response.json()
+  }
+  // No board directory yet: an empty feed, not an error.
+  assert.deepEqual(await read(), { ok: true, value: { lines: [] } })
+  mkdirSync(board, { recursive: true })
+  const row = (bot, at, what) => ({ bot, kind: 'delivery', what, at })
+  writeFileSync(join(board, 'ops.json'), JSON.stringify([row('运维', '2026-11-15T02:00:00+08:00', 'old'), row('运维', '2026-11-15T04:00:00+08:00', 'new')]))
+  writeFileSync(join(board, 'writer.json'), JSON.stringify([row('写手', '2026-11-15T03:00:00+08:00', 'middle')]))
+  const merged = await read()
+  assert.equal(merged.ok, true)
+  assert.deepEqual(merged.value.lines.map(entry => entry.what), ['new', 'middle', 'old'])
+  assert.equal(merged.value.lines[0].bot, '运维')
+  // A file that does not parse costs its own lines and nothing else.
+  writeFileSync(join(board, 'broken.json'), '{oops')
+  assert.deepEqual((await read()).value.lines.map(entry => entry.what), ['new', 'middle', 'old'])
 })

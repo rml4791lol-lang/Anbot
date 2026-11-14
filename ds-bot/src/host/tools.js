@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { readAvatar } from './avatar.js'
 import { INBOX_READ_MAX } from './inbox.js'
+import { writeTeamBoard } from './team-board-feed.js'
 import { COLORS, EXTRA_COLORS, MESSAGE_INLINE_MAX, ROOM_MODES, SOURCE_KIND, TEXT_KEPT } from './constants.js'
 import { within } from './folders.js'
 import { missingFileRefs } from './claims.js'
@@ -1411,6 +1412,42 @@ export function install(rt) {
         ? `Read ${marked}; ${left} unread ${left === 1 ? 'note stays' : 'notes stay'} in the mailbox. Read notes never come back as unread and never start a turn.`
         : `${left} unread ${left === 1 ? 'note is' : 'notes are'} still waiting. Read notes never start a turn.`
       return `${entries.length} note${entries.length === 1 ? '' : 's'} for ${bot.name}:\n${lines.join('\n\n')}\n\n${footer}`
+    },
+  }))
+
+  rt.teamTools.push(defineTool({
+    name: 'update_team_board',
+    description: 'Publish the lines the team board shows for you. Each call replaces your own entry, never another Bot\'s: the board keeps at most 3 of your newest lines, sorted by at. kind is delivery (done), decision (waiting for the user) or blocked (stuck); a line with another kind is dropped when the board is read. Missing fields are stored as null. at is an ISO time with a timezone, such as 2026-11-15T02:00:01+08:00.',
+    parameters: {
+      lines: {
+        type: 'array',
+        required: true,
+        description: 'Your board lines, newest first; at most 3 are shown',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            kind: { type: 'string', description: 'delivery, decision or blocked' },
+            what: { type: 'string', description: 'One line: what happened or what is waiting' },
+            number: { type: 'string', description: 'The number that carries the line, if any' },
+            evidence: { type: 'string', description: 'Path or command output that shows it' },
+            needs: { type: 'string', description: 'What you need from the user, if anything' },
+            default: { type: 'string', description: 'What happens if the user says nothing' },
+            deadline: { type: 'string', description: 'When it stops mattering, if it does' },
+            at: { type: 'string', description: 'ISO time with a timezone, used to sort' },
+          },
+        },
+      },
+    },
+    output,
+    async execute(args, exec) {
+      await rt.load()
+      const bot = callerBot(exec)
+      if (bot === undefined) return 'Only Bots on the team have a board entry.'
+      const count = writeTeamBoard(bot.name, args.lines)
+      return count === 0
+        ? `Your board entry is empty: nothing of yours is on the board now. The other Bots' entries are untouched.`
+        : `Your board entry now holds ${count} line${count === 1 ? '' : 's'}; the board shows at most 3 of your newest, sorted by at. Another Bot's entry is never written.`
     },
   }))
 

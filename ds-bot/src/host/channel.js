@@ -7,6 +7,7 @@ import { install as installBtw } from './btw.js'
 import { install as installSide } from './side.js'
 import { handoffReply, questionReply, viewReply } from './parts.js'
 import { validateViewAnswer } from 'deep-view/core'
+import { readTeamBoardLines } from './team-board-feed.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
 
 const STAGED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -892,6 +893,25 @@ export function install(rt) {
       headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
     }),
   }), 'ds-bot: team board config')
+
+  // The board's lines, merged from the one file each Bot owns. A boot reads this on
+  // mount and on focus, and `no-store` keeps a check from being answered by a stale copy.
+  ctx.effect(() => ctx.connection.fetch.register({
+    path: `${ROUTE}/team-board.feed.json`,
+    methods: ['GET'],
+    fetch: async () => {
+      let body
+      try {
+        body = { ok: true, value: { lines: readTeamBoardLines(undefined, message => ctx.logger?.warn?.(message)) } }
+      } catch (error) {
+        body = { ok: false, error: String(error?.message ?? error) }
+      }
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      })
+    },
+  }), 'ds-bot: team board feed')
 
   // An exact Fetch route on the shared /api channel; the browser authenticates with its session cookie.
   ctx.effect(() => ctx.connection.fetch.register({

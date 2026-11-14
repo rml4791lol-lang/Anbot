@@ -42,6 +42,7 @@
 | `list_bot_models` | 要 provider/model 引用、某模型支持的思考档位 | 不要猜模型名 | 档位只有在模型支持时才生效 |
 | `message_bot` | 对方必须行动，或它能补上你缺的事实 | 不道谢、不回执、不转发状态 | 对方忙时下一 step 读到；不要轮询 |
 | `read_inbox` | 每轮开头看静默通知（profile 更新、停止回执）；有需要自己做的才动手 | 不要用它等 reply/request，那些仍会叫醒你 | 默认只读未读、从旧到新、`limit` ≤ 20；已读位置写在 cursor 文件，不再算未读 |
+| `update_team_board` | 交付完、等用户决策、卡住时，把一行写进团队看板自己的那条 | 不要替别的 Bot 写，也不要当日志堆 | 每次整份覆盖自己那一份文件；看板只显示每人最新 3 条；`kind` 只认 delivery / decision / blocked，缺字段存 null |
 | `stop_bot` | 对方必须立刻停手 | 不要用它催进度 | 回执走 `record`，不开轮 |
 
 ### 群聊
