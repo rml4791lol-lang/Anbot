@@ -1,17 +1,17 @@
 // Mounts the team board in DSH's right column. The board itself owns its drawing;
 // this host only hands it the roster and work snapshots the shell already keeps
 // (both arrive over the live feed, so the board moves without a timer of its own).
-import { createElement as h, useSyncExternalStore } from 'react'
+import { createElement as h } from 'react'
 import { TeamBoard, readBoardConfig } from './team-board.js'
 
 // Served by src/host/channel.js so the config can change without a rebuild.
 export const TEAM_BOARD_CONFIG_URL = '/api/bot/team-board.config.json'
 
-const useSnapshot = source => useSyncExternalStore(source.subscribe, () => source.getSnapshot())
-
-export function TeamBoardHost({ actions, hooks }) {
-  const roster = useSnapshot(hooks.roster)
-  const work = useSnapshot(hooks.work)
+// Slot injection flattens the injected `hooks` face into one `useXxx` prop per
+// source, so the board reads them as ordinary snapshot hooks (like TeamSidebar).
+export function TeamBoardHost({ actions, useRoster, useWork }) {
+  const roster = useRoster(value => value)
+  const work = useWork(value => value)
   return h(TeamBoard, { roster, work, onClose: actions.closeTeamBoard, configUrl: TEAM_BOARD_CONFIG_URL })
 }
 
