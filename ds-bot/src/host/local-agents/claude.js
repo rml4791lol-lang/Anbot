@@ -6,6 +6,34 @@ import { cleanEnv, spawnAgent } from './discover.js'
 // Claude Code tools that only read; the rest may change files or run something.
 const READ_TOOLS = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch', 'TodoWrite', 'NotebookRead'])
 
+// Checkers that only look at a file. A review of a finished file must not stop
+// on an approval card, and reading a file is not the call worth refusing.
+const READ_ONLY_COMMANDS = ['md5', 'md5sum', 'shasum', 'ffprobe', 'stat', 'wc']
+
+// Claude Code's prefix rules for those checkers, plus `ffmpeg -i`, which probes
+// its input before any output is named.
+export const readOnlyTools = () => [
+  ...READ_ONLY_COMMANDS.map(command => `Bash(${command}:*)`),
+  'Bash(ffmpeg -i:*)',
+]
+
+// A refusal must come back as a deny the CLI can parse. `{ behavior: 'deny' }`
+// alone is rejected as an invalid permission result, and the turn hangs.
+const DENY_MESSAGE = 'Denied by the approval policy; the call was not run.'
+
+// The control_response for one can_use_tool request, in the shape the
+// stream-json protocol expects.
+export const permissionResponse = (requestId, optionId, input) => ({
+  type: 'control_response',
+  response: {
+    subtype: 'success',
+    request_id: requestId,
+    response: optionId === 'allow'
+      ? { behavior: 'allow', updatedInput: input ?? {} }
+      : { behavior: 'deny', message: DENY_MESSAGE },
+  },
+})
+
 export class ClaudeEngine {
   constructor(route, engine, { findExecutable }) {
     this.route = route
@@ -93,10 +121,11 @@ class ClaudeSession {
       args.push('--mcp-config', JSON.stringify({
         mcpServers: { dsbot: { type: 'http', url: mcp.url, headers: { Authorization: `Bearer ${mcp.token}` } } },
       }))
-      // DS Bot's own team tools need no approval, as for a model-backed Bot:
-      // toolsFor() already narrowed what this Bot may call.
-      args.push('--allowedTools', 'mcp__dsbot')
     }
+    // DS Bot's own team tools need no approval, as for a model-backed Bot:
+    // toolsFor() already narrowed what this Bot may call. The read-only checkers
+    // are admitted the same way, so a review never waits on a card.
+    args.push('--allowedTools', ...(mcp === undefined ? [] : ['mcp__dsbot']), ...readOnlyTools())
     this.resumeId = resumeId
     const child = this.child = spawnAgent(bin, args, {
       env: cleanEnv(this.engine.env ?? {}),
@@ -184,10 +213,7 @@ class ClaudeSession {
           const tool = request.tool_name ?? 'tool'
           this.emit({
             type: 'permission', id: event.request_id,
-            reply: (optionId) => this.write({
-              type: 'control_response',
-              response: { subtype: 'success', request_id: event.request_id, response: optionId === 'allow' ? { behavior: 'allow', updatedInput: request.input ?? {} } : { behavior: 'deny' } },
-            }),
+            reply: (optionId) => this.write(permissionResponse(event.request_id, optionId, request.input)),
             action: `Run ${tool}`,
             detail: JSON.stringify(request.input ?? {}).slice(0, 4_000),
             changes: !READ_TOOLS.has(tool),
