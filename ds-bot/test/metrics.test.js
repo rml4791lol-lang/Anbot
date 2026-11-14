@@ -115,7 +115,7 @@ test('collects a day, ignoring unrelated ledger files, bad lines and other sessi
   assert.equal(metrics.botTurns, 4)
   assert.deepEqual(metrics.zeroTool, { n: 1, m: 4, value: '1/4 (25%)' })
   assert.deepEqual(metrics.toolErrorRate, { n: 1, m: 3, value: '1/3 (33%)' })
-  assert.deepEqual(metrics.emptyAnswerRate, { n: 2, m: 4, value: '2/4 (50%)' })
+  assert.deepEqual(metrics.emptyAnswerRate, { n: 1, m: 3, value: '1/3 (33%)' })
   assert.deepEqual(metrics.durationMs, { p50: 2000, p90: 3000, n: 3 })
   assert.deepEqual(metrics.injectedChars, { p90: 400, n: 4 })
   assert.deepEqual(metrics.skillCalls, { n: 1, m: 4, value: '1/4 (25%)' })

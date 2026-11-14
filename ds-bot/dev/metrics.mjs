@@ -151,7 +151,10 @@ export function collectMetrics({ day, ledgerDir, home }) {
   const toolCalls = turns.reduce((sum, row) => sum + namesOf(row).length, 0)
   const toolErrors = turns.reduce((sum, row) => sum + (Number.isFinite(row.tools?.errors) ? row.tools.errors : 0), 0)
   const zeroTool = turns.filter(row => namesOf(row).length === 0).length
-  const emptyAnswers = turns.filter(row => (row.final_chars ?? 0) === 0).length
+  // An open or aborted turn has no answer yet; it is not an empty answer. Only a turn
+  // that ran to completion can tell whether the Bot answered.
+  const completed = turns.filter(row => row.outcome === 'completed')
+  const emptyAnswers = completed.filter(row => (row.final_chars ?? 0) === 0).length
   const durations = turns.map(row => row.duration_ms).filter(value => Number.isFinite(value) && value >= 0)
   const injected = turns.map(row => row.context?.bytes).filter(value => Number.isFinite(value) && value >= 0)
   const skillCalls = turns.reduce((sum, row) => sum + namesOf(row).filter(name => name === 'skill').length, 0)
@@ -162,7 +165,7 @@ export function collectMetrics({ day, ledgerDir, home }) {
     botTurns: turns.length,
     zeroTool: { n: zeroTool, m: turns.length, value: share(zeroTool, turns.length) },
     toolErrorRate: { n: toolErrors, m: toolCalls, value: share(toolErrors, toolCalls) },
-    emptyAnswerRate: { n: emptyAnswers, m: turns.length, value: share(emptyAnswers, turns.length) },
+    emptyAnswerRate: { n: emptyAnswers, m: completed.length, value: share(emptyAnswers, completed.length) },
     durationMs: { p50: quantile(durations, 0.5), p90: quantile(durations, 0.9), n: durations.length },
     injectedChars: { p90: quantile(injected, 0.9), n: injected.length },
     skillCalls: { n: skillCalls, m: turns.length, value: share(skillCalls, turns.length) },
