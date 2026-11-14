@@ -191,6 +191,11 @@ test('content text drops DSML tags written with fullwidth pipes', () => {
   assert.equal(contentText([{ type: 'text', text: '好。\n' + closeDsml('parameter') }]), '好。')
 })
 
+test('content text drops both shapes when they arrive together', () => {
+  assert.equal(contentText([{ type: 'text', text: '好。</DSML invoke></final>' }]), '好。')
+  assert.equal(contentText([{ type: 'text', text: OPEN_FINAL + '好。' + closeDsml('invoke') + CLOSE_FINAL }]), '好。')
+})
+
 test('a fenced block keeps wire tags exactly as written', () => {
   const code = '```\n' + closeDsml('invoke') + '\n```'
   assert.equal(contentText([{ type: 'text', text: '看这段：\n' + code }]), '看这段：\n' + code)
