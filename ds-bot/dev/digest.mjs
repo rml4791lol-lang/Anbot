@@ -10,7 +10,6 @@ import path from 'node:path'
 
 const args = process.argv.slice(2)
 const arg = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback)
-const has = name => args.includes(name)
 
 const REQUIRED_PROPOSAL_SECTIONS = ['假设', '证据', '改动', '预期指标', '回滚']
 
