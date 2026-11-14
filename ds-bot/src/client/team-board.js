@@ -138,7 +138,7 @@ function Row({ bot, doing, waiting, since, now, main }) {
         h('span', { className: 'tb-name' }, nameOf(bot)),
         roleOf(bot) === '' ? null : h('span', { className: 'tb-role' }, roleOf(bot)),
         running ? h('span', { className: 'tb-pulse', 'aria-hidden': true }) : null),
-      h('div', { className: 'tb-task' }, h('span', { className: 'tb-label' }, COPY.task), running ? workPhrase(doing) : COPY.standby),
+      h('div', { className: 'tb-task' }, h('span', { className: 'tb-label' }, `${COPY.task}：`), h('span', { className: 'tb-phrase' }, running ? workPhrase(doing) : COPY.standby)),
       h('div', { className: 'tb-who' }, `${COPY.who}：${nameOf(bot)} · ${line}`)))
 }
 

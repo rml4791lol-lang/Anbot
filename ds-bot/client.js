@@ -41768,7 +41768,7 @@ function Row4({ bot, doing, waiting, since, now, main }) {
         roleOf(bot) === "" ? null : (0, import_react67.createElement)("span", { className: "tb-role" }, roleOf(bot)),
         running ? (0, import_react67.createElement)("span", { className: "tb-pulse", "aria-hidden": true }) : null
       ),
-      (0, import_react67.createElement)("div", { className: "tb-task" }, (0, import_react67.createElement)("span", { className: "tb-label" }, COPY.task), running ? workPhrase(doing) : COPY.standby),
+      (0, import_react67.createElement)("div", { className: "tb-task" }, (0, import_react67.createElement)("span", { className: "tb-label" }, `${COPY.task}：`), (0, import_react67.createElement)("span", { className: "tb-phrase" }, running ? workPhrase(doing) : COPY.standby)),
       (0, import_react67.createElement)("div", { className: "tb-who" }, `${COPY.who}：${nameOf2(bot)} · ${line}`)
     )
   );
