@@ -3,7 +3,7 @@
 // a question the user sees is answered to the user. Issue #17: a reply looked lost, so
 // these are the paths it could have taken, each held by an assertion.
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -95,7 +95,7 @@ async function start(t) {
     await ctx.dispose()
     rmSync(home, { recursive: true, force: true, maxRetries: 5 })
   })
-  return { ctx, rt, agents, emit, tool, agentOf }
+  return { ctx, rt, home, agents, emit, tool, agentOf }
 }
 
 const textBlock = content => [{ type: 'text', text: content }]
@@ -141,28 +141,50 @@ test('a plain text answer wakes the Bot that asked: it gets a new turn (followup
   assert.equal(textOf(reply.content), '[Reply from Chief]\n就发')
 })
 
-test('a turn opened by a "[Reply from …]" never writes back to that Bot', async (t) => {
-  const { rt, agents, emit } = await start(t)
-  // Chief told Writer something; Writer's turn is the answer to it, so its final text
-  // answers the user. Delivering it back would restart an exchange that just ended.
+test('a turn opened by a "[Reply from …]" hands its text back quietly, without a new turn', async (t) => {
+  const { home, rt, agents, emit } = await start(t)
+  // Chief told Writer something; Writer's turn is the answer to it. Sending it back as a
+  // reply would restart an exchange that just ended, but dropping it loses what Writer
+  // said (issue #17): it goes back without waking the Bot that said it.
   await rt.deliver({ fromId: 'a', toId: 'b', text: '封面用第二版', role: 'reply', replyTo: 'x-1' })
   const [, told] = callsOf(agents, 'b')[0]
   assert.equal(told.source.role, 'reply')
 
   turn(emit, 'b', told, '收到，我去换')
-  await delay(50)
-  assert.deepEqual(callsOf(agents, 'a'), [])
+  assert.ok(await until(() => callsOf(agents, 'a').length > 0), 'the text evaporated')
+
+  // A send is a queue entry read at the next turn: no turn is spent on it.
+  const [kind, note, when, wake] = callsOf(agents, 'a').at(-1)
+  assert.deepEqual([kind, when, wake], ['send', 'next-turn', false])
+  assert.equal(note.source.role, 'reply')
+  assert.equal(textOf(note.content), '[Reply from Writer]\n收到，我去换')
+
+  // On disk before it goes out: the pair's book holds the send line, so nothing passes
+  // between two Bots without a record of it.
+  const book = () => readFileSync(join(home, 'ledger', 'pair-a-b.jsonl'), 'utf8')
+  const sent = () => {
+    try {
+      return book().split('\n').filter(Boolean).map(line => JSON.parse(line)).find(record => record.text === '收到，我去换')
+    } catch {
+      return undefined
+    }
+  }
+  assert.ok(await until(() => sent() !== undefined), 'the pair book has no send line')
+  assert.deepEqual([sent().from, sent().to, sent().role], ['b', 'a', 'reply'])
 })
 
-test('an answer the user sees stays with the user, never relayed back as a reply', async (t) => {
+test('an answer the user sees still leaves the asker a quiet note', async (t) => {
   const { agents, emit, tool } = await start(t)
   await tool('message_bot', { to: 'Writer', message: '告诉用户：明天发', reply_to: 'user', when: 'now' }, 'a')
   const [, asked] = callsOf(agents, 'b')[0]
   assert.equal(asked.source.audience, 'user')
 
   turn(emit, 'b', asked, '明天发')
-  await delay(50)
-  assert.deepEqual(callsOf(agents, 'a'), [])
+  // The user sees it; the Bot that asked reads it at its next turn instead of opening one.
+  assert.ok(await until(() => callsOf(agents, 'a').length > 0), 'the asker never learned the answer')
+  const [kind, note, when, wake] = callsOf(agents, 'a').at(-1)
+  assert.deepEqual([kind, when, wake], ['send', 'next-turn', false])
+  assert.equal(textOf(note.content), '[Reply from Writer]\n明天发')
 })
 
 test('stop_bot still hands the reason to the stopped Bot', async (t) => {
