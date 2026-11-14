@@ -298,7 +298,7 @@ export const TEAM_BOARD_CSS = `
 .tb-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
 .tb-line{display:flex;align-items:center;gap:6px;min-width:0}
 .tb-name{font-size:12.5px;font-weight:600;color:var(--bt-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-role{flex:none;font-size:10.5px;color:var(--bt-ink-3);padding:0 5px;border-radius:5px;border:.5px solid color-mix(in srgb,var(--bt-ink) 14%,transparent)}
+.tb-role{flex:none;font-size:10.5px;color:var(--bt-ink-3);padding:0 5px;border-radius:6px;border:.5px solid color-mix(in srgb,var(--bt-ink) 14%,transparent)}
 .tb-pulse{flex:none;width:6px;height:6px;border-radius:50%;background:var(--bt-accent);animation:tb-breathe 1.8s ease-in-out infinite}
 @keyframes tb-breathe{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
 .tb-task{display:flex;gap:4px;min-width:0;font-size:12px;color:var(--bt-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
