@@ -30,7 +30,7 @@ import { Overlays } from './overlays.js'
 import { createBotBrowsers, serveBrowserReads } from './bot-browsers.js'
 import { BROWSER_CSS } from './browser-pane.js'
 import { TEAM_BOARD_CSS } from './team-board.js'
-import { TeamBoardHost, openTeamBoard } from './team-board-host.js'
+import { TEAM_BOARD_HOST_CSS, TeamBoardHost } from './team-board-host.js'
 import { SECRET_CSS, SecretDock } from './secret-card.js'
 import { ConnectorDock, MailDock, CONNECTOR_CSS } from './connectors.js'
 import { CONNECTORS_PAGE_CSS } from './connectors-page.js'
@@ -1093,6 +1093,7 @@ export function apply(ctx) {
     [SIDE_CSS, 'side'],
     [BROWSER_CSS, 'browser'],
     [TEAM_BOARD_CSS, 'team-board'],
+    [TEAM_BOARD_HOST_CSS, 'team-board-host'],
   ]
   // Settings outside Bot mode (Agent mode) brings DS Bot's own rules and colors while it
   // shows; the shell overrides and DSH's tokens stay as Agent mode has them.
@@ -1127,8 +1128,7 @@ export function apply(ctx) {
     () => shadow('shell.overlay', { id: 'bot', order: 50, inject: face }, Overlays),
     () => shadow('shell.overlay', { id: 'bot-signin', order: 55, inject: face }, DeepSeekSignIn),
     () => shadow('shell.overlay', { id: 'bot-toast', order: 60, inject: face }, ErrorToast),
-    () => shadow('rightbar', { id: 'bot-team-board', inject: face }, TeamBoardHost),
-    () => { openTeamBoard(ctx.layout).catch(() => {}); return () => ctx.layout.closeRightbar() },
+    () => shadow('shell.overlay', { id: 'bot-team-board', order: 45, inject: face }, TeamBoardHost),
   ]
   const installConversation = () => [
     () => installCompiledStyles(CONVERSATION_CSS, 'conversation'),
