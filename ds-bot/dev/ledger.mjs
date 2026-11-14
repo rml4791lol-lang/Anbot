@@ -1,8 +1,11 @@
 // The turn ledger: one line per Bot turn, written on the host, read by everyone.
 //
-// This is the observation record the improvement loop runs on. It is append-only and
-// idempotent: re-running the same day rewrites nothing, and a turn already in the file
-// is skipped. Messages are never copied in — only sizes, hashes, tool names and paths.
+// Append-only and idempotent: re-running a day rewrites nothing and skips turns already
+// recorded. Messages are never copied in — only sizes, hashes, tool names and paths.
+//
+// Attribution: the host queues an injection before the turn it belongs to. A `next-turn`
+// item belongs to the next turn/start, a `next-step` item to the turn already running.
+// Both are counted, so context.bytes answers "what did this turn actually have to work with".
 //
 // Usage: node dev/ledger.mjs [--day 2026-11-14] [--out ~/.dsh/bot/ledger]
 import fs from 'node:fs'
@@ -47,59 +50,65 @@ const sourceOf = text => {
   if (head.includes('Group chat')) return 'group'
   return 'other'
 }
+const textOf = item => item.text ?? (item.content ?? []).filter(c => c.type === 'text').map(c => c.text).join('')
+const SEEDS = new Set(['user', 'bot', 'schedule', 'tool-jobs', 'user-question-reply'])
 
 const records = []
 for (const { id, file } of files) {
   const events = zlib.zstdDecompressSync(fs.readFileSync(file)).toString('utf8').split('\n').filter(Boolean).map(JSON.parse)
-  let turn = null
-  const flush = () => {
-    if (turn !== null && turn.start >= dayStart && turn.start < dayEnd) records.push(turn)
-    turn = null
+  const turns = []
+  for (let i = 0; i < events.length; i += 1) {
+    if (events[i].type === 'turn/start') turns.push({ index: i, turn: events[i].data?.turn, start: events[i].time, injected: {}, seed: null, tools: [], files: [], chars: 0, hash: '' })
   }
-  for (const ev of events) {
-    const time = ev.time ?? 0
-    if (ev.type === 'turn/start') { flush(); turn = { session: id, turn: ev.data?.turn, start: time, tools: [], files: [], injected: {}, seed: null, chars: 0, hash: '' } ; continue }
-    if (turn === null) continue
-    if (ev.type === 'turn/end') { turn.end = time; turn.outcome = ev.data?.reason ?? 'completed'; flush(); continue }
-    if (ev.type === 'agent/inbox/spliced' && time >= turn.start) {
-      for (const item of ev.data?.inserted ?? []) {
-        const kind = item.source?.kind
-        if (['user', 'bot', 'schedule', 'tool-jobs', 'user-question-reply'].includes(kind)) {
-          turn.seed ??= { kind, role: item.source?.role ?? null, form: item.source?.form ?? null }
-        } else {
-          const text = item.text ?? (item.content ?? []).filter(c => c.type === 'text').map(c => c.text).join('')
-          if (text) { const label = sourceOf(text); turn.injected[label] = (turn.injected[label] ?? 0) + text.length }
-        }
-      }
+  if (!turns.length) continue
+  // The turn running at `index`, or the next one when the item is queued ahead of a start.
+  const running = index => {
+    let lo = 0; let hi = turns.length - 1; let found = null
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (turns[mid].index <= index) { found = turns[mid]; lo = mid + 1 } else hi = mid - 1 }
+    return found
+  }
+  const next = index => turns.find(t => t.index > index) ?? null
+  const ownerOf = (index, target) => (target === 'next-turn' ? next(index) : (running(index) ?? next(index)))
+
+  for (let i = 0; i < events.length; i += 1) {
+    const ev = events[i]
+    if (ev.type === 'turn/end') {
+      const turn = running(i)
+      if (turn) { turn.end = ev.time; turn.outcome = ev.data?.reason?.kind ?? (typeof ev.data?.reason === 'string' ? ev.data.reason : 'completed') }
       continue
     }
-    if (ev.type === 'user/message' && time >= turn.start && !turn.seed) {
-      const source = ev.data?.source ?? {}
-      const content = ev.data?.message?.content
-      const text = typeof content === 'string' ? content : Array.isArray(content) ? content.map(c => c.text ?? '').join('') : ''
-      if (source.kind === 'user' || source.kind === 'bot' || source.kind === 'schedule' || source.kind === 'tool-jobs') {
-        turn.seed = { kind: source.kind, role: source.role ?? null, form: source.form ?? null }
-      } else if (text) {
-        const label = sourceOf(text)
-        turn.injected[label] = (turn.injected[label] ?? 0) + text.length
+    if (ev.type === 'agent/inbox/spliced') {
+      const target = ev.data?.target
+      const turn = ownerOf(i, target)
+      if (!turn) continue
+      for (const item of ev.data?.inserted ?? []) {
+        const kind = item.source?.kind
+        const text = textOf(item)
+        if (!text) continue
+        if (SEEDS.has(kind)) { turn.seed ??= { kind, role: item.source?.role ?? null, form: item.source?.form ?? null } }
+        else { const label = sourceOf(text); turn.injected[label] = (turn.injected[label] ?? 0) + text.length }
       }
       continue
     }
     if (ev.type === 'tool/call') {
+      const turn = running(i)
+      if (!turn) continue
       turn.tools.push(ev.data?.name ?? '?')
       try {
-        const argsObj = JSON.parse(ev.data?.arguments ?? '{}')
-        for (const key of ['path', 'file', 'file_path', 'target']) if (typeof argsObj[key] === 'string') turn.files.push(argsObj[key])
+        const callArgs = JSON.parse(ev.data?.arguments ?? '{}')
+        for (const key of ['path', 'file', 'file_path', 'target']) if (typeof callArgs[key] === 'string') turn.files.push(callArgs[key])
       } catch { /* arguments are opaque */ }
       continue
     }
-    if (ev.type === 'tool/result' && ev.data?.message?.isError) turn.toolErrors = (turn.toolErrors ?? 0) + 1
+    if (ev.type === 'tool/result' && ev.data?.message?.isError) { const turn = running(i); if (turn) turn.toolErrors = (turn.toolErrors ?? 0) + 1; continue }
     if (ev.type === 'assistant/message') {
+      const turn = running(i)
+      if (!turn) continue
       const text = (ev.data?.message?.content ?? []).filter(c => c.type === 'text').map(c => c.text).join('')
       if (text) { turn.chars += text.length; turn.hash = crypto.createHash('sha256').update(text).digest('hex').slice(0, 16) }
     }
   }
-  flush()
+  for (const turn of turns) if (turn.start >= dayStart && turn.start < dayEnd) records.push({ session: id, ...turn })
 }
 
 const outFile = path.join(outDir, `${day}.jsonl`)
