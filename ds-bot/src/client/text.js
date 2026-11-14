@@ -2,6 +2,7 @@
 // Text helpers
 import { dateLocale, t } from './i18n.js'
 import { mentionSpans } from '../shared/mentions.js'
+import { stripWireTags } from '../shared/wire-tags.js'
 
 export const MENTION_ORIGIN = 'https://bots.local/'
 
@@ -70,15 +71,10 @@ export function elapsedLabel(ms) {
   return `${hours > 0 ? `${hours}h ` : ''}${total >= 60 ? `${Math.floor(total / 60) % 60}m ` : ''}${total % 60}s`
 }
 
-// A model that writes its tool call in DSML form can leave the closing tags in
-// the text block DSH hands the chat. They are wire syntax, not part of the reply.
-const DSML_CLOSING_TAG = /<\/DSML\s+(?:invoke|calls)\s*>/i
-const DSML_CLOSING_TAGS = /\s*<\/DSML\s+(?:invoke|calls)\s*>\s*/gi
-export const stripToolCallTags = (text) => {
-  const value = String(text ?? '')
-  if (!DSML_CLOSING_TAG.test(value)) return value
-  return value.replace(DSML_CLOSING_TAGS, ' ').trim()
-}
+// #1517: wire syntax, not words. The cleanup lives in shared/wire-tags.js so the
+// host drops the same tags on the way to storage and delivery. Text inside a
+// fenced block is code or a quoted sample and is left exactly as written.
+export const stripToolCallTags = stripWireTags
 export const contentText = content => (content ?? [])
   .filter(block => block?.type === 'text')
   .map(block => (typeof block.text === 'string' ? stripToolCallTags(block.text) : ''))

@@ -14500,6 +14500,36 @@ function mentionSpans(text, bots, { references = [] } = {}) {
   return spans;
 }
 
+// src/shared/wire-tags.js
+var WIRE_TAG = /<\s*\/?\s*(?:[｜|]+\s*)?(?:DSML|final)\s*(?:(?:[｜|]+\s*)?(?:invoke|calls|parameter)\b)?[^>\n]{0,200}>/giu;
+var HAS_WIRE_TAG = /DSML|final/i;
+var FENCE = /(^|\n)(```|~~~)[\s\S]*?\n\2[^\n]*(\n|$)/g;
+var stripLines = (chunk) => {
+  if (!HAS_WIRE_TAG.test(chunk)) return chunk;
+  const kept = [];
+  for (const line of chunk.split("\n")) {
+    if (!HAS_WIRE_TAG.test(line)) {
+      kept.push(line);
+      continue;
+    }
+    const left = line.replace(WIRE_TAG, "").replace(/[ \t]{2,}/g, " ").trim();
+    if (left !== "") kept.push(left);
+  }
+  return kept.join("\n");
+};
+var stripWireTags = (text) => {
+  const value = String(text ?? "");
+  if (!HAS_WIRE_TAG.test(value)) return value;
+  let out = "";
+  let at = 0;
+  for (const match of value.matchAll(FENCE)) {
+    out += stripLines(value.slice(at, match.index));
+    out += match[0];
+    at = match.index + match[0].length;
+  }
+  return (out + stripLines(value.slice(at))).trim();
+};
+
 // src/client/text.js
 var MENTION_ORIGIN = "https://bots.local/";
 function linkMentions(text, bots, selfId) {
@@ -14553,13 +14583,7 @@ function elapsedLabel(ms) {
   const hours = Math.floor(total / 3600);
   return `${hours > 0 ? `${hours}h ` : ""}${total >= 60 ? `${Math.floor(total / 60) % 60}m ` : ""}${total % 60}s`;
 }
-var DSML_CLOSING_TAG = /<\/DSML\s+(?:invoke|calls)\s*>/i;
-var DSML_CLOSING_TAGS = /\s*<\/DSML\s+(?:invoke|calls)\s*>\s*/gi;
-var stripToolCallTags = (text) => {
-  const value = String(text ?? "");
-  if (!DSML_CLOSING_TAG.test(value)) return value;
-  return value.replace(DSML_CLOSING_TAGS, " ").trim();
-};
+var stripToolCallTags = stripWireTags;
 var contentText = (content) => (content ?? []).filter((block) => block?.type === "text").map((block) => typeof block.text === "string" ? stripToolCallTags(block.text) : "").join("\n");
 var HEADER = /^\[(Message from|Reply from|Group chat|Group post from|Bot team setup|Handoff · part|Secret card)(?:[^\r\n]*\]\r?\n|[^\]\r\n]*\])/;
 var currentPart = (bot) => bot.sessionId ?? bot.id;
@@ -25573,7 +25597,7 @@ var FOLD_HUGE = { chars: 2e4, lines: Infinity };
 var ALWAYS = { chars: -1, lines: 0 };
 var PREVIEW_LINES = 10;
 var PREVIEW_CHARS = 600;
-var FENCE = /^ {0,3}(`{3,}|~{3,})/;
+var FENCE2 = /^ {0,3}(`{3,}|~{3,})/;
 var CLOSE = /^ {0,3}(`{3,}|~{3,})\s*$/;
 var closes = (line, open) => {
   const marker = CLOSE.exec(line)?.[1];
@@ -25594,7 +25618,7 @@ function openedFence(lines) {
   let open = null;
   let openLine = -1;
   for (let i = 0; i < lines.length; i += 1) {
-    const marker = FENCE.exec(lines[i])?.[1];
+    const marker = FENCE2.exec(lines[i])?.[1];
     if (marker === void 0) continue;
     if (open === null) {
       open = marker;
