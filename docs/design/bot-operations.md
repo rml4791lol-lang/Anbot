@@ -105,7 +105,36 @@
 
 DoD 必须可检查：写成「≤260 字、按 3.5 字/秒、误差 ≤1 秒」而不是「写得好一点」。
 
-## 4. 同步规则
+## 4. 技能与能力
+
+技能有两层，别混：
+
+- **工作区技能**：`~/.dsh/skills/<name>/SKILL.md`，由 harness 注入目录（每个会话一次，约 22 KB），Bot 用 `skill` 工具加载全文。`standard` 预设带 `tool-skill`，所以每个 Bot 技术上都能用。
+- **能力技能**：DS-Bot 的 `capability`，`kind: 'skill'`，内容内联存在状态库，按 Bot 挂载（`save_capability` → `attach_capability`）。适合私有、需要按 Bot 隔离的流程。
+
+现状（2026-11-14 实测）：4 个 Bot 会话里技能目录各注入 1 次，`skill` 调用 0 次——目录是白给的 token，没人用。问题不在权限，在没人教。
+
+规则：
+
+1. 任务与技能描述匹配时，先 `skill` 加载再动手；不匹配不要加载。
+2. 每个 Bot 只在自己的 instructions 里列 3–5 个常用技能，不要抄全局目录。
+3. 私有流程用能力技能挂载，不要往 `~/.dsh/skills` 里塞。
+
+推荐映射（写进各自 instructions，不写进全局 prompt）：
+
+| Bot | 常用技能 |
+|---|---|
+| 参谋 / 运营 | `deep-research`、`content-competitor-research` |
+| 写手 / 制片 | `zh-short-video-script`、`zh-short-video-render`、`zh-douyin-content` |
+| 课件 / 编制官 | `office-pptx`、`html-ppt`、`ppt-studio` |
+| 前端 | `frontend-ui-engineering`、`impeccable`、`design-qa` |
+| 工程师 | `test-driven-development`、`graphlint`、`code-review-and-quality` |
+| 审查 | `code-review-and-quality`、`zh-code-review` |
+| 运维 | `orca-cli`、`observability-and-instrumentation` |
+
+度量：`turn-economy` 统计每个会话的 `skill` 调用次数；连续 7 天为 0 的 Bot 先改 instructions，再谈加技能。
+
+## 5. 同步规则
 
 - 新增或改名工具：改 `ds-bot/src/host/constants.js` 的 `TEAM_TOOLS`，再改本文件的表格；测试会比对两边。
 - 工具语义变了：改本文件对应行的「何时用/何时别用」，提交信息写明行为变化。
