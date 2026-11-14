@@ -484,6 +484,8 @@ export function install(rt) {
     const waiting = new Map()
     for (const id of sessionIds) {
       await stopSubagents(id)
+      // A batch still waiting for this Session never reaches the Bot that is gone.
+      rt.dropWaiting?.(id)
       const entry = live.get(id)
       const held = [entry?.info, entry?.pending, ...(entry?.joined ?? []).map(joined => joined.info)]
       if (entry?.turn !== undefined) {

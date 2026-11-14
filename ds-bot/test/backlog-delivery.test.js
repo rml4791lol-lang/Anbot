@@ -118,7 +118,8 @@ const textOf = content => content.map(block => block.text ?? '').join('\n')
 
 const flush = async (agents, ctx, sessionId) => {
   for (const listener of ctx.listeners.get('agent/status') ?? []) listener({ agent: agents.get(sessionId), status: 'idle' })
-  await delay(10)
+  // The batch waits out the quiet window after the turn ends.
+  await delay(2100)
 }
 
 test('plain notes that pile up while a Bot works are read as one message', async (t) => {
@@ -132,7 +133,7 @@ test('plain notes that pile up while a Bot works are read as one message', async
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
   const body = textOf(agents.get('b').calls[0][1].content)
-  assert.match(body, /^\[Message from Chief\][^\n]*\nthree\n\n另有 2 条并入本轮$/)
+  assert.match(body, /^\[Message from Chief\][^\n]*\nthree\n\n2 more messages came along in this batch\.$/)
 })
 
 test('a flood of notes is read five at a time, the rest at the next turn', async (t) => {
@@ -143,11 +144,11 @@ test('a flood of notes is read five at a time, the rest at the next turn', async
   for (const text of ['one', 'two', 'three', 'four', 'five', 'six', 'seven']) await rt.deliver({ fromId: 'a', toId: 'b', text, role: 'request' })
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
-  assert.match(textOf(agents.get('b').calls[0][1].content), /\nfive\n\n另有 4 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[0][1].content), /\nfive\n\n4 more messages came along in this batch\.$/)
 
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
-  assert.match(textOf(agents.get('b').calls[1][1].content), /\nseven\n\n另有 1 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[1][1].content), /\nseven\n\n1 more message came along in this batch\.$/)
 })
 
 test('notes for two Bots never ride together', async (t) => {
@@ -173,11 +174,11 @@ test('twelve waiting notes are read in three rounds of five, five and two', asyn
   emit('b', 'turn/start', { turn: 1 })
   for (let index = 1; index <= 12; index += 1) await rt.deliver({ fromId: 'a', toId: 'b', text: `note ${index}`, role: 'request' })
   await flush(agents, ctx, 'b')
-  assert.match(textOf(agents.get('b').calls[0][1].content), /\nnote 5\n\n另有 4 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[0][1].content), /\nnote 5\n\n4 more messages came along in this batch\.$/)
   await flush(agents, ctx, 'b')
-  assert.match(textOf(agents.get('b').calls[1][1].content), /\nnote 10\n\n另有 4 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[1][1].content), /\nnote 10\n\n4 more messages came along in this batch\.$/)
   await flush(agents, ctx, 'b')
-  assert.match(textOf(agents.get('b').calls[2][1].content), /\nnote 12\n\n另有 1 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[2][1].content), /\nnote 12\n\n1 more message came along in this batch\.$/)
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup', 'followup'])
   await flush(agents, ctx, 'b')
   assert.equal(agents.get('b').calls.length, 3)
@@ -213,5 +214,5 @@ test('a queued task is never folded: it goes out on its own', async (t) => {
 
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
-  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Message from Chief\][^\n]*\nplain three\n\n另有 2 条并入本轮$/)
+  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Message from Chief\][^\n]*\nplain three\n\n2 more messages came along in this batch\.$/)
 })

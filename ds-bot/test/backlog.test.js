@@ -1,7 +1,8 @@
 // R59: notes waiting for one Bot are read as one message, not one turn each.
-// The rules here are the six the plan fixed: same Session only, plain relays only,
-// nothing the plugin injects, at most five a round, the newest text untouched with a
-// last line counting the others, and a burst measured as one delivery.
+// The rules here: same Session only, plain relays only, nothing the plugin injects,
+// at most five a round, the newest text untouched with a last line counting the others,
+// replies keeping their words and the exchange each answers, and a burst measured as
+// one delivery.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { BACKLOG_LIMIT, backlogNote, mergeBacklog, mergeBySession, plainRelay } from '../src/host/backlog.js'
@@ -10,10 +11,11 @@ const note = (text, extra = {}) => ({ role: 'request', text, toId: 'b', ...extra
 
 test('only a plain relay is folded', () => {
   assert.equal(plainRelay(note('one')), true)
+  assert.equal(plainRelay({ role: 'reply', text: 'an answer', replyTo: 'r-1' }), true)
   const rejected = [
     { title: 'an image', extra: { images: [{ attachment: {} }] } },
     { title: 'a file', extra: { files: [{ attachment: {} }] } },
-    { title: 'a reply target', extra: { replyTo: 'x-1' } },
+    { title: 'a request with a reply target', extra: { replyTo: 'x-1' } },
     { title: 'a room', extra: { roomId: 'room-1' } },
     { title: 'a work item', extra: { work: 'w-1' } },
     { title: 'an audience', extra: { audience: 'user' } },
@@ -31,7 +33,7 @@ test('only a plain relay is folded', () => {
 })
 
 test('what the plugin injects into a Session never rides along', () => {
-  for (const role of ['memory-update', 'runtime-context', 'skill-catalog', 'approval', 'update', 'kickoff', 'resume', 'room', 'report', 'secret', 'stopped', 'reply']) {
+  for (const role of ['memory-update', 'runtime-context', 'skill-catalog', 'approval', 'update', 'kickoff', 'resume', 'room', 'report', 'secret', 'stopped']) {
     assert.equal(plainRelay({ role, text: 'injected' }), false, role)
   }
 })
@@ -44,6 +46,29 @@ test('the newest text goes out untouched, the others are only counted', () => {
   // The earlier words are not rewritten into the body: only the newest one is quoted.
   assert.ok(!merged.text.includes('first'))
   assert.ok(!merged.text.includes('second'))
+})
+
+test('replies keep their words and say which exchange each answers', () => {
+  const merged = mergeBacklog([
+    { role: 'reply', fromName: 'Chief', text: 'first answer', replyTo: 'r-1', exchangeId: 'e-1' },
+    { role: 'reply', fromName: 'Writer', text: 'second answer', replyTo: 'r-2', exchangeId: 'e-2' },
+  ])
+  assert.equal(merged.text, [
+    '[Reply from Chief · re r-1 · ex e-1]',
+    'first answer',
+    '',
+    '[Reply from Writer · re r-2 · ex e-2]',
+    'second answer',
+    '',
+    backlogNote(1),
+    '',
+    'Reply only to the exchanges you actually need; the rest are recorded.',
+  ].join('\n'))
+})
+
+test('one reply keeps its words, with no counting line', () => {
+  const merged = mergeBacklog([{ role: 'reply', fromName: 'Chief', text: 'just this', replyTo: 'r-1', exchangeId: 'e-1' }])
+  assert.equal(merged.text, 'just this')
 })
 
 test('one note is delivered as it was written, with no counting line', () => {
