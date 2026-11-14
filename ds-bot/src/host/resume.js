@@ -164,6 +164,13 @@ export function install(rt) {
       return
     }
   }
+  // A folded batch carries every exchange it took in: the Session took them all up
+  // together, so all of them are done with at once.
+  const idsOf = source => Array.isArray(source?.exchangeIds) ? source.exchangeIds
+    : source?.exchangeId === undefined ? [] : [source.exchangeId]
+  const forgetIds = (ids) => {
+    for (const id of ids) forgetQueued(id)
+  }
 
   const deliver = rt.deliver
   rt.deliver = async (args) => {
@@ -190,7 +197,7 @@ export function install(rt) {
   // A message is done with once a turn takes it up, or once it leaves the inbox untaken
   // while DS Bot runs: the user stopped the Bot, or DS Bot moved or withdrew it.
   ctx.on('agent/inbox/discarded', ({ message } = {}) => {
-    if (message?.source?.kind === SOURCE_KIND && message.source.exchangeId) forgetQueued(message.source.exchangeId)
+    if (message?.source?.kind === SOURCE_KIND) forgetIds(idsOf(message.source))
   })
   // Exchanges a turn took up since this start, until the resends are done, so a resend
   // never repeats one.
@@ -205,9 +212,11 @@ export function install(rt) {
     if ((event.type === 'turn/start' || event.type === 'turn/end') && firstTurn?.has(id) === false) {
       firstTurn.set(id, { type: event.type, turn: event.data?.turn, reason: event.data?.reason })
     }
-    if (event.type === 'user/message' && event.data?.source?.kind === SOURCE_KIND && event.data.source.exchangeId) {
-      taken?.add(event.data.source.exchangeId)
-      forgetQueued(event.data.source.exchangeId)
+    if (event.type === 'user/message' && event.data?.source?.kind === SOURCE_KIND) {
+      for (const id of idsOf(event.data.source)) {
+        taken?.add(id)
+        forgetQueued(id)
+      }
     }
     if (!rt.isBotSession(id)) return
     switch (event.type) {
@@ -276,16 +285,22 @@ export function install(rt) {
   // up, so a send that fails here, or a Session that cannot be opened, leaves them
   // for the next start instead of losing them.
   async function resendQueued(sessionId, list) {
-    const fresh = list.filter(item => rt.botOf(item.args?.toId) !== undefined
-      && sessionFor(sessionId, item.args) !== undefined && taken?.has(item.args.exchangeId) !== true)
+    const fresh = list.filter((item) => {
+      const ids = idsOf(item.args)
+      return rt.botOf(item.args?.toId) !== undefined
+        && sessionFor(sessionId, item.args) !== undefined && !ids.some(id => taken?.has(id) === true)
+    })
     if (fresh.length === 0) return
     const target = sessionFor(sessionId, fresh[0].args)
     const agent = await rt.resolveAgent(target)
-    const waiting = new Set([...(agent.inbox?.nextStep ?? []), ...(agent.inbox?.nextTurn ?? [])].map(message => message.source?.exchangeId))
+    // Every exchange of a folded batch is in its one message: that message in the
+    // inbox means the whole batch already has a turn to run in.
+    const waiting = new Set([...(agent.inbox?.nextStep ?? []), ...(agent.inbox?.nextTurn ?? [])].flatMap(message => idsOf(message.source)))
     for (const { args } of fresh) {
-      if (waiting.has(args.exchangeId)) continue
-      if (taken?.has(args.exchangeId) === true) {
-        forgetQueued(args.exchangeId)
+      const ids = idsOf(args)
+      if (ids.some(id => waiting.has(id))) continue
+      if (ids.some(id => taken?.has(id) === true)) {
+        forgetIds(ids)
         continue
       }
       // A request that waited through a restart reaches its target late: the work
@@ -422,7 +437,8 @@ export function install(rt) {
     for (const [oldId, list] of Object.entries(pending)) {
       if (!Array.isArray(list)) continue
       for (const item of list) {
-        if (item?.args?.exchangeId === undefined || taken?.has(item.args.exchangeId) === true || rt.botOf(item.args.toId) === undefined) continue
+        const ids = idsOf(item?.args)
+        if (ids.length === 0 || ids.some(id => taken?.has(id) === true) || rt.botOf(item.args.toId) === undefined) continue
         const key = sessionFor(oldId, item.args) ?? oldId
         queued = { ...queued, [key]: [...(queued[key] ?? []), item] }
       }
