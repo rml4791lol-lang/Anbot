@@ -150,7 +150,7 @@ test('a flood is read five at a time and the rest come next round', async (t) =>
   emit('b', 'turn/start', { turn: 1 })
   for (let at = 0; at < 7; at += 1) await reply(rt, at, `task ${at}`)
   status('idle')
-  await delay(2100)
+  await rt.flushWaiting('b')
   let body = textOf(agentOf('b').calls[0][1].content)
   assert.match(body, /task 0/)
   assert.match(body, /task 3/)
@@ -159,7 +159,7 @@ test('a flood is read five at a time and the rest come next round', async (t) =>
   assert.match(body, /4 more messages came along in this batch\.\n\nReply only/)
 
   status('idle')
-  await delay(2100)
+  await rt.flushWaiting('b')
   body = textOf(agentOf('b').calls[1][1].content)
   assert.match(body, /task 5/)
   assert.match(body, /task 6\n/)
@@ -197,7 +197,7 @@ test('every reply of a folded batch is marked delivered', async (t) => {
   assert.equal((await exchanges()).length, 0)
 
   status('idle')
-  await delay(2100)
+  await rt.flushWaiting('b')
   assert.equal(agentOf('b').calls.length, 1)
   const delivered = await exchanges()
   assert.equal(delivered.length, 3)
@@ -213,7 +213,7 @@ test('a folded batch found in the inbox after a restart is not sent again', asyn
   await settle(() => (notes(home).queued?.b ?? []).length === 3)
 
   first.status('idle')
-  await delay(2100)
+  await first.rt.flushWaiting('b')
   assert.equal(first.agentOf('b').calls.length, 1)
   const merged = first.agentOf('b').calls[0][1]
   await first.stop()

@@ -366,5 +366,5 @@ export function install(rt) {
     return { ...record, ledger: true }
   }
 
-  Object.assign(rt, { resolveAgent, deliver, exchangeText, attachLong, fileText, exchangesOf, exchangeOf, dropWaiting })
+  Object.assign(rt, { resolveAgent, deliver, flushWaiting, exchangeText, attachLong, fileText, exchangesOf, exchangeOf, dropWaiting })
 }

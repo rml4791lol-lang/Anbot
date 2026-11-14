@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { setTimeout as delay } from 'node:timers/promises'
 import { test } from 'node:test'
 import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
@@ -118,8 +117,8 @@ const textOf = content => content.map(block => block.text ?? '').join('\n')
 
 const flush = async (agents, ctx, sessionId) => {
   for (const listener of ctx.listeners.get('agent/status') ?? []) listener({ agent: agents.get(sessionId), status: 'idle' })
-  // The batch waits out the quiet window after the turn ends.
-  await delay(2100)
+  // The batch waits out the quiet window after the turn ends; flush it now.
+  await rt.flushWaiting(sessionId)
 }
 
 test('plain notes that pile up while a Bot works are read as one message', async (t) => {
