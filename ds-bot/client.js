@@ -41750,14 +41750,14 @@ function groupBots(bots, roster, sort) {
   if (loose.length > 0) kept.push({ id: "_loose", name: COPY.ungrouped, bots: loose });
   return kept;
 }
-function Row4({ bot, doing, waiting, since, now }) {
+function Row4({ bot, doing, waiting, since, now, main }) {
   const running = doing !== void 0;
   const state = botState(running, running ? "working" : void 0, waiting);
   const line = running ? `${COPY.worked} ${durationOf(now - since)}` : waiting ? `${COPY.waited} ${durationOf(now - since)}` : COPY.idleFor;
   return (0, import_react67.createElement)(
     "article",
-    { className: "tb-row", "data-running": running || void 0, "data-waiting": !running && waiting || void 0 },
-    (0, import_react67.createElement)("div", { className: "tb-avatar" }, (0, import_react67.createElement)(BotAvatar, { bot, size: 34, state, live: running })),
+    { className: "tb-row", "data-running": running || void 0, "data-waiting": !running && waiting || void 0, "data-main": main || void 0 },
+    (0, import_react67.createElement)("div", { className: "tb-avatar" }, (0, import_react67.createElement)(BotAvatar, { bot, size: main ? 44 : 34, state, live: running, main })),
     (0, import_react67.createElement)(
       "div",
       { className: "tb-body" },
@@ -41874,7 +41874,7 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
       groups.map((group) => (0, import_react67.createElement)(
         "div",
         { className: "tb-group", key: group.id },
-        group.name === "" ? null : (0, import_react67.createElement)("div", { className: "tb-group-name" }, group.name),
+        group.name === "" ? null : (0, import_react67.createElement)("div", { className: "tb-group-name" }, (0, import_react67.createElement)("span", null, group.name), (0, import_react67.createElement)("span", { className: "tb-group-count" }, String(group.bots.length))),
         (0, import_react67.createElement)(
           "div",
           { className: "tb-rows" },
@@ -41884,7 +41884,8 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
             doing: doingById.get(bot.id),
             waiting: waitingById.has(bot.id),
             since: sinceRef.current.get(bot.id) ?? at,
-            now: at
+            now: at,
+            main: bot.id === (roster?.mainBotId ?? "") || bot.main === true
           }))
         )
       ))
@@ -41921,18 +41922,21 @@ var TEAM_BOARD_CSS = `
 .tb-close:hover{background:color-mix(in srgb,var(--bt-ink) 8%,transparent);color:var(--bt-ink)}
 .tb-groups{flex:1;min-height:0;overflow:auto;padding:8px 10px 12px}
 .tb-group+.tb-group{margin-top:10px}
-.tb-group-name{padding:6px 4px;font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--bt-ink-3)}
+.tb-group-name{display:flex;align-items:baseline;gap:6px;padding:6px 4px;font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--bt-ink-3)}
+.tb-group-count{font-weight:500;color:var(--bt-ink-3);opacity:.72;font-variant-numeric:tabular-nums}
 .tb-rows{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .tb-board[data-density=two] .tb-rows{grid-template-columns:minmax(0,1fr)}
 @container (min-width:560px){.tb-board[data-density=two] .tb-rows{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .tb-row{min-width:0;display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:.5px solid color-mix(in srgb,var(--bt-ink) 10%,transparent);border-radius:10px;background:color-mix(in srgb,var(--bt-main) 60%,transparent);transition:background-color .18s ease,border-color .18s ease}
+.tb-row[data-main]{border-color:color-mix(in srgb,var(--bt-accent) 26%,transparent);background:color-mix(in srgb,var(--bt-accent) 5%,transparent);padding:11px 12px}
+.tb-row[data-main] .tb-name{font-size:13.5px}
 .tb-row[data-running]{border-color:color-mix(in srgb,var(--bt-accent) 42%,transparent);background:color-mix(in srgb,var(--bt-accent) 8%,transparent)}
 .tb-row[data-waiting]{border-color:color-mix(in srgb,var(--bt-danger) 42%,transparent)}
 .tb-avatar{flex:none;display:flex;align-items:center;justify-content:center}
 .tb-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
 .tb-line{display:flex;align-items:center;gap:6px;min-width:0}
 .tb-name{font-size:12.5px;font-weight:600;color:var(--bt-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-role{flex:none;font-size:10.5px;color:var(--bt-ink-3);padding:0 5px;border-radius:4px;border:.5px solid color-mix(in srgb,var(--bt-ink) 14%,transparent)}
+.tb-role{flex:none;font-size:10.5px;color:var(--bt-ink-3);padding:0 5px;border-radius:6px;border:.5px solid color-mix(in srgb,var(--bt-ink) 14%,transparent)}
 .tb-pulse{flex:none;width:6px;height:6px;border-radius:50%;background:var(--bt-accent);animation:tb-breathe 1.8s ease-in-out infinite}
 @keyframes tb-breathe{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
 .tb-task{display:flex;gap:4px;min-width:0;font-size:12px;color:var(--bt-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
