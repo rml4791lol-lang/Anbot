@@ -106,7 +106,32 @@ ledger 日文件
 - 08 生产指标：改为消费 ledger，不再重复扫 session 文件。
 - 03 裁判稳定性：改为"旧 vs 旧"配对，一致率 ≥80% 才允许用裁判下结论。
 
-## 8. 分母口径（写死，避免第二次翻车）
+## 8. 开源参照（均在本机核实过仓库与机制）
+
+| 项目 | 核实到的事实 | 借什么 | 不借什么 |
+|---|---|---|---|
+| SWE-bench（6.2k star） | README 明写 "SWE-bench uses Docker for reproducible evaluations"；判据是容器里跑测试：修复后 FAIL_TO_PASS 全过、PASS_TO_PASS 不退 | 效果层的判据形态：只认跑出来的结果，不认描述；每条 check 必须"改前为假、改后为真"才有区分力 | Docker 沙箱（我们的效果层只跑只读检查与白名单命令） |
+| promptfoo（27k star） | 断言是声明式列表（contains / regex / is-json / javascript），逐条对输出求值 | `checks` 字段的形状：类型 + 参数 + 期望，一条一条可列举 | 它的执行编排与云服务 |
+| Langfuse（37k star） | trace → observation → score；分数挂在具体 observation 上，不挂在会话上；数据集可复用 | ledger 的粒度：一行一轮，分数/反应挂到那一轮，不挂"整段对话" | 自托管整套平台、OTel 管线 |
+| Phoenix（12k star） | OpenTelemetry 原生，按 span 记录评估 | span 化思路：轮 → 工具调用 → 结果，父子关系 | 引入 OTel 依赖 |
+| Darwin Gödel Machine（2.5k star） | README 明写 agent 改自己的代码、每条改动用编码基准验证，且需要 Docker 沙箱 | 闸门形态：基线快照 → 改动 → 同口径复跑 → 谱系留档 | 自动改自身代码、无人批准 |
+
+结论：借 schema 与判据形态，不引入任何运行时依赖。
+
+## 9. 上下文与工具是产出上限（m01549 的推论）
+
+Bot 每轮能做什么，由这一轮**给了什么上下文、开着哪些工具**决定。因此 ledger 必须记这两项，否则"回答变好"无法归因：
+
+| 新增字段 | 含义 |
+|---|---|
+| `context.bytes` | 本轮系统提示 + instructions + 各注入源的字符数，按来源分组（system / instructions / injected / history） |
+| `context.sources[]` | 注入源名称与字节数（如 openviking-context 19,488、skills 22,383、AGENTS.md 7,061） |
+| `tools.offered[]` | 本轮实际可调用的工具名集合 |
+| `tools.used[]` | 实际调用过的工具名与次数 |
+
+对照规则：**任何 prompt/instructions 改动，必须在 ledger 里同时给出改动前后的 context.bytes 与 tools.offered 差异**，否则只算"观感变化"，不算"能力变化"。
+
+## 10. 分母口径（写死，避免第二次翻车）
 
 - 轮次：按 `turn/start` 计；跨天按事件时间过滤，`[dayStart, dayEnd)`。
 - 效果层：分母是"有 checks 的任务数"。
