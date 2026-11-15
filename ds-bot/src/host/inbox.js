@@ -111,7 +111,9 @@ export function install(rt) {
         from: entry.from ?? null,
         role: entry.role ?? null,
         reason: String(error?.message ?? error),
-        time: Number.isFinite(entry.time) ? entry.time : Date.now(),
+        // When the note was lost, not when the message was written: the hole it leaves
+        // starts at the failure.
+        time: Date.now(),
       })
       void rt.ledger.written(book).catch(() => {})
     } catch (failure) {
@@ -131,22 +133,26 @@ export function install(rt) {
 
   // The stretches a mailbox is missing, oldest first: consecutive failed notes are one
   // hole, from the first of them to the write that ended it (`to` is null while it
-  // has not ended). Derived from the ledger, so it survives a restart.
+  // has not ended). The same exchange failing again is the same hole, not a second lost
+  // note. Derived from the ledger, so it survives a restart.
   function gaps(botId) {
     if (rt.ledger === undefined) return []
     const found = []
+    const hole = open => ({ from: open.from, to: open.to, reason: open.reason, count: open.ids.size + open.lost })
     let open
     for (const record of rt.ledger.records(bookOf(botId))) {
       if (record.event === 'failed') {
-        if (open === undefined) open = { from: record.time, to: null, reason: record.reason, count: 0 }
-        open.count += 1
+        if (open === undefined) open = { from: record.time, to: null, reason: record.reason, ids: new Set(), lost: 0 }
+        // A note with no exchange cannot be told apart from another: count each one.
+        if (typeof record.id === 'string' && record.id !== '') open.ids.add(record.id)
+        else open.lost += 1
       } else if (record.event === 'resumed' && open !== undefined) {
         open.to = record.time
-        found.push(open)
+        found.push(hole(open))
         open = undefined
       }
     }
-    if (open !== undefined) found.push(open)
+    if (open !== undefined) found.push(hole(open))
     return found
   }
 

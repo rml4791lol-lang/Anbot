@@ -1378,6 +1378,13 @@ export function install(rt) {
     }))
   }
 
+  // Rendered from the structured gaps, never from prose kept beside them, so the two
+  // cannot name different stretches.
+  const gapText = (gaps) => (gaps.length === 0 ? '' : `\n\nMailbox gaps: some notes could not be saved and are not here.\n${gaps.map((gap) => {
+    const span = gap.to === null ? `since ${rt.clock(gap.from)}` : `${rt.clock(gap.from)} to ${rt.clock(gap.to)}`
+    return `· ${gap.count === 1 ? '1 note' : `${gap.count} notes`} could not be saved ${span}: ${gap.reason}`
+  }).join('\n')}\nAsk the sender to resend anything that still matters.`)
+
   rt.teamTools.push(defineTool({
     name: 'read_inbox',
     description: 'Read your mailbox: the quiet notes from the team that did not start a turn, such as a profile update or a stop receipt. With unread_only (the default), only unread notes are returned and marked read; each shows its id, sender, time and the first 200 characters. limit is at most 20, oldest first. gaps lists any stretch of notes that could not be saved to the mailbox, oldest first; it is empty when every note landed, so a stretch here means records are missing and the sender may need to resend. Replies and requests still wake you and are not kept here. A note is not a request you must answer, and reading it never starts a turn: look at the inbox at the start of every turn, and act only when a note asks you to.',
@@ -1407,7 +1414,7 @@ export function install(rt) {
           },
         },
       },
-      render: (_args, value) => [{ type: 'text', text: String(value.text) }],
+      render: (_args, value) => [{ type: 'text', text: `${String(value.text)}${gapText(value.gaps ?? [])}` }],
     },
     async execute(args, exec) {
       await rt.load()
@@ -1421,17 +1428,11 @@ export function install(rt) {
       const before = rt.inbox.unreadCount(bot.id)
       const marked = await rt.inbox.markRead(bot.id, unread.map(entry => entry.id))
       const gaps = rt.inbox.gaps(bot.id)
-      const missing = gaps.length === 0
-        ? ''
-        : `\n\nMailbox gaps: some notes could not be saved and are not here.\n${gaps.map((gap) => {
-          const span = gap.to === null ? `since ${rt.clock(gap.from)}` : `${rt.clock(gap.from)} to ${rt.clock(gap.to)}`
-          return `· ${gap.count === 1 ? '1 note' : `${gap.count} notes`} could not be saved ${span}: ${gap.reason}`
-        }).join('\n')}\nAsk the sender to resend anything that still matters.`
       if (entries.length === 0) {
         const text = unreadOnly
           ? 'No unread notes. Nothing in your mailbox needs you; read notes never come back as unread.'
           : 'Your mailbox is empty.'
-        return { text: `${text}${missing}`, gaps }
+        return { text, gaps }
       }
       const lines = entries.map(entry => {
         const what = entry.role === 'update' ? 'profile update' : entry.role === 'stopped' ? 'stop receipt' : String(entry.role ?? 'note')
@@ -1442,7 +1443,7 @@ export function install(rt) {
       const footer = marked > 0
         ? `Read ${marked}; ${left} unread ${left === 1 ? 'note stays' : 'notes stay'} in the mailbox. Read notes never come back as unread and never start a turn.`
         : `${left} unread ${left === 1 ? 'note is' : 'notes are'} still waiting. Read notes never start a turn.`
-      return { text: `${entries.length} note${entries.length === 1 ? '' : 's'} for ${bot.name}:\n${lines.join('\n\n')}\n\n${footer}${missing}`, gaps }
+      return { text: `${entries.length} note${entries.length === 1 ? '' : 's'} for ${bot.name}:\n${lines.join('\n\n')}\n\n${footer}`, gaps }
     },
   }))
 

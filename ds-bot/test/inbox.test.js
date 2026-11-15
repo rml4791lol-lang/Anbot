@@ -105,19 +105,21 @@ test('a note that cannot be written leaves a ledger mark and a mailbox gap', asy
   // A directory where the mailbox file goes: every append fails.
   mkdirSync(join(home, 'inbox'), { recursive: true })
   mkdirSync(file('a'))
+  const before = Date.now()
   await assert.rejects(rt.inbox.append('a', entry({ exchangeId: 'x-lost', text: 'lost' })))
   const marks = rt.ledger.records('inbox-a')
   assert.equal(marks.length, 1)
   assert.equal(marks[0].event, 'failed')
   assert.equal(marks[0].id, 'x-lost')
-  assert.equal(marks[0].time, 1763000000000)
+  // The hole is timed by when the note was lost, not by when the message was written.
+  assert.ok(marks[0].time >= before, 'the mark is timed when the write failed')
   assert.match(marks[0].reason, /EISDIR|directory/)
-  assert.deepEqual(rt.inbox.gaps('a'), [{ from: 1763000000000, to: null, reason: marks[0].reason, count: 1 }])
+  assert.deepEqual(rt.inbox.gaps('a'), [{ from: marks[0].time, to: null, reason: marks[0].reason, count: 1 }])
   // The mailbox takes a note again: the stretch ends there.
   rmSync(file('a'), { recursive: true, force: true })
   await rt.inbox.append('a', entry({ exchangeId: 'x-2', text: 'again' }))
   const [gap] = rt.inbox.gaps('a')
-  assert.equal(gap.from, 1763000000000)
+  assert.equal(gap.from, marks[0].time)
   assert.equal(typeof gap.to, 'number')
   assert.equal(gap.count, 1)
   // Only the note that landed is in the mailbox; the lost one is what the gap names.
@@ -136,14 +138,25 @@ test('a gap is read back from the ledger, so it survives a restart', async (t) =
   mkdirSync(join(home, 'inbox'), { recursive: true })
   mkdirSync(file('a'))
   await assert.rejects(rt.inbox.append('a', entry({ exchangeId: 'x-lost' })))
+  const marks = rt.ledger.records('inbox-a')
   await rt.ledger.flush()
   const replayed = { home, readOnly: () => undefined, warn: () => {} }
   installLedger(replayed)
   install(replayed)
   const [gap] = replayed.inbox.gaps('a')
-  assert.equal(gap.from, 1763000000000)
+  assert.equal(gap.from, marks[0].time)
   assert.equal(gap.to, null)
   assert.equal(gap.count, 1)
+})
+
+test('a gap counts the exchanges it lost, not the attempts to write them', async (t) => {
+  const { rt, home, file } = host(t)
+  mkdirSync(join(home, 'inbox'), { recursive: true })
+  mkdirSync(file('a'))
+  // The same note is sent again while the mailbox is broken: it is one lost exchange.
+  for (let at = 0; at < 2; at += 1) await assert.rejects(rt.inbox.append('a', entry({ exchangeId: 'x-lost', text: 'lost' })))
+  assert.equal(rt.ledger.records('inbox-a').length, 2)
+  assert.deepEqual(rt.inbox.gaps('a').map(gap => gap.count), [1])
 })
 
 test('read_inbox shows a quiet note, marks it read, and works in a group Session', async (t) => {
@@ -193,6 +206,10 @@ test('read_inbox shows a quiet note, marks it read, and works in a group Session
   const gaps = await read.execute({}, { agent: { id: 'b' } })
   assert.equal(gaps.gaps.length, 1)
   assert.equal(gaps.gaps[0].to, null)
-  assert.match(gaps.text, /1 note could not be saved/)
+  // The prose is rendered from the structured gaps, so the two cannot drift apart.
+  assert.doesNotMatch(gaps.text, /could not be saved/)
+  const [shown] = read.output.render({}, gaps)
+  assert.match(shown.text, /1 note could not be saved/)
+  assert.match(shown.text, /Ask the sender to resend anything that still matters\./)
   assert.equal(rt.ledger.records('inbox-b').filter(record => record.event === 'failed').length, 1)
 })
