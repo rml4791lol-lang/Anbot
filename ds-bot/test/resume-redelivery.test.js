@@ -174,6 +174,31 @@ test('a turn the shutdown cut off does not swallow a note that was never sent', 
   await second.stop()
 })
 
+test('a turn DSH disposed does not swallow a note that was never sent', async (t) => {
+  const home = freshHome(t)
+  const logs = new Map()
+  const first = await start(home, logs)
+  const writer = first.agentOf('b')
+  const send = writer.followup
+  // A send that failed leaves its note; the log holds a turn that read an earlier
+  // delivery of the same exchange and was disposed as DSH stopped. A disposed turn did
+  // not settle, so the note it did not read must still go out.
+  writer.followup = () => { throw new Error('DeepSeek Harness shut down') }
+  await assert.rejects(first.rt.deliver({ fromId: 'a', toId: 'b', role: 'reply', replyTo: 'r0', exchangeId: 'e0', text: 'Do it once.' }), /shut down/)
+  writer.followup = send
+  await settle(() => (notes(home).queued?.b ?? []).length === 1)
+  await first.stop()
+  logs.set('b', [
+    { type: 'turn/start', seq: 1, data: { turn: 1 } },
+    { type: 'user/message', seq: 2, data: { content: [], source: { kind: 'bot', exchangeId: 'e0' } } },
+    { type: 'turn/end', seq: 3, data: { turn: 1, reason: { kind: 'aborted', reason: { kind: 'disposed' } } } },
+  ])
+  const second = await start(home, logs)
+  await delay(3300)
+  assert.equal(second.agentOf('b').calls.length, 1)
+  await second.stop()
+})
+
 test('an exchange a Session took up while DS Bot was down is not sent again', async (t) => {
   const home = freshHome(t)
   const logs = new Map()

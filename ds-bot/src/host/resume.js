@@ -138,6 +138,13 @@ export const readNotes = (file, warn = () => {}) => {
     keepAside(file, 'it holds no JSON object', warn)
     return { turns: {}, queued: {} }
   }
+  // A member that is not an object is a note that cannot be read: writing over it would
+  // lose what the last run was doing. An absent member is a start with nothing there.
+  const member = value => value === undefined || (value !== null && typeof value === 'object' && !Array.isArray(value))
+  if (!member(parsed.turns) || !member(parsed.queued)) {
+    keepAside(file, 'a member holds no JSON object', warn)
+    return { turns: {}, queued: {} }
+  }
   return { turns: object(parsed.turns), queued: object(parsed.queued) }
 }
 
@@ -219,9 +226,10 @@ export function install(rt) {
     persist()
   }
   // Every exchange a Session's durable log shows a turn took up and finished. A turn
-  // that DSH stopped as it shut down is not counted: its own note picks it up, and an
-  // older delivery of the exchange must not swallow a note that was never sent.
-  const consumedInLog = events => new Set(turnsOf(events)
+  // that DSH stopped as it shut down is not counted: it did not settle, its own note
+  // picks it up, and an older delivery of the exchange must not swallow a note that was
+  // never sent.
+  const consumedInLog = turns => new Set(turns
     .filter(turn => turn.reason !== undefined && !(turn.reason.kind === 'aborted' && turn.reason.reason?.kind === 'disposed'))
     .flatMap(turn => turn.took.flatMap(source => idsOf(source))))
   const forgetIds = (ids) => {
@@ -380,6 +388,9 @@ export function install(rt) {
   // have gone to the Bot that waits for it. The Session's durable log says what it did;
   // the work it was for is settled once, the way a finished turn settles it.
   async function reconcileEnded(sessionId, record, ended) {
+    // DSH stops a turn as it shuts down; that is not the turn settling. The note stays
+    // and the turn is picked up in this same pass, so the caller must not drop it.
+    if (ended.reason?.kind === 'aborted' && ended.reason.reason?.kind === 'disposed') return true
     const trigger = record.trigger
     if (trigger === undefined) return
     const workId = rt.workOf(trigger)
@@ -389,11 +400,6 @@ export function install(rt) {
     const sender = asker?.senderSessionId
     if (exchangeId === undefined || sender === undefined || rt.botOf(sender) === undefined) return
     const name = rt.botOf(rt.selfOf(sessionId))?.name ?? 'The other Bot'
-    // DSH stopped that turn as it shut down: it is picked up at the next start.
-    if (ended.reason?.kind === 'aborted' && ended.reason.reason?.kind === 'disposed') {
-      update(sessionId, () => record)
-      return
-    }
     const events = await logOf(sessionId)
     if (events === undefined) {
       // The record of that work cannot be read: whether it answered cannot be
@@ -479,6 +485,29 @@ export function install(rt) {
     answerSender(rt, sessionId, asker, text, long)
   }
 
+  // A turn the log shows cut off with no note: DS Bot was down when the Session took the
+  // message up, so nothing here noted it. It is noted again, and picked up in this pass.
+  const noteCutTurn = (sessionId, logTurns, exchangeId) => {
+    if (turns[sessionId] !== undefined) return undefined
+    const botId = rt.selfOf(sessionId)
+    if (botId === undefined) return undefined
+    const turn = logTurns.findLast(entry => entry.reason?.kind === 'interrupted'
+      && entry.took.some(source => idsOf(source).includes(exchangeId)))
+    if (turn === undefined) return undefined
+    const source = turn.took.find(source => idsOf(source).includes(exchangeId))
+    const owner = rt.groupOwners.get(sessionId)
+    const record = {
+      botId,
+      ...(owner?.roomId ? { roomId: owner.roomId } : {}),
+      since: Date.now(),
+      trigger: triggerOf(source),
+      ...(source.resumed ? { resumed: true } : {}),
+    }
+    turns = { ...turns, [sessionId]: record }
+    persist()
+    return record
+  }
+
   async function resumeAll() {
     await rt.load()
     if (rt.readOnly() !== undefined) return
@@ -510,8 +539,16 @@ export function install(rt) {
       const first = firstTurn.get(sessionId)
       if (first?.type === 'turn/end') {
         // The turn ended while DS Bot was not watching it: what it did is settled from
-        // the Session's durable log.
-        await reconcileEnded(sessionId, record, first).catch(error => rt.warn('ds-bot: settling the work of %s failed: %s', sessionId, error))
+        // the Session's durable log. A turn DSH disposed as it shut down did not settle,
+        // so its note stays and the turn is picked up in this pass.
+        const pickUp = await reconcileEnded(sessionId, record, first).catch((error) => {
+          rt.warn('ds-bot: settling the work of %s failed: %s', sessionId, error)
+          return false
+        })
+        if (pickUp === true) {
+          cut.push([sessionId, record])
+          continue
+        }
         // Whatever the log could tell, the note is done with: the turn is not resumed.
         update(sessionId, () => undefined)
         continue
@@ -530,12 +567,17 @@ export function install(rt) {
       if (ids.length === 0) continue
       const events = await logOf(sessionId)
       if (events === undefined) continue
-      const consumed = consumedInLog(events)
+      const logTurns = turnsOf(events)
+      const consumed = consumedInLog(logTurns)
       for (const id of ids) {
         if (!consumed.has(id)) continue
         taken ??= new Set()
         taken.add(id)
         forgetQueued(id)
+        // The log, not a note, is what says this turn was cut off: note it now so the
+        // message it read is not lost with nothing to show for it.
+        const record = noteCutTurn(sessionId, logTurns, id)
+        if (record !== undefined) cut.push([sessionId, record])
       }
     }
     for (const [sessionId, list] of Object.entries(dropped)) {

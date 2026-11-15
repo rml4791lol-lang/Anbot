@@ -61,6 +61,22 @@ test('notes that cannot be read are kept aside, and the read is reported', (t) =
   assert.equal(existsSync(file), false)
 })
 
+test('notes with a member of the wrong type are kept aside, not read as empty', (t) => {
+  const dir = scratch(t)
+  const file = join(dir, 'inflight.json')
+  const warned = []
+  const warn = (...args) => warned.push(args)
+  // A member that is not a JSON object holds no turn or delivery: reading it as empty
+  // would write over notes that may still be read by hand.
+  for (const written of [{ turns: [1], queued: {} }, { turns: {}, queued: 'b' }]) {
+    writeFileSync(file, JSON.stringify(written))
+    assert.deepEqual(readNotes(file, warn), { turns: {}, queued: {} })
+    assert.equal(existsSync(file), false)
+    assert.match(warned.at(-1)[2], /a member holds no JSON object/)
+  }
+  assert.equal(readdirSync(dir).filter(name => name.startsWith('inflight.json.corrupt-')).length, 2)
+})
+
 test('no notes file is a start with nothing to pick up, and is not reported', (t) => {
   const dir = scratch(t)
   const warned = []

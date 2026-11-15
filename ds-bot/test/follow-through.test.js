@@ -233,6 +233,54 @@ test('when only DS Bot restarts, a turn still running or finished meanwhile is n
   assert.deepEqual([third.agentOf('b').calls[0].source.exchangeId, third.agentOf('a').calls.length], ['x1', 0])
 })
 
+test('a turn DSH disposes while DS Bot watches its end is picked up, not dropped', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const home = freshHome(t)
+  const logs = new Map()
+  const first = await start(home, logs)
+  run(first, 'b', 1, { content: [{ type: 'text', text: '[Message from Chief]\nDraft the plan' }], source: { kind: 'bot', form: 'relay', role: 'request', exchangeId: 'x1', senderName: 'Chief', senderSessionId: 'a', hop: 0 } })
+  await settle(() => inflight(home).b?.trigger?.exchangeId === 'x1')
+  await first.stop()
+
+  // DSH shuts the turn down while DS Bot watches: its log starts with that end. The
+  // turn never settled, so the note must be picked up here, not deleted.
+  logs.set('b', [{ type: 'turn/end', seq: 1, data: { turn: 1, reason: { kind: 'aborted', reason: { kind: 'disposed' } } } }])
+  const second = await start(home, logs)
+  second.emit('b', 'turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'disposed' } } })
+  t.mock.timers.tick(3000)
+  await settle(() => second.agentOf('b').calls.length === 1)
+  const picked = second.agentOf('b').calls[0]
+  assert.deepEqual([picked.source.role, picked.source.exchangeId, picked.source.resumed], ['request', 'x1', true])
+  // The note is gone because the turn runs again, not because it was dropped.
+  await settle(() => inflight(home).b === undefined)
+  await second.stop()
+})
+
+test('a turn cut off while DS Bot was down is noted again and picked up', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const home = freshHome(t)
+  const logs = new Map()
+  const first = await start(home, logs)
+  await rt.deliver({ fromId: 'a', toId: 'b', role: 'request', exchangeId: 'x2', text: 'Draft the plan' })
+  await settle(() => (notes(home).queued?.b ?? []).length === 1)
+  const delivered = first.agentOf('b').calls[0]
+  await first.stop()
+
+  // The turn took the message up and was cut off while DS Bot was down: nothing
+  // noted it, so the log is the only record that the request has to run.
+  logs.set('b', [
+    { type: 'turn/start', seq: 1, data: { turn: 1 } },
+    { type: 'user/message', seq: 2, data: { content: delivered.content, source: delivered.source } },
+    { type: 'turn/end', seq: 3, data: { turn: 1, reason: { kind: 'interrupted' } } },
+  ])
+  const second = await start(home, logs)
+  t.mock.timers.tick(3000)
+  await settle(() => second.agentOf('b').calls.length === 1)
+  const picked = second.agentOf('b').calls[0]
+  assert.deepEqual([picked.source.role, picked.source.exchangeId, picked.source.resumed], ['request', 'x2', true])
+  await second.stop()
+})
+
 // Chief asks Writer for the plan; Writer's turn takes it up and the work waits.
 const askWriter = async (host, home) => {
   await host.tool('message_bot', { to: 'Writer', message: 'Draft the plan' }, 'a')
