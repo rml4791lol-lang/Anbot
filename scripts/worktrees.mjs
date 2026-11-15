@@ -8,18 +8,20 @@
 //   node scripts/worktrees.mjs --apply    # not implemented yet: exits non-zero
 //
 // Facts that keep this honest:
-//   - `--untracked-files=no` stops `?? node_modules` from marking every tree dirty.
-//   - mtime prefers the worktree's `.git` file and falls back to the directory, so a
-//     tree touched within LOCK_MINUTES stays busy even when its HEAD is merged.
+//   - `dirty` counts tracked changes only, so `?? node_modules` does not mark every tree
+//     dirty; a separate `untracked` flag keeps a tree with new, uncommitted files busy.
+//   - `mtimeMs` is the last moment git wrote state for the tree: the newer of the admin
+//     index file and the HEAD commit time. A worktree's `.git` file is written once at
+//     creation and never again, so its mtime says nothing about use.
+//   - A detached HEAD has no branch to restore from, so it is never reapable.
 //   - The main worktree (`.git` is a directory) and the first porcelain entry are skipped.
 import { execFileSync } from 'node:child_process'
-import { statSync } from 'node:fs'
+import { realpathSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const MAIN_REF = 'main'
 const LOCK_MINUTES = 45
-const KINDS = ['reapable', 'busy', 'prunable']
 
 // Blocks of `git worktree list --porcelain`, split on blank lines.
 export function parsePorcelain(text) {
@@ -56,22 +58,46 @@ export function issueOf(entry) {
   return ''
 }
 
-// Entry facts: { path, branch, head, detached, bare, exists, merged, ahead, dirty, mtimeMs }.
-// Pure: no git, no fs, no clock. `merged` is `HEAD` being an ancestor of main, `dirty` the
-// number of tracked changes, `ahead` the commits main does not have yet.
+// Entry facts: { path, branch, head, detached, bare, exists, merged, ahead, dirty,
+// untracked, mtimeMs }. Pure: no git, no fs, no clock. `merged` is `HEAD` being an
+// ancestor of main, `dirty` the number of tracked changes, `untracked` whether the tree
+// holds files git does not track yet, `ahead` the commits main does not have yet.
 export function classify(entries, { now = Date.now(), lockMinutes = LOCK_MINUTES } = {}) {
   const lockMs = lockMinutes * 60 * 1000
-  const rows = entries.map((entry) => {
-    const kind = !entry.exists
-      ? 'prunable'
-      : entry.merged === true && entry.dirty === 0 && now - entry.mtimeMs > lockMs
-        ? 'reapable'
-        : 'busy'
-    return { ...entry, kind }
-  })
+  const rows = entries.map((entry) => ({ ...entry, kind: kindOf(entry, now, lockMs) }))
   const counts = { total: rows.length, reapable: 0, busy: 0, prunable: 0 }
   for (const row of rows) counts[row.kind] += 1
   return { rows, counts }
+}
+
+function kindOf(entry, now, lockMs) {
+  if (!entry.exists) return 'prunable'
+  const idle = Number.isFinite(entry.mtimeMs) && now - entry.mtimeMs > lockMs
+  // A detached HEAD has no branch to restore from, and unknown facts are never clean.
+  if (entry.detached || entry.merged !== true || entry.dirty !== 0 || entry.untracked !== false || !idle) return 'busy'
+  return 'reapable'
+}
+
+// `??` is `git status --porcelain`'s only untracked marker: one pass yields both the
+// tracked-change count the row shows and the untracked flag that blocks reaping.
+export function parseStatus(text) {
+  let dirty = 0
+  let untracked = false
+  for (const line of text.split('\n')) {
+    if (line === '') continue
+    if (line.startsWith('??')) untracked = true
+    else dirty += 1
+  }
+  return { dirty, untracked }
+}
+
+// Newest known timestamp, null when none is known.
+export function newestMs(values) {
+  let newest = null
+  for (const value of values) {
+    if (Number.isFinite(value) && (newest === null || value > newest)) newest = value
+  }
+  return newest
 }
 
 export function formatRow(row) {
@@ -101,8 +127,17 @@ export function parseArgs(argv) {
   }
 }
 
+// A hung git (a stale `.git/index.lock`, an unreachable network filesystem) would hang
+// triage forever, so it is bounded. The timeout throws like any other git failure, which
+// `factsFor` turns into "cannot read" and `classify` into `busy`.
 function git(args, cwd) {
-  return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 16 * 1024 * 1024 }).trim()
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    maxBuffer: 16 * 1024 * 1024,
+    timeout: 60_000,
+  }).trim()
 }
 
 function gitExit(args, cwd) {
@@ -127,7 +162,7 @@ function isMainCheckout(path) {
   return isDirectory(join(path, '.git'))
 }
 
-// Prefer the `.git` file the worktree was checked out with, fall back to the directory.
+// Fallback only, for a tree whose admin index and HEAD are both unreadable.
 function mtimeOf(path) {
   for (const candidate of [join(path, '.git'), path]) {
     try {
@@ -139,23 +174,56 @@ function mtimeOf(path) {
   return null
 }
 
+// The admin index moves on every git write in the worktree.
+function adminIndexMs(path) {
+  try {
+    return statSync(join(git(['rev-parse', '--absolute-git-dir'], path), 'index')).mtimeMs
+  } catch {
+    return null
+  }
+}
+
+function headCommitMs(path) {
+  try {
+    return Number(git(['log', '-1', '--format=%ct', 'HEAD'], path)) * 1000 || null
+  } catch {
+    return null
+  }
+}
+
 function factsFor(entry, mainSha) {
   if (!isDirectory(entry.path)) {
-    return { ...entry, exists: false, merged: false, ahead: null, dirty: null, mtimeMs: null }
+    return { ...entry, exists: false, merged: false, ahead: null, dirty: null, untracked: null, mtimeMs: null }
   }
+  const mtimeMs = newestMs([adminIndexMs(entry.path), headCommitMs(entry.path)]) ?? mtimeOf(entry.path)
   try {
-    const status = git(['status', '--porcelain', '--untracked-files=no'], entry.path)
+    const { dirty, untracked } = parseStatus(
+      // `status` may refresh the index, which is exactly what `mtimeMs` measures.
+      git(['--no-optional-locks', 'status', '--porcelain', '--untracked-files=normal'], entry.path),
+    )
     return {
       ...entry,
       exists: true,
       merged: gitExit(['merge-base', '--is-ancestor', entry.head, mainSha], entry.path) === 0,
       ahead: Number(git(['rev-list', '--count', `${mainSha}..HEAD`], entry.path)),
-      dirty: status === '' ? 0 : status.split('\n').filter(Boolean).length,
-      mtimeMs: mtimeOf(entry.path),
+      dirty,
+      untracked,
+      mtimeMs,
     }
   } catch {
     // A tree git cannot read is not a tree we may call reapable.
-    return { ...entry, exists: true, merged: null, ahead: null, dirty: null, mtimeMs: mtimeOf(entry.path) }
+    return { ...entry, exists: true, merged: null, ahead: null, dirty: null, untracked: null, mtimeMs }
+  }
+}
+
+// Compare real paths: through a symlink (or `/tmp` on macOS) a plain `resolve` compare
+// is false, and the script would exit 0 having printed nothing.
+function invokedDirectly(argv) {
+  if (!argv) return false
+  try {
+    return realpathSync(resolve(argv)) === realpathSync(fileURLToPath(import.meta.url))
+  } catch {
+    return false
   }
 }
 
@@ -167,7 +235,7 @@ function main(argv) {
   const targets = entries
     .filter((entry, index) => index !== 0)
     .filter((entry) => !isMainCheckout(entry.path))
-    .sort((left, right) => left.path.localeCompare(right.path))
+    .sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0))
   const { rows, counts } = classify(targets.map((entry) => factsFor(entry, mainSha)), { lockMinutes: LOCK_MINUTES })
   for (const row of rows) console.log(formatRow(row))
   console.log(formatSummary(counts))
@@ -177,7 +245,7 @@ function main(argv) {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (invokedDirectly(process.argv[1])) {
   try {
     main(process.argv.slice(2))
   } catch (error) {
