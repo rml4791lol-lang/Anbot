@@ -201,6 +201,18 @@ test('the summary prints each skill call by name, most called first', t => {
   assert.match(output, /skill calls: 3\/4 \(75%\) · code-review-and-quality 2 · test-driven-development 1/)
 })
 
+test('a skill call with no name counts nowhere', t => {
+  const home = fixture(t)
+  const ledgerDir = path.join(home, 'bot', 'ledger')
+  writeLedger(ledgerDir, [
+    botRow({ session: 's1', turn: 1, tools: { used: ['skill'], errors: 0 }, skills: ['code-review-and-quality'] }),
+    // The call was offered but its arguments named nothing: it has no place in the ranking.
+    botRow({ session: 's1', turn: 2, tools: { used: ['skill'], errors: 0 }, skills: [] })
+  ].map(row => JSON.stringify(row)))
+  const metrics = collectMetrics({ day: DAY, ledgerDir, home })
+  assert.deepEqual(metrics.skillCalls, { n: 1, m: 2, value: '1/2 (50%)', byName: { 'code-review-and-quality': 1 } })
+})
+
 // The name lives only in the `skill` call arguments, so the ledger has to read them there.
 test('the ledger records a skill call by name, and the metrics count it per name', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ds-bot-skill-ledger-'))

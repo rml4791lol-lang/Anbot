@@ -158,11 +158,13 @@ export function collectMetrics({ day, ledgerDir, home }) {
   const emptyAnswers = completed.filter(row => (row.final_chars ?? 0) === 0).length
   const durations = turns.map(row => row.duration_ms).filter(value => Number.isFinite(value) && value >= 0)
   const injected = turns.map(row => row.context?.bytes).filter(value => Number.isFinite(value) && value >= 0)
-  const skillCalls = turns.reduce((sum, row) => sum + namesOf(row).filter(name => name === 'skill').length, 0)
-  // The name a Bot loaded lives in the `skill` call arguments; the ledger keeps it per turn.
-  // Ranked, so the summary lists the most used skill first.
+  // The name a Bot loaded lives in the `skill` call arguments; the ledger keeps it per
+  // turn. n and the ranking come from that one parse, so a call whose arguments named no
+  // skill cannot count in n and be missing from byName. Ranked, most used first.
+  const namedSkills = turns.flatMap(skillsOf)
+  const skillCalls = namedSkills.length
   const byName = {}
-  for (const name of turns.flatMap(skillsOf)) byName[name] = (byName[name] ?? 0) + 1
+  for (const name of namedSkills) byName[name] = (byName[name] ?? 0) + 1
   const rankedSkills = Object.fromEntries(Object.entries(byName).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])))
   const sessions = new Set(turns.map(row => row.session).filter(id => typeof id === 'string'))
   return {
