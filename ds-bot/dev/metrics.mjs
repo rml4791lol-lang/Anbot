@@ -50,6 +50,7 @@ export const dayWindow = (day) => {
 }
 
 const namesOf = row => (Array.isArray(row.tools?.used) ? row.tools.used.filter(name => typeof name === 'string') : [])
+const skillsOf = row => (Array.isArray(row.skills) ? row.skills.filter(name => typeof name === 'string' && name !== '') : [])
 const isBotTurn = row => typeof row.bot === 'string' && row.bot !== ''
 
 // Every dated ledger file, rows filtered by event time: a file holds the day it was
@@ -158,6 +159,11 @@ export function collectMetrics({ day, ledgerDir, home }) {
   const durations = turns.map(row => row.duration_ms).filter(value => Number.isFinite(value) && value >= 0)
   const injected = turns.map(row => row.context?.bytes).filter(value => Number.isFinite(value) && value >= 0)
   const skillCalls = turns.reduce((sum, row) => sum + namesOf(row).filter(name => name === 'skill').length, 0)
+  // The name a Bot loaded lives in the `skill` call arguments; the ledger keeps it per turn.
+  // Ranked, so the summary lists the most used skill first.
+  const byName = {}
+  for (const name of turns.flatMap(skillsOf)) byName[name] = (byName[name] ?? 0) + 1
+  const rankedSkills = Object.fromEntries(Object.entries(byName).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])))
   const sessions = new Set(turns.map(row => row.session).filter(id => typeof id === 'string'))
   return {
     day,
@@ -168,7 +174,7 @@ export function collectMetrics({ day, ledgerDir, home }) {
     emptyAnswerRate: { n: emptyAnswers, m: completed.length, value: share(emptyAnswers, completed.length) },
     durationMs: { p50: quantile(durations, 0.5), p90: quantile(durations, 0.9), n: durations.length },
     injectedChars: { p90: quantile(injected, 0.9), n: injected.length },
-    skillCalls: { n: skillCalls, m: turns.length, value: share(skillCalls, turns.length) },
+    skillCalls: { n: skillCalls, m: turns.length, value: share(skillCalls, turns.length), byName: rankedSkills },
     tokens: readUsage(home, start, end, sessions),
     userCorrections: readCorrections(home, start, end)
   }
@@ -178,11 +184,14 @@ export function renderSummary(metrics) {
   const tokens = metrics.tokens.calls === 0
     ? 'n/a (0 calls)'
     : `input ${metrics.tokens.input} · output ${metrics.tokens.output} (${metrics.tokens.calls} calls)`
+  const skills = metrics.skillCalls.m === 0
+    ? 'n/a (no Bot turns)'
+    : `${metrics.skillCalls.value}${Object.entries(metrics.skillCalls.byName).map(([name, n]) => ` · ${name} ${n}`).join('')}`
   return [
     `day ${metrics.day}: ${metrics.botTurns} Bot turns (${metrics.ledgerRows} ledger rows)`,
     `zero-tool ${metrics.zeroTool.value} · tool-error ${metrics.toolErrorRate.value} · empty-answer ${metrics.emptyAnswerRate.value}`,
     `duration ms: p50 ${metrics.durationMs.p50} · p90 ${metrics.durationMs.p90} (n=${metrics.durationMs.n}) · injected chars p90 ${metrics.injectedChars.p90} (n=${metrics.injectedChars.n})`,
-    `skill calls: ${metrics.skillCalls.value}`,
+    `skill calls: ${skills}`,
     `tokens: ${tokens}`,
     `user correction proxy: ${metrics.userCorrections.value} (next user message within ${metrics.userCorrections.windowMinutes} min; ${metrics.userCorrections.m} reply runs had one)`,
     `correction regex: ${metrics.userCorrections.regex}`
