@@ -23,6 +23,15 @@ if [ -z "${DSH_HARNESS:-}" ]; then
   fi
 fi
 
+# settings-shell.test.js loads its packages from this checkout's dev/harness whatever
+# DSH_HARNESS says, and a worktree has no install of its own: borrow the main checkout's.
+if [ ! -e ds-bot/dev/harness/node_modules ]; then
+  main_harness="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/ds-bot/dev/harness/node_modules"
+  if [ -d "$main_harness" ]; then
+    ln -s "$main_harness" ds-bot/dev/harness/node_modules
+  fi
+fi
+
 # Unit runs here rather than through dev/check.sh, which runs the bare `npm test`, because it is the
 # one step the gate sets a flag for, and node reads --test-concurrency only before the file list:
 # npm cannot append it to the script. So this is the command in ds-bot/package.json's test script
