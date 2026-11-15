@@ -122,7 +122,7 @@ DoD 必须可检查：写成「≤260 字、按 3.5 字/秒、误差 ≤1 秒」
 
 规则：
 
-1. 任务与技能描述匹配时，先 `skill` 加载再动手；不匹配不要加载。
+1. 任务与技能描述匹配时，先 `skill` 加载再动手（`prompt.js` 的全局规则）；不匹配不要加载。
 2. 每个 Bot 只在自己的 instructions 里列 3–5 个常用技能，不要抄全局目录。
 3. 私有流程用能力技能挂载，不要往 `~/.dsh/skills` 里塞。
 
@@ -140,7 +140,7 @@ DoD 必须可检查：写成「≤260 字、按 3.5 字/秒、误差 ≤1 秒」
 
 Orca 的实测命令表与安全分级在 [`docs/design/orca-runbook.md`](orca-runbook.md)：运维 Bot 无人值守只跑只读的发现与诊断命令（`status`、`agent-context`、`skills list/get`、`host list`、`environment list`、`worktree list/current`）；建删 worktree、起 agent、动插件与自动化一律交人。
 
-度量：`turn-economy` 统计每个会话的 `skill` 调用次数；连续 7 天为 0 的 Bot 先改 instructions，再谈加技能。
+度量：`dev/ledger.mjs` 记下每次 `skill` 调用载入的技能名，`dev/metrics.mjs` 按名汇总（分母为 0 时输出 n/a）；连续 7 天为 0 的 Bot 先改 instructions，再谈加技能。
 
 ## 5. 同步规则
 
