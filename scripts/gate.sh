@@ -14,6 +14,15 @@ set -eu
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
+# A worktree has no dev/harness of its own, and without it the suite cannot load its packages: the
+# main checkout beside it has one. In the main checkout itself this finds the same directory.
+if [ -z "${DSH_HARNESS:-}" ]; then
+  candidate="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/ds-bot/dev/harness"
+  if [ -d "$candidate/node_modules" ]; then
+    export DSH_HARNESS="$candidate"
+  fi
+fi
+
 # Unit runs here rather than through dev/check.sh, which runs the bare `npm test`, because it is the
 # one step the gate sets a flag for, and node reads --test-concurrency only before the file list:
 # npm cannot append it to the script. So this is the command in ds-bot/package.json's test script
