@@ -145,6 +145,27 @@ test('replies that arrive while the Bot works are read as one message', async (t
   assert.equal(agentOf('b').calls.length, 1)
 })
 
+test('a note that lands while the window counts down joins the batch', async (t) => {
+  const { rt, agentOf, emit, status, home, stop } = await start(team())
+  t.after(async () => { await stop(); rmSync(home, { recursive: true, force: true, maxRetries: 5 }) })
+
+  emit('b', 'turn/start', { turn: 1 })
+  await reply(rt, 0, 'one')
+  // The turn ends and the quiet window starts; the next reply arrives inside it.
+  emit('b', 'turn/end', { turn: 1 })
+  status('idle')
+  await reply(rt, 1, 'two')
+  assert.deepEqual(agentOf('b').calls, [], 'a note inside the window must not open its own turn')
+
+  await delay(2100)
+  const calls = agentOf('b').calls
+  assert.equal(calls.length, 1)
+  const body = textOf(calls[0][1].content)
+  assert.match(body, /one/)
+  assert.match(body, /two/)
+  assert.deepEqual(calls[0][1].source.exchangeIds, ['e0', 'e1'])
+})
+
 test('a flood is read five at a time and the rest come next round', async (t) => {
   const { rt, agentOf, emit, status, home, stop } = await start(team())
   t.after(async () => { await stop(); rmSync(home, { recursive: true, force: true, maxRetries: 5 }) })

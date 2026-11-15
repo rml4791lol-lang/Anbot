@@ -193,7 +193,10 @@ export function install(rt) {
       source,
     })
     const busy = rt.live.get(targetSessionId)?.turn !== undefined
-    if (busy && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, queue, deferred, resumed, retried, merged, abandoned, images, files })) {
+    // A window already counting down is still a batch in the making: a note that
+    // lands there joins it instead of starting a turn of its own.
+    const arming = flushTimers.get(targetSessionId) !== undefined
+    if ((busy || arming) && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, queue, deferred, resumed, retried, merged, abandoned, images, files })) {
       const queued = waiting.get(targetSessionId) ?? []
       queued.push({ text, role, fromName, roomName: room?.name, audience, note, deferred, replyTo, source, exchangeId, book })
       waiting.set(targetSessionId, queued)
@@ -262,8 +265,17 @@ export function install(rt) {
       arm(sessionId, { deadline: true })
       return
     }
-    agent.followup(message)
-    await ctx.sessions.flush(agent.session)
+    try {
+      agent.followup(message)
+      await ctx.sessions.flush(agent.session)
+    } catch (error) {
+      // The batch left `waiting` before it was handed over; putting it back keeps a
+      // rejected flush from dropping every reply it carried until the next restart.
+      rt.warn('ds-bot: notes held for %s not delivered: %s', sessionId, error)
+      waiting.set(sessionId, [...folded.batch, ...(waiting.get(sessionId) ?? [])])
+      arm(sessionId, { deadline: true })
+      return
+    }
     for (const entry of folded.batch) {
       if (entry.book === undefined) continue
       rt.ledger.append(entry.book, { event: 'delivered', id: entry.exchangeId, sessionId, time: Date.now() })
