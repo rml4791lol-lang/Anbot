@@ -124,11 +124,16 @@ borrow_harness() {
 # with that flag added, and the two have to be kept in step.
 #
 # Serial is the default: the files share ports and temporary directories, and on one commit a
-# parallel run reported 2486 to 2508 tests with 0 or 1 failures, while --test-concurrency=1 gave
-# 2507 and none. It costs about 3.5 minutes; raise it only for a change that cannot touch those.
+# parallel run reported 2486 to 2508 tests with 0 or 1 failures. Serial costs about 3.5 minutes;
+# raise it only for a change that cannot touch those.
+#
+# No --test-force-exit, which the test script used to carry: it cut the run from 205s to 137s and
+# in exchange reported 2494 to 2507 tests where the same tree reports 2529, and about one run in
+# three exited 1 with `fail 0` and no failing line — a gate that fails a good tree is worse than a
+# slow one.
 unit() {
   (cd ds-bot && node --import ./test/harness-resolve.mjs --import ./test/drain.mjs \
-    --test --test-concurrency="${GATE_CONCURRENCY:-1}" --test-timeout=120000 --test-force-exit \
+    --test --test-concurrency="${GATE_CONCURRENCY:-1}" --test-timeout=120000 \
     "test/*.test.js")
 }
 
