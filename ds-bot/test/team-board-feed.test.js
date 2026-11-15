@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { boardFileName, readTeamBoardLines, writeTeamBoard } from '../src/host/team-board-feed.js'
+import { boardFileName, readTeamBoardArchive, readTeamBoardLines, writeTeamBoard } from '../src/host/team-board-feed.js'
 
 const dirOf = t => {
   const dir = mkdtempSync(join(tmpdir(), 'ds-bot-board-'))
@@ -87,4 +87,36 @@ test('a Bot name that a path could read as a directory still lands in one file',
   assert.equal(boardFileName('运维'), '运维.json')
   assert.equal(boardFileName('a/b..c'), 'a_b_c.json')
   assert.equal(boardFileName(''), 'bot.json')
+})
+
+test('the board keeps three lines; the archive keeps every delivery, once', (t) => {
+  const dir = dirOf(t)
+  const lines = [1, 2, 3, 4].map(n => line({ what: `d${n}`, at: `2026-11-15T0${n}:00:00+08:00` }))
+  writeTeamBoard('ops', lines, dir)
+  // Sending the same lines again must not duplicate them in the archive.
+  writeTeamBoard('ops', lines, dir)
+  assert.equal(readTeamBoardLines(dir).length, 3)
+  const archived = readFileSync(join(dir, 'archive', 'ops.jsonl'), 'utf8').trim().split('\n')
+  assert.equal(archived.length, 4)
+  assert.deepEqual(readTeamBoardArchive(join(dir, 'archive')).map(entry => entry.what), ['d1', 'd2', 'd3', 'd4'])
+})
+
+test('a line of an unknown kind is on the board file but not in the archive', (t) => {
+  const dir = dirOf(t)
+  writeTeamBoard('ops', [line({ kind: 'brainstorm', what: 'idea' }), line({ what: 'done' })], dir)
+  assert.equal(readFileSync(join(dir, 'archive', 'ops.jsonl'), 'utf8').trim().split('\n').length, 1)
+  assert.deepEqual(readTeamBoardArchive(join(dir, 'archive')).map(entry => entry.what), ['done'])
+})
+
+test('an old archive with duplicates, a torn row and an unknown kind still reads once', (t) => {
+  const dir = join(dirOf(t), 'archive')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'ops.jsonl'), [
+    JSON.stringify(line({ bot: 'ops', what: 'done' })),
+    JSON.stringify(line({ bot: 'ops', what: 'done' })),
+    JSON.stringify(line({ bot: 'ops', kind: 'brainstorm', what: 'idea' })),
+    '{torn',
+    '',
+  ].join('\n'))
+  assert.deepEqual(readTeamBoardArchive(dir).map(entry => entry.what), ['done'])
 })

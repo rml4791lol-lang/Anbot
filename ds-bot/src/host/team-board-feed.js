@@ -2,7 +2,7 @@
 // two Bots writing at once cannot lose each other's lines; the host merges them into
 // one read-only feed. The directory lives outside the Bot home because the same files
 // are also edited by hand and by scripts.
-import { mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -33,7 +33,9 @@ export function normalizeBoardLine(item, bot) {
 }
 
 // Replaces this Bot's own file and nothing else: a Bot writes only the lines the board
-// shows for it, and the other Bots' files stay as they are.
+// shows for it, and the other Bots' files stay as they are. Every line the Bot sends is
+// also kept in the archive beside the board: the board shows three, the archive keeps
+// what was reported done, so a later count does not depend on what is still on screen.
 export function writeTeamBoard(bot, lines, dir = teamBoardDir()) {
   const rows = (Array.isArray(lines) ? lines : [])
     .filter(item => item && typeof item === 'object' && !Array.isArray(item))
@@ -43,7 +45,78 @@ export function writeTeamBoard(bot, lines, dir = teamBoardDir()) {
   const next = `${file}.${process.pid}.tmp`
   writeFileSync(next, `${JSON.stringify(rows, null, 2)}\n`)
   renameSync(next, file)
+  try {
+    archiveTeamBoardLines(bot, rows, boardArchiveDir(dir))
+  } catch { /* the board itself is written; a missing archive is not a failed write */ }
   return rows.length
+}
+
+export const boardArchiveDir = (boardDir = teamBoardDir()) => join(boardDir, 'archive')
+const archiveFile = (bot, dir) => join(dir, boardFileName(bot).replace(/\.json$/, '') + '.jsonl')
+const lineKey = line => `${line.bot}\u0000${line.at ?? ''}\u0000${line.what ?? ''}\u0000${line.kind ?? ''}`
+
+export function archiveTeamBoardLines(bot, lines, dir = boardArchiveDir()) {
+  const rows = (Array.isArray(lines) ? lines : []).filter(line => KINDS.has(line?.kind))
+  if (rows.length === 0) return 0
+  mkdirSync(dir, { recursive: true })
+  const file = archiveFile(bot, dir)
+  const seen = new Set()
+  try {
+    for (const row of readFileSync(file, 'utf8').split('\n')) {
+      if (row === '') continue
+      try { seen.add(lineKey(JSON.parse(row))) } catch { /* old torn row */ }
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+  const fresh = []
+  for (const line of rows) {
+    const key = lineKey(line)
+    if (seen.has(key)) continue
+    seen.add(key)
+    fresh.push(line)
+  }
+  if (fresh.length > 0) appendFileSync(file, fresh.map(line => JSON.stringify(line) + '\n').join(''))
+  return fresh.length
+}
+
+// Every archived line once, oldest first. A line sent twice is one line here; a broken
+// row is skipped, because the archive is a record, not the source of truth.
+export function readTeamBoardArchive(dir = boardArchiveDir(), warn = () => {}) {
+  let names
+  try {
+    names = readdirSync(dir)
+  } catch {
+    return []
+  }
+  const seen = new Set()
+  const lines = []
+  for (const name of names.sort()) {
+    if (!name.endsWith('.jsonl')) continue
+    let text
+    try {
+      text = readFileSync(join(dir, name), 'utf8')
+    } catch (error) {
+      warn(`team board archive: skipped ${name}: ${error.message}`)
+      continue
+    }
+    for (const row of text.split('\n')) {
+      if (row === '') continue
+      let line
+      try {
+        line = JSON.parse(row)
+      } catch {
+        continue
+      }
+      if (line === null || typeof line !== 'object' || Array.isArray(line) || !KINDS.has(line.kind)) continue
+      const key = lineKey(line)
+      if (seen.has(key)) continue
+      seen.add(key)
+      lines.push(line)
+    }
+  }
+  lines.sort((a, b) => asTime(a.at) - asTime(b.at))
+  return lines
 }
 
 // A missing directory, a file that does not parse, or a line of an unknown kind is

@@ -10,6 +10,7 @@ import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
 import { SOURCE_KIND } from '../src/host/constants.js'
 import { install as installHandoffs } from '../src/host/handoffs.js'
+import { readTaskLedger } from '../src/host/task-ledger.js'
 import { scopeTarget } from '@deepseek-ai/dsh-scope'
 
 let rt
@@ -178,6 +179,20 @@ async function handedOn({ start }, review) {
   await settled(() => callsOf(agents, 'b').length === 2)
   return { first, agents, result: callsOf(agents, 'b')[1][1] }
 }
+
+test('a hand-off writes one open row and one close row, with no message text', async (t) => {
+  const { home, start } = bench(t)
+  await handedOn({ start }, 'two things to fix')
+  const { rows } = readTaskLedger(join(home, 'ledger'), 0, Number.MAX_SAFE_INTEGER)
+  const opens = rows.filter(row => row.kind === 'open')
+  const closes = rows.filter(row => row.kind === 'close')
+  assert.equal(opens.length, 2)
+  assert.equal(closes.length, 1)
+  assert.equal(closes[0].outcome, 'answered')
+  assert.equal(closes[0].parent, opens[0].id)
+  assert.ok(closes[0].chars > 0)
+  assert.ok(rows.every(row => !('text' in row) && !('message' in row)))
+})
 
 const LONG = '审查意见。'.repeat(1000)
 
