@@ -60,10 +60,10 @@ check_stub() {
 
 empty_steps() {
   t="$tmp/empty-steps"; repo "$t"
-  run "$t" "$t.out" env GATE_STEPS=, sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=, sh "$src/scripts/gate.sh"; st=$?
   expect_exit 2 "$st" "GATE_STEPS=',' exits 2"
   expect_in "$t.out" "names no steps" "GATE_STEPS=',' says why"
-  run "$t" "$t.out" env GATE_STEPS=" " sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=" " sh "$src/scripts/gate.sh"; st=$?
   expect_exit 2 "$st" "GATE_STEPS=' ' exits 2"
   expect_in "$t.out" "names no steps" "GATE_STEPS=' ' says why"
 }
@@ -72,7 +72,7 @@ lock_held() {
   t="$tmp/lock-held"; repo "$t"; installs "$t"
   mkdir -p "$t/.git/gate.lock"
   printf 'pid=%s host=%s started=2026-01-01T00:00:00\n' "$$" "$(hostname)" >"$t/.git/gate.lock/owner"
-  run "$t" "$t.out" env GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
   expect_exit 1 "$st" "a held lock makes the gate exit 1"
   expect_in "$t.out" "another gate is running in this repository" "the held lock says so"
   expect_in "$t.out" "pid=$$ host=" "the held lock names its owner"
@@ -81,10 +81,10 @@ lock_held() {
 concurrent() {
   t="$tmp/concurrent"; repo "$t"; installs "$t"
   printf '#!/bin/sh\nsleep 2\n' >"$t/ds-bot/dev/check.sh"
-  ( cd "$t" && GATE_STEPS=build sh "$src/scripts/gate.sh" ) >"$t.a" 2>&1 &
+  ( cd "$t" && DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh" ) >"$t.a" 2>&1 &
   apid=$!
   sleep 1
-  ( cd "$t" && GATE_STEPS=build sh "$src/scripts/gate.sh" ) >"$t.b" 2>&1; bst=$?
+  ( cd "$t" && DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh" ) >"$t.b" 2>&1; bst=$?
   expect_exit 1 "$bst" "a second concurrent gate exits 1"
   expect_in "$t.b" "another gate is running in this repository" "the second gate says another is running"
   wait "$apid"; ast=$?
@@ -100,13 +100,13 @@ stale_lock() {
   wait "$dead" 2>/dev/null || true
   mkdir -p "$t/.git/gate.lock"
   printf 'pid=%s host=%s started=2026-01-01T00:00:00\n' "$dead" "$(hostname)" >"$t/.git/gate.lock/owner"
-  run "$t" "$t.out" env GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
   expect_exit 0 "$st" "a lock whose owner is gone is cleared"
 }
 
 preflight() {
   t="$tmp/preflight"; repo "$t"
-  run "$t" "$t.out" env GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
   expect_exit 1 "$st" "a checkout without installs exits 1"
   expect_in "$t.out" "ds-bot/node_modules missing at $t/ds-bot/node_modules" "the preflight names ds-bot/node_modules"
   expect_in "$t.out" "run: (cd ds-bot && npm ci)" "the preflight gives npm ci"
@@ -118,14 +118,14 @@ preflight() {
 
   t="$tmp/preflight-link"; repo "$t"
   mkdir -p "$t/ds-bot/node_modules" "$t/ds-bot/dev/harness/node_modules"
-  run "$t" "$t.out" env GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
   expect_exit 1 "$st" "only link/node_modules missing exits 1"
   expect_in "$t.out" "link/node_modules missing at $t/link/node_modules" "only the missing link is named"
   expect_not_in "$t.out" "run: (cd ds-bot && npm ci)" "the installed ds-bot is not reported"
 
   t="$tmp/preflight-harness"; repo "$t"
   mkdir -p "$t/ds-bot/node_modules" "$t/link/node_modules"
-  run "$t" "$t.out" env GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
+  run "$t" "$t.out" env DSH_HARNESS= GATE_STEPS=build sh "$src/scripts/gate.sh"; st=$?
   expect_exit 1 "$st" "only the harness missing exits 1"
   expect_in "$t.out" "run: (cd ds-bot && npm run harness)" "the missing harness gives npm run harness"
   expect_not_in "$t.out" "run: npm ci --prefix link" "the installed link is not reported"
@@ -151,7 +151,7 @@ dangling_link() {
   t="$tmp/dangling"; unit_worktree "$t/main" "$t/wt"
   link="$t/wt/ds-bot/dev/harness/node_modules"
   ln -s "$t/gone" "$link"
-  run "$t/wt" "$t.out" env GATE_STEPS=unit sh "$src/scripts/gate.sh"; st=$?
+  run "$t/wt" "$t.out" env DSH_HARNESS= GATE_STEPS=unit sh "$src/scripts/gate.sh"; st=$?
   expect_exit 0 "$st" "a dangling harness link does not fail the gate"
   if [ ! -e "$link" ] && [ ! -L "$link" ]; then pass "the dangling link is cleared"; else fail "the dangling link is cleared" "$link remains"; fi
 }
@@ -160,7 +160,7 @@ live_link() {
   t="$tmp/live"; unit_worktree "$t/main" "$t/wt"
   link="$t/wt/ds-bot/dev/harness/node_modules"
   ln -s "$t/main/ds-bot/dev/harness/node_modules" "$link"
-  run "$t/wt" "$t.out" env GATE_STEPS=unit sh "$src/scripts/gate.sh"; st=$?
+  run "$t/wt" "$t.out" env DSH_HARNESS= GATE_STEPS=unit sh "$src/scripts/gate.sh"; st=$?
   expect_exit 0 "$st" "a leftover live harness link does not fail the gate"
   if [ ! -e "$link" ] && [ ! -L "$link" ]; then pass "the leftover link is removed after the unit step"; else fail "the leftover link is removed after the unit step" "$link remains"; fi
 }
