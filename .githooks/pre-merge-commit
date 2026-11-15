@@ -1,0 +1,14 @@
+#!/bin/sh
+# A merge into main runs the local gate before its commit lands. The merge the other way, main into
+# a feature branch, happens constantly and would add 3.5 minutes to each one without telling anyone
+# anything: those commits were gated when they landed on main.
+#
+#   git config core.hooksPath .githooks    (scripts/install-hooks.sh)
+#
+# The gate itself is scripts/gate.sh; this is its copy on the manual merge path, which can be
+# skipped with `git merge --no-verify`. A failed run leaves the merge open for `git commit`, which
+# no longer runs this hook: that is the known exit, not a closed one.
+set -eu
+# HEAD is still the branch being merged into while this hook runs, so its name is the merge target.
+[ "$(git symbolic-ref --short -q HEAD)" = main ] || exit 0
+exec "$(git rev-parse --show-toplevel)/scripts/gate.sh"
