@@ -6,9 +6,11 @@ import path from 'node:path'
 import test from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
+import { zstdCompressSync } from 'node:zlib'
 import { CORRECTION_RE, collectMetrics, quantile, share } from '../dev/metrics.mjs'
 
 const METRICS = fileURLToPath(new URL('../dev/metrics.mjs', import.meta.url))
+const LEDGER = fileURLToPath(new URL('../dev/ledger.mjs', import.meta.url))
 const DAY = '2026-11-14'
 const dayStart = new Date(2026, 10, 14).getTime()
 const at = minutes => dayStart + minutes * 60_000
@@ -22,6 +24,7 @@ const botRow = overrides => ({
   seed: { kind: 'user' },
   context: { bytes: 100, sources: [] },
   tools: { offered: [], used: ['bash'], errors: 0 },
+  skills: [],
   files: [],
   duration_ms: 1000,
   final_chars: 10,
@@ -60,7 +63,7 @@ const fixture = t => {
 const ledgerRows = [
   botRow({ session: 's1', turn: 1, ts: at(0), duration_ms: 1000, context: { bytes: 100 }, tools: { used: ['bash'], errors: 0 }, final_chars: 10 }),
   botRow({ session: 's1', turn: 2, ts: at(10), duration_ms: 2000, context: { bytes: 200 }, tools: { used: [], errors: 0 }, final_chars: 0 }),
-  botRow({ session: 's2', turn: 1, ts: at(20), duration_ms: 3000, context: { bytes: 300 }, tools: { used: ['skill'], errors: 0 }, final_chars: 5 }),
+  botRow({ session: 's2', turn: 1, ts: at(20), duration_ms: 3000, context: { bytes: 300 }, tools: { used: ['skill'], errors: 0 }, skills: ['test-driven-development'], final_chars: 5 }),
   botRow({ session: 's2', turn: 2, ts: at(30), duration_ms: null, context: { bytes: 400 }, tools: { used: ['bash'], errors: 1 }, final_chars: 0, outcome: 'open' }),
   botRow({ bot: null, session: 'mn-run', turn: 1, ts: at(40), tools: { used: ['bash', 'bash'], errors: 5 }, duration_ms: 9000, final_chars: 0 }),
   '{broken line',
@@ -118,7 +121,7 @@ test('collects a day, ignoring unrelated ledger files, bad lines and other sessi
   assert.deepEqual(metrics.emptyAnswerRate, { n: 1, m: 3, value: '1/3 (33%)' })
   assert.deepEqual(metrics.durationMs, { p50: 2000, p90: 3000, n: 3 })
   assert.deepEqual(metrics.injectedChars, { p90: 400, n: 4 })
-  assert.deepEqual(metrics.skillCalls, { n: 1, m: 4, value: '1/4 (25%)' })
+  assert.deepEqual(metrics.skillCalls, { n: 1, m: 4, value: '1/4 (25%)', byName: { 'test-driven-development': 1 } })
   assert.deepEqual(metrics.tokens, { input: 3000, output: 300, calls: 2 })
 })
 
@@ -168,7 +171,7 @@ test('a day without turns reports n/a everywhere and still prints the regex', t 
   assert.deepEqual(metrics.durationMs, { p50: 'n/a', p90: 'n/a', n: 0 })
   assert.deepEqual(metrics.injectedChars, { p90: 'n/a', n: 0 })
   assert.deepEqual(metrics.tokens, { input: 'n/a', output: 'n/a', calls: 0 })
-  assert.deepEqual(metrics.skillCalls, { n: 0, m: 0, value: 'n/a' })
+  assert.deepEqual(metrics.skillCalls, { n: 0, m: 0, value: 'n/a', byName: {} })
   assert.equal(metrics.userCorrections.value, 'n/a')
 
   const output = execFileSync(process.execPath, [METRICS, '--day', '2026-11-13', '--ledger-dir', ledgerDir], {
@@ -177,7 +180,75 @@ test('a day without turns reports n/a everywhere and still prints the regex', t 
   })
   assert.match(output, /zero-tool n\/a/)
   assert.match(output, /duration ms: p50 n\/a/)
+  assert.match(output, /skill calls: n\/a \(no Bot turns\)/)
   assert.match(output, /correction regex: \//)
+})
+
+test('the summary prints each skill call by name, most called first', t => {
+  const home = fixture(t)
+  const ledgerDir = path.join(home, 'bot', 'ledger')
+  writeLedger(ledgerDir, [
+    botRow({ session: 's1', turn: 1, tools: { used: ['skill'], errors: 0 }, skills: ['code-review-and-quality'] }),
+    botRow({ session: 's1', turn: 2, tools: { used: ['skill'], errors: 0 }, skills: ['code-review-and-quality'] }),
+    botRow({ session: 's2', turn: 1, tools: { used: ['skill'], errors: 0 }, skills: ['test-driven-development'] }),
+    botRow({ session: 's2', turn: 2, tools: { used: [], errors: 0 }, skills: [] })
+  ].map(row => JSON.stringify(row)))
+
+  const output = execFileSync(process.execPath, [METRICS, '--day', DAY, '--ledger-dir', ledgerDir], {
+    env: { ...process.env, DSH_HOME: home },
+    encoding: 'utf8'
+  })
+  assert.match(output, /skill calls: 3\/4 \(75%\) · code-review-and-quality 2 · test-driven-development 1/)
+})
+
+test('a skill call with no name counts nowhere', t => {
+  const home = fixture(t)
+  const ledgerDir = path.join(home, 'bot', 'ledger')
+  writeLedger(ledgerDir, [
+    botRow({ session: 's1', turn: 1, tools: { used: ['skill'], errors: 0 }, skills: ['code-review-and-quality'] }),
+    // The call was offered but its arguments named nothing: it has no place in the ranking.
+    botRow({ session: 's1', turn: 2, tools: { used: ['skill'], errors: 0 }, skills: [] })
+  ].map(row => JSON.stringify(row)))
+  const metrics = collectMetrics({ day: DAY, ledgerDir, home })
+  assert.deepEqual(metrics.skillCalls, { n: 1, m: 2, value: '1/2 (50%)', byName: { 'code-review-and-quality': 1 } })
+})
+
+// The name lives only in the `skill` call arguments, so the ledger has to read them there.
+test('the ledger records a skill call by name, and the metrics count it per name', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ds-bot-skill-ledger-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true, maxRetries: 5 }))
+  const home = path.join(root, '.dsh')
+  fs.mkdirSync(path.join(home, 'bot'), { recursive: true })
+  fs.writeFileSync(path.join(home, 'bot', 'state.json'), JSON.stringify({
+    bots: { b1: { id: 'b1', name: 'Dev', sessionId: 's1' } },
+    rooms: {}
+  }))
+  // The ledger files a turn under an Asia/Shanghai day and the metrics under the local
+  // one; this instant is inside both windows on any machine time zone.
+  const start = Math.max(new Date(`${DAY}T00:00:00+08:00`).getTime(), dayStart) + 3_600_000
+  const events = [
+    { type: 'turn/start', time: start, data: { turn: 1 } },
+    { type: 'tool/call', time: start + 1, data: { name: 'skill', arguments: JSON.stringify({ name: 'test-driven-development' }) } },
+    { type: 'tool/call', time: start + 2, data: { name: 'create_bot', arguments: JSON.stringify({ name: 'Scout' }) } },
+    { type: 'assistant/message', time: start + 3, data: { message: { content: [{ type: 'text', text: 'done' }] } } },
+    { type: 'turn/end', time: start + 4, data: { reason: 'completed' } }
+  ]
+  const sessionDir = path.join(home, 'sessions', 'cwd-1', 's1')
+  fs.mkdirSync(sessionDir, { recursive: true })
+  fs.writeFileSync(path.join(sessionDir, 'session.v4.jsonl.zstd'), zstdCompressSync(`${events.map(event => JSON.stringify(event)).join('\n')}\n`))
+
+  const ledgerDir = path.join(root, 'ledger')
+  execFileSync(process.execPath, [LEDGER, '--day', DAY, '--out', ledgerDir], {
+    env: { ...process.env, HOME: root, USERPROFILE: root },
+    encoding: 'utf8'
+  })
+  const rows = fs.readFileSync(path.join(ledgerDir, `${DAY}.jsonl`), 'utf8').trim().split('\n').map(line => JSON.parse(line))
+  assert.equal(rows.length, 1)
+  assert.deepEqual(rows[0].tools.used, ['skill', 'create_bot'])
+  assert.deepEqual(rows[0].skills, ['test-driven-development'])
+
+  const metrics = collectMetrics({ day: DAY, ledgerDir, home })
+  assert.deepEqual(metrics.skillCalls, { n: 1, m: 1, value: '1/1 (100%)', byName: { 'test-driven-development': 1 } })
 })
 
 test('the CLI prints one JSON object for --json', t => {

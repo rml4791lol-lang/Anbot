@@ -28,6 +28,23 @@ test('an empty answer does not wake the Bot that asked', async () => {
   assert.equal(sent.length, 0)
 })
 
+test('an answer made only of punctuation does not wake the Bot that asked', async () => {
+  for (const body of ['。', '.']) {
+    const { rt, sent } = fake()
+    answerSender(rt, 'b', source, body)
+    await tick()
+    assert.equal(sent.length, 0, `“${body}” is not an answer`)
+  }
+})
+
+test('an answer of one CJK character still goes back to the Bot that asked', async () => {
+  const { rt, sent } = fake()
+  answerSender(rt, 'b', source, '好')
+  await tick()
+  assert.equal(sent.length, 1)
+  assert.equal(sent[0].text, '好')
+})
+
 test('an answer with text still goes back to the Bot that asked', async () => {
   const { rt, sent } = fake()
   answerSender(rt, 'b', source, 'done: 12 rows')

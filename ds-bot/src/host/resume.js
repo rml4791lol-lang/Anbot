@@ -10,10 +10,11 @@
 // that waits for it, and an outcome that cannot be read is said to be unknown. The
 // request itself is never sent again there.
 import { randomUUID } from 'node:crypto'
-import { readFileSync } from 'node:fs'
-import { mkdir, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { existsSync, readFileSync, renameSync } from 'node:fs'
+import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { HISTORY_TIMEOUT_MS, MESSAGE_INLINE_MAX, SOURCE_KIND, STEER_CUT } from './constants.js'
+import { replaceFile } from './files.js'
 import { answerSender, cutOffText, failureLine, turnFailure } from './turns.js'
 import { textOf } from './text.js'
 
@@ -101,13 +102,63 @@ const triggerOf = info => ({
   ...(info.senderRoomId ? { senderRoomId: info.senderRoomId } : {}),
 })
 
-const readNotes = (file) => {
+// The notes are the only record of a turn or a delivery that was on its way: a file
+// that cannot be read is kept, never written over, since it may still be read by hand.
+const keepAside = (file, reason, warn) => {
+  let aside = `${file}.corrupt-${Date.now()}`
+  for (let at = 1; existsSync(aside); at += 1) aside = `${file}.corrupt-${Date.now()}-${at}`
   try {
-    const parsed = JSON.parse(readFileSync(file, 'utf8'))
-    const object = value => (value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {})
-    return { turns: object(parsed?.turns), queued: object(parsed?.queued) }
-  } catch {
+    renameSync(file, aside)
+  } catch (error) {
+    warn('ds-bot: %s could not be read (%s), and it could not be kept aside: %s', file, reason, error)
+    return
+  }
+  warn('ds-bot: %s could not be read (%s); it was kept as %s', file, reason, aside)
+}
+
+// What the last run left: the turns it was running and the messages it was delivering.
+export const readNotes = (file, warn = () => {}) => {
+  let text
+  try {
+    text = readFileSync(file, 'utf8')
+  } catch (error) {
+    // A start with no notes is a start with nothing to pick up.
+    if (error?.code !== 'ENOENT') warn('ds-bot: %s could not be read: %s', file, error)
     return { turns: {}, queued: {} }
+  }
+  let parsed
+  try {
+    parsed = JSON.parse(text)
+  } catch (error) {
+    keepAside(file, error.message, warn)
+    return { turns: {}, queued: {} }
+  }
+  const object = value => (value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {})
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    keepAside(file, 'it holds no JSON object', warn)
+    return { turns: {}, queued: {} }
+  }
+  // A member that is not an object is a note that cannot be read: writing over it would
+  // lose what the last run was doing. An absent member is a start with nothing there.
+  const member = value => value === undefined || (value !== null && typeof value === 'object' && !Array.isArray(value))
+  if (!member(parsed.turns) || !member(parsed.queued)) {
+    keepAside(file, 'a member holds no JSON object', warn)
+    return { turns: {}, queued: {} }
+  }
+  return { turns: object(parsed.turns), queued: object(parsed.queued) }
+}
+
+// Replaced whole: written beside the file and moved over it, so a kill part way through
+// leaves the last whole notes in place instead of half of the new ones.
+export const writeNotes = async (file, snapshot) => {
+  const temp = `${file}.${process.pid}.tmp`
+  try {
+    await mkdir(dirname(file), { recursive: true })
+    await writeFile(temp, snapshot, 'utf8')
+    await replaceFile(temp, file)
+  } catch (error) {
+    await unlink(temp).catch(() => {})
+    throw error
   }
 }
 
@@ -116,7 +167,7 @@ export function install(rt) {
   const file = join(home, 'inflight.json')
 
   // What the last run left; read before this run notes anything.
-  let interrupted = readNotes(file)
+  let interrupted = readNotes(file, rt.warn)
 
   /** @type {Record<string, {botId:string, roomId?:string, since:number, trigger?:any, approval?:{tool:string, reason:string}, resumed?:boolean}>} */
   let turns = {}
@@ -135,13 +186,12 @@ export function install(rt) {
     // write the file once per change.
     if (due) return
     due = true
-    // Written in place: a rename over the file fails on Windows while anything reads
-    // it, and a torn write only loses what one restart would pick up.
+    // Each write replaces the file whole: what a kill part way through leaves is the
+    // notes of one moment, never half of them.
     writing = writing.then(async () => {
       due = false
       const snapshot = latest
-      await mkdir(home, { recursive: true })
-      await writeFile(file, snapshot, 'utf8')
+      await writeNotes(file, snapshot)
     }).catch(error => rt.warn('ds-bot: noting running turns failed: %s', error))
   }
   const update = (id, change) => {
@@ -152,22 +202,36 @@ export function install(rt) {
     else turns[id] = next
     persist()
   }
-  const forgetQueued = (exchangeId) => {
-    for (const [sessionId, list] of Object.entries(queued)) {
-      const at = list.findIndex(item => item.args.exchangeId === exchangeId)
-      if (at === -1) continue
-      const rest = list.toSpliced(at, 1)
-      queued = { ...queued }
-      if (rest.length === 0) delete queued[sessionId]
-      else queued[sessionId] = rest
-      persist()
-      return
-    }
-  }
   // A folded batch carries every exchange it took in: the Session took them all up
   // together, so all of them are done with at once.
   const idsOf = source => Array.isArray(source?.exchangeIds) ? source.exchangeIds
     : source?.exchangeId === undefined ? [] : [source.exchangeId]
+  // Every note of the exchange goes, not just the first: a send that failed is noted
+  // again when the same exchange is sent again, and a note left behind sends it once
+  // more at the next start.
+  const forgetQueued = (exchangeId) => {
+    let found = false
+    const next = {}
+    for (const [sessionId, list] of Object.entries(queued)) {
+      const rest = list.filter(item => !idsOf(item?.args).includes(exchangeId))
+      if (rest.length === list.length) {
+        next[sessionId] = list
+        continue
+      }
+      found = true
+      if (rest.length > 0) next[sessionId] = rest
+    }
+    if (!found) return
+    queued = next
+    persist()
+  }
+  // Every exchange a Session's durable log shows a turn took up and finished. A turn
+  // that DSH stopped as it shut down is not counted: it did not settle, its own note
+  // picks it up, and an older delivery of the exchange must not swallow a note that was
+  // never sent.
+  const consumedInLog = turns => new Set(turns
+    .filter(turn => turn.reason !== undefined && !(turn.reason.kind === 'aborted' && turn.reason.reason?.kind === 'disposed'))
+    .flatMap(turn => turn.took.flatMap(source => idsOf(source))))
   const forgetIds = (ids) => {
     for (const id of ids) forgetQueued(id)
   }
@@ -324,6 +388,9 @@ export function install(rt) {
   // have gone to the Bot that waits for it. The Session's durable log says what it did;
   // the work it was for is settled once, the way a finished turn settles it.
   async function reconcileEnded(sessionId, record, ended) {
+    // DSH stops a turn as it shuts down; that is not the turn settling. The note stays
+    // and the turn is picked up in this same pass, so the caller must not drop it.
+    if (ended.reason?.kind === 'aborted' && ended.reason.reason?.kind === 'disposed') return true
     const trigger = record.trigger
     if (trigger === undefined) return
     const workId = rt.workOf(trigger)
@@ -333,11 +400,6 @@ export function install(rt) {
     const sender = asker?.senderSessionId
     if (exchangeId === undefined || sender === undefined || rt.botOf(sender) === undefined) return
     const name = rt.botOf(rt.selfOf(sessionId))?.name ?? 'The other Bot'
-    // DSH stopped that turn as it shut down: it is picked up at the next start.
-    if (ended.reason?.kind === 'aborted' && ended.reason.reason?.kind === 'disposed') {
-      update(sessionId, () => record)
-      return
-    }
     const events = await logOf(sessionId)
     if (events === undefined) {
       // The record of that work cannot be read: whether it answered cannot be
@@ -423,11 +485,38 @@ export function install(rt) {
     answerSender(rt, sessionId, asker, text, long)
   }
 
+  // A turn the log shows cut off with no note: DS Bot was down when the Session took the
+  // message up, so nothing here noted it. It is noted again, and picked up in this pass.
+  const noteCutTurn = (sessionId, logTurns, exchangeId) => {
+    if (turns[sessionId] !== undefined) return undefined
+    const botId = rt.selfOf(sessionId)
+    if (botId === undefined) return undefined
+    const turn = logTurns.findLast(entry => entry.reason?.kind === 'interrupted'
+      && entry.took.some(source => idsOf(source).includes(exchangeId)))
+    if (turn === undefined) return undefined
+    const source = turn.took.find(source => idsOf(source).includes(exchangeId))
+    const owner = rt.groupOwners.get(sessionId)
+    const record = {
+      botId,
+      ...(owner?.roomId ? { roomId: owner.roomId } : {}),
+      since: Date.now(),
+      trigger: triggerOf(source),
+      ...(source.resumed ? { resumed: true } : {}),
+    }
+    turns = { ...turns, [sessionId]: record }
+    persist()
+    return record
+  }
+
   async function resumeAll() {
     await rt.load()
     if (rt.readOnly() !== undefined) return
     const { turns: noted, queued: dropped } = interrupted
     interrupted = { turns: {}, queued: {} }
+    // Every note is noted again as this run's own before anything is written: a start
+    // that stops part way through picking them up leaves them all on disk, and the next
+    // start picks up what this one did not settle. Each is dropped once it is settled.
+    turns = { ...noted }
     // What the last run still had on the way is noted again first, under the
     // Session it would go to now: nothing is cleared before it is handed over.
     // A Bot that is gone takes its notes with it; what a turn already read here
@@ -450,22 +539,59 @@ export function install(rt) {
       const first = firstTurn.get(sessionId)
       if (first?.type === 'turn/end') {
         // The turn ended while DS Bot was not watching it: what it did is settled from
-        // the Session's durable log.
-        await reconcileEnded(sessionId, record, first).catch(error => rt.warn('ds-bot: settling the work of %s failed: %s', sessionId, error))
+        // the Session's durable log. A turn DSH disposed as it shut down did not settle,
+        // so its note stays and the turn is picked up in this pass.
+        const pickUp = await reconcileEnded(sessionId, record, first).catch((error) => {
+          rt.warn('ds-bot: settling the work of %s failed: %s', sessionId, error)
+          return false
+        })
+        if (pickUp === true) {
+          cut.push([sessionId, record])
+          continue
+        }
+        // Whatever the log could tell, the note is done with: the turn is not resumed.
+        update(sessionId, () => undefined)
         continue
       }
-      // Still running: noted again, as if it had started here.
-      if (first === undefined && (await rt.resolveAgent(sessionId).catch(() => undefined))?.status === 'running') update(sessionId, () => record)
-      else cut.push([sessionId, record])
+      // Still running: the note stays as it is, as if it had started here.
+      if (first === undefined && (await rt.resolveAgent(sessionId).catch(() => undefined))?.status === 'running') continue
+      cut.push([sessionId, record])
     }
     firstTurn = undefined
+    // A Session may have taken up a noted exchange while DS Bot was not running: that
+    // message is not in its inbox any more and no event here saw it. Its durable log
+    // says which ones were read to the end, so they are not sent again, and their
+    // notes are done with.
+    for (const [sessionId, list] of Object.entries(dropped)) {
+      const ids = Array.isArray(list) ? [...new Set(list.flatMap(item => idsOf(item?.args)))] : []
+      if (ids.length === 0) continue
+      const events = await logOf(sessionId)
+      if (events === undefined) continue
+      const logTurns = turnsOf(events)
+      const consumed = consumedInLog(logTurns)
+      for (const id of ids) {
+        if (!consumed.has(id)) continue
+        taken ??= new Set()
+        taken.add(id)
+        forgetQueued(id)
+        // The log, not a note, is what says this turn was cut off: note it now so the
+        // message it read is not lost with nothing to show for it.
+        const record = noteCutTurn(sessionId, logTurns, id)
+        if (record !== undefined) cut.push([sessionId, record])
+      }
+    }
     for (const [sessionId, list] of Object.entries(dropped)) {
       if (!Array.isArray(list)) continue
       await resendQueued(sessionId, list).catch(error => rt.warn('ds-bot: sending again what %s was sent failed: %s', sessionId, error))
     }
     taken = undefined
     for (const [sessionId, record] of cut) {
-      await resumeTurn(sessionId, record).catch(error => rt.warn('ds-bot: picking up the turn of %s failed: %s', sessionId, error))
+      // A turn picked up here that fails keeps its note: the next start has it again.
+      const picked = await resumeTurn(sessionId, record).then(() => true, (error) => {
+        rt.warn('ds-bot: picking up the turn of %s failed: %s', sessionId, error)
+        return false
+      })
+      if (picked) update(sessionId, () => undefined)
     }
     // What a group's members were asked for and will not pick up is settled now.
     await rt.settleRoomBatches?.()
