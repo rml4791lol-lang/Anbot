@@ -10,10 +10,11 @@
 // that waits for it, and an outcome that cannot be read is said to be unknown. The
 // request itself is never sent again there.
 import { randomUUID } from 'node:crypto'
-import { readFileSync } from 'node:fs'
-import { mkdir, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { existsSync, readFileSync, renameSync } from 'node:fs'
+import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { HISTORY_TIMEOUT_MS, MESSAGE_INLINE_MAX, SOURCE_KIND, STEER_CUT } from './constants.js'
+import { replaceFile } from './files.js'
 import { answerSender, cutOffText, failureLine, turnFailure } from './turns.js'
 import { textOf } from './text.js'
 
@@ -101,13 +102,56 @@ const triggerOf = info => ({
   ...(info.senderRoomId ? { senderRoomId: info.senderRoomId } : {}),
 })
 
-const readNotes = (file) => {
+// The notes are the only record of a turn or a delivery that was on its way: a file
+// that cannot be read is kept, never written over, since it may still be read by hand.
+const keepAside = (file, reason, warn) => {
+  let aside = `${file}.corrupt-${Date.now()}`
+  for (let at = 1; existsSync(aside); at += 1) aside = `${file}.corrupt-${Date.now()}-${at}`
   try {
-    const parsed = JSON.parse(readFileSync(file, 'utf8'))
-    const object = value => (value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {})
-    return { turns: object(parsed?.turns), queued: object(parsed?.queued) }
-  } catch {
+    renameSync(file, aside)
+  } catch (error) {
+    warn('ds-bot: %s could not be read (%s), and it could not be kept aside: %s', file, reason, error)
+    return
+  }
+  warn('ds-bot: %s could not be read (%s); it was kept as %s', file, reason, aside)
+}
+
+// What the last run left: the turns it was running and the messages it was delivering.
+export const readNotes = (file, warn = () => {}) => {
+  let text
+  try {
+    text = readFileSync(file, 'utf8')
+  } catch (error) {
+    // A start with no notes is a start with nothing to pick up.
+    if (error?.code !== 'ENOENT') warn('ds-bot: %s could not be read: %s', file, error)
     return { turns: {}, queued: {} }
+  }
+  let parsed
+  try {
+    parsed = JSON.parse(text)
+  } catch (error) {
+    keepAside(file, error.message, warn)
+    return { turns: {}, queued: {} }
+  }
+  const object = value => (value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {})
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    keepAside(file, 'it holds no JSON object', warn)
+    return { turns: {}, queued: {} }
+  }
+  return { turns: object(parsed.turns), queued: object(parsed.queued) }
+}
+
+// Replaced whole: written beside the file and moved over it, so a kill part way through
+// leaves the last whole notes in place instead of half of the new ones.
+export const writeNotes = async (file, snapshot) => {
+  const temp = `${file}.${process.pid}.tmp`
+  try {
+    await mkdir(dirname(file), { recursive: true })
+    await writeFile(temp, snapshot, 'utf8')
+    await replaceFile(temp, file)
+  } catch (error) {
+    await unlink(temp).catch(() => {})
+    throw error
   }
 }
 
@@ -116,7 +160,7 @@ export function install(rt) {
   const file = join(home, 'inflight.json')
 
   // What the last run left; read before this run notes anything.
-  let interrupted = readNotes(file)
+  let interrupted = readNotes(file, rt.warn)
 
   /** @type {Record<string, {botId:string, roomId?:string, since:number, trigger?:any, approval?:{tool:string, reason:string}, resumed?:boolean}>} */
   let turns = {}
@@ -135,13 +179,12 @@ export function install(rt) {
     // write the file once per change.
     if (due) return
     due = true
-    // Written in place: a rename over the file fails on Windows while anything reads
-    // it, and a torn write only loses what one restart would pick up.
+    // Each write replaces the file whole: what a kill part way through leaves is the
+    // notes of one moment, never half of them.
     writing = writing.then(async () => {
       due = false
       const snapshot = latest
-      await mkdir(home, { recursive: true })
-      await writeFile(file, snapshot, 'utf8')
+      await writeNotes(file, snapshot)
     }).catch(error => rt.warn('ds-bot: noting running turns failed: %s', error))
   }
   const update = (id, change) => {
@@ -428,6 +471,10 @@ export function install(rt) {
     if (rt.readOnly() !== undefined) return
     const { turns: noted, queued: dropped } = interrupted
     interrupted = { turns: {}, queued: {} }
+    // Every note is noted again as this run's own before anything is written: a start
+    // that stops part way through picking them up leaves them all on disk, and the next
+    // start picks up what this one did not settle. Each is dropped once it is settled.
+    turns = { ...noted }
     // What the last run still had on the way is noted again first, under the
     // Session it would go to now: nothing is cleared before it is handed over.
     // A Bot that is gone takes its notes with it; what a turn already read here
@@ -452,11 +499,13 @@ export function install(rt) {
         // The turn ended while DS Bot was not watching it: what it did is settled from
         // the Session's durable log.
         await reconcileEnded(sessionId, record, first).catch(error => rt.warn('ds-bot: settling the work of %s failed: %s', sessionId, error))
+        // Whatever the log could tell, the note is done with: the turn is not resumed.
+        update(sessionId, () => undefined)
         continue
       }
-      // Still running: noted again, as if it had started here.
-      if (first === undefined && (await rt.resolveAgent(sessionId).catch(() => undefined))?.status === 'running') update(sessionId, () => record)
-      else cut.push([sessionId, record])
+      // Still running: the note stays as it is, as if it had started here.
+      if (first === undefined && (await rt.resolveAgent(sessionId).catch(() => undefined))?.status === 'running') continue
+      cut.push([sessionId, record])
     }
     firstTurn = undefined
     for (const [sessionId, list] of Object.entries(dropped)) {
@@ -465,7 +514,12 @@ export function install(rt) {
     }
     taken = undefined
     for (const [sessionId, record] of cut) {
-      await resumeTurn(sessionId, record).catch(error => rt.warn('ds-bot: picking up the turn of %s failed: %s', sessionId, error))
+      // A turn picked up here that fails keeps its note: the next start has it again.
+      const picked = await resumeTurn(sessionId, record).then(() => true, (error) => {
+        rt.warn('ds-bot: picking up the turn of %s failed: %s', sessionId, error)
+        return false
+      })
+      if (picked) update(sessionId, () => undefined)
     }
     // What a group's members were asked for and will not pick up is settled now.
     await rt.settleRoomBatches?.()
