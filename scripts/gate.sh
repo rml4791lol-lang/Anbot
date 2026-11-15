@@ -24,13 +24,19 @@ if [ -z "${DSH_HARNESS:-}" ]; then
 fi
 
 # settings-shell.test.js loads its packages from this checkout's dev/harness whatever
-# DSH_HARNESS says, and a worktree has no install of its own: borrow the main checkout's.
-if [ ! -e ds-bot/dev/harness/node_modules ]; then
+# DSH_HARNESS says, and a worktree has no install of its own: borrow the main checkout's for the
+# length of the unit run. `.gitignore`'s `node_modules/` matches directories only, so the link
+# would show up as an untracked file if it stayed.
+harness_link=ds-bot/dev/harness/node_modules
+harness_link_made=""
+borrow_harness() {
+  [ -e "$harness_link" ] && return 0
   main_harness="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/ds-bot/dev/harness/node_modules"
-  if [ -d "$main_harness" ]; then
-    ln -s "$main_harness" ds-bot/dev/harness/node_modules
-  fi
-fi
+  [ -d "$main_harness" ] || return 0
+  ln -s "$main_harness" "$harness_link"
+  harness_link_made=1
+  trap '[ -z "$harness_link_made" ] || rm -f "$harness_link"' EXIT HUP INT TERM
+}
 
 # Unit runs here rather than through dev/check.sh, which runs the bare `npm test`, because it is the
 # one step the gate sets a flag for, and node reads --test-concurrency only before the file list:
@@ -49,7 +55,13 @@ unit() {
 rest=""
 for step in $(printf '%s' "${GATE_STEPS:-unit,build,lint}" | tr ',' ' '); do
   if [ "$step" = unit ]; then
+    borrow_harness
     unit
+    if [ -n "$harness_link_made" ]; then
+      rm -f "$harness_link"
+      harness_link_made=""
+      trap - EXIT HUP INT TERM
+    fi
   else
     rest="${rest:+$rest,}$step"
   fi
