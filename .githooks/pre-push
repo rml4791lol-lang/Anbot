@@ -1,0 +1,14 @@
+#!/bin/sh
+# Before a push sends commits, run the cheaper half of the gate: a message-only change or a test
+# file needs no rebuild, and the unit suite is the slow part of merge-dev.sh's gate.
+#
+#   git config core.hooksPath .githooks    (scripts/install-hooks.sh)
+#
+# It can be skipped with `git push --no-verify`. It is a second gate, not the gate itself.
+set -eu
+# git writes the refs it is about to push to this hook's stdin and can block once that pipe fills,
+# so read them — unless a person runs this hook by hand, where it would wait for Ctrl-D.
+[ -t 0 ] || cat >/dev/null
+GATE_STEPS=build,lint
+export GATE_STEPS
+exec "$(git rev-parse --show-toplevel)/scripts/gate.sh"

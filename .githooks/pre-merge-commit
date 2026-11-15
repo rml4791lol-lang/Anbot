@@ -1,0 +1,11 @@
+#!/bin/sh
+# A merge into this checkout runs the local gate before its commit lands. A merge that resolves
+# without conflict never runs pre-commit, so this is the one hook it can be stopped at.
+#
+#   git config core.hooksPath .githooks    (scripts/install-hooks.sh)
+#
+# The gate itself is scripts/gate.sh; this is its copy on the manual merge path, which can be
+# skipped with `git merge --no-verify`. A failed run leaves the merge open for `git commit`, which
+# no longer runs this hook: that is the known exit, not a closed one.
+set -eu
+exec "$(git rev-parse --show-toplevel)/scripts/gate.sh"
