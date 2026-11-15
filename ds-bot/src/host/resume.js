@@ -195,22 +195,35 @@ export function install(rt) {
     else turns[id] = next
     persist()
   }
-  const forgetQueued = (exchangeId) => {
-    for (const [sessionId, list] of Object.entries(queued)) {
-      const at = list.findIndex(item => item.args.exchangeId === exchangeId)
-      if (at === -1) continue
-      const rest = list.toSpliced(at, 1)
-      queued = { ...queued }
-      if (rest.length === 0) delete queued[sessionId]
-      else queued[sessionId] = rest
-      persist()
-      return
-    }
-  }
   // A folded batch carries every exchange it took in: the Session took them all up
   // together, so all of them are done with at once.
   const idsOf = source => Array.isArray(source?.exchangeIds) ? source.exchangeIds
     : source?.exchangeId === undefined ? [] : [source.exchangeId]
+  // Every note of the exchange goes, not just the first: a send that failed is noted
+  // again when the same exchange is sent again, and a note left behind sends it once
+  // more at the next start.
+  const forgetQueued = (exchangeId) => {
+    let found = false
+    const next = {}
+    for (const [sessionId, list] of Object.entries(queued)) {
+      const rest = list.filter(item => !idsOf(item?.args).includes(exchangeId))
+      if (rest.length === list.length) {
+        next[sessionId] = list
+        continue
+      }
+      found = true
+      if (rest.length > 0) next[sessionId] = rest
+    }
+    if (!found) return
+    queued = next
+    persist()
+  }
+  // Every exchange a Session's durable log shows a turn took up and finished. A turn
+  // that DSH stopped as it shut down is not counted: its own note picks it up, and an
+  // older delivery of the exchange must not swallow a note that was never sent.
+  const consumedInLog = events => new Set(turnsOf(events)
+    .filter(turn => turn.reason !== undefined && !(turn.reason.kind === 'aborted' && turn.reason.reason?.kind === 'disposed'))
+    .flatMap(turn => turn.took.flatMap(source => idsOf(source))))
   const forgetIds = (ids) => {
     for (const id of ids) forgetQueued(id)
   }
@@ -508,6 +521,23 @@ export function install(rt) {
       cut.push([sessionId, record])
     }
     firstTurn = undefined
+    // A Session may have taken up a noted exchange while DS Bot was not running: that
+    // message is not in its inbox any more and no event here saw it. Its durable log
+    // says which ones were read to the end, so they are not sent again, and their
+    // notes are done with.
+    for (const [sessionId, list] of Object.entries(dropped)) {
+      const ids = Array.isArray(list) ? [...new Set(list.flatMap(item => idsOf(item?.args)))] : []
+      if (ids.length === 0) continue
+      const events = await logOf(sessionId)
+      if (events === undefined) continue
+      const consumed = consumedInLog(events)
+      for (const id of ids) {
+        if (!consumed.has(id)) continue
+        taken ??= new Set()
+        taken.add(id)
+        forgetQueued(id)
+      }
+    }
     for (const [sessionId, list] of Object.entries(dropped)) {
       if (!Array.isArray(list)) continue
       await resendQueued(sessionId, list).catch(error => rt.warn('ds-bot: sending again what %s was sent failed: %s', sessionId, error))
