@@ -157,7 +157,10 @@ export function probeSignIn(executable, check, { home = homedir() } = {}) {
   return new Promise((resolve) => {
     try {
       const launch = launchOf(executable, check.args)
-      execFile(launch.file, launch.args, { encoding: 'utf8', timeout: 3_000, env: cleanEnv(), windowsHide: true, ...launch.options }, (_error, stdout, stderr) => {
+      // Ten seconds, like probeVersion: a CLI that is signing in can be slow, and three was short
+      // enough that a loaded machine killed the call and the check answered "unknown" for a CLI
+      // that was in fact signed in (test/run-mode.test.js caught it as an intermittent failure).
+      execFile(launch.file, launch.args, { encoding: 'utf8', timeout: 10_000, env: cleanEnv(), windowsHide: true, ...launch.options }, (_error, stdout, stderr) => {
         const text = `${stdout ?? ''}${stderr ?? ''}`
         resolve(/not (?:logged|signed) in/iu.test(text) ? false : /(?:logged|signed) in/iu.test(text) ? true : null)
       })

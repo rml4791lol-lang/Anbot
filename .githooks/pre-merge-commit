@@ -6,8 +6,8 @@
 #   git config core.hooksPath .githooks    (scripts/install-hooks.sh)
 #
 # The gate itself is scripts/gate.sh; this is its copy on the manual merge path, which can be
-# skipped with `git merge --no-verify`. A failed run leaves the merge open for `git commit`, which
-# no longer runs this hook: that is the known exit, not a closed one.
+# skipped with `git merge --no-verify`. A failed run leaves the merge open, and the `git commit`
+# git suggests then runs .githooks/pre-commit, so that exit is closed too.
 set -eu
 # HEAD is still the branch being merged into while this hook runs, so its name is the merge target.
 [ "$(git symbolic-ref --short -q HEAD)" = main ] || exit 0

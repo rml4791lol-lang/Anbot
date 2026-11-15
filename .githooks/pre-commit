@@ -1,0 +1,10 @@
+#!/bin/sh
+# The merge hook refuses a merge into main, and git then suggests `git commit` to finish it, which
+# runs pre-commit rather than pre-merge-commit. This closes that exit: an open merge on main is
+# gated again by whatever finishes it.
+#
+#   git config core.hooksPath .githooks    (scripts/install-hooks.sh)
+set -eu
+[ -f "$(git rev-parse --git-path MERGE_HEAD)" ] || exit 0
+[ "$(git symbolic-ref --short -q HEAD)" = main ] || exit 0
+exec "$(git rev-parse --show-toplevel)/scripts/gate.sh"

@@ -4,10 +4,13 @@
 // for the queue to flush, then exiting with the same code, keeps the forced exit and loses nothing:
 // a 1 MiB write delivered 65536 bytes without this and all 1048576 with it.
 //
-// This fixes that layer only. It does not steady the result count on its own: on one commit,
-// parallel runs end with 2486 to 2508 tests and 0 or 1 failures, because the files share ports and
-// temporary directories. scripts/gate.sh runs the suite with --test-concurrency=1 for that, which
-// is where the count is stable; this preload is no substitute for it.
+// Nothing passes that flag any more: with it the suite reported 2494 to 2507 tests where the same
+// tree reports 2529, and about one run in three exited 1 with `fail 0`, so scripts/gate.sh and the
+// test script drop it and pay the extra 68 seconds. This preload stays as the guard for anyone who
+// adds it back by hand.
+//
+// It does not steady the result count on its own either: parallel runs end with 2486 to 2508 tests
+// because the files share ports and temporary directories, so the gate runs --test-concurrency=1.
 //
 // Only the per-file children exit that way, so only they are patched; the runner's own stdout is
 // left alone. The context name has a version suffix on some releases, hence the prefix check.
