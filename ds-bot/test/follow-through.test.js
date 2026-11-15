@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -844,6 +844,87 @@ test('a resend whose first send never landed records the exchange once it arrive
   for (let at = 0; at < 50 && (await listed()).length === 0; at += 1) await new Promise(resolve => setImmediate(resolve))
   const [entry] = await listed()
   assert.deepEqual([entry.id, entry.role, entry.from, entry.to], [again.source.exchangeId, 'request', 'a', 'b'])
+})
+
+test('a write cut off before the rename leaves the queue whole', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const home = freshHome(t)
+  const first = await start(home)
+  await first.tool('message_bot', { to: 'Writer', message: 'Draft the plan', when: 'queue' }, 'a')
+  await settle(() => (notes(home).queued.b ?? []).length === 1)
+  await first.stop()
+
+  // A kill between writing the new notes beside the file and moving them over it:
+  // half of them are on disk, and the file the last run left is whole.
+  const file = join(home, 'inflight.json')
+  const temp = `${file}.${process.pid}.tmp`
+  writeFileSync(temp, readFileSync(file, 'utf8').slice(0, 20))
+
+  const second = await start(home)
+  t.mock.timers.tick(3000)
+  await settle(() => second.agentOf('b').calls.length === 1)
+  assert.match(text(second.agentOf('b').calls[0]), /Draft the plan$/)
+  // The half-written note is never read: the next whole one replaces it.
+  await settle(() => !existsSync(temp))
+  assert.equal(notes(home).queued.b.length, 1)
+})
+
+test('a note file cut off part way is kept aside, not written over', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const home = freshHome(t)
+  const first = await start(home)
+  await first.tool('message_bot', { to: 'Writer', message: 'Draft the plan', when: 'queue' }, 'a')
+  await settle(() => (notes(home).queued.b ?? []).length === 1)
+  await first.stop()
+
+  // A file a write cut off part way, or a damaged one: half a JSON document.
+  const file = join(home, 'inflight.json')
+  const torn = readFileSync(file, 'utf8').slice(0, 40)
+  writeFileSync(file, torn)
+
+  const second = await start(home)
+  const aside = () => readdirSync(home).filter(name => name.startsWith('inflight.json.corrupt-'))
+  // Nothing is written over it: the bytes are moved aside whole, and the start says
+  // what it did instead of dropping the queue silently.
+  assert.equal(existsSync(file), false)
+  assert.equal(aside().length, 1)
+  assert.equal(readFileSync(join(home, aside()[0]), 'utf8'), torn)
+  const entries = await readDiagnostics(home, list => list.some(entry => /kept as/.test(entry.text)))
+  assert.ok(entries.some(entry => entry.level === 'warn' && /inflight\.json/.test(entry.text) && /could not be read/.test(entry.text)))
+
+  // What the next note writes is a fresh file; the kept one still has what was in it.
+  await second.tool('message_bot', { to: 'Writer', message: 'Task after the damage', when: 'queue' }, 'a')
+  await settle(() => (notes(home).queued.b ?? []).length === 1)
+  assert.equal(readFileSync(join(home, aside()[0]), 'utf8'), torn)
+})
+
+test('a recovery cut off part way leaves every note for the next start', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const home = freshHome(t)
+  const first = await start(home)
+  run(first, 'b', 1, { content: [{ type: 'text', text: '[Message from Chief]\nDraft the plan' }], source: { kind: 'bot', form: 'relay', role: 'request', exchangeId: 'x1', senderName: 'Chief', senderSessionId: 'a', hop: 0 } })
+  await settle(() => inflight(home).b?.trigger !== undefined)
+  await first.stop()
+
+  // Picking the notes up throws before it settles anything.
+  const second = await start(home)
+  const resolving = rt.resolveAgent
+  rt.resolveAgent = () => { throw new Error('boom') }
+  t.mock.timers.tick(3000)
+  const entries = await readDiagnostics(home, list => list.some(entry => /picking up interrupted work failed/.test(entry.text)))
+  assert.ok(entries.some(entry => /boom/.test(entry.text)))
+  // The file still holds what the recovery started from: nothing was settled by the
+  // attempt, so nothing may be dropped by it.
+  assert.equal(inflight(home).b?.trigger?.exchangeId, 'x1')
+
+  // The next start picks it up.
+  rt.resolveAgent = resolving
+  await second.stop()
+  const third = await start(home)
+  t.mock.timers.tick(3000)
+  await settle(() => third.agentOf('b').calls.length === 1)
+  const request = third.agentOf('b').calls[0]
+  assert.deepEqual([request.source.role, request.source.exchangeId, request.source.resumed], ['request', 'x1', true])
 })
 
 const WRITTEN = 'Checking now.\n<tool_call>\n<function=pwsh>\n<parameter=command>\nGet-ChildItem E:\\\n</parameter>\n</function>\n</tool_call>'
