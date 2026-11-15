@@ -1,16 +1,18 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from '../index.js'
 import { INBOX_READ_MAX, install, parseInbox } from '../src/host/inbox.js'
+import { install as installLedger } from '../src/host/ledger.js'
 import { fakeContext } from './fake-ctx.js'
 
 const host = (t, { readOnly, home: given } = {}) => {
   const home = given ?? mkdtempSync(join(tmpdir(), 'ds-bot-inbox-'))
   const warnings = []
   const rt = { home, readOnly: () => readOnly, warn: (...args) => warnings.push(args) }
+  installLedger(rt)
   install(rt)
   if (given === undefined) t.after(() => rmSync(home, { recursive: true, force: true, maxRetries: 5 }))
   return {
@@ -98,6 +100,52 @@ test('a mailbox is per Bot, and a read-only host writes nothing', async (t) => {
   assert.equal(reader.rt.inbox.list('a').length, 0)
 })
 
+test('a note that cannot be written leaves a ledger mark and a mailbox gap', async (t) => {
+  const { rt, home, file } = host(t)
+  // A directory where the mailbox file goes: every append fails.
+  mkdirSync(join(home, 'inbox'), { recursive: true })
+  mkdirSync(file('a'))
+  await assert.rejects(rt.inbox.append('a', entry({ exchangeId: 'x-lost', text: 'lost' })))
+  const marks = rt.ledger.records('inbox-a')
+  assert.equal(marks.length, 1)
+  assert.equal(marks[0].event, 'failed')
+  assert.equal(marks[0].id, 'x-lost')
+  assert.equal(marks[0].time, 1763000000000)
+  assert.match(marks[0].reason, /EISDIR|directory/)
+  assert.deepEqual(rt.inbox.gaps('a'), [{ from: 1763000000000, to: null, reason: marks[0].reason, count: 1 }])
+  // The mailbox takes a note again: the stretch ends there.
+  rmSync(file('a'), { recursive: true, force: true })
+  await rt.inbox.append('a', entry({ exchangeId: 'x-2', text: 'again' }))
+  const [gap] = rt.inbox.gaps('a')
+  assert.equal(gap.from, 1763000000000)
+  assert.equal(typeof gap.to, 'number')
+  assert.equal(gap.count, 1)
+  // Only the note that landed is in the mailbox; the lost one is what the gap names.
+  assert.deepEqual(rt.inbox.list('a').map(item => item.text), ['again'])
+})
+
+test('gaps stay empty while every note lands', async (t) => {
+  const { rt } = host(t)
+  await rt.inbox.append('a', entry())
+  assert.deepEqual(rt.inbox.gaps('a'), [])
+  assert.deepEqual(rt.ledger.records('inbox-a'), [])
+})
+
+test('a gap is read back from the ledger, so it survives a restart', async (t) => {
+  const { rt, home, file } = host(t)
+  mkdirSync(join(home, 'inbox'), { recursive: true })
+  mkdirSync(file('a'))
+  await assert.rejects(rt.inbox.append('a', entry({ exchangeId: 'x-lost' })))
+  await rt.ledger.flush()
+  const replayed = { home, readOnly: () => undefined, warn: () => {} }
+  installLedger(replayed)
+  install(replayed)
+  const [gap] = replayed.inbox.gaps('a')
+  assert.equal(gap.from, 1763000000000)
+  assert.equal(gap.to, null)
+  assert.equal(gap.count, 1)
+})
+
 test('read_inbox shows a quiet note, marks it read, and works in a group Session', async (t) => {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-read-inbox-'))
   writeFileSync(join(home, 'state.json'), JSON.stringify({
@@ -126,15 +174,25 @@ test('read_inbox shows a quiet note, marks it read, and works in a group Session
   const read = rt.teamTools.find(def => def.name === 'read_inbox')
   assert.ok(read, 'read_inbox is a team tool')
   const seen = await read.execute({}, { agent: { id: 'b' } })
-  assert.match(seen, /^1 note for Writer:/)
-  assert.match(seen, /Writer · profile update/)
-  assert.match(seen, /Your profile was updated/)
-  assert.match(seen, /never start a turn/)
+  assert.deepEqual(seen.gaps, [], 'nothing is missing when every note landed')
+  assert.match(seen.text, /^1 note for Writer:/)
+  assert.match(seen.text, /Writer · profile update/)
+  assert.match(seen.text, /Your profile was updated/)
+  assert.match(seen.text, /never start a turn/)
   assert.equal(rt.inbox.unreadCount('b'), 0)
-  assert.match(await read.execute({}, { agent: { id: 'b' } }), /^No unread notes/)
+  assert.match((await read.execute({}, { agent: { id: 'b' } })).text, /^No unread notes/)
   // A group Session belongs to its Bot: the relay scope includes the inbox.
   await rt.inbox.append('b', entry({ exchangeId: 'x-2', text: 'Stop receipt' }))
   const group = await read.execute({}, { agent: { id: 'g1' } })
-  assert.match(group, /^1 note for Writer:/)
-  assert.match(group, /stop receipt|update/)
+  assert.match(group.text, /^1 note for Writer:/)
+  assert.match(group.text, /stop receipt|update/)
+  // A note the mailbox cannot take: the reading Bot is told a stretch is missing.
+  rmSync(join(home, 'inbox', 'b.jsonl'))
+  mkdirSync(join(home, 'inbox', 'b.jsonl'))
+  await assert.rejects(rt.inbox.append('b', entry({ exchangeId: 'x-lost', text: 'lost note' })))
+  const gaps = await read.execute({}, { agent: { id: 'b' } })
+  assert.equal(gaps.gaps.length, 1)
+  assert.equal(gaps.gaps[0].to, null)
+  assert.match(gaps.text, /1 note could not be saved/)
+  assert.equal(rt.ledger.records('inbox-b').filter(record => record.event === 'failed').length, 1)
 })
