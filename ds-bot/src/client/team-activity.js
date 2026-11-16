@@ -57,6 +57,9 @@ const copyText = () => ({
   stage: t('Stage'),
   warning: t('Warning'),
   noOwner: t('No owner'),
+  attempt: t('Attempt'),
+  handoffRoute: t('Handoff route'),
+  recovery: t('Recovery'),
   latestCheckpoint: t('Latest checkpoint'),
   nextAction: t('Next action'),
   blockers: t('Blockers'),
@@ -279,6 +282,9 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
   ]
   const stageTitle = detail?.location?.stageTitle || shown.stageTitle
   const blockers = Array.isArray(detail?.blockers) ? detail.blockers : []
+  const attempt = detail?.attempt
+  const handoff = detail?.handoff
+  const recovery = detail?.recovery
   const evidence = Array.isArray(detail?.evidence) ? detail.evidence : []
   const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : []
   const controls = Array.isArray(detail?.controls) ? detail.controls : []
@@ -337,7 +343,10 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
       h('div', null, h('dt', null, copy.status), h('dd', null, h('span', { className: 'bt-activity-status', 'data-status': shown.sourceStatus }, shown.sourceStatus))),
       h('div', null, h('dt', null, copy.sourceId), h('dd', { className: 'bt-activity-id' }, shown.sourceId || shown.id)),
       ...(stageTitle ? [h('div', { key: 'stage' }, h('dt', null, copy.stage), h('dd', null, stageTitle))] : []),
+      ...(detail && attempt ? [h('div', { key: 'attempt' }, h('dt', null, copy.attempt), h('dd', null, h('span', { className: 'bt-activity-id' }, `${attempt.id || copy.none}${attempt.number ? ` · ${attempt.number}` : ''}${attempt.status ? ` · ${attempt.status}` : ''}`)))] : []),
+      ...(detail && handoff ? [h('div', { key: 'handoff' }, h('dt', null, copy.handoffRoute), h('dd', null, [handoff.from?.name || handoff.from?.id, handoff.to?.name || handoff.to?.id].filter(Boolean).join(' → ') || copy.none, handoff.status ? ` · ${handoff.status}` : '', handoff.name ? ` · ${handoff.name}` : ''))] : []),
       ...(detail ? [h('div', { key: 'checkpoint' }, h('dt', null, copy.latestCheckpoint), h('dd', null, detail.checkpoint?.text || copy.none))] : []),
+      ...(detail && recovery ? [h('div', { key: 'recovery' }, h('dt', null, copy.recovery), h('dd', null, recovery.records?.length > 0 ? recovery.records.map(item => `${item.kind}: ${item.summary}`).join(' · ') : copy.none))] : []),
       ...(detail ? [h('div', { key: 'next' }, h('dt', null, copy.nextAction), h('dd', null, detail.nextAction?.text || copy.none))] : []),
       ...(detail ? [h('div', { key: 'blockers' }, h('dt', null, copy.blockers), h('dd', null, blockers.length > 0
         ? h('ul', { className: 'bt-task-blockers' }, blockers.map(item => h('li', { key: item.id, 'data-kind': item.kind }, item.text)))

@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
 import { installTaskLog } from './task-ledger.js'
-import { evidenceFromEvents, progressAfterTurn, progressFingerprint } from './task-evidence.js'
+import { evidenceFromEvents, noteAttemptRecovery, progressAfterTurn, progressFingerprint } from './task-evidence.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
@@ -311,6 +311,7 @@ export function install(rt) {
     if (info?.exchangeId !== undefined) target.work.attempt.exchangeId = info.exchangeId
     if (Number.isInteger(turn)) target.work.attempt.turn = turn
     target.work.attempt.updatedAt = now
+    noteAttemptRecovery(target.work, { attemptId: target.work.attempt.id, info, sessionId, now })
     save()
     return { taskId: `handoff:${target.id}`, attemptId: target.work.attempt.id }
   }

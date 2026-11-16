@@ -157,6 +157,48 @@ test('a restart keeps the task and attempt identity while resuming once', async 
   await second.stop()
 })
 
+test('a resumed handoff keeps its attempt and records the restart on the work', async (t) => {
+  const home = freshHome(t)
+  const now = Date.now()
+  const team = seed()
+  team.works = {
+    w1: {
+      from: 'a', to: 'b', open: [], results: [], at: now,
+      attempt: { id: 'w1:a1', n: 1, status: 'working', startedAt: now, updatedAt: now },
+      verification: { state: 'pending', status: 'pending', evidenceIds: [], checks: [], missing: [] },
+      evidence: [],
+    },
+  }
+  writeFileSync(join(home, 'state.json'), JSON.stringify(team))
+
+  const first = await start(home)
+  await first.rt.deliver({
+    fromId: 'a', toId: 'b', role: 'request', exchangeId: 'w1', text: 'Review the repair.',
+    taskId: 'handoff:w1', attemptId: 'w1:a1',
+  })
+  const delivered = first.agentOf('b').calls[0]
+  run(first, 'b', 1, delivered)
+  await delay(20)
+  await first.stop()
+
+  const second = await start(home)
+  await delay(3300)
+  assert.equal(second.agentOf('b').calls.length, 1)
+  assert.deepEqual(
+    [second.agentOf('b').calls[0].source.taskId, second.agentOf('b').calls[0].source.attemptId, second.agentOf('b').calls[0].source.resumed],
+    ['handoff:w1', 'w1:a1', true],
+  )
+  const work = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  assert.equal(work.attempt.id, 'w1:a1')
+  run(second, 'b', 1, second.agentOf('b').calls[0])
+  await delay(20)
+  const resumedWork = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  assert.equal(resumedWork.recovery.length, 1)
+  assert.equal(resumedWork.recovery[0].attemptId, 'w1:a1')
+  assert.equal(resumedWork.recovery[0].kind, 'resumed')
+  await second.stop()
+})
+
 test('a restart reconciles pending evidence into the same task attempt', async (t) => {
   const home = freshHome(t)
   const now = Date.now()
@@ -244,6 +286,7 @@ test('a turn the shutdown cut off does not swallow a note that was never sent', 
   const second = await start(home, logs)
   await delay(3300)
   assert.equal(second.agentOf('b').calls.length, 1)
+  assert.equal(second.agentOf('b').calls[0].source.resent, true)
   await second.stop()
 })
 
@@ -269,6 +312,7 @@ test('a turn DSH disposed does not swallow a note that was never sent', async (t
   const second = await start(home, logs)
   await delay(3300)
   assert.equal(second.agentOf('b').calls.length, 1)
+  assert.equal(second.agentOf('b').calls[0].source.resent, true)
   await second.stop()
 })
 

@@ -1,0 +1,283 @@
+{
+  "schema": 1,
+  "scenario": "chief-forge-prism-mcp-repair",
+  "generatedAt": "2026-11-16T16:18:40.511Z",
+  "outcome": "verified",
+  "mocking": "scripted-model-acceptance-only",
+  "chief": {
+    "role": "Coordinator",
+    "view": "Reality Gate",
+    "stages": [
+      {
+        "title": "Repair",
+        "owner": "Forge",
+        "checks": [
+          "repair-diff",
+          "repair-command",
+          "forge-handoff"
+        ]
+      },
+      {
+        "title": "Review",
+        "owner": "Prism",
+        "checks": [
+          "review-diff",
+          "review-tests",
+          "review-inventory",
+          "no-dsh-patch",
+          "prism-review"
+        ]
+      }
+    ],
+    "definitionOfDone": "Forge returns a structured repair artifact; Prism verifies the actual diff, official MCP inventory behavior, tests and the no-DSH-patch invariant."
+  },
+  "forge": {
+    "role": "Engineer",
+    "taskId": "goal:goal-45d6d9f4:s1:t1",
+    "attemptId": "t1:a1",
+    "worktree": {
+      "isolated": true,
+      "baselineCommit": "4b48417251365d0ad5c9a1f5bb958cee6e8fd050",
+      "changedPaths": [
+        "ds-bot/src/host/local-agents/mcp.js"
+      ]
+    },
+    "handoff": {
+      "schema": 1,
+      "owner": {
+        "name": "Forge",
+        "role": "Engineer"
+      },
+      "changedPaths": [
+        "ds-bot/src/host/local-agents/mcp.js"
+      ],
+      "commands": [
+        {
+          "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs",
+          "exitCode": 1,
+          "result": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private<temporary-run>/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1"
+        },
+        {
+          "command": "node test/acceptance/fixtures/repair-mcp-drift.mjs",
+          "exitCode": 0,
+          "result": "{\"repaired\":true,\"path\":\"ds-bot/src/host/local-agents/mcp.js\"}"
+        },
+        {
+          "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs",
+          "exitCode": 0,
+          "result": "{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}"
+        },
+        {
+          "command": "git diff --check",
+          "exitCode": 0,
+          "result": ""
+        }
+      ],
+      "results": {
+        "inventory": {
+          "tools": [
+            "mcp__github__search"
+          ],
+          "initialRevision": "5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8",
+          "changedRevision": "ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba"
+        },
+        "diffDigest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+      },
+      "limitations": "The model turn is scripted DSH Session data; source edits, official MCP loopback behavior, team tools, persistence and restart recovery are executed by the acceptance harness."
+    }
+  },
+  "restart": {
+    "boundary": "after-forge-durable-result-before-prism-pickup",
+    "hostStarts": 2,
+    "sameTaskId": "goal:goal-45d6d9f4:s2:t2",
+    "sameAttemptId": "t2:a1",
+    "queuedBeforeRestart": true,
+    "prismPickupsBeforeRestart": 0,
+    "prismPickupsAfterRestart": 1,
+    "recoveryKind": "resent"
+  },
+  "prism": {
+    "taskId": "goal:goal-45d6d9f4:s2:t2",
+    "attemptId": "t2:a1",
+    "handoffTaskId": "handoff:56315efe-cb66-4af0-9626-0eaac433d97c",
+    "checks": {
+      "diff": {
+        "verified": true,
+        "command": "git diff --check",
+        "exitCode": 0
+      },
+      "tests": {
+        "verified": true,
+        "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
+        "exitCode": 0,
+        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208"
+      },
+      "inventory": {
+        "verified": true,
+        "result": {
+          "tools": [
+            "mcp__github__search"
+          ],
+          "initialRevision": "5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8",
+          "changedRevision": "ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba"
+        },
+        "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
+      },
+      "noDshPatch": {
+        "verified": true,
+        "result": {
+          "changedPaths": [
+            "ds-bot/src/host/local-agents/mcp.js"
+          ],
+          "dshPatched": false
+        },
+        "command": "node test/acceptance/fixtures/no-dsh-patch.mjs"
+      }
+    },
+    "review": {
+      "schema": 1,
+      "owner": {
+        "name": "Prism",
+        "role": "Reviewer"
+      },
+      "taskId": "goal:goal-45d6d9f4:s2:t2",
+      "attemptId": "t2:a1",
+      "checks": {
+        "diff": {
+          "verified": true,
+          "command": "git diff --check",
+          "exitCode": 0
+        },
+        "tests": {
+          "verified": true,
+          "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
+          "exitCode": 0,
+          "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208"
+        },
+        "inventory": {
+          "verified": true,
+          "result": {
+            "tools": [
+              "mcp__github__search"
+            ],
+            "initialRevision": "5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8",
+            "changedRevision": "ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba"
+          },
+          "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
+        },
+        "noDshPatch": {
+          "verified": true,
+          "result": {
+            "changedPaths": [
+              "ds-bot/src/host/local-agents/mcp.js"
+            ],
+            "dshPatched": false
+          },
+          "command": "node test/acceptance/fixtures/no-dsh-patch.mjs"
+        }
+      },
+      "limitations": "This is a mock-model acceptance run, not evidence of a paid production model turn."
+    }
+  },
+  "detail": {
+    "owner": {
+      "role": "Reviewer"
+    },
+    "attempt": {
+      "id": "t2:a1",
+      "number": 1,
+      "status": "working",
+      "startedAt": 1794845916288,
+      "updatedAt": 1794845919563,
+      "sessionId": "prism",
+      "exchangeId": "56315efe-cb66-4af0-9626-0eaac433d97c",
+      "turn": 1
+    },
+    "handoff": {
+      "id": "56315efe-cb66-4af0-9626-0eaac433d97c",
+      "parentId": null,
+      "name": "Review the MCP repair",
+      "status": "active",
+      "from": {
+        "id": "chief",
+        "name": "Chief"
+      },
+      "to": {
+        "id": "prism",
+        "name": "Prism"
+      },
+      "open": 0,
+      "results": 0
+    },
+    "checkpoint": {
+      "text": "Task attempt started.",
+      "at": 1794845916288,
+      "kind": "progress"
+    },
+    "recovery": {
+      "state": "recovered",
+      "records": [
+        {
+          "id": "t2:a1:resent:56315efe-cb66-4af0-9626-0eaac433d97c",
+          "at": 1794845919563,
+          "attemptId": "t2:a1",
+          "kind": "resent",
+          "summary": "The queued handoff was delivered again after the host restarted.",
+          "sessionId": "prism"
+        }
+      ]
+    }
+  },
+  "verification": {
+    "status": "verified",
+    "reason": "All declared acceptance checks are bound to fresh evidence."
+  },
+  "typedEvidence": [
+    {
+      "id": "ev:tool-result:prism:prism-1-git-diff-check",
+      "trust": "verified",
+      "title": "",
+      "text": "",
+      "sourceId": "tool-result"
+    },
+    {
+      "id": "ev:tool-result:prism:prism-1-node-test-test-acceptance-fixtures-mcp-i",
+      "trust": "verified",
+      "title": "",
+      "text": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208",
+      "sourceId": "tool-result"
+    },
+    {
+      "id": "ev:tool-result:prism:prism-1-node-test-acceptance-fixtures-mcp-invent",
+      "trust": "verified",
+      "title": "",
+      "text": "{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}",
+      "sourceId": "tool-result"
+    },
+    {
+      "id": "ev:tool-result:prism:prism-1-node-test-acceptance-fixtures-no-dsh-pat",
+      "trust": "verified",
+      "title": "",
+      "text": "{\"changedPaths\":[\"ds-bot/src/host/local-agents/mcp.js\"],\"dshPatched\":false}",
+      "sourceId": "tool-result"
+    },
+    {
+      "id": "ev:artifact:prism:26:prism-review.json",
+      "trust": "verified",
+      "title": "",
+      "text": "prism-review.json",
+      "sourceId": "deliverable"
+    }
+  ],
+  "mockSeams": [
+    "scripted DSH Session events replace a paid model response",
+    "in-memory DSH agent handles replace Desktop/Web GUI processes",
+    "temporary DSH_HOME is created under the OS temp directory and removed",
+    "the isolated git worktree is created and removed only by this harness"
+  ],
+  "limitations": [
+    "The model choice and tool sequence are scripted; no production model claim is made.",
+    "The run proves the existing DS Bot runtime, team tools, persistence, recovery and official MCP loopback behavior under that scripted seam.",
+    "No commit, push, deployment, external message or paid operation is performed."
+  ]
+}

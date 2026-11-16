@@ -7,6 +7,39 @@ import { buildTaskDetail, taskSessionIds } from '../src/host/task-detail.js'
 const NOW = Date.parse('2026-11-16T12:00:00+08:00')
 const day = (offset, hour = 12) => Date.parse(`2026-11-${String(16 + offset).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00+08:00`)
 
+test('buildTaskDetail exposes the attempt, handoff route, and persisted recovery record', () => {
+  const state = {
+    bots: {
+      chief: { id: 'chief', name: 'Chief', role: 'Coordinator' },
+      prism: { id: 'prism', name: 'Prism', role: 'Reviewer', sessionId: 'prism-chat' },
+    },
+    rooms: { r1: { id: 'r1', name: 'Delivery' } },
+    works: {
+      w0: { from: 'prism', to: 'chief', open: ['w1'], results: [], at: NOW - 400 },
+      w1: {
+        from: 'chief', to: 'prism', parent: 'w0', open: [], results: [], name: 'Review the MCP repair', at: NOW - 300,
+        attempt: { id: 'w1:a1', n: 1, status: 'working', startedAt: NOW - 300, updatedAt: NOW - 100, sessionId: 'prism-chat', exchangeId: 'review-1', turn: 7 },
+        checkpoint: { at: NOW - 100, attemptId: 'w1:a1', kind: 'progress', summary: 'Tests started.' },
+        recovery: [{ id: 'w1:a1:resent:review-1', at: NOW - 50, attemptId: 'w1:a1', kind: 'resent', summary: 'Delivered once after the host restarted.', sessionId: 'prism-chat' }],
+      },
+    },
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId: 'handoff:w1', now: NOW })
+  assert.deepEqual(detail.attempt, {
+    id: 'w1:a1', number: 1, status: 'working', startedAt: NOW - 300, updatedAt: NOW - 100,
+    sessionId: 'prism-chat', exchangeId: 'review-1', turn: 7,
+  })
+  assert.deepEqual(detail.handoff, {
+    id: 'w1', parentId: 'w0', name: 'Review the MCP repair', status: 'active',
+    from: { id: 'chief', name: 'Chief' }, to: { id: 'prism', name: 'Prism' }, open: 0, results: 0,
+  })
+  assert.deepEqual(detail.recovery, {
+    state: 'recovered',
+    records: [{ id: 'w1:a1:resent:review-1', at: NOW - 50, attemptId: 'w1:a1', kind: 'resent', summary: 'Delivered once after the host restarted.', sessionId: 'prism-chat' }],
+  })
+})
+
 test('buildTaskDetail does not promote done status or prose into verified evidence', () => {
   const state = {
     mainBotIds: ['chief'],
