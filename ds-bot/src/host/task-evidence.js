@@ -23,6 +23,55 @@ export const diffDigest = diffs => canonicalDigest((Array.isArray(diffs) ? diffs
   newText: text(item?.newText),
 })).sort((a, b) => a.path.localeCompare(b.path)))
 
+export class PendingCallCache {
+  constructor({ limit = 256 } = {}) {
+    this.limit = Number.isInteger(limit) && limit > 0 ? limit : 256
+    this.callsBySession = new Map()
+    this.count = 0
+  }
+
+  get size() {
+    return this.count
+  }
+
+  remember(sessionId, callId, value) {
+    let calls = this.callsBySession.get(sessionId)
+    if (calls === undefined) {
+      calls = new Map()
+      this.callsBySession.set(sessionId, calls)
+    }
+    if (calls.has(callId)) {
+      calls.delete(callId)
+      this.count -= 1
+    }
+    calls.set(callId, value)
+    this.count += 1
+    while (this.count > this.limit) {
+      const [oldestSession, oldestCalls] = this.callsBySession.entries().next().value
+      const [oldestCall] = oldestCalls.keys()
+      oldestCalls.delete(oldestCall)
+      this.count -= 1
+      if (oldestCalls.size === 0) this.callsBySession.delete(oldestSession)
+    }
+  }
+
+  take(sessionId, callId) {
+    const calls = this.callsBySession.get(sessionId)
+    if (calls === undefined) return undefined
+    const value = calls.get(callId)
+    if (value === undefined) return undefined
+    calls.delete(callId)
+    this.count -= 1
+    if (calls.size === 0) this.callsBySession.delete(sessionId)
+    return value
+  }
+
+  clearSession(sessionId) {
+    this.count -= this.callsBySession.get(sessionId)?.size ?? 0
+    this.callsBySession.delete(sessionId)
+  }
+}
+
 const commandOf = (argumentsText) => {
   let args = argumentsText
   if (typeof argumentsText === 'string') {
@@ -49,6 +98,31 @@ export function noteAttemptRecovery(record, { attemptId, info, sessionId, now = 
     { id, at: now, attemptId, kind, summary, ...(text(sessionId) ? { sessionId: text(sessionId) } : {}), ...(exchangeId ? { exchangeId } : {}) },
   ].slice(-16)
   record.attempt = { ...record.attempt, recoveredAt: now }
+  return true
+}
+
+export function noteRecoveryNeeded(record, { attemptId, sessionId, reason, now = Date.now() } = {}) {
+  if (!record || typeof record !== 'object') return false
+  const id = `${text(attemptId) || text(sessionId) || 'attempt'}:needs-review`
+  record.recovery = [
+    ...(Array.isArray(record.recovery) ? record.recovery.filter(item => item?.id !== id) : []),
+    {
+      id,
+      at: now,
+      attemptId: text(attemptId) || null,
+      kind: 'needs-review',
+      summary: reason ?? 'Session events could not be matched to this task attempt after a restart; recover it before accepting the result.',
+      ...(text(sessionId) ? { sessionId: text(sessionId) } : {}),
+    },
+  ].slice(-16)
+  return true
+}
+
+export function clearRecoveryNeeded(record) {
+  if (!Array.isArray(record?.recovery)) return false
+  const recovery = record.recovery.filter(item => item?.kind !== 'needs-review')
+  if (recovery.length === record.recovery.length) return false
+  record.recovery = recovery
   return true
 }
 
@@ -90,6 +164,9 @@ export function evidenceFromEvents({ sessionId, actor, events } = {}) {
       const output = contentText(event.data?.message?.content)
       const meta = event.data?.meta ?? event.data?.message?.meta
       const diffs = Array.isArray(meta?.diffs) ? meta.diffs : []
+      const diffPaths = [...new Set(diffs.map(item => text(item.path)).filter(Boolean))].sort()
+      const hashableDiff = diffs.every(item => typeof item?.path === 'string' && item.path !== ''
+        && typeof item.oldText === 'string' && typeof item.newText === 'string')
       evidence.push({
         id: `ev:tool-result:${text(sessionId)}:${callId}`,
         state: 'executed',
@@ -100,7 +177,7 @@ export function evidenceFromEvents({ sessionId, actor, events } = {}) {
         actor,
         summary: output,
         ...(call.command === undefined ? {} : { command: { text: call.command, ...(exitCode === undefined ? {} : { exitCode }), outputDigest: digest(output) } }),
-        ...(diffs.length === 0 ? {} : { diff: { paths: [...new Set(diffs.map(item => text(item.path)).filter(Boolean))].sort(), digest: diffDigest(diffs) } }),
+        ...(diffPaths.length === 0 ? {} : { diff: { paths: diffPaths, ...(hashableDiff ? { digest: diffDigest(diffs) } : {}) } }),
         record: { sessionId, seq, callId, tool: call.tool },
       })
     } else if (event?.type === 'deliverables/presented') {
@@ -139,7 +216,7 @@ function matchesCheck(check, item) {
   }
   if (check.kind === 'diff') {
     return item.diff?.paths?.includes(check.path) === true
-      && item.diff?.digest !== undefined
+      && typeof item.diff?.digest === 'string' && item.diff.digest !== ''
       && (check.expect?.digest === undefined || item.diff.digest === check.expect.digest)
   }
   return false
@@ -176,8 +253,8 @@ export function verifyAcceptance({ checks = [], evidence = [], now = Date.now() 
 export function invalidateAcceptance(verification, { artifacts = {}, diffs = {} } = {}, now = Date.now()) {
   if (verification?.state !== 'verified') return verification
   const invalidated = [
-    ...Object.entries(verification.artifactDigests ?? {}).filter(([path, value]) => artifacts[path] !== undefined && artifacts[path] !== value).map(([path]) => path),
-    ...Object.entries(verification.diffDigests ?? {}).filter(([path, value]) => diffs[path] !== undefined && diffs[path] !== value).map(([path]) => path),
+    ...Object.entries(verification.artifactDigests ?? {}).filter(([path, value]) => Object.hasOwn(artifacts, path) && artifacts[path] !== value).map(([path]) => path),
+    ...Object.entries(verification.diffDigests ?? {}).filter(([path, value]) => Object.hasOwn(diffs, path) && diffs[path] !== value).map(([path]) => path),
   ]
   if (invalidated.length === 0) return verification
   return { ...verification, state: 'stale', status: 'stale', invalidatedAt: now, invalidated }
@@ -201,11 +278,13 @@ export function progressFingerprint(evidence = []) {
 
 export function progressAfterTurn(progress, evidence = [], { now = Date.now(), limit = 2 } = {}) {
   const fingerprint = progressFingerprint(evidence)
-  const unchanged = progress === undefined ? fingerprint === progressFingerprint([]) : progress.fingerprint === fingerprint
+  const baseline = progress?.lastTurnFingerprint ?? progress?.fingerprint ?? progressFingerprint([])
+  const unchanged = baseline === fingerprint
   const unchangedTurns = unchanged ? (progress?.unchangedTurns ?? 0) + 1 : 0
   return {
     state: unchangedTurns >= limit ? 'stalled' : 'moving',
     fingerprint,
+    lastTurnFingerprint: fingerprint,
     unchangedTurns,
     ...(unchanged ? {} : { changedAt: now }),
   }

@@ -41,6 +41,12 @@ const bundled = async () => {
 }
 const mod = await bundled()
 
+test('team activity type sizes and elevation use the shared UI scale', () => {
+  assert.doesNotMatch(mod.TEAM_ACTIVITY_CSS, /font-size:10px;line-height:(?:14|16)px/)
+  assert.doesNotMatch(mod.TEAM_ACTIVITY_CSS, /rgba\(/)
+  assert.match(mod.TEAM_ACTIVITY_CSS, /\.bt-trace-tab\[aria-pressed=true\]\{[^}]*box-shadow:var\(--bt-card-shadow\)/)
+})
+
 const text = node => {
   if (node === null || node === undefined || node === false) return ''
   if (typeof node !== 'object') return String(node)

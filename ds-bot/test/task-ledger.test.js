@@ -83,26 +83,28 @@ test('taskRow carries the configured local day and its event', () => {
   assert.equal(row.id, 'a')
 })
 
-test('the report reads by row time, not by the file named for another day', (t) => {
+test('the report filters rows after selecting candidate day files', (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'ds-bot-tasks-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const first = Date.UTC(2026, 10, 15, 12)
+  const second = Date.UTC(2026, 10, 16, 12)
   writeFileSync(join(dir, 'tasks-2026-11-15.jsonl'), [
-    JSON.stringify({ kind: 'open', id: 'old', day: '2026-11-15', time: 100 }),
+    JSON.stringify({ kind: 'open', id: 'old', day: '2026-11-15', time: first - 1_000 }),
     '{torn',
     JSON.stringify({ kind: 'close', id: 'bad-time', day: '2026-11-15', time: 'not-a-time' }),
     JSON.stringify({ kind: 'brainstorm', id: 'bad-kind', day: '2026-11-15', time: 220 }),
-    JSON.stringify({ kind: 'close', id: 'old', day: '2026-11-15', time: 200, outcome: 'answered' }),
+    JSON.stringify({ kind: 'close', id: 'old', day: '2026-11-15', time: first + 31 * 60_000, outcome: 'answered' }),
     '',
   ].join('\n'))
-  writeFileSync(join(dir, 'tasks-2026-11-16.jsonl'), JSON.stringify({ kind: 'open', id: 'new', day: '2026-11-16', time: 300 }) + '\n')
+  writeFileSync(join(dir, 'tasks-2026-11-16.jsonl'), JSON.stringify({ kind: 'open', id: 'new', day: '2026-11-16', time: second - 1_000 }) + '\n')
   writeFileSync(join(dir, 'notes.jsonl'), JSON.stringify({ kind: 'open', id: 'noise', time: 200 }) + '\n')
 
   const warn = []
-  const ledger = readTaskLedger(dir, 150, 250, message => warn.push(message))
-  assert.deepEqual(ledger.rows.map(row => [row.kind, row.id, row.time]), [['close', 'old', 200]])
+  const ledger = readTaskLedger(dir, first + 30 * 60_000, second + 30 * 60_000, message => warn.push(message))
+  assert.deepEqual(ledger.rows.map(row => [row.kind, row.id, row.time]), [['close', 'old', first + 31 * 60_000], ['open', 'new', second - 1_000]])
   assert.deepEqual(warn, ['task ledger: skipped 3 bad rows in tasks-2026-11-15.jsonl'])
   assert.deepEqual(ledger.files, ['tasks-2026-11-15.jsonl', 'tasks-2026-11-16.jsonl'])
-  assert.deepEqual(ledger.days, ['2026-11-15'])
+  assert.deepEqual(ledger.days, ['2026-11-15', '2026-11-16'])
 })
 
 test('the host writes the event under the configured local day', (t) => {
@@ -135,10 +137,32 @@ test('a warm ledger cache sees an appended row without losing its file entry', (
   const dir = mkdtempSync(join(tmpdir(), 'ds-bot-tasks-cache-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   const file = join(dir, 'tasks-2026-11-15.jsonl')
-  writeFileSync(file, JSON.stringify({ kind: 'open', id: 'a', day: '2026-11-15', time: 100 }) + '\n')
+  const time = Date.parse('2026-11-15T00:00:00Z')
+  writeFileSync(file, JSON.stringify({ kind: 'open', id: 'a', day: '2026-11-15', time }) + '\n')
   const cache = new Map()
   assert.deepEqual(readTaskLedger(dir, 0, Number.MAX_SAFE_INTEGER, () => {}, cache).rows.map(row => row.id), ['a'])
-  appendFileSync(file, JSON.stringify({ kind: 'close', id: 'a', outcome: 'answered', day: '2026-11-15', time: 200 }) + '\n')
+  appendFileSync(file, JSON.stringify({ kind: 'close', id: 'a', outcome: 'answered', day: '2026-11-15', time: time + 100 }) + '\n')
   assert.deepEqual(readTaskLedger(dir, 0, Number.MAX_SAFE_INTEGER, () => {}, cache).rows.map(row => [row.kind, row.id]), [['open', 'a'], ['close', 'a']])
   assert.equal(cache.size, 1)
+})
+
+test('the report skips ledger files outside the time window before reading them', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'ds-bot-tasks-window-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  writeFileSync(join(dir, 'tasks-2026-10-01.jsonl'), '{torn\n')
+  writeFileSync(join(dir, 'tasks-2026-11-16.jsonl'), JSON.stringify({
+    kind: 'open', id: 'current', day: '2026-11-16', time: Date.UTC(2026, 10, 15, 16, 30),
+  }) + '\n')
+  const warn = []
+  const ledger = readTaskLedger(
+    dir,
+    Date.UTC(2026, 10, 15, 15, 30),
+    Date.UTC(2026, 10, 16, 15, 30),
+    message => warn.push(message),
+    undefined,
+    'Asia/Shanghai',
+  )
+  assert.deepEqual(ledger.files, ['tasks-2026-11-16.jsonl'])
+  assert.deepEqual(ledger.rows.map(row => row.id), ['current'])
+  assert.deepEqual(warn, [])
 })

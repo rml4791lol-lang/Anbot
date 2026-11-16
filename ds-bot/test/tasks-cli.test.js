@@ -35,8 +35,8 @@ test('the task report filters by row time and keeps board rows separate', (t) =>
     { kind: 'close', id: 'b', time: now - 0.25 * hour, outcome: 'abandoned', day: '2026-11-16' },
     { kind: 'open', id: 'c', time: now - 0.1 * hour, day: '2026-11-16' },
   ]
-  // The file name is deliberately wrong: the report must trust row.time.
-  writeFileSync(join(ledger, 'tasks-1999-01-01.jsonl'), rows.map(row => JSON.stringify(row)).join('\n') + '\n')
+  // The file is one file day earlier, so it remains a candidate while row.time decides.
+  writeFileSync(join(ledger, 'tasks-2026-11-15.jsonl'), rows.map(row => JSON.stringify(row)).join('\n') + '\n')
   writeFileSync(join(archive, 'ops.jsonl'), [
     { bot: 'ops', kind: 'delivery', what: 'done', at: new Date(now - hour).toISOString() },
     { bot: 'ops', kind: 'decision', what: 'choose', at: new Date(now - 2 * hour).toISOString() },
@@ -54,7 +54,7 @@ test('the task report filters by row time and keeps board rows separate', (t) =>
   assert.equal(report.pending, 1)
   assert.equal(report.completion, '1/3 (33.3%)')
   assert.equal(report.abandonRate, '1/3 (33.3%)')
-  assert.deepEqual(report.files, ['tasks-1999-01-01.jsonl'])
+  assert.deepEqual(report.files, ['tasks-2026-11-15.jsonl'])
   assert.deepEqual(report.daysSeen, ['2026-11-16'])
   assert.deepEqual(report.board, { total: 2, delivery: 1, decision: 1, blocked: 0, undated: 1 })
 })

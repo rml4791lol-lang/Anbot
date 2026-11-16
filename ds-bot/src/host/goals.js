@@ -9,9 +9,12 @@ import { GOAL_IDLE_NUDGES, SOURCE_KIND } from './constants.js'
 import { headOf } from './text.js'
 import { output } from './tools.js'
 import {
+  PendingCallCache,
+  clearRecoveryNeeded,
   evidenceFromEvents,
   invalidateAcceptance,
   noteAttemptRecovery,
+  noteRecoveryNeeded,
   progressAfterTurn,
   progressFingerprint,
   verifyAcceptance,
@@ -51,6 +54,7 @@ export const TASK_LABEL = { pending: 'not started', working: 'working', reported
 const goalId = () => `goal-${randomUUID().replace(/-/g, '').slice(0, 8)}`
 
 const attemptId = (task, n) => `${task.id}:a${n}`
+const valueText = value => (value === undefined || value === null ? '' : String(value))
 
 const pendingVerification = (checks = []) => ({
   state: 'pending',
@@ -65,14 +69,25 @@ const artifactFacts = (evidence = []) => {
   const artifacts = {}
   const diffs = {}
   for (const item of evidence) {
-    if (item?.artifact?.path && item.artifact.digest) artifacts[item.artifact.path] = item.artifact.digest
-    for (const path of item?.diff?.paths ?? []) if (item.diff.digest) diffs[path] = item.diff.digest
+    if (item?.artifact?.path) {
+      artifacts[item.artifact.path] = typeof item.artifact.digest === 'string' && item.artifact.digest !== '' ? item.artifact.digest : null
+    }
+    for (const path of item?.diff?.paths ?? []) {
+      diffs[path] = typeof item.diff?.digest === 'string' && item.diff.digest !== '' ? item.diff.digest : null
+    }
   }
   return { artifacts, diffs }
 }
 
 const currentEvidence = task => (Array.isArray(task?.evidence) ? task.evidence : [])
   .filter(item => task?.attempt?.id === undefined || item?.attemptId === task.attempt.id)
+
+const currentFingerprint = (progress, fingerprint) => ({
+  ...progress,
+  lastTurnFingerprint: progress?.lastTurnFingerprint ?? progress?.fingerprint ?? progressFingerprint([]),
+  fingerprint,
+  state: 'moving',
+})
 
 function cleanChecks(list, stageNumber, action) {
   if (list === undefined) return {}
@@ -85,8 +100,8 @@ function cleanChecks(list, stageNumber, action) {
       return { error: `A check in ${place} must be an object.` }
     }
     const kind = String(item.kind ?? '').trim()
-    if (!['command', 'artifact', 'diff', 'review', 'manual'].includes(kind)) {
-      return { error: `A check in ${place} needs kind command, artifact, diff, review, or manual.` }
+    if (!['command', 'artifact', 'diff'].includes(kind)) {
+      return { error: `A check in ${place} needs kind command, artifact, or diff.` }
     }
     const id = String(item.id ?? `c${index + 1}`).trim()
     if (id === '' || id.length > 80) return { error: `A check in ${place} has an invalid id.` }
@@ -400,6 +415,7 @@ function startTaskAttempt(task, now, extra = {}) {
   task.progress = {
     state: 'moving',
     fingerprint: progressFingerprint(currentEvidence(task)),
+    lastTurnFingerprint: progressFingerprint(currentEvidence(task)),
     unchangedTurns: 0,
     changedAt: now,
   }
@@ -492,7 +508,7 @@ export function passGoal(room, input, by, now = Date.now()) {
   const verification = verifyStage(stage, now)
   if (stage.verification?.manual !== true && verification.state !== 'verified') {
     const missing = verification.missing.length > 0 ? verification.missing.join(', ') : 'required checks'
-    return { error: `Acceptance checks are not verified: ${missing}. Supply matching command, artifact, diff, or independent review evidence.` }
+    return { error: `Acceptance checks are not verified: ${missing}. Supply matching command, artifact, or diff evidence.` }
   }
   goal.status = 'active'
   stage.status = 'passed'
@@ -575,7 +591,7 @@ export function completeGoal(room, input, by, now = Date.now()) {
     overall = verifyAcceptance({ checks: goal.checks, evidence, now })
     if (overall.state !== 'verified') {
       const missing = overall.missing.length > 0 ? overall.missing.join(', ') : 'required checks'
-      return { error: `Overall acceptance checks are not verified: ${missing}. Supply matching command, artifact, diff, or independent review evidence.` }
+      return { error: `Overall acceptance checks are not verified: ${missing}. Supply matching command, artifact, or diff evidence.` }
     }
     const ids = new Set(overall.evidenceIds ?? Object.values(overall.checkEvidence ?? {}))
     for (const stage of goal.stages) {
@@ -677,7 +693,7 @@ const RESUME_LINE = 'The user resumed the goal. Take the next step now.'
 
 export function install(rt) {
   const { ctx, state } = rt
-  const callsBySession = new Map()
+  const callsBySession = new PendingCallCache()
   const tasksBySession = new Map()
 
   const memberOf = room => (ref) => {
@@ -941,7 +957,7 @@ export function install(rt) {
     if (rt.readOnly() !== undefined) return false
     const callId = String(event?.data?.callId ?? '')
     if (event?.type === 'tool/call' && callId !== '') {
-      callsBySession.set(`${sessionId}:${callId}`, {
+      callsBySession.remember(sessionId, callId, {
         seq: Number.isInteger(event.seq) ? event.seq - 1 : 0,
         type: 'tool/call',
         time: event.time,
@@ -951,7 +967,7 @@ export function install(rt) {
     }
     const events = []
     if (event?.type === 'tool/result') {
-      const call = callsBySession.get(`${sessionId}:${callId}`)
+      const call = callsBySession.take(sessionId, callId)
       if (call !== undefined) events.push(call)
     }
     events.push(event)
@@ -980,7 +996,7 @@ export function install(rt) {
       progressFingerprint: progressFingerprint(currentEvidence(task)),
     }
     task.attempt.updatedAt = now
-    task.progress = { ...task.progress, fingerprint: task.checkpoint.progressFingerprint, state: 'moving' }
+    task.progress = currentFingerprint(task.progress, task.checkpoint.progressFingerprint)
     touchGoal(target.goal, { kind: 'evidence', by: task.botId, stage: target.stage.id, text: headOf(task.checkpoint.summary, EVENT_TEXT_MAX) }, now, { keepNudges: true })
     void rt.save().catch(() => {})
     return true
@@ -1068,6 +1084,21 @@ export function install(rt) {
     return undefined
   }
 
+  function taskByAttempt(attemptId) {
+    if (valueText(attemptId) === '') return undefined
+    for (const room of Object.values(state.rooms ?? {})) {
+      for (const goal of [room.goal, ...(room.pastGoals ?? [])]) {
+        if (goal === undefined) continue
+        for (const [stageIndex, stage] of goal.stages.entries()) {
+          for (const task of stage.tasks) {
+            if (task.attempt?.id === attemptId) return { room, goal, stage, stageIndex, task }
+          }
+        }
+      }
+    }
+    return undefined
+  }
+
   function matchingTurns(events, trigger) {
     const turns = new Set()
     let turn
@@ -1086,16 +1117,26 @@ export function install(rt) {
 
   function reconcileEvidence(sessionId, events, trigger) {
     if (rt.readOnly() !== undefined || !Array.isArray(events) || events.length === 0) return false
-    let target = trigger?.taskId === undefined ? targetForSession(sessionId) : taskByIdentity(trigger.taskId, trigger.attemptId)
-    if (target === undefined && trigger?.taskId === undefined) {
-      target = targetForSession(sessionId)
+    if (valueText(trigger?.taskId) === '' && valueText(trigger?.attemptId) === '' && valueText(trigger?.exchangeId) === '') return false
+    let target
+    if (valueText(trigger.taskId) !== '') target = taskByIdentity(trigger.taskId, trigger.attemptId)
+    else if (valueText(trigger.attemptId) !== '') target = taskByAttempt(trigger.attemptId)
+    else {
+      const candidate = targetForSession(sessionId)
+      target = candidate?.task.attempt?.exchangeId === trigger.exchangeId ? candidate : undefined
     }
     if (target === undefined) return false
     const turns = matchingTurns(events, trigger)
-    const scoped = events.filter((event) => {
-      const turn = event.data?.turn
-      return turns.size === 0 || (Number.isInteger(turn) && turns.has(turn))
-    })
+    if (turns.size === 0) {
+      noteRecoveryNeeded(target.task, {
+        attemptId: target.task.attempt?.id,
+        sessionId,
+        reason: 'Session events could not be matched to this goal task attempt after a restart; recover it before accepting the result.',
+      })
+      void rt.save().catch(() => {})
+      return false
+    }
+    const scoped = events.filter(event => Number.isInteger(event.data?.turn) && turns.has(event.data.turn))
     const evidence = evidenceFromEvents({
       sessionId,
       actor: { botId: target.task.botId, sessionId },
@@ -1105,6 +1146,7 @@ export function install(rt) {
     const known = new Set((target.task.evidence ?? []).map(item => item.id))
     const added = evidence.filter(item => !known.has(item.id))
     if (added.length === 0) return false
+    clearRecoveryNeeded(target.task)
     target.task.evidence = [...(target.task.evidence ?? []), ...added].slice(-EVIDENCE_MAX)
     const last = added.at(-1)
     target.task.checkpoint = {
@@ -1117,7 +1159,7 @@ export function install(rt) {
       evidenceId: last.id,
       progressFingerprint: progressFingerprint(currentEvidence(target.task)),
     }
-    target.task.progress = { ...target.task.progress, fingerprint: target.task.checkpoint.progressFingerprint, state: 'moving' }
+    target.task.progress = currentFingerprint(target.task.progress, target.task.checkpoint.progressFingerprint)
     touchGoal(target.goal, { kind: 'evidence', by: target.task.botId, stage: target.stage.id, text: 'Recovered pending evidence after restart.' }, Date.now(), { keepNudges: true })
     void rt.save().catch(() => {})
     return true
@@ -1142,6 +1184,7 @@ export function install(rt) {
   }
 
   function finishTurn(sessionId, outcome = 'completed') {
+    callsBySession.clearSession(sessionId)
     if (rt.readOnly() !== undefined || outcome !== 'completed') return false
     const target = tasksBySession.get(sessionId) ?? targetForSession(sessionId)
     tasksBySession.delete(sessionId)
@@ -1192,7 +1235,7 @@ export function install(rt) {
           additionalProperties: true,
           properties: {
             id: { type: 'string' },
-            kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+            kind: { type: 'string', enum: ['command', 'artifact', 'diff'] },
             label: { type: 'string' },
             required: { type: 'boolean' },
             command: { type: 'string' },
@@ -1220,7 +1263,7 @@ export function install(rt) {
                 additionalProperties: true,
                 properties: {
                   id: { type: 'string' },
-                  kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+                  kind: { type: 'string', enum: ['command', 'artifact', 'diff'] },
                   label: { type: 'string' },
                   required: { type: 'boolean' },
                   command: { type: 'string' },
@@ -1228,7 +1271,7 @@ export function install(rt) {
                   expect: { type: 'object', additionalProperties: true },
                 },
               },
-              description: 'start, revise: typed acceptance checks. command needs command and expect.exitCode; artifact/diff need path and may pin expect.digest; review needs an independent reviewer; manual is never auto-verified',
+              description: 'start, revise: typed acceptance checks. command needs command and expect.exitCode; artifact/diff need path and may pin expect.digest',
             },
             tasks: {
               type: 'array',
@@ -1245,7 +1288,7 @@ export function install(rt) {
                       additionalProperties: true,
                       properties: {
                         id: { type: 'string' },
-                        kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+                        kind: { type: 'string', enum: ['command', 'artifact', 'diff'] },
                         label: { type: 'string' },
                         required: { type: 'boolean' },
                         command: { type: 'string' },

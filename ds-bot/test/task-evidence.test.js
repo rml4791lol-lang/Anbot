@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
+  PendingCallCache,
   evidenceFromEvents,
   invalidateAcceptance,
   progressAfterTurn,
+  progressFingerprint,
   verifyAcceptance,
 } from '../src/host/task-evidence.js'
 
@@ -113,6 +115,49 @@ test('new executed evidence resets the no-progress count', () => {
   assert.deepEqual([second.state, second.unchangedTurns], ['moving', 0])
   const third = progressAfterTurn(second, executed, { now: 12, limit: 2 })
   assert.deepEqual([third.state, third.unchangedTurns], ['moving', 1])
+})
+
+test('the turn-end baseline lets repeated productive evidence stay moving', () => {
+  let progress = {
+    state: 'moving',
+    fingerprint: progressFingerprint([]),
+    lastTurnFingerprint: progressFingerprint([]),
+    unchangedTurns: 0,
+  }
+  for (let turn = 1; turn <= 3; turn += 1) {
+    const evidence = [{ id: `ev-${turn}`, state: 'executed', source: 'tool-result', command: { text: `command-${turn}`, exitCode: 0 }, at: turn }]
+    const fingerprint = progressFingerprint(evidence)
+    progress = { ...progress, fingerprint }
+    progress = progressAfterTurn(progress, evidence, { now: turn, limit: 2 })
+    assert.deepEqual([progress.state, progress.unchangedTurns], ['moving', 0])
+  }
+})
+
+test('a missing current artifact or diff digest invalidates verified acceptance', () => {
+  const verification = {
+    state: 'verified', status: 'verified',
+    artifactDigests: { 'dist/app.zip': 'sha256:first' },
+    diffDigests: { 'src/app.js': 'sha256:diff' },
+  }
+  const stale = invalidateAcceptance(verification, {
+    artifacts: { 'dist/app.zip': undefined },
+    diffs: { 'src/app.js': undefined },
+  }, 14)
+  assert.equal(stale.state, 'stale')
+  assert.deepEqual(stale.invalidated, ['dist/app.zip', 'src/app.js'])
+})
+
+test('the pending tool-call cache is bounded and removes results it consumes', () => {
+  const cache = new PendingCallCache({ limit: 2 })
+  cache.remember('s', '1', { data: { callId: '1' } })
+  cache.remember('s', '2', { data: { callId: '2' } })
+  cache.remember('s', '3', { data: { callId: '3' } })
+  assert.equal(cache.size, 2)
+  assert.equal(cache.take('s', '1'), undefined)
+  assert.deepEqual(cache.take('s', '3')?.data, { callId: '3' })
+  assert.equal(cache.size, 1)
+  cache.clearSession('s')
+  assert.equal(cache.size, 0)
 })
 
 test('command exit and artifact digest must be present, not merely implied', () => {

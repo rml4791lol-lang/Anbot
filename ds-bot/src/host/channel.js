@@ -10,7 +10,8 @@ import { validateViewAnswer } from 'deep-view/core'
 import { readTeamBoardLines, teamBoardArchiveSignature, teamBoardDir, readTeamBoardArchive } from './team-board-feed.js'
 import { readTaskLedger } from './task-ledger.js'
 import { buildTeamActivity } from './team-activity.js'
-import { buildTaskDetail, taskSessionIds } from './task-detail.js'
+import { buildTaskDetail, redactCredentialText, taskSessionIds } from './task-detail.js'
+import { redactDeep } from './secrets.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
 
 const STAGED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -193,7 +194,7 @@ export function install(rt) {
     const since = now - 7 * 24 * 60 * 60 * 1000
     const sourceWarnings = []
     const timeZone = rt.config?.timeZone
-    const ledger = readTaskLedger(join(rt.home, 'ledger'), since, now, message => { sourceWarnings.push(message); ctx.logger?.warn?.(message) }, activityLedgerCache)
+    const ledger = readTaskLedger(join(rt.home, 'ledger'), since, now, message => { sourceWarnings.push(message); ctx.logger?.warn?.(message) }, activityLedgerCache, timeZone)
     const archiveDir = join(teamBoardDir(), 'archive')
     const archiveKey = teamBoardArchiveSignature(archiveDir)
     if (activityArchiveCache.key !== archiveKey) {
@@ -395,7 +396,8 @@ export function install(rt) {
           const taskId = String(body.taskId ?? '')
           if (taskId === '') return fail('No task named', 'bot/invalid')
           const detail = await taskDetailFor(taskId)
-          return ok({ ...detail, improvements: rt.improvementView?.(taskId) ?? { proposals: [], history: [] } })
+          const payload = { ...detail, improvements: rt.improvementView?.(taskId) ?? { proposals: [], history: [] } }
+          return ok(redactDeep(payload, value => redactCredentialText(rt.redactSecrets?.(value) ?? value)))
         }
         case 'room-progress': {
           // Any part id of the group's own Session means the group itself.

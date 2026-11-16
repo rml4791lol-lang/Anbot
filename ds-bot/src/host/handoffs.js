@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
 import { installTaskLog } from './task-ledger.js'
-import { evidenceFromEvents, noteAttemptRecovery, progressAfterTurn, progressFingerprint } from './task-evidence.js'
+import { PendingCallCache, clearRecoveryNeeded, evidenceFromEvents, noteAttemptRecovery, noteRecoveryNeeded, progressAfterTurn, progressFingerprint } from './task-evidence.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
@@ -30,7 +30,7 @@ export function install(rt) {
   const { ctx, state } = rt
   const logTask = installTaskLog(rt)
   const works = () => (state.works ??= {})
-  const callsBySession = new Map()
+  const callsBySession = new PendingCallCache()
   // What came back, whole; state.json keeps the start of each.
   const whole = new Map()
   const save = () => void rt.save().catch(() => {})
@@ -120,7 +120,7 @@ export function install(rt) {
       open: [], results: [], at: now,
       attempt,
       checkpoint: { at: now, attemptId: attempt.id, kind: 'progress', summary: 'Work started.', nextAction: name ?? 'Complete the requested work.' },
-      progress: { state: 'moving', fingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now },
+      progress: { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now },
       verification: { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' },
       evidence: [],
     }
@@ -238,11 +238,18 @@ export function install(rt) {
   const evidenceOf = work => (Array.isArray(work?.evidence) ? work.evidence : [])
     .filter(item => work?.attempt?.id === undefined || item.attemptId === work.attempt.id)
 
+  const currentFingerprint = (progress, fingerprint) => ({
+    ...progress,
+    lastTurnFingerprint: progress?.lastTurnFingerprint ?? progress?.fingerprint ?? progressFingerprint([]),
+    fingerprint,
+    state: 'moving',
+  })
+
   function ensureAttempt(id, work, now = Date.now()) {
     if (work.attempt === undefined) {
       work.attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
       work.checkpoint ??= { at: now, attemptId: work.attempt.id, kind: 'progress', summary: 'Recovered work.', nextAction: work.name ?? 'Continue the requested work.' }
-      work.progress ??= { state: 'moving', fingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now }
+      work.progress ??= { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now }
       work.verification ??= { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' }
       work.evidence ??= []
     }
@@ -259,7 +266,7 @@ export function install(rt) {
     if (rt.readOnly?.() !== undefined) return false
     const callId = String(event?.data?.callId ?? '')
     if (event?.type === 'tool/call' && callId !== '') {
-      callsBySession.set(`${sessionId}:${callId}`, {
+      callsBySession.remember(sessionId, callId, {
         seq: Number.isInteger(event.seq) ? event.seq - 1 : 0,
         type: 'tool/call',
         time: event.time,
@@ -269,7 +276,7 @@ export function install(rt) {
     }
     const events = []
     if (event?.type === 'tool/result') {
-      const call = callsBySession.get(`${sessionId}:${callId}`)
+      const call = callsBySession.take(sessionId, callId)
       if (call !== undefined) events.push(call)
     }
     events.push(event)
@@ -296,7 +303,7 @@ export function install(rt) {
       progressFingerprint: progressFingerprint(evidenceOf(work)),
     }
     work.attempt.updatedAt = now
-    work.progress = { ...work.progress, fingerprint: work.checkpoint.progressFingerprint, state: 'moving' }
+    work.progress = currentFingerprint(work.progress, work.checkpoint.progressFingerprint)
     save()
     return true
   }
@@ -322,6 +329,7 @@ export function install(rt) {
   }
 
   function finishTurn(sessionId, info, outcome = 'completed') {
+    callsBySession.clearSession(sessionId)
     if (rt.readOnly?.() !== undefined || outcome !== 'completed') return false
     const target = workForSession(info)
     if (target === undefined) return false
@@ -343,7 +351,8 @@ export function install(rt) {
 
   function reconcileEvidence(sessionId, events, trigger) {
     if (rt.readOnly?.() !== undefined || !Array.isArray(events) || events.length === 0) return false
-    const id = String(trigger?.taskId ?? '').startsWith('handoff:') ? String(trigger.taskId).slice('handoff:'.length) : undefined
+    const taskId = String(trigger?.taskId ?? '')
+    const id = taskId.startsWith('handoff:') ? taskId.slice('handoff:'.length) : String(trigger?.work ?? '') || undefined
     const work = id === undefined ? undefined : works()[id]
     if (work === undefined || (trigger?.attemptId !== undefined && work.attempt?.id !== trigger.attemptId)) return false
     ensureAttempt(id, work)
@@ -359,15 +368,22 @@ export function install(rt) {
         && (trigger?.attemptId === undefined || source.attemptId === trigger.attemptId)
         && Number.isInteger(turn)) turns.add(turn)
     }
-    const scoped = events.filter((event) => {
-      const value = event.data?.turn
-      return turns.size === 0 || (Number.isInteger(value) && turns.has(value))
-    })
+    if (turns.size === 0) {
+      noteRecoveryNeeded(work, {
+        attemptId: work.attempt?.id,
+        sessionId,
+        reason: 'Session events could not be matched to this hand-off attempt after a restart; recover it before accepting the result.',
+      })
+      save()
+      return false
+    }
+    const scoped = events.filter(event => Number.isInteger(event.data?.turn) && turns.has(event.data.turn))
     const evidence = evidenceFromEvents({ sessionId, actor: { sessionId }, events: scoped })
       .map(item => ({ ...item, attemptId: work.attempt.id }))
     const known = new Set(evidenceOf(work).map(item => item.id))
     const added = evidence.filter(item => !known.has(item.id))
     if (added.length === 0) return false
+    clearRecoveryNeeded(work)
     work.evidence = [...evidenceOf(work), ...added].slice(-32)
     const last = added.at(-1)
     work.checkpoint = {
@@ -380,7 +396,7 @@ export function install(rt) {
       evidenceId: last.id,
       progressFingerprint: progressFingerprint(evidenceOf(work)),
     }
-    work.progress = { ...work.progress, fingerprint: work.checkpoint.progressFingerprint, state: 'moving' }
+    work.progress = currentFingerprint(work.progress, work.checkpoint.progressFingerprint)
     save()
     return true
   }

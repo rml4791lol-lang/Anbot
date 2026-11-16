@@ -470,8 +470,8 @@ test('task detail reads bounded linked Session records and stays read-only on a 
           hasMore: false,
           records: [
             { event: { seq: 1, time: Date.now() - 3, type: 'turn/start', data: { turn: 1 } } },
-            { event: { seq: 2, time: Date.now() - 2, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Build it' }], source: { kind: 'ds-bot', role: 'request', taskId: 'goal:g1:s1:t1' } } } },
-            { event: { seq: 3, time: Date.now() - 1, type: 'tool/result', data: { turn: 1, message: { toolCallId: 'c1', ok: true, content: [{ type: 'text', text: 'tests pass' }] } } } },
+            { event: { seq: 2, time: Date.now() - 2, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Build it DATABASE_PASSWORD=trace-value' }], source: { kind: 'ds-bot', role: 'request', taskId: 'goal:g1:s1:t1' } } } },
+            { event: { seq: 3, time: Date.now() - 1, type: 'tool/result', data: { turn: 1, message: { toolCallId: 'c1', ok: true, content: [{ type: 'text', text: 'tests pass DATABASE_PASSWORD=trace-result-value' }] } } } },
           ],
         }
       },
@@ -482,21 +482,32 @@ test('task detail reads bounded linked Session records and stays read-only on a 
     bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer', instructions: '', createdAt: 1 } },
     rooms: {
       r1: {
-        id: 'r1', name: 'Delivery', named: true, sessionId: 'group-session', members: ['forge'], sessions: { forge: 'room-s1' },
+        id: 'r1', name: 'Delivery DATABASE_PASSWORD=room-name-value', named: true, sessionId: 'group-session', members: ['forge'], sessions: { forge: 'room-s1' },
         goal: {
-          id: 'g1', revision: 2, status: 'active', title: 'Ship MCP', updatedAt: Date.now(),
-          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'forge', task: 'Build it', status: 'working', attempt: { sessionId: 'room-s1' } }] }],
+          id: 'g1', revision: 2, status: 'active', title: 'Ship MCP DATABASE_PASSWORD=goal-title-value', updatedAt: Date.now(),
+          stages: [{
+            id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active',
+            tasks: [{
+              id: 't1', botId: 'forge', task: 'Build it DATABASE_PASSWORD=task-body-value', status: 'working', note: 'DATABASE_PASSWORD=note-value',
+              nextAction: 'DATABASE_PASSWORD=next-value', evidence: ['DATABASE_PASSWORD=evidence-value'], attempt: { sessionId: 'room-s1' },
+            }],
+          }],
         },
       },
     },
     works: {},
   }, { context })
   t.after(stop)
+  rt.improvementView = () => ({
+    proposals: [{ id: 'improvement-1', description: 'Use DATABASE_PASSWORD=improvement-value', nested: { credential: 'DATABASE_PASSWORD=nested-value' } }],
+    history: [],
+  })
   const result = await call('task-detail', { taskId: 'goal:g1:s1:t1' })
   assert.equal(result.ok, true)
   assert.deepEqual(result.value.trace.sessionIds, ['room-s1'])
   assert.equal(result.value.trace.records.find(item => item.type === 'tool/result').trust, 'executed')
   assert.deepEqual(pages.map(page => [page.address.sessionId, page.maxMessages]), [['room-s1', 60], ['group-session', 60]])
+  assert.doesNotMatch(JSON.stringify(result.value), /goal-title-value|room-name-value|task-body-value|note-value|next-value|evidence-value|trace-value|trace-result-value|improvement-value|nested-value/)
 
   rt.readOnly = () => 'Another host owns this team'
   const locked = await call('task-detail', { taskId: 'goal:g1:s1:t1' })

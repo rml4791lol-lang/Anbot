@@ -228,6 +228,89 @@ test('an open hand-off keeps its attempt, checkpoint, and executed evidence', as
   assert.match(diff.diff.digest, /^sha256:[a-f0-9]{64}$/)
 })
 
+test('repeated productive hand-off turns reset the unchanged-turn count', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer do it')
+  await first.tool('message_bot', { to: 'Writer', message: 'run the checks' }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId] = Object.entries(await worksIn(first)).find(([, work]) => work.to === 'b' && work.from === 'a')
+  const info = { work: workId }
+  for (let turn = 1; turn <= 3; turn += 1) {
+    rt.bindWorkAttempt('b', info, turn)
+    first.emit('b', 'tool/call', { callId: `productive-${turn}`, name: 'pwsh', arguments: JSON.stringify({ command: `command-${turn}` }) })
+    rt.noteWorkEvidence('b', {
+      seq: 2, type: 'tool/result', data: { callId: `productive-${turn}`, message: { ok: true, content: textBlock(`green-${turn}`) } },
+    }, info)
+    assert.equal(rt.finishWorkTurn('b', info, 'completed'), false)
+  }
+  const work = (await worksIn(first))[workId]
+  assert.equal(work.progress.state, 'moving')
+  assert.equal(work.progress.unchangedTurns, 0)
+  assert.equal(work.evidence.length, 3)
+})
+
+test('two genuinely unchanged hand-off turns still stall the work', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer do it')
+  await first.tool('message_bot', { to: 'Writer', message: 'run the checks' }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId] = Object.entries(await worksIn(first)).find(([, work]) => work.to === 'b' && work.from === 'a')
+  const info = { work: workId }
+  rt.bindWorkAttempt('b', info, 1)
+  assert.equal(rt.finishWorkTurn('b', info, 'completed'), false)
+  assert.equal(rt.finishWorkTurn('b', info, 'completed'), true)
+  const work = (await worksIn(first))[workId]
+  assert.equal(work.progress.state, 'stalled')
+  assert.equal(work.progress.unchangedTurns, 2)
+  assert.equal(work.verification.state, 'needs-review')
+  assert.match(work.checkpoint.summary, /No measurable progress/)
+})
+
+test('restart reconciliation fails closed and marks a hand-off recovery-needed for unrelated events', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer do it')
+  await first.tool('message_bot', { to: 'Writer', message: 'run the checks' }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId, before] = Object.entries(await worksIn(first)).find(([, work]) => work.to === 'b' && work.from === 'a')
+  const events = [
+    { seq: 1, type: 'turn/start', data: { turn: 1 } },
+    { seq: 2, type: 'assistant/message', data: { turn: 1, message: { content: textBlock('Unrelated report') } } },
+    { seq: 3, type: 'tool/call', data: { turn: 1, callId: 'other', name: 'pwsh', arguments: JSON.stringify({ command: 'other command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 1, callId: 'other', message: { ok: true, content: textBlock('green') } } },
+  ]
+  assert.equal(rt.reconcileWorkEvidence('b', events, {
+    taskId: `handoff:${workId}`, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), false)
+  const work = (await worksIn(first))[workId]
+  assert.equal(work.evidence.length, 0)
+  assert.equal(work.recovery[0].kind, 'needs-review')
+  assert.match(work.recovery[0].summary, /could not be matched/i)
+  const matching = [
+    { seq: 1, type: 'turn/start', data: { turn: 2 } },
+    {
+      seq: 2, type: 'user/message',
+      data: {
+        turn: 2, content: textBlock('Recovered hand-off'),
+        source: { kind: 'ds-bot', role: 'request', taskId: `handoff:${workId}`, attemptId: before.attempt.id, exchangeId: 'expected-exchange' },
+      },
+    },
+    { seq: 3, type: 'tool/call', data: { turn: 2, callId: 'matched', name: 'pwsh', arguments: JSON.stringify({ command: 'matched command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 2, callId: 'matched', message: { ok: true, content: textBlock('green') } } },
+  ]
+  assert.equal(rt.reconcileWorkEvidence('b', matching, {
+    taskId: `handoff:${workId}`, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), true)
+  const recovered = (await worksIn(first))[workId]
+  assert.equal(recovered.evidence.length, 1)
+  assert.equal(recovered.recovery.some(item => item.kind === 'needs-review'), false)
+})
+
 const LONG = '审查意见。'.repeat(1000)
 
 test('a result longer than 2,000 characters survives a restart before the Bot that asked for it answers', async (t) => {

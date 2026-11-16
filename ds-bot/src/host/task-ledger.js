@@ -13,6 +13,7 @@ import { join } from 'node:path'
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 const TASK_FILE_RE = /^tasks-\d{4}-\d{2}-\d{2}\.jsonl$/
 const dayFormats = new Map()
+const MAX_DATE_MS = 8_640_000_000_000_000
 
 // The day a row belongs to follows the team's configured time zone, as memory and
 // other user-facing dates do. The file name is only an index; the report filters on
@@ -43,6 +44,17 @@ export const taskRow = (event, time = Date.now(), timeZone) => ({
   time,
 })
 
+const boundDay = (time, timeZone) => taskDay(
+  Number.isFinite(time) ? Math.max(-MAX_DATE_MS, Math.min(MAX_DATE_MS, time)) : Date.now(),
+  timeZone,
+)
+
+const shiftDay = (day, days) => {
+  if (!DAY_RE.test(day)) return days < 0 ? '0000-01-01' : '9999-12-31'
+  const shifted = new Date(Date.parse(`${day}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10)
+  return DAY_RE.test(shifted) ? shifted : days < 0 ? '0000-01-01' : '9999-12-31'
+}
+
 export function installTaskLog(rt) {
   const dir = join(rt.home, 'ledger')
   return (event) => {
@@ -59,10 +71,19 @@ export function installTaskLog(rt) {
 
 // Read by event time, not by the file name: the window is half-open [since, until),
 // and a bad or unrelated line is skipped rather than stopping the report.
-export function readTaskLedger(dir, since, until, warn = () => {}, cache = undefined) {
+export function readTaskLedger(dir, since, until, warn = () => {}, cache = undefined, timeZone = undefined) {
   let names
   try {
-    names = readdirSync(dir).filter(name => TASK_FILE_RE.test(name)).sort()
+    const present = readdirSync(dir).filter(name => TASK_FILE_RE.test(name)).sort()
+    const firstDay = boundDay(since, timeZone)
+    const lastDay = until > since ? boundDay(until - 1, timeZone) : undefined
+    // A team that changes time zone can move a boundary row one file day either way.
+    const firstFileDay = lastDay === undefined ? undefined : shiftDay(firstDay, -1)
+    const lastFileDay = lastDay === undefined ? undefined : shiftDay(lastDay, 1)
+    names = lastDay === undefined ? [] : present.filter((name) => {
+      const fileDay = name.slice('tasks-'.length, -'.jsonl'.length)
+      return fileDay >= firstFileDay && fileDay <= lastFileDay
+    })
   } catch (error) {
     if (error?.code !== 'ENOENT') warn(`task ledger: cannot read ${dir}: ${error.message}`)
     return { rows: [], files: [], days: [] }

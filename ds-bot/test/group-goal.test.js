@@ -207,12 +207,32 @@ test('typed acceptance checks refuse prose and report the missing check', async 
   await startGoal(host, { stages: CHECKED_STAGES })
   host.emit('gb', 'assistant/message', { message: { content: [{ type: 'text', text: 'I ran npm test and it passed.' }] } })
   assert.equal(await host.tool('group_goal', { action: 'pass', evidence: 'I ran npm test and it passed.' }, 'ga'),
-    'Acceptance checks are not verified: tests. Supply matching command, artifact, diff, or independent review evidence.')
+    'Acceptance checks are not verified: tests. Supply matching command, artifact, or diff evidence.')
   assert.equal(goal(host).stages[0].status, 'active')
   const verification = goal(host).stages[0].verification
   assert.equal(verification.state, 'pending')
   assert.deepEqual(verification.checkEvidence, {})
   assert.deepEqual(verification.missing, ['tests'])
+})
+
+test('typed acceptance checks only accept command, artifact, and diff kinds', async (t) => {
+  const host = await start(t)
+  const run = args => host.tool('group_goal', args, 'ga')
+  for (const kind of ['review', 'manual']) {
+    await assert.rejects(run({
+      action: 'start', objective: 'o', acceptance: 'a',
+      stages: [{ title: 'S', acceptance: 'a', checks: [{ id: kind, kind }], tasks: [{ bot: 'Writer', task: 't' }] }],
+    }), error => error?.code === 'INVALID_ARGS' && /must be one of \["command","artifact","diff"\]/.test(error.message))
+  }
+  assert.equal(goal(host), undefined)
+  const tool = host.rt.teamTools.find(item => item.name === 'group_goal')
+  const enums = [
+    tool.parameters.properties.checks.items.properties.kind.enum,
+    tool.parameters.properties.stages.items.properties.checks.items.properties.kind.enum,
+    tool.parameters.properties.stages.items.properties.tasks.items.properties.checks.items.properties.kind.enum,
+  ]
+  assert.deepEqual(enums, Array(3).fill(['command', 'artifact', 'diff']))
+  assert.doesNotMatch(JSON.stringify(tool.parameters), /independent review|manual is never/)
 })
 
 test('goal-level acceptance checks gate complete with executed evidence', async (t) => {
@@ -253,6 +273,27 @@ test('changing a verified artifact invalidates acceptance and reopens the goal',
   assert.equal(reopened.stages[0].tasks[0].verification.state, 'stale')
 })
 
+test('a deleted or unhashable artifact invalidates verified acceptance', async (t) => {
+  const host = await start(t)
+  await startGoal(host, {
+    stages: [{
+      title: 'Package',
+      acceptance: 'the package is current',
+      checks: [{ id: 'package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }],
+      tasks: [{ bot: 'Writer', task: 'build the package' }],
+    }],
+  })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:first' }] })
+  await host.tool('group_goal', { action: 'pass', evidence: 'package verified' }, 'ga')
+  await host.tool('group_goal', { action: 'complete', evidence: 'all stages verified', summary: 'shipped' }, 'ga')
+
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: '' }] })
+  await settle(() => goal(host).status === 'needs-review')
+  assert.equal(goal(host).stages[0].tasks[0].verification.state, 'stale')
+  assert.deepEqual(goal(host).stages[0].tasks[0].verification.invalidated, ['dist/app.zip'])
+})
+
 test('changing a goal-level verified artifact also reopens completed work', async (t) => {
   const host = await start(t)
   await startGoal(host, {
@@ -288,6 +329,66 @@ test('two completed turns with only prose mark the goal task stalled', async (t)
   const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
   const taskId = `goal:${state.rooms.r1.goal.id}:${state.rooms.r1.goal.stages[0].id}:${task.id}`
   assert.equal(buildTaskDetail({ state, activity, taskId }).verification.status, 'needs-review')
+})
+
+test('repeated productive goal turns reset the unchanged-turn count', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  for (let turn = 1; turn <= 3; turn += 1) {
+    host.emit('gb', 'turn/start', { turn })
+    host.emit('gb', 'tool/call', { callId: `productive-${turn}`, name: 'pwsh', arguments: JSON.stringify({ command: `command-${turn}` }) })
+    host.emit('gb', 'tool/result', { callId: `productive-${turn}`, message: { ok: true, content: [{ type: 'text', text: `green-${turn}` }] } })
+    host.emit('gb', 'turn/end', { turn, reason: { kind: 'completed' } })
+    await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === turn)
+  }
+  const task = goal(host).stages[0].tasks[0]
+  assert.equal(task.progress.state, 'moving')
+  assert.equal(task.progress.unchangedTurns, 0)
+})
+
+test('restart reconciliation fails closed and marks a goal task recovery-needed for unrelated events', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const before = goal(host).stages[0].tasks[0]
+  const taskId = `goal:${goal(host).id}:${goal(host).stages[0].id}:${before.id}`
+  const events = [
+    { seq: 1, type: 'turn/start', data: { turn: 1 } },
+    { seq: 2, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'Unrelated report' }] } } },
+    { seq: 3, type: 'tool/call', data: { turn: 1, callId: 'other', name: 'pwsh', arguments: JSON.stringify({ command: 'other command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 1, callId: 'other', message: { ok: true, content: [{ type: 'text', text: 'green' }] } } },
+  ]
+  assert.equal(host.rt.reconcileGoalEvidence('gb', events, {
+    taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), false)
+  await settle(() => goal(host).stages[0].tasks[0].recovery?.length > 0)
+  const after = goal(host).stages[0].tasks[0]
+  assert.equal((after.evidence ?? []).length, 0)
+  assert.equal(after.recovery[0].kind, 'needs-review')
+  const state = saved(host)
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId })
+  assert.equal(detail.recovery.state, 'needs-review')
+  assert.equal(detail.partial, true)
+  assert.ok(detail.blockers.some(item => item.kind === 'recovery' && /could not be matched/i.test(item.text)))
+  const matching = [
+    { seq: 1, type: 'turn/start', data: { turn: 2 } },
+    {
+      seq: 2, type: 'user/message',
+      data: {
+        turn: 2, content: [{ type: 'text', text: 'Recovered task request' }],
+        source: { kind: 'ds-bot', role: 'request', taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange' },
+      },
+    },
+    { seq: 3, type: 'tool/call', data: { turn: 2, callId: 'matched', name: 'pwsh', arguments: JSON.stringify({ command: 'matched command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 2, callId: 'matched', message: { ok: true, content: [{ type: 'text', text: 'green' }] } } },
+  ]
+  assert.equal(host.rt.reconcileGoalEvidence('gb', matching, {
+    taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), true)
+  await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === 1)
+  assert.equal(goal(host).stages[0].tasks[0].recovery.some(item => item.kind === 'needs-review'), false)
 })
 
 test('rework sends the current stage back; revise keeps passed stages and a matching task', async (t) => {

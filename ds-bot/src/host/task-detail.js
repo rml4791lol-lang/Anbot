@@ -7,14 +7,17 @@ const timeOf = value => {
   return Number.isFinite(time) ? time : null
 }
 
-const redactText = (value) => {
+export const redactCredentialText = (value) => {
   let output = text(value)
   output = output.replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, 'Bearer [redacted]')
   output = output.replace(/\b(?:sk|gh[pousr]|xox[baprs])-[A-Za-z0-9_-]{8,}\b/g, '[redacted]')
-  output = output.replace(/("?(?:api[_-]?key|token|secret|password|authorization|credential)"?\s*:\s*)"[^"]*"/gi, '$1"[redacted]"')
-  output = output.replace(/\b(api[_-]?key|token|secret|password|authorization|credential)\s*=\s*[^\s,;]+/gi, '$1=[redacted]')
-  return output.slice(0, 1200)
+  const key = '(?:(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|password|passwd|pwd|token|secret|authorization|credential|key))'
+  output = output.replace(new RegExp(`("?${key}"?\\s*:\\s*)"[^"]*"`, 'gi'), '$1"[redacted]"')
+  output = output.replace(new RegExp(`\\b(${key})\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s,;]+)`, 'gi'), '$1=[redacted]')
+  return output
 }
+
+const redactText = value => redactCredentialText(value).slice(0, 1200)
 
 const contentText = (content) => {
   if (!Array.isArray(content)) return ''
@@ -450,7 +453,7 @@ function recoveryFor(raw) {
     id: `${text(raw.id)}:late`, at: null, attemptId: text(raw.work.attempt?.id) || null,
     kind: 'late', summary: 'This request reached its owner only after a restart.',
   })
-  return { state: records.length === 0 ? 'none' : 'recovered', records }
+  return { state: records.length === 0 ? 'none' : records.some(item => item.kind === 'needs-review') ? 'needs-review' : 'recovered', records }
 }
 
 function blockersFor(raw, task) {
@@ -465,6 +468,10 @@ function blockersFor(raw, task) {
       blockers.push({ id: text(value.id) || `${task.id}:blocker:${index}`, kind: text(value.kind) || 'reported', text: redactText(value.text ?? value.summary) })
     }
   }
+  const recovery = raw?.task?.recovery ?? raw?.work?.recovery
+  for (const item of Array.isArray(recovery) ? recovery : []) {
+    if (item?.kind === 'needs-review') blockers.push({ id: text(item.id) || `${task.id}:recovery`, kind: 'recovery', text: redactText(item.summary) })
+  }
   for (const childId of Array.isArray(raw?.work?.open) ? raw.work.open : []) {
     blockers.push({ id: `${task.id}:wait:${text(childId)}`, kind: 'wait', text: `Waiting for ${text(childId)} to return.` })
   }
@@ -476,6 +483,8 @@ function blockersFor(raw, task) {
   return blockers
 }
 
+// The normalizers above stay private: this projection is their only consumer, and
+// splitting them would make the detail response contract harder to follow.
 export function buildTaskDetail({ state, activity, taskId, records = [], sourceWarnings = [], liveSessionIds = [], readOnly, now = Date.now() } = {}) {
   const at = Number.isFinite(now) ? now : Date.now()
   const activityTask = (activity?.tasks ?? []).find(task => task.id === taskId)
@@ -496,8 +505,10 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
   const verification = demo ? { status: 'unavailable', reason: 'Demo data is not verification.' } : checked.verification
   const artifacts = mergedArtifacts([...artifactsFor(raw, evidence), ...traceParts.artifacts])
   const blockers = blockersFor(raw, activityTask)
+  const recovery = recoveryFor(raw)
+  const recoveryNeeded = recovery.state === 'needs-review'
   const hasSourceWarning = Array.isArray(sourceWarnings) && sourceWarnings.length > 0
-  const trace = hasSourceWarning ? { ...traceParts.trace, status: 'partial' } : traceParts.trace
+  const trace = hasSourceWarning || recoveryNeeded ? { ...traceParts.trace, status: 'partial' } : traceParts.trace
   const controls = controlsFor({ state, raw, task: activityTask, liveSessionIds, readOnly }).map(control => demo
     ? { ...control, enabled: false, reason: 'Demo data is read-only.' }
     : control)
@@ -529,7 +540,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
     location: locationFor(activityTask, raw),
     attempt: attemptFor(raw),
     handoff: handoffFor(raw, state),
-    recovery: recoveryFor(raw),
+    recovery,
     checkpoint: checkpointFor(raw, activityTask),
     nextAction: nextActionFor(raw, activityTask),
     blockers,
@@ -538,7 +549,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
     verification,
     trace,
     controls,
-    partial: hasSourceWarning || activityTask.warnings?.length > 0,
+    partial: hasSourceWarning || activityTask.warnings?.length > 0 || recoveryNeeded,
     warnings: [
       ...(Array.isArray(sourceWarnings) ? sourceWarnings : []).map(message => ({ taskId, message: redactText(message) })),
       ...(Array.isArray(activityTask.warnings) ? activityTask.warnings : []).map(message => ({ taskId, message: redactText(message) })),
