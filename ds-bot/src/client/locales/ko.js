@@ -1,6 +1,22 @@
 // Korean (ko) localization for DS Bot client and DSH settings namespaces.
 
 export const KO = {
+  'Improvement proposals': '개선 제안',
+  'Propose improvement': '개선 제안하기',
+  'Reading verified evidence…': '검증된 근거를 읽는 중…',
+  'No reusable improvement was found in this verified evidence.': '이 검증된 근거에서 재사용할 수 있는 개선을 찾지 못했습니다.',
+  'No improvements have been proposed for this task yet.': '이 작업에는 아직 개선 제안이 없습니다.',
+  'The improvement proposal could not be created.': '개선 제안을 만들 수 없습니다.',
+  'Only verified task evidence can produce an improvement proposal.': '검증된 작업 근거만 개선 제안을 만들 수 있습니다.',
+  'Verified improvement': '검증된 개선',
+  'Affects': '영향',
+  'Observed problem': '관찰된 문제',
+  'Proposed change': '제안 변경',
+  'Expected benefit': '기대 효과',
+  'Rollback path': '롤백 방법',
+  'Audit': '감사',
+  'Review required': '검토 필요',
+
   'Opening…': '여는 중…',
   'Still opening…': '아직 여는 중…',
   "Android beta": "Android 베타",

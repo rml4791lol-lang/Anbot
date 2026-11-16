@@ -205,6 +205,35 @@ export function install(rt) {
     return buildTeamActivity({ state, board: activityArchiveCache.lines, ledger: ledger.rows, now, timeZone, sourceWarnings })
   }
 
+  const taskDetailFor = async (taskId) => {
+    const now = Date.now()
+    const activity = teamActivitySnapshot(now)
+    const records = []
+    const sourceWarnings = []
+    for (const sessionId of taskSessionIds({ state, activity, taskId })) {
+      if (typeof ctx.sessionController?.page !== 'function') {
+        sourceWarnings.push(`Session ${sessionId} could not be read`)
+        continue
+      }
+      try {
+        const page = await ctx.sessionController.page({
+          address: { kind: 'session', sessionId },
+          maxMessages: 60,
+        }, AbortSignal.timeout(15_000))
+        records.push({ sessionId, events: page.records.map(record => record.event), hasMore: page.hasMore === true })
+      } catch (error) {
+        const message = `Session ${sessionId} could not be read: ${error?.message ?? error}`
+        sourceWarnings.push(message)
+        ctx.logger?.warn?.(message)
+      }
+    }
+    return buildTaskDetail({
+      state, activity, taskId, records, sourceWarnings,
+      liveSessionIds: [...rt.live.keys()], readOnly: rt.readOnly(), now,
+    })
+  }
+  rt.taskDetailFor = taskDetailFor
+
   async function setPrefs(body) {
     if (body.theme !== undefined) {
       if (typeof body.theme !== 'string' || !/^[a-z][\w-]{0,31}$/.test(body.theme)) throw invalid('Unknown theme')
@@ -365,31 +394,8 @@ export function install(rt) {
           await rt.load()
           const taskId = String(body.taskId ?? '')
           if (taskId === '') return fail('No task named', 'bot/invalid')
-          const now = Date.now()
-          const activity = teamActivitySnapshot(now)
-          const records = []
-          const sourceWarnings = []
-          for (const sessionId of taskSessionIds({ state, activity, taskId })) {
-            if (typeof ctx.sessionController?.page !== 'function') {
-              sourceWarnings.push(`Session ${sessionId} could not be read`)
-              continue
-            }
-            try {
-              const page = await ctx.sessionController.page({
-                address: { kind: 'session', sessionId },
-                maxMessages: 60,
-              }, AbortSignal.timeout(15_000))
-              records.push({ sessionId, events: page.records.map(record => record.event), hasMore: page.hasMore === true })
-            } catch (error) {
-              const message = `Session ${sessionId} could not be read: ${error?.message ?? error}`
-              sourceWarnings.push(message)
-              ctx.logger?.warn?.(message)
-            }
-          }
-          return ok(buildTaskDetail({
-            state, activity, taskId, records, sourceWarnings,
-            liveSessionIds: [...rt.live.keys()], readOnly: rt.readOnly(), now,
-          }))
+          const detail = await taskDetailFor(taskId)
+          return ok({ ...detail, improvements: rt.improvementView?.(taskId) ?? { proposals: [], history: [] } })
         }
         case 'room-progress': {
           // Any part id of the group's own Session means the group itself.
@@ -649,6 +655,7 @@ export function install(rt) {
           await rt.load()
           return ok(await rt.memoryEndpoint(endpoint, body))
         case 'learning-answer':
+        case 'task-improvement-propose':
           await rt.load()
           return ok(await rt.learningEndpoint(endpoint, body))
         // The mobile API (mobile.js).

@@ -28,10 +28,23 @@ export const LEARNING = {
   declinedMax: 20,
   agentsFileMax: 16_000,
   agentsEditMax: 400,
+  improvementTextMax: 1_000,
 }
 
 const clip = (text, max) => (text.length > max ? `${text.slice(0, max)} […]` : text)
 export const hashOf = text => createHash('sha256').update(String(text ?? '')).digest('hex').slice(0, 16)
+
+export function botConfigHash(bot) {
+  return hashOf(JSON.stringify({
+    name: textOf(bot?.name),
+    role: textOf(bot?.role),
+    instructions: textOf(bot?.instructions),
+    model: textOf(bot?.model),
+    workDir: textOf(bot?.workDir),
+    permission: textOf(bot?.permission),
+    capabilities: [...(Array.isArray(bot?.capabilities) ? bot.capabilities : [])].map(textOf).sort(),
+  }))
+}
 
 // The answer of the review's model: one JSON object, perhaps in a code fence.
 export function parseJson(text) {
@@ -263,6 +276,76 @@ export function agentsProblem(proposal, current) {
   return undefined
 }
 
+const improvementFields = ['observedProblem', 'proposedChange', 'expectedBenefit', 'rollbackPath']
+
+export function improvementSystem() {
+  return [
+    'You turn verified task evidence into one reviewable Bot improvement proposal.',
+    'The task was already checked against its declared acceptance evidence. Do not restate completion or invent facts beyond that evidence.',
+    'Most verified tasks should produce "none". A proposal must name a reusable improvement, not merely describe the task.',
+    '',
+    'An improvement changes either:',
+    '- a learned skill of the affected Bot: action "create" or "update", with name, description, content, and why;',
+    '- the project AGENTS.md used by the affected Bot: action "edit", with 1 to 3 exact whole-line edits.',
+    'Prefer a skill for a repeatable procedure. Use AGENTS.md only for a lasting rule that applies to most work in that project.',
+    '',
+    'Every proposal also needs:',
+    '- observedProblem: the concrete recurring problem shown by the verified evidence;',
+    '- proposedChange: what will change, in plain language;',
+    '- expectedBenefit: the future outcome this should improve;',
+    '- rollbackPath: how the user can restore the previous behavior.',
+    'Never include secrets, credentials, dates, issue or PR numbers, task progress, file lists, or pasted logs in the proposed skill or AGENTS edits.',
+    '',
+    'Answer with one JSON object only:',
+    '{"action":"none","reason":"<one sentence>"}',
+    '{"action":"create","scope":"skill","name":"<lowercase-hyphen-name>","description":"<when to use it>","content":"<Markdown skill>","why":"<why the evidence earns it>","observedProblem":"…","proposedChange":"…","expectedBenefit":"…","rollbackPath":"…"}',
+    '{"action":"update","scope":"skill","name":"<a learned skill listed>","description":"…","content":"<the whole new content>","why":"…","observedProblem":"…","proposedChange":"…","expectedBenefit":"…","rollbackPath":"…"}',
+    '{"action":"edit","scope":"agents","edits":[{"op":"add|replace|remove","after":"<anchor or empty>","old":"<exact old whole lines when needed>","text":"<new text when needed>","why":"…"}],"observedProblem":"…","proposedChange":"…","expectedBenefit":"…","rollbackPath":"…"}',
+  ].join('\n')
+}
+
+export function improvementRequest({ bot, detail, learned = [], agents }) {
+  const evidence = (detail?.evidence ?? []).filter(item => item?.trust === 'verified' && item.stale !== true)
+  const task = detail?.task ?? {}
+  const parts = [
+    `The affected Bot: ${bot.name}${bot.role ? `, ${bot.role}` : ''} (${bot.id}).`,
+    `Verified task ${detail?.taskId ?? ''}: ${task.title || task.sourceId || ''}`,
+    `Acceptance: ${task.acceptance || 'not stated'}`,
+    `Verification: ${detail?.verification?.reason || 'verified'}`,
+    `Verified evidence:\n${evidence.map(item => `<evidence id="${item.id}" source="${item.sourceId || ''}">\n${item.title ? `${item.title}\n` : ''}${item.text || ''}\n</evidence>`).join('\n')}`,
+  ]
+  parts.push(learned.length === 0
+    ? 'This Bot has no learned skills yet, so only create a new skill or edit its project AGENTS.md.'
+    : `This Bot's learned skills:\n${learned.map(skill => `<skill name="${skill.name}">\ndescription: ${skill.description}\n${skill.content}\n</skill>`).join('\n')}`)
+  parts.push(agents?.current === undefined
+    ? 'No writable project AGENTS.md is available for this Bot.'
+    : `Project folder: ${agents.folder}\nCurrent AGENTS.md:\n\`\`\`md\n${agents.current}\n\`\`\``)
+  return parts.join('\n\n')
+}
+
+export function improvementProblem(answer, { detail, bot, learned = [], skills = {}, agents, limit = LEARNING.learnedMax }) {
+  if (!detail || detail.empty === true) return 'the task is no longer available'
+  if (detail.verification?.status === 'stale') return 'the task evidence is stale and needs review'
+  if (detail.verification?.status !== 'verified') return 'the task has no verified acceptance evidence'
+  const evidence = (detail.evidence ?? []).filter(item => item?.trust === 'verified' && item.stale !== true)
+  if (evidence.length === 0) return 'the task has no fresh verified evidence'
+  if (!bot) return 'the affected Bot is no longer available'
+  if (answer === undefined || answer === null || typeof answer !== 'object') return 'the answer is not a JSON object'
+  if (answer.action === 'none') return undefined
+  for (const field of improvementFields) {
+    const value = textOf(answer[field]).trim()
+    if (value === '') return `${field} is required`
+    if (value.length > LEARNING.improvementTextMax) return `${field} must have at most ${LEARNING.improvementTextMax} characters`
+    if (holdsSecret(value)) return 'it looks like it holds a secret'
+  }
+  if (answer.scope === 'skill') return skillProblem(answer, { skills, learned, limit })
+  if (answer.scope === 'agents') {
+    if (agents?.current === undefined && agents?.exists !== false) return 'the Bot has no writable project AGENTS.md'
+    return agentsProblem(answer, agents?.current)
+  }
+  return 'scope must be skill or agents'
+}
+
 export function skillProblem(proposal, { skills, learned, limit = LEARNING.learnedMax }) {
   if (proposal === undefined) return 'the answer is not a JSON object'
   const { action } = proposal
@@ -299,7 +382,7 @@ export function install(rt) {
   const on = config.learning !== false && config.memory !== false
   const view = () => ({})
   if (!on) {
-    Object.assign(rt, { learningView: view, learningSettledView: view, learningEndpoint: async () => { throw new Error('Learning is turned off on this host') }, learningRun: async () => 0 })
+    Object.assign(rt, { learningView: view, learningSettledView: view, improvementView: () => ({ proposals: [], history: [] }), learningEndpoint: async () => { throw new Error('Learning is turned off on this host') }, learningRun: async () => 0 })
     return
   }
 
@@ -309,7 +392,8 @@ export function install(rt) {
   // folder → queued work waiting for AGENTS.md review. `cursors`: newest line read.
   // `proposals`: waiting for the user, by id. `settled`: answered ones, by id, with
   // the outcome; their cards stay in the chat part they were answered in.
-  // `learned`: skill names learned by Bot.
+  // `learned`: skill names learned by Bot. `versions`: approved task improvements
+  // by Bot and changed scope; the full audit stays with each settled proposal.
   let saved
   const data = () => {
     if (saved !== undefined) return saved
@@ -326,6 +410,7 @@ export function install(rt) {
     saved.declined ??= []
     saved.learned ??= {}
     saved.agentsPending ??= {}
+    saved.versions ??= {}
     return saved
   }
   let stopped = false
@@ -475,6 +560,112 @@ export function install(rt) {
       exists: current !== undefined,
       edits: answer.edits.map(edit => ({ ...edit, text: textOf(edit.text), old: textOf(edit.old), why: textOf(edit.why) })),
       content,
+    }
+  }
+
+  async function improvementAgents(bot) {
+    if (!bot.workDir || config.agentsMd === false) return undefined
+    try {
+      const folder = await rt.real(bot.workDir)
+      await rt.workFolder(folder)
+      const current = await agentsFile(folder)
+      return { folder, path: join(folder, 'AGENTS.md'), current, exists: current !== undefined }
+    } catch (error) {
+      rt.warn('ds-bot: the task improvement folder lookup for %s failed: %s', bot.name, error?.message ?? error)
+      return undefined
+    }
+  }
+
+  async function reviewImprovement(bot, detail) {
+    const skills = skillsOf()
+    const learned = learnedOf(bot)
+    const agents = await improvementAgents(bot)
+    const reply = await rt.botShot(bot, improvementSystem(), improvementRequest({ bot, detail, learned: learned.map(name => skills[name]), agents }), {
+      sessionId: rt.chatOf(bot.id), kind: 'memory',
+    })
+    const answer = parseJson(reply)
+    const textValues = answer === undefined ? [] : [
+      ...improvementFields.map(field => answer[field]),
+      answer.scope === 'skill' ? answer.description : undefined,
+      answer.scope === 'skill' ? answer.content : undefined,
+      answer.scope === 'skill' ? answer.why : undefined,
+      ...(Array.isArray(answer.edits) ? answer.edits.flatMap(edit => [edit?.text, edit?.why]) : []),
+    ]
+    if (textValues.some(value => typeof value === 'string' && rt.redactSecrets(value) !== value)) {
+      rt.warn('ds-bot: the task improvement review of %s proposed content containing a saved secret', bot.name)
+      return undefined
+    }
+    const problem = improvementProblem(answer, { detail, bot, learned, skills, agents, limit: settings.learnedMax })
+    if (problem !== undefined) throw new Error(`the task improvement proposal is not usable: ${problem}`)
+    if (answer.action === 'none') return undefined
+    const verified = detail.evidence.filter(item => item.trust === 'verified' && item.stale !== true)
+    let target
+    let label
+    let base
+    let afterHash
+    let fields
+    if (answer.scope === 'skill') {
+      const name = answer.name.trim()
+      const current = answer.action === 'update' ? skills[name] : undefined
+      target = name
+      label = `Skill · ${name}`
+      base = current === undefined ? hashOf('') : hashOf(`${current.description}\n${current.content}`)
+      afterHash = hashOf(`${answer.description.trim()}\n${answer.content.trim()}`)
+      fields = {
+        kind: 'skill',
+        action: answer.action,
+        name,
+        description: answer.description.trim(),
+        content: answer.content.trim(),
+        why: textOf(answer.why).trim(),
+        ...(current ? {
+          previous: { description: current.description, content: current.content },
+          base: hashOf(`${current.description}\n${current.content}`),
+        } : {}),
+      }
+    } else {
+      const content = applyEdits(agents.current, answer.edits)
+      target = agents.folder
+      label = `AGENTS.md · ${agents.folder}`
+      base = hashOf(agents.current ?? '')
+      afterHash = hashOf(content)
+      fields = {
+        kind: 'agents',
+        action: 'edit',
+        folder: agents.folder,
+        path: agents.path,
+        base,
+        exists: agents.current !== undefined,
+        edits: answer.edits.map(edit => ({ ...edit, text: textOf(edit.text), old: textOf(edit.old), why: textOf(edit.why) })),
+        content,
+      }
+    }
+    return {
+      id: randomUUID(),
+      ...fields,
+      botId: bot.id,
+      at: Date.now(),
+      improvement: {
+        taskId: detail.taskId,
+        taskTitle: detail.task?.title || detail.task?.sourceId || detail.taskId,
+        evidenceIds: verified.map(item => item.id),
+        sourceIds: [...new Set(verified.map(item => item.sourceId).filter(Boolean))],
+        verification: {
+          status: detail.verification.status,
+          verifiedAt: detail.verification.verifiedAt ?? null,
+          reason: detail.verification.reason ?? '',
+        },
+        affectedBot: { id: bot.id, name: bot.name },
+        scope: { kind: answer.scope, target, label },
+        observedProblem: textOf(answer.observedProblem).trim(),
+        proposedChange: textOf(answer.proposedChange).trim(),
+        expectedBenefit: textOf(answer.expectedBenefit).trim(),
+        rollbackPath: textOf(answer.rollbackPath).trim(),
+        botConfigHash: botConfigHash(bot),
+        beforeHash: base,
+        afterHash,
+        changeKey: `${answer.scope}:${target}`,
+      },
     }
   }
 
@@ -656,33 +847,139 @@ export function install(rt) {
     }
   }, 'ds-bot: learning')
 
-  // The user's answer to a card.
+  async function proposeImprovement({ taskId }) {
+    const id = String(taskId ?? '').trim()
+    if (id === '') throw Object.assign(new Error('No task named'), { code: 'bot/invalid' })
+    if (typeof rt.taskDetailFor !== 'function') throw new Error('Task detail is unavailable on this host')
+    const detail = await rt.taskDetailFor(id)
+    if (detail?.empty === true) throw Object.assign(new Error('The task is no longer available'), { code: 'bot/stale' })
+    if (detail.verification?.status === 'stale') throw new Error('The task evidence is stale and needs review')
+    if (detail.verification?.status !== 'verified') throw new Error('The task has no verified acceptance evidence')
+    if ((detail.evidence ?? []).every(item => item.trust !== 'verified' || item.stale === true)) throw new Error('The task has no fresh verified evidence')
+    const owner = detail.owner ?? {}
+    const bot = owner.kind === 'bot' && owner.id ? rt.botOf(owner.id) : undefined
+    if (bot === undefined) throw new Error('Only a task owned by a Bot can produce an improvement')
+    const proposal = await reviewImprovement(bot, detail)
+    if (proposal === undefined) return null
+    data().proposals[proposal.id] = proposal
+    await persist()
+    return proposal
+  }
+
+  function settledAnswer(proposal, approve) {
+    const store = data()
+    if (!Object.hasOwn(store.settled, proposal.id)) return undefined
+    const settled = store.settled[proposal.id]
+    const expected = approve ? 'approved' : 'declined'
+    if (settled.outcome !== expected) {
+      throw Object.assign(new Error(`This proposal was already ${settled.outcome}`), { code: 'bot/conflict' })
+    }
+    return { applied: settled.outcome === 'approved', duplicate: true, proposal: settled }
+  }
+
+  async function requiresReview(proposal, reason) {
+    const open = data().proposals[proposal.id]
+    if (open === undefined) return
+    open.requiresReview = true
+    open.reviewReason = clip(reason, LEARNING.improvementTextMax)
+    open.reviewedAt = Date.now()
+    await persist()
+    throw Object.assign(new Error(`${reason}; review the proposal before applying it`), { code: 'bot/refused' })
+  }
+
+  async function checkImprovement(proposal) {
+    const bot = rt.botOf(proposal.botId)
+    if (bot === undefined) return requiresReview(proposal, 'The affected Bot is gone')
+    if (proposal.improvement.botConfigHash !== botConfigHash(bot)) return requiresReview(proposal, 'The Bot configuration changed since this proposal was created')
+    const detail = await rt.taskDetailFor(proposal.improvement.taskId)
+    if (detail?.verification?.status === 'stale') return requiresReview(proposal, `The task evidence is stale: ${detail.verification.reason || 'acceptance changed'}`)
+    if (detail?.verification?.status !== 'verified') return requiresReview(proposal, 'The task no longer has verified acceptance evidence')
+    const verified = (detail.evidence ?? []).filter(item => item.trust === 'verified' && item.stale !== true)
+    const available = new Set(verified.map(item => item.id))
+    const sources = new Set(verified.map(item => item.sourceId).filter(Boolean))
+    if (proposal.improvement.evidenceIds.some(id => !available.has(id)) || proposal.improvement.sourceIds.some(id => !sources.has(id))) {
+      return requiresReview(proposal, 'The verified task evidence changed since this proposal was created')
+    }
+  }
+
+  async function taskImprovementAudit(proposal) {
+    const bot = rt.botOf(proposal.botId)
+    if (bot === undefined) throw new Error('The affected Bot is gone')
+    await checkImprovement(proposal)
+    const store = data()
+    const versions = store.versions[bot.id] ??= {}
+    const version = (Number.isInteger(versions[proposal.improvement.changeKey]) ? versions[proposal.improvement.changeKey] : 0) + 1
+    let beforeHash = proposal.improvement.beforeHash
+    let afterHash = proposal.improvement.afterHash
+    try {
+      if (proposal.kind === 'agents') {
+        await applyAgents(proposal)
+      } else {
+        const current = skillsOf()[proposal.name]
+        beforeHash = proposal.action === 'update' && current ? hashOf(`${current.description}\n${current.content}`) : hashOf('')
+        await applySkill(proposal)
+        const after = skillsOf()[proposal.name]
+        if (after) afterHash = hashOf(`${after.description}\n${after.content}`)
+      }
+    } catch (error) {
+      if (/changed since this was proposed|exists now|is gone/i.test(error?.message ?? '')) await requiresReview(proposal, error.message)
+      throw error
+    }
+    versions[proposal.improvement.changeKey] = version
+    return {
+      id: randomUUID(),
+      action: 'apply',
+      at: Date.now(),
+      proposalId: proposal.id,
+      version,
+      botId: bot.id,
+      scope: proposal.improvement.changeKey,
+      taskId: proposal.improvement.taskId,
+      evidenceIds: [...proposal.improvement.evidenceIds],
+      sourceIds: [...proposal.improvement.sourceIds],
+      beforeHash,
+      afterHash,
+      rollbackPath: proposal.improvement.rollbackPath,
+    }
+  }
+
+  // The user's answer to a card. Repeated answers with the same decision return the
+  // settled result; a different decision is refused because the first one is history.
   async function answer({ id, approve }) {
     const store = data()
     const proposal = Object.hasOwn(store.proposals, id) ? store.proposals[id] : undefined
-    if (proposal === undefined) throw Object.assign(new Error('This proposal is no longer open'), { code: 'bot/stale' })
-    // The answered card stays where it was, read-only, with how it ended. A waiting
-    // card shows in the Bot's current chat part, so that is where it stays.
-    const settle = (outcome) => {
+    if (proposal === undefined) {
+      if (Object.hasOwn(store.settled, id)) return settledAnswer(store.settled[id], approve)
+      throw Object.assign(new Error('This proposal is no longer open'), { code: 'bot/stale' })
+    }
+    if (proposal.requiresReview === true) {
+      throw Object.assign(new Error(`This proposal requires review: ${proposal.reviewReason}`), { code: 'bot/refused' })
+    }
+    const settle = (outcome, extra = {}) => {
       delete store.proposals[id]
       const { saved: _saved, ...kept } = proposal
-      store.settled[id] = { ...kept, sessionId: rt.chatOf(proposal.botId), outcome, settledAt: Date.now() }
+      const settled = { ...kept, ...extra, sessionId: rt.chatOf(proposal.botId), outcome, settledAt: Date.now() }
+      store.settled[id] = settled
+      return settled
     }
     if (approve !== true) {
-      settle('declined')
       const decline = proposal.kind === 'agents'
         ? { kind: 'agents', folder: proposal.folder, edits: proposal.edits.map(({ op, text, old }) => ({ op, text, old })), at: Date.now() }
         : { name: proposal.name, description: proposal.description, at: Date.now() }
+      if (proposal.improvement) decline.improvement = { taskId: proposal.improvement.taskId, evidenceIds: proposal.improvement.evidenceIds }
       store.declined = [...store.declined, decline].slice(-settings.declinedMax)
+      const settled = settle('declined')
       await persist()
-      return { applied: false }
+      return { applied: false, duplicate: false, proposal: settled }
     }
-    // A failed approval keeps the card, so the user can still decline it.
-    if (proposal.kind === 'agents') await applyAgents(proposal)
+    let audit
+    if (proposal.improvement) audit = await taskImprovementAudit(proposal)
+    else if (proposal.kind === 'agents') await applyAgents(proposal)
     else await applySkill(proposal)
-    settle('approved')
+    const version = audit?.version
+    const settled = settle('approved', audit ? { audit, version } : {})
     await persist()
-    return { applied: true }
+    return { applied: true, duplicate: false, proposal: settled }
   }
 
   const agentsApplying = new Map()
@@ -755,6 +1052,7 @@ export function install(rt) {
 
   async function learningEndpoint(endpoint, body) {
     if (endpoint === 'learning-answer') return answer({ id: String(body.id ?? ''), approve: body.approve === true })
+    if (endpoint === 'task-improvement-propose') return proposeImprovement({ taskId: body.taskId })
     throw new Error(`Unknown endpoint ${endpoint}`)
   }
 
@@ -772,6 +1070,14 @@ export function install(rt) {
     const byBot = {}
     for (const entry of Object.values(data().proposals)) (byBot[entry.botId] ??= []).push(entry)
     return byBot
+  }
+  // Every pending and answered proposal tied to one task, including history that
+  // left the Bot's current chat part.
+  const improvementView = (taskId) => {
+    const pending = Object.values(data().proposals).filter(entry => entry.improvement?.taskId === taskId)
+    const history = Object.values(data().settled).filter(entry => entry.improvement?.taskId === taskId)
+    const byTime = (a, b) => (a.at ?? 0) - (b.at ?? 0) || (a.settledAt ?? 0) - (b.settledAt ?? 0)
+    return { proposals: pending.sort(byTime), history: history.sort(byTime) }
   }
   // Per Bot, the answered proposals of its current chat part.
   const learningSettledView = () => {
@@ -795,5 +1101,5 @@ export function install(rt) {
     return result
   }
 
-  Object.assign(rt, { learningView, learningSettledView, learningEndpoint, learningRun: run })
+  Object.assign(rt, { learningView, learningSettledView, improvementView, learningEndpoint, learningRun: run })
 }
