@@ -70,3 +70,4 @@
 | [移动端客户端 API](2026-10-24-mobile-api.md) | 自己画界面的客户端（手机）用的接口：握手和版本、群聊条目、提醒和补发、头像按引用取、直接改记忆、单个 Bot 的用量 |
 | [Office 文档](2026-10-27-office-documents.md) | Bot 离线处理 .docx/.pptx/.xlsx：应用带的 payload、`office.js` 命令行、office 路由换成带 `office-tools` 的版本 |
 | [连接器](2026-11-04-connectors.md) | 通用连接器引擎、OAuth、网关、邮箱 |
+| [官方 MCP loopback 与只读工具清单](2026-11-16-official-mcp-loopback.md) | 本地 Agent Bot 的官方 MCP 传输、取消、schema 保真、工具热更新和 `dsbot://tool-inventory` 只读漂移清单 |

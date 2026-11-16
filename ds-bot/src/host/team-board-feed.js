@@ -2,7 +2,7 @@
 // two Bots writing at once cannot lose each other's lines; the host merges them into
 // one read-only feed. The directory lives outside the Bot home because the same files
 // are also edited by hand and by scripts.
-import { appendFileSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -52,6 +52,16 @@ export function writeTeamBoard(bot, lines, dir = teamBoardDir()) {
 }
 
 export const boardArchiveDir = (boardDir = teamBoardDir()) => join(boardDir, 'archive')
+export function teamBoardArchiveSignature(dir = boardArchiveDir()) {
+  try {
+    return readdirSync(dir).filter(name => name.endsWith('.jsonl')).sort().map((name) => {
+      const stat = statSync(join(dir, name))
+      return `${name}:${stat.size}:${stat.mtimeMs}`
+    }).join('|')
+  } catch (error) {
+    return error?.code === 'ENOENT' ? '' : `error:${error?.code}:${error?.message}`
+  }
+}
 const archiveFile = (bot, dir) => join(dir, boardFileName(bot).replace(/\.json$/, '') + '.jsonl')
 const lineKey = line => `${line.bot}\u0000${line.at ?? ''}\u0000${line.what ?? ''}\u0000${line.kind ?? ''}`
 
@@ -86,7 +96,8 @@ export function readTeamBoardArchive(dir = boardArchiveDir(), warn = () => {}) {
   let names
   try {
     names = readdirSync(dir)
-  } catch {
+  } catch (error) {
+    if (error?.code !== 'ENOENT') warn(`team board archive: cannot read ${dir}: ${error.message}`)
     return []
   }
   const seen = new Set()
@@ -100,20 +111,26 @@ export function readTeamBoardArchive(dir = boardArchiveDir(), warn = () => {}) {
       warn(`team board archive: skipped ${name}: ${error.message}`)
       continue
     }
+    let badRows = 0
     for (const row of text.split('\n')) {
       if (row === '') continue
       let line
       try {
         line = JSON.parse(row)
       } catch {
+        badRows += 1
         continue
       }
-      if (line === null || typeof line !== 'object' || Array.isArray(line) || !KINDS.has(line.kind)) continue
+      if (line === null || typeof line !== 'object' || Array.isArray(line) || !KINDS.has(line.kind) || typeof line.bot !== 'string' || line.bot === '' || typeof line.what !== 'string') {
+        badRows += 1
+        continue
+      }
       const key = lineKey(line)
       if (seen.has(key)) continue
       seen.add(key)
       lines.push(line)
     }
+    if (badRows > 0) warn(`team board archive: skipped ${badRows} bad row${badRows === 1 ? '' : 's'} in ${name}`)
   }
   lines.sort((a, b) => asTime(a.at) - asTime(b.at))
   return lines

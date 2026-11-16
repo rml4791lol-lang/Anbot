@@ -206,7 +206,14 @@ MIT License, Copyright (c) 2026 xmanrui
 
 No other third-party code is copied into this repository. At run time the
 plugin uses the @deepseek-ai/* packages of the DeepSeek Harness install it
-runs in; they are not bundled. The bundled ds-bot/office.js includes
+runs in; they are not bundled. The local-agent MCP bridge uses @modelcontextprotocol/server 2.4.0 and
+@modelcontextprotocol/node 2.1.2; connector OAuth uses
+@modelcontextprotocol/client 2.4.0. These packages come from
+https://github.com/modelcontextprotocol/typescript-sdk and are Apache-2.0
+(portions remain MIT by their original authors); their source is not modified.
+The server depends on zod (MIT) and the Node transport depends on hono and
+@hono/node-server (MIT).
+The bundled ds-bot/office.js includes
 @xmldom/xmldom (https://github.com/xmldom/xmldom, MIT License, Copyright (c)
 jindw and contributors) from npm. esbuild is a build tool only. The plugin's
 client.js bundles qrcode-generator from npm (MIT, Copyright (c) 2009 Kazuhiko

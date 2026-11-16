@@ -37,6 +37,59 @@ const createReply = JSON.stringify({
 })
 const noneReply = JSON.stringify({ action: 'none', reason: 'This work taught nothing reusable.' })
 
+const improvementAgentsReply = JSON.stringify({
+  action: 'edit',
+  scope: 'agents',
+  edits: [{ op: 'add', after: '- Existing rule', text: '- Rerun acceptance checks before reporting a delivery complete.', why: 'Verified delivery work showed that reported completion is not enough.' }],
+  observedProblem: 'The project rules allow a delivery report to stand without fresh acceptance evidence.',
+  proposedChange: 'Add a project rule that reruns the declared acceptance checks before reporting completion.',
+  expectedBenefit: 'Delivery work in this project keeps a visible, repeatable verification step.',
+  rollbackPath: 'Restore AGENTS.md from the before hash in this proposal audit.',
+})
+
+const improvementReply = JSON.stringify({
+  action: 'create',
+  scope: 'skill',
+  name: 'verified-delivery-checks',
+  description: 'Use when a delivery task needs durable acceptance checks.',
+  content: 'Record the acceptance commands and verify them against fresh evidence.',
+  why: 'Verified delivery work showed that its checks should be reused.',
+  observedProblem: 'The task was marked done without a durable reusable check.',
+  proposedChange: 'Create a learned skill for recording and rerunning acceptance checks.',
+  expectedBenefit: 'Later delivery tasks can verify the same evidence instead of trusting a completion report.',
+  rollbackPath: 'Remove the learned skill from this Bot if the checks stop matching the team workflow.',
+})
+
+function verifiedTaskSeed() {
+  const seed = JSON.parse(JSON.stringify(TEAM))
+  const now = Date.now()
+  seed.rooms.r1 = {
+    id: 'r1', name: 'Delivery', named: true, members: ['m1', 'b2'],
+    goal: {
+      id: 'g1', status: 'active', title: 'Ship release', createdAt: now - 1_000, updatedAt: now,
+      stages: [{
+        id: 's1', title: 'Verify release', acceptance: 'tests pass', status: 'passed',
+        tasks: [{
+          id: 't1', botId: 'b2', task: 'Ship the release', status: 'done',
+          evidence: [{
+            id: 'reported-44', kind: 'reported', text: 'A done status is enough to call the release complete.',
+            sourceId: 'session:b2:40', at: now - 200,
+          }, {
+            id: 'verify-44', kind: 'verified', text: 'npm test passed against the release artifact',
+            sourceId: 'session:b2:44', at: now - 100,
+            artifact: { path: 'dist/app.zip', digest: 'sha256:verified-44' },
+          }],
+          verification: {
+            status: 'verified', evidenceIds: ['verify-44'], verifiedAt: now - 50,
+            checks: [{ text: 'tests pass', status: 'verified', evidenceId: 'verify-44' }],
+          },
+        }],
+      }],
+    },
+  }
+  return seed
+}
+
 function start({ replies = [], config = {}, history = {}, seed = TEAM, learningSeed = {} } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-learning-'))
   writeFileSync(join(home, 'state.json'), JSON.stringify(JSON.parse(JSON.stringify(seed))))
@@ -989,3 +1042,185 @@ test('a learning review retries TRANSPORT and TIMEOUT failures on the same route
   assert.equal(runtime.learningState().pending?.b2, undefined)
 })
 
+
+test('a verified task creates a task-linked improvement proposal without applying it', async t => {
+  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+
+  const created = await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })
+
+  assert.equal(created.ok, true)
+  const proposal = created.value
+  assert.equal(proposal.kind, 'skill')
+  assert.equal(proposal.improvement.taskId, 'goal:g1:s1:t1')
+  assert.deepEqual(proposal.improvement.evidenceIds, ['verify-44'])
+  assert.deepEqual(proposal.improvement.sourceIds, ['session:b2:44'])
+  assert.equal(proposal.improvement.affectedBot.id, 'b2')
+  assert.equal(proposal.improvement.scope.kind, 'skill')
+  assert.match(proposal.improvement.observedProblem, /durable reusable check/)
+  assert.match(proposal.improvement.expectedBenefit, /Later delivery tasks/)
+  assert.match(proposal.improvement.rollbackPath, /Remove the learned skill/)
+  assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false, 'nothing is applied on proposal')
+  assert.equal(Object.keys(runtime.learningState().proposals).length, 1)
+
+  const request = runtime.requests[0].messages[0].content[0].text
+  assert.match(request, /goal:g1:s1:t1/)
+  assert.match(request, /verify-44/)
+  assert.match(request, /npm test passed/)
+  assert.doesNotMatch(request, /done status is enough/)
+
+  const detail = await runtime.call('task-detail', { taskId: 'goal:g1:s1:t1' })
+  assert.deepEqual(detail.value.improvements.proposals.map(item => item.id), [proposal.id])
+})
+
+test('task improvement proposals reject pending, stale, and unverified evidence', async t => {
+  const pendingSeed = verifiedTaskSeed()
+  pendingSeed.rooms.r1.goal.stages[0].tasks[0].verification = undefined
+  const pending = await startRuntime({ seed: pendingSeed, replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => pending.stop())
+  const refused = await pending.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(refused.ok, false)
+  assert.match(refused.error.message, /verified acceptance evidence/)
+  assert.equal(pending.requests.length, 0)
+  assert.deepEqual(pending.learningState().proposals ?? {}, {})
+
+  const staleSeed = verifiedTaskSeed()
+  staleSeed.rooms.r1.goal.stages[0].tasks[0].verification.status = 'stale'
+  staleSeed.rooms.r1.goal.stages[0].tasks[0].verification.reason = 'dist/app.zip changed after acceptance'
+  const stale = await startRuntime({ seed: staleSeed, replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => stale.stop())
+  const staleRefused = await stale.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(staleRefused.ok, false)
+  assert.match(staleRefused.error.message, /stale/)
+  assert.equal(stale.requests.length, 0)
+})
+
+test('approving a task improvement is idempotent, versioned, audited, and traceable', async t => {
+  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+
+  const approved = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(approved.ok, true)
+  assert.equal(approved.value.applied, true)
+  assert.equal(approved.value.duplicate, false)
+  assert.equal(approved.value.proposal.outcome, 'approved')
+  assert.equal(approved.value.proposal.version, 1)
+  assert.equal(approved.value.proposal.audit.proposalId, proposal.id)
+  assert.equal(approved.value.proposal.audit.taskId, 'goal:g1:s1:t1')
+  assert.deepEqual(approved.value.proposal.audit.evidenceIds, ['verify-44'])
+  assert.ok(approved.value.proposal.audit.beforeHash !== approved.value.proposal.audit.afterHash)
+  assert.match(approved.value.proposal.audit.rollbackPath, /Remove the learned skill/)
+  assert.ok(runtime.teamState().capabilities.items['verified-delivery-checks'])
+
+  const again = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(again.ok, true)
+  assert.equal(again.value.applied, true)
+  assert.equal(again.value.duplicate, true)
+  assert.equal(again.value.proposal.version, 1)
+  const changedAnswer = await runtime.call('learning-answer', { id: proposal.id, approve: false })
+  assert.equal(changedAnswer.ok, false)
+  assert.match(changedAnswer.error.message, /already approved/)
+})
+
+test('concurrent proposal decisions share approval and reject an opposite answer', async t => {
+  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+  let release
+  const blocked = new Promise(resolve => { release = resolve })
+  const save = runtime.rt.capabilitySave.bind(runtime.rt)
+  runtime.rt.capabilitySave = async (...args) => {
+    await blocked
+    return save(...args)
+  }
+
+  const first = runtime.call('learning-answer', { id: proposal.id, approve: true })
+  await settle()
+  const repeated = runtime.call('learning-answer', { id: proposal.id, approve: true })
+  const opposite = await runtime.call('learning-answer', { id: proposal.id, approve: false })
+  assert.equal(opposite.ok, false)
+  assert.match(opposite.error.message, /being approved/)
+  release()
+
+  const [approved, duplicate] = await Promise.all([first, repeated])
+  assert.equal(approved.ok, true)
+  assert.equal(duplicate.ok, true)
+  assert.deepEqual(duplicate.value, approved.value)
+  assert.equal(approved.value.proposal.outcome, 'approved')
+  assert.equal(runtime.learningState().settled[proposal.id].version, 1)
+})
+
+test('rejecting a task improvement is idempotent history and never changes the Bot', async t => {
+  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+
+  const rejected = await runtime.call('learning-answer', { id: proposal.id, approve: false })
+  assert.equal(rejected.ok, true)
+  assert.equal(rejected.value.applied, false)
+  assert.equal(rejected.value.duplicate, false)
+  assert.equal(rejected.value.proposal.outcome, 'declined')
+  assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+  assert.equal(runtime.learningState().settled[proposal.id].improvement.taskId, 'goal:g1:s1:t1')
+
+  const again = await runtime.call('learning-answer', { id: proposal.id, approve: false })
+  assert.equal(again.ok, true)
+  assert.equal(again.value.applied, false)
+  assert.equal(again.value.duplicate, true)
+  const changedAnswer = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(changedAnswer.ok, false)
+  assert.match(changedAnswer.error.message, /already declined/)
+})
+
+test('changed task evidence or Bot configuration blocks application for review', async t => {
+  await t.test('stale evidence', async t => {
+    const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+    t.after(() => runtime.stop())
+    const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+    runtime.rt.state.rooms.r1.goal.stages[0].tasks[0].verification.status = 'stale'
+    runtime.rt.state.rooms.r1.goal.stages[0].tasks[0].verification.reason = 'dist/app.zip changed after acceptance'
+
+    const blocked = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+    assert.equal(blocked.ok, false)
+    assert.match(blocked.error.message, /verified task evidence|stale/)
+    const open = runtime.learningState().proposals[proposal.id]
+    assert.equal(open.requiresReview, true)
+    assert.match(open.reviewReason, /stale/)
+    assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+  })
+
+  await t.test('changed Bot configuration', async t => {
+    const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+    t.after(() => runtime.stop())
+    const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+    runtime.rt.state.bots.b2.instructions = 'Changed after the proposal was created.'
+
+    const blocked = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+    assert.equal(blocked.ok, false)
+    assert.match(blocked.error.message, /Bot configuration changed/)
+    const open = runtime.learningState().proposals[proposal.id]
+    assert.equal(open.requiresReview, true)
+    assert.match(open.reviewReason, /Bot configuration changed/)
+    assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+  })
+})
+
+test('a verified task can propose and apply an audited AGENTS.md rule', async t => {
+  const folder = projectFolder(t)
+  const seed = verifiedTaskSeed()
+  seed.bots.b2.workDir = folder
+  const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+
+  const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+  assert.equal(proposal.kind, 'agents')
+  assert.equal(proposal.improvement.scope.kind, 'agents')
+  assert.equal(proposal.improvement.scope.target, await runtime.rt.real(folder))
+  assert.equal(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), '# Project\n- Existing rule\n')
+
+  const approved = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(approved.value.applied, true)
+  assert.equal(approved.value.proposal.audit.scope, `agents:${await runtime.rt.real(folder)}`)
+  assert.match(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), /Rerun acceptance checks/)
+})

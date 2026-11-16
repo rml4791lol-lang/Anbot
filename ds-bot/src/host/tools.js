@@ -313,6 +313,7 @@ export function install(rt) {
       const send = async () => {
         const toUser = args.reply_to === 'user'
         const work = toUser ? undefined : works[0]
+        const goalTask = toUser ? undefined : rt.goalTaskBinding?.(room?.id, sender.id)
         const chat = rt.chatOf(target.id)
         const agent = await rt.resolveAgent(chat)
         const status = rt.statusOf(target.id)
@@ -331,9 +332,10 @@ export function install(rt) {
         const steer = (args.when !== 'queue' && !toUser) || (joins && earlier.steered)
         const exchangeId = joins ? earlier.message.source.exchangeId : randomUUID()
         if (joins) rt.forgetDelivery?.(exchangeId)
-        else if (!toUser) rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work })
+        else if (!toUser) rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask })
+        const binding = toUser ? undefined : rt.workBinding?.(exchangeId)
         try {
-          await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}) })
+          await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}), ...binding })
         } catch (error) {
           // The delivery stays noted for the next start while its Bot exists
           // (resume.js), and the resent request still answers up the tree, so the

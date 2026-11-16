@@ -204,7 +204,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     clearTimeout(live.idle)
     this.live.delete(live.sessionId)
     live.engine.forget?.(live.sessionId)
-    live.mcp?.close()
+    await live.mcp?.close().catch(() => {})
     if (idle) {
       // The CLI session survives on the agent side; the process leaves and the
       // next prompt resumes it.
@@ -258,16 +258,31 @@ export class LocalAgentAdapter extends LlmAdapter {
   // The loopback MCP server for one live session; tools/call lands in its event queue.
   // `tools` lists the current turn's tools; the server outlives the turn that
   // started it, so tools/list reads the latest one.
-  async ensureMcp(live, tools) {
+  async ensureMcp(live, tools, inventoryTools = tools) {
     live.tools = tools
+    live.inventoryTools = inventoryTools
     if (live.mcp !== undefined) return live.mcp
-    const mcp = new LoopbackMcp(() => live.tools(), ({ name, arguments: args, callId }) => {
+    const mcp = new LoopbackMcp(() => live.tools(), ({ name, arguments: args, callId, signal }) => {
       const dshCallId = `dsbot-${callId}`
       return new Promise((resolve) => {
-        live.pending.set(dshCallId, { name, mcpCallId: callId, resolve })
+        let settled = false
+        const settle = (result) => {
+          if (settled) return
+          settled = true
+          signal?.removeEventListener('abort', cancel)
+          live.pending.delete(dshCallId)
+          resolve(result)
+        }
+        const cancel = () => settle({ text: 'the call was cancelled', isError: true })
+        signal?.addEventListener('abort', cancel, { once: true })
+        if (signal?.aborted === true) {
+          cancel()
+          return
+        }
+        live.pending.set(dshCallId, { name, mcpCallId: callId, resolve: settle })
         live.push({ type: 'call', name, args, dshCallId })
       })
-    })
+    }, () => live.inventoryTools?.() ?? [])
     await mcp.listen()
     live.mcp = mcp
     return mcp
@@ -333,7 +348,7 @@ export class LocalAgentAdapter extends LlmAdapter {
 
     const system = messages.filter(message => message.role === 'system').map(message => textOf(message.content)).join('\n').trim()
     const promptHash = system === '' ? undefined : createHash('sha256').update(system).digest('hex')
-    const mcp = await this.ensureMcp(live, () => this.deps.toolsFor(options))
+    const mcp = await this.ensureMcp(live, () => this.deps.toolsFor(options), () => options.tools ?? [])
     const cwd = live.cwd ?? await this.deps.cwdFor(sessionId)
     live.cwd = cwd
 

@@ -7,12 +7,13 @@
 //
 // A row that cannot be written must never stop the work it describes: the failure is
 // warned and the work goes on.
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 const TASK_FILE_RE = /^tasks-\d{4}-\d{2}-\d{2}\.jsonl$/
 const dayFormats = new Map()
+const MAX_DATE_MS = 8_640_000_000_000_000
 
 // The day a row belongs to follows the team's configured time zone, as memory and
 // other user-facing dates do. The file name is only an index; the report filters on
@@ -43,6 +44,17 @@ export const taskRow = (event, time = Date.now(), timeZone) => ({
   time,
 })
 
+const boundDay = (time, timeZone) => taskDay(
+  Number.isFinite(time) ? Math.max(-MAX_DATE_MS, Math.min(MAX_DATE_MS, time)) : Date.now(),
+  timeZone,
+)
+
+const shiftDay = (day, days) => {
+  if (!DAY_RE.test(day)) return days < 0 ? '0000-01-01' : '9999-12-31'
+  const shifted = new Date(Date.parse(`${day}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10)
+  return DAY_RE.test(shifted) ? shifted : days < 0 ? '0000-01-01' : '9999-12-31'
+}
+
 export function installTaskLog(rt) {
   const dir = join(rt.home, 'ledger')
   return (event) => {
@@ -59,32 +71,75 @@ export function installTaskLog(rt) {
 
 // Read by event time, not by the file name: the window is half-open [since, until),
 // and a bad or unrelated line is skipped rather than stopping the report.
-export function readTaskLedger(dir, since, until) {
+export function readTaskLedger(dir, since, until, warn = () => {}, cache = undefined, timeZone = undefined) {
   let names
   try {
-    names = readdirSync(dir).filter(name => TASK_FILE_RE.test(name)).sort()
-  } catch {
+    const present = readdirSync(dir).filter(name => TASK_FILE_RE.test(name)).sort()
+    const firstDay = boundDay(since, timeZone)
+    const lastDay = until > since ? boundDay(until - 1, timeZone) : undefined
+    // A team that changes time zone can move a boundary row one file day either way.
+    const firstFileDay = lastDay === undefined ? undefined : shiftDay(firstDay, -1)
+    const lastFileDay = lastDay === undefined ? undefined : shiftDay(lastDay, 1)
+    names = lastDay === undefined ? [] : present.filter((name) => {
+      const fileDay = name.slice('tasks-'.length, -'.jsonl'.length)
+      return fileDay >= firstFileDay && fileDay <= lastFileDay
+    })
+  } catch (error) {
+    if (error?.code !== 'ENOENT') warn(`task ledger: cannot read ${dir}: ${error.message}`)
     return { rows: [], files: [], days: [] }
+  }
+  if (cache !== undefined) {
+    const present = new Set(names)
+    for (const name of cache.keys()) if (!present.has(name)) cache.delete(name)
   }
   const rows = []
   for (const name of names) {
-    let text
+    let fileKey
     try {
-      text = readFileSync(join(dir, name), 'utf8')
-    } catch {
+      const stat = statSync(join(dir, name))
+      fileKey = `${stat.size}:${stat.mtimeMs}`
+    } catch (error) {
+      if (error?.code !== 'ENOENT') warn(`task ledger: cannot stat ${name}: ${error.message}`)
+      cache?.delete(name)
       continue
     }
-    for (const line of text.split('\n')) {
-      if (line === '') continue
-      let row
+    let parsed = cache?.get(name)
+    if (parsed?.key !== fileKey) {
+      let text
       try {
-        row = JSON.parse(line)
-      } catch {
+        text = readFileSync(join(dir, name), 'utf8')
+      } catch (error) {
+        if (error?.code !== 'ENOENT') warn(`task ledger: skipped ${name}: ${error.message}`)
+        cache?.delete(name)
         continue
       }
-      if (row === null || typeof row !== 'object' || Array.isArray(row)) continue
-      if (!Number.isFinite(row.time) || row.time < since || row.time >= until) continue
-      rows.push(row)
+      const valid = []
+      let badRows = 0
+      for (const line of text.split('\n')) {
+        if (line === '') continue
+        let row
+        try {
+          row = JSON.parse(line)
+        } catch {
+          badRows += 1
+          continue
+        }
+        if (row === null || typeof row !== 'object' || Array.isArray(row)) {
+          badRows += 1
+          continue
+        }
+        if ((row.kind !== 'open' && row.kind !== 'close') || typeof row.id !== 'string' || row.id === '' || !Number.isFinite(row.time)) {
+          badRows += 1
+          continue
+        }
+        valid.push(row)
+      }
+      parsed = { key: fileKey, rows: valid, badRows }
+      cache?.set(name, parsed)
+    }
+    if (parsed.badRows > 0) warn(`task ledger: skipped ${parsed.badRows} bad row${parsed.badRows === 1 ? '' : 's'} in ${name}`)
+    for (const row of parsed.rows) {
+      if (row.time >= since && row.time < until) rows.push(row)
     }
   }
   rows.sort((a, b) => a.time - b.time)

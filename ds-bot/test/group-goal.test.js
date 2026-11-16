@@ -7,6 +7,8 @@ import { afterRound } from './relay-rows.js'
 import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
 import { ROOM_WORK_GRACE_MS } from '../src/host/constants.js'
+import { buildTaskDetail } from '../src/host/task-detail.js'
+import { buildTeamActivity } from '../src/host/team-activity.js'
 
 // Chief, the admin of group 'r1', speaks there from 'ga'; Writer from 'gb'; Tester from 'gc'.
 const seed = (room = {}, extraRooms = {}) => ({
@@ -130,6 +132,12 @@ const STAGES = [
   { title: 'Draft', acceptance: 'draft reviewed', tasks: [{ bot: 'Writer', task: 'write the draft' }] },
   { title: 'Check', acceptance: 'checks pass', tasks: [{ bot: 'Tester', task: 'run the checks' }] },
 ]
+const CHECKED_STAGES = [{
+  title: 'Check',
+  acceptance: 'the test suite passes',
+  checks: [{ id: 'tests', kind: 'command', label: 'test suite', command: 'npm test', expect: { exitCode: 0 } }],
+  tasks: [{ bot: 'Writer', task: 'run the tests' }],
+}]
 const startGoal = (host, extra = {}) => host.tool('group_goal', {
   action: 'start', title: 'Ship it', objective: 'Ship the thing', acceptance: 'it is shipped', stages: STAGES, ...extra,
 }, 'ga')
@@ -168,8 +176,239 @@ test('a goal starts, passes its stages, and completes', async (t) => {
   assert.equal(goal(host).current, 2)
   assert.equal(await host.tool('group_goal', { action: 'complete', summary: 's' }, 'ga'), 'evidence is required for complete.')
   assert.equal(await host.tool('group_goal', { action: 'complete', evidence: 'e' }, 'ga'), 'summary is required for complete.')
-  assert.match(await host.tool('group_goal', { action: 'complete', evidence: 'all green', summary: 'shipped' }, 'ga'), /Complete\. Tell the user what was delivered\./)
-  assert.equal(goal(host).status, 'complete')
+  assert.match(await host.tool('group_goal', { action: 'complete', evidence: 'all green', summary: 'shipped' }, 'ga'), /typed acceptance checks/i)
+  assert.equal(goal(host).status, 'active')
+  assert.equal(goal(host).stages[0].verification.manual, true)
+  assert.equal(goal(host).stages[0].status, 'passed')
+})
+
+test('typed acceptance checks require matching executed evidence before a stage passes', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: CHECKED_STAGES })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'tool/call', { callId: 'test-1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
+  host.emit('gb', 'tool/result', { callId: 'test-1', message: { ok: true, content: [{ type: 'text', text: '12 tests passed' }] } })
+
+  assert.match(await host.tool('group_goal', { action: 'pass', evidence: 'Writer reported green' }, 'ga'), /Every stage passed/)
+  const passed = goal(host)
+  assert.equal(passed.stages[0].verification.state, 'verified')
+  assert.equal(passed.stages[0].tasks[0].verification.state, 'verified')
+  assert.equal(passed.stages[0].tasks[0].evidence[0].command.text, 'npm test')
+  assert.equal(passed.stages[0].tasks[0].evidence[0].command.exitCode, 0)
+  const state = saved(host)
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const taskId = `goal:${passed.id}:${passed.stages[0].id}:${passed.stages[0].tasks[0].id}`
+  assert.equal(buildTaskDetail({ state, activity, taskId }).verification.status, 'verified')
+})
+
+test('a goal Bot handoff keeps its goal task binding in activity and task detail', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: [STAGES[0]] })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const before = goal(host)
+  const goalTaskId = `goal:${before.id}:${before.stages[0].id}:${before.stages[0].tasks[0].id}`
+  const attemptId = before.stages[0].tasks[0].attempt.id
+
+  await host.tool('message_bot', { to: 'Tester', message: 'Review the draft before I report it.' }, 'b')
+  const state = saved(host)
+  const [workId, work] = Object.entries(state.works).find(([, item]) => item.from === 'b' && item.to === 'c')
+  assert.deepEqual(work.goalTask, { taskId: goalTaskId, attemptId })
+
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const handoff = activity.tasks.find(item => item.id === `handoff:${workId}`)
+  assert.equal(handoff.parentId, goalTaskId)
+  assert.equal(handoff.goalTaskId, goalTaskId)
+  const detail = buildTaskDetail({ state, activity, taskId: goalTaskId, now: Date.now() })
+  assert.deepEqual(detail.handoffs.map(item => [item.id, item.owner, item.status]), [[`handoff:${workId}`, 'Tester', 'active']])
+})
+
+test('typed acceptance checks refuse prose and report the missing check', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: CHECKED_STAGES })
+  host.emit('gb', 'assistant/message', { message: { content: [{ type: 'text', text: 'I ran npm test and it passed.' }] } })
+  assert.equal(await host.tool('group_goal', { action: 'pass', evidence: 'I ran npm test and it passed.' }, 'ga'),
+    'Acceptance checks are not verified: tests. Supply matching command, artifact, or diff evidence.')
+  assert.equal(goal(host).stages[0].status, 'active')
+  const verification = goal(host).stages[0].verification
+  assert.equal(verification.state, 'pending')
+  assert.deepEqual(verification.checkEvidence, {})
+  assert.deepEqual(verification.missing, ['tests'])
+})
+
+test('typed acceptance checks only accept command, artifact, and diff kinds', async (t) => {
+  const host = await start(t)
+  const run = args => host.tool('group_goal', args, 'ga')
+  for (const kind of ['review', 'manual']) {
+    await assert.rejects(run({
+      action: 'start', objective: 'o', acceptance: 'a',
+      stages: [{ title: 'S', acceptance: 'a', checks: [{ id: kind, kind }], tasks: [{ bot: 'Writer', task: 't' }] }],
+    }), error => error?.code === 'INVALID_ARGS' && /must be one of \["command","artifact","diff"\]/.test(error.message))
+  }
+  assert.equal(goal(host), undefined)
+  const tool = host.rt.teamTools.find(item => item.name === 'group_goal')
+  const enums = [
+    tool.parameters.properties.checks.items.properties.kind.enum,
+    tool.parameters.properties.stages.items.properties.checks.items.properties.kind.enum,
+    tool.parameters.properties.stages.items.properties.tasks.items.properties.checks.items.properties.kind.enum,
+  ]
+  assert.deepEqual(enums, Array(3).fill(['command', 'artifact', 'diff']))
+  assert.doesNotMatch(JSON.stringify(tool.parameters), /independent review|manual is never/)
+})
+
+test('goal-level acceptance checks gate complete with executed evidence', async (t) => {
+  const host = await start(t)
+  await startGoal(host, {
+    checks: [{ id: 'overall', kind: 'command', label: 'end-to-end tests', command: 'npm run e2e', expect: { exitCode: 0 } }],
+    stages: [{ ...STAGES[0], checks: [{ id: 'stage-e2e', kind: 'command', command: 'npm run e2e', expect: { exitCode: 0 } }] }],
+  })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'tool/call', { callId: 'e2e', name: 'pwsh', arguments: JSON.stringify({ command: 'npm run e2e' }) })
+  host.emit('gb', 'tool/result', { callId: 'e2e', message: { ok: true, content: [{ type: 'text', text: 'e2e green' }] } })
+  await host.tool('group_goal', { action: 'pass', evidence: 'draft reviewed' }, 'ga')
+  assert.match(await host.tool('group_goal', { action: 'complete', evidence: 'reported done', summary: 'shipped' }, 'ga'), /Complete/)
+  assert.equal(goal(host).verification.state, 'verified')
+  assert.deepEqual(goal(host).verification.evidenceIds, ['ev:tool-result:gb:e2e'])
+})
+
+test('changing a verified artifact invalidates acceptance and reopens the goal', async (t) => {
+  const host = await start(t)
+  await startGoal(host, {
+    stages: [{
+      title: 'Package',
+      acceptance: 'the package is current',
+      checks: [{ id: 'package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }],
+      tasks: [{ bot: 'Writer', task: 'build the package' }],
+    }],
+  })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:first' }] })
+  await host.tool('group_goal', { action: 'pass', evidence: 'package verified' }, 'ga')
+  await host.tool('group_goal', { action: 'complete', evidence: 'all stages verified', summary: 'shipped' }, 'ga')
+
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:changed' }] })
+  await settle(() => goal(host).status === 'needs-review')
+  const reopened = goal(host)
+  assert.equal(reopened.status, 'needs-review')
+  assert.equal(reopened.stages[0].status, 'active')
+  assert.equal(reopened.stages[0].tasks[0].verification.state, 'stale')
+})
+
+test('a deleted or unhashable artifact invalidates verified acceptance', async (t) => {
+  const host = await start(t)
+  await startGoal(host, {
+    stages: [{
+      title: 'Package',
+      acceptance: 'the package is current',
+      checks: [{ id: 'package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }],
+      tasks: [{ bot: 'Writer', task: 'build the package' }],
+    }],
+  })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:first' }] })
+  await host.tool('group_goal', { action: 'pass', evidence: 'package verified' }, 'ga')
+  await host.tool('group_goal', { action: 'complete', evidence: 'all stages verified', summary: 'shipped' }, 'ga')
+
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: '' }] })
+  await settle(() => goal(host).status === 'needs-review')
+  assert.equal(goal(host).stages[0].tasks[0].verification.state, 'stale')
+  assert.deepEqual(goal(host).stages[0].tasks[0].verification.invalidated, ['dist/app.zip'])
+})
+
+test('changing a goal-level verified artifact also reopens completed work', async (t) => {
+  const host = await start(t)
+  await startGoal(host, {
+    checks: [{ id: 'overall-package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }],
+    stages: [{ ...STAGES[0], checks: [{ id: 'stage-package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }] }],
+  })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:first' }] })
+  await host.tool('group_goal', { action: 'pass', evidence: 'draft reviewed' }, 'ga')
+  await host.tool('group_goal', { action: 'complete', evidence: 'verified', summary: 'shipped' }, 'ga')
+  assert.equal(goal(host).verification.state, 'verified')
+
+  host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:changed' }] })
+  await settle(() => goal(host).status === 'needs-review')
+  assert.equal(goal(host).verification.state, 'stale')
+})
+
+test('two completed turns with only prose mark the goal task stalled', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  for (const reply of ['I am checking it.', 'It still looks good.']) {
+    host.emit('gb', 'turn/start', { turn: 1 })
+    host.emit('gb', 'assistant/message', { message: { content: [{ type: 'text', text: reply }] } })
+    host.emit('gb', 'turn/end', { reason: { kind: 'completed' } })
+  }
+  await settle(() => goal(host).stages[0].tasks[0].progress.state === 'stalled')
+  const task = goal(host).stages[0].tasks[0]
+  assert.equal(task.progress.state, 'stalled')
+  assert.equal(task.verification.state, 'needs-review')
+  assert.match(task.checkpoint.summary, /No measurable progress/)
+  const state = saved(host)
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const taskId = `goal:${state.rooms.r1.goal.id}:${state.rooms.r1.goal.stages[0].id}:${task.id}`
+  assert.equal(buildTaskDetail({ state, activity, taskId }).verification.status, 'needs-review')
+})
+
+test('repeated productive goal turns reset the unchanged-turn count', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  for (let turn = 1; turn <= 3; turn += 1) {
+    host.emit('gb', 'turn/start', { turn })
+    host.emit('gb', 'tool/call', { callId: `productive-${turn}`, name: 'pwsh', arguments: JSON.stringify({ command: `command-${turn}` }) })
+    host.emit('gb', 'tool/result', { callId: `productive-${turn}`, message: { ok: true, content: [{ type: 'text', text: `green-${turn}` }] } })
+    host.emit('gb', 'turn/end', { turn, reason: { kind: 'completed' } })
+    await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === turn)
+  }
+  const task = goal(host).stages[0].tasks[0]
+  assert.equal(task.progress.state, 'moving')
+  assert.equal(task.progress.unchangedTurns, 0)
+})
+
+test('restart reconciliation fails closed and marks a goal task recovery-needed for unrelated events', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const before = goal(host).stages[0].tasks[0]
+  const taskId = `goal:${goal(host).id}:${goal(host).stages[0].id}:${before.id}`
+  const events = [
+    { seq: 1, type: 'turn/start', data: { turn: 1 } },
+    { seq: 2, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'Unrelated report' }] } } },
+    { seq: 3, type: 'tool/call', data: { turn: 1, callId: 'other', name: 'pwsh', arguments: JSON.stringify({ command: 'other command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 1, callId: 'other', message: { ok: true, content: [{ type: 'text', text: 'green' }] } } },
+  ]
+  assert.equal(host.rt.reconcileGoalEvidence('gb', events, {
+    taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), false)
+  await settle(() => goal(host).stages[0].tasks[0].recovery?.length > 0)
+  const after = goal(host).stages[0].tasks[0]
+  assert.equal((after.evidence ?? []).length, 0)
+  assert.equal(after.recovery[0].kind, 'needs-review')
+  const state = saved(host)
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId })
+  assert.equal(detail.recovery.state, 'needs-review')
+  assert.equal(detail.partial, true)
+  assert.ok(detail.blockers.some(item => item.kind === 'recovery' && /could not be matched/i.test(item.text)))
+  const matching = [
+    { seq: 1, type: 'turn/start', data: { turn: 2 } },
+    {
+      seq: 2, type: 'user/message',
+      data: {
+        turn: 2, content: [{ type: 'text', text: 'Recovered task request' }],
+        source: { kind: 'ds-bot', role: 'request', taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange' },
+      },
+    },
+    { seq: 3, type: 'tool/call', data: { turn: 2, callId: 'matched', name: 'pwsh', arguments: JSON.stringify({ command: 'matched command' }) } },
+    { seq: 4, type: 'tool/result', data: { turn: 2, callId: 'matched', message: { ok: true, content: [{ type: 'text', text: 'green' }] } } },
+  ]
+  assert.equal(host.rt.reconcileGoalEvidence('gb', matching, {
+    taskId, attemptId: before.attempt.id, exchangeId: 'expected-exchange',
+  }), true)
+  await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === 1)
+  assert.equal(goal(host).stages[0].tasks[0].recovery.some(item => item.kind === 'needs-review'), false)
 })
 
 test('a named goal change is applied once and its first receipt is replayed', async (t) => {
@@ -406,6 +645,27 @@ test('a paused goal and a room at work do not get a goal check', async (t) => {
   assert.equal(host.takeGoal(), undefined)
 })
 
+test('an explicit goal task identity binds evidence from the Bot own chat', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const task = goal(host).stages[0].tasks[0]
+  const taskId = `goal:${goal(host).id}:${goal(host).stages[0].id}:${task.id}`
+  host.emit('b', 'turn/start', { turn: 1 })
+  host.emit('b', 'user/message', {
+    content: [{ type: 'text', text: 'Run the checks.' }],
+    source: { kind: 'ds-bot', taskId, attemptId: task.attempt.id, exchangeId: 'explicit-task' },
+  })
+  host.emit('b', 'tool/call', { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
+  host.emit('b', 'tool/result', { callId: 'c1', exitCode: 0, message: { ok: true, exitCode: 0, content: [{ type: 'text', text: 'green' }] } })
+  await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === 1)
+  const current = goal(host).stages[0].tasks[0]
+  assert.equal(current.attempt.id, task.attempt.id)
+  assert.equal(current.attempt.sessionId, 'b')
+  assert.equal(current.evidence[0].attemptId, task.attempt.id)
+  assert.equal(current.evidence[0].command.text, 'npm test')
+})
+
 test('the goal tracks tasks as the admin calls and members answer', async (t) => {
   const host = await start(t)
   await startGoal(host)
@@ -416,7 +676,13 @@ test('the goal tracks tasks as the admin calls and members answer', async (t) =>
   host.finish('ga', '@Writer write the draft')
   await settle(() => host.agentOf('gb').calls.length === 1)
   await settle(() => writerTask().status === 'working')
+  assert.equal(writerTask().attempt.sessionId, 'gb')
+  assert.equal(writerTask().checkpoint.attemptId, writerTask().attempt.id)
   host.begin('gb')
+  await settle(() => writerTask().attempt.exchangeId !== undefined)
+  assert.match(writerTask().attempt.exchangeId, /^[0-9a-f-]{36}$/)
+  assert.equal(host.agentOf('gb').calls[0].source.taskId, `goal:${goal(host).id}:${goal(host).stages[0].id}:${writerTask().id}`)
+  assert.equal(host.agentOf('gb').calls[0].source.attemptId, writerTask().attempt.id)
   host.finish('gb', 'draft written, see out.md')
   await settle(() => writerTask().status === 'reported')
   await settle(() => result() !== undefined)

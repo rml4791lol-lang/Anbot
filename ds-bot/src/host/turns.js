@@ -2,7 +2,8 @@
 // triggered, the waiters and inboxes of group rounds, and routing a finished turn's reply.
 //
 // Turn tracking: which turns were triggered by another Bot, and what they said.
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { carrierKeyOf } from '@deepseek-ai/dsh-scope'
 import { HANDOFF_ACK, LATE_ANSWER, MESSAGE_INLINE_MAX, REFERENCE_KIND, REPLY_KIND, SOURCE_KIND, STEER_CUT } from './constants.js'
 import { cleanText } from './diagnostics.js'
@@ -17,6 +18,14 @@ import { usageChunk } from './usage.js'
 // this never cancels the turn or changes its real status.
 export const POSSIBLY_STALLED_MS = 2 * 60_000
 const possiblyStalled = at => Number.isFinite(at) && Date.now() - at >= POSSIBLY_STALLED_MS
+
+const fileDigest = (path) => {
+  try {
+    return `sha256:${createHash('sha256').update(readFileSync(path)).digest('hex')}`
+  } catch {
+    return undefined
+  }
+}
 
 // Failures only the user can fix: a key, a sign-in, a balance. They block the Bot
 // until it is fixed (`bot.blocked`, for the repair card).
@@ -811,6 +820,23 @@ export function install(rt) {
     const entry = liveOf(id)
     entry.lastEventAt = Number.isFinite(event.time) ? event.time : Date.now()
     if (rt.groupOwners.has(id)) rt.touchRoomTurn?.(id)
+    if (['assistant/message', 'tool/call', 'tool/result', 'deliverables/presented'].includes(event.type)) {
+      const evidenceEvent = event.type === 'deliverables/presented'
+        ? {
+            ...event,
+            data: {
+              ...event.data,
+              files: (Array.isArray(event.data?.files) ? event.data.files : []).map((file) => {
+                if (file?.digest || typeof file?.path !== 'string') return file
+                const digest = fileDigest(file.path)
+                return digest === undefined ? file : { ...file, digest }
+              }),
+            },
+          }
+        : event
+      rt.noteGoalEvidence?.(id, evidenceEvent)
+      rt.noteWorkEvidence?.(id, evidenceEvent, entry.info)
+    }
     switch (event.type) {
       case 'subagent/catalog': {
         const childId = event.data?.childId
@@ -894,6 +920,8 @@ export function install(rt) {
         break
       case 'user/message': {
         const source = event.data?.source
+        rt.bindGoalAttempt?.(id, source, entry.turn)
+        rt.bindWorkAttempt?.(id, source, entry.turn)
         if (source?.kind === 'subagent-settled' || source?.kind === 'agent-message') {
           const childId = typeof source.senderSessionId === 'string' ? source.senderSessionId : undefined
           // Only settlement ends a child's turn; an intermediate `agent-message` keeps the
@@ -1089,6 +1117,8 @@ export function install(rt) {
         break
       }
       case 'turn/end': {
+        rt.finishGoalTurn?.(id, event.data?.reason?.kind)
+        rt.finishWorkTurn?.(id, entry.info, event.data?.reason?.kind)
         setActivity(id, undefined)
         // A steer cut leaves the turn's routing state for the fresh turn that
         // claims the steer: nothing is answered or delivered for the cut one.
@@ -1325,7 +1355,33 @@ export function install(rt) {
     if (typeof info?.id !== 'string') return
     rt.settleSubWork?.(typeof info.runId === 'string' ? info.runId : info.id, subEndText(info), info.id)
   })
-  ctx.on('tools/result', (exec, result) => {
+  ctx.on('tools/result', function (exec, result) {
+    const sessionId = carrierKeyOf(this)?.session?.id ?? exec?.agent?.session?.id
+    if (sessionId !== undefined && exec?.callId !== undefined) {
+      const info = live.get(sessionId)?.info
+      const call = {
+        type: 'tool/call',
+        data: { callId: exec.callId, name: exec.name, arguments: JSON.stringify(exec.arguments ?? {}) },
+      }
+      const content = Array.isArray(result?.content) ? result.content
+        : result?.value === undefined ? [] : [{ type: 'text', text: typeof result.value === 'string' ? result.value : JSON.stringify(result.value) }]
+      const resultEvent = {
+        type: 'tool/result',
+        time: Date.now(),
+        data: {
+          callId: exec.callId,
+          message: {
+            ok: result?.isError !== true,
+            content,
+            ...(result?.meta ?? result?.value?.meta ? { meta: result.meta ?? result.value.meta } : {}),
+          },
+        },
+      }
+      rt.noteGoalEvidence?.(sessionId, call)
+      rt.noteGoalEvidence?.(sessionId, resultEvent)
+      rt.noteWorkEvidence?.(sessionId, call, info)
+      rt.noteWorkEvidence?.(sessionId, resultEvent, info)
+    }
     if (!SUBAGENT_TOOLS.has(exec?.name) || result?.isError || typeof result?.value?.subagentId !== 'string') return
     const description = exec.arguments?.description
     rt.nameSubWork?.(result.value.subagentId, `subagent${typeof description === 'string' && description.trim() !== '' ? ` ${description.trim()}` : ''}`)
