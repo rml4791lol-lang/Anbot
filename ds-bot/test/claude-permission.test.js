@@ -53,11 +53,15 @@ test("the team's gate scripts run with their arguments, and nothing else", (t) =
   symlinkSync(join(elsewhere, 'evil.sh'), join(dir, 'link.sh'))
 
   const tools = readOnlyTools([dir])
-  const rule = `Bash(bash ${realpathSync(join(dir, 'research-gate.sh'))}:*)`
+  const scriptPath = realpathSync(join(dir, 'research-gate.sh'))
+  const rule = `Bash(bash ${scriptPath}:*)`
   assert.ok(tools.includes(rule), 'a gate script must run without a card')
   // The whole form matters: the CLI takes `Bash(<prefix>:*)`, and a `*` inside the
   // path is matched literally, so a pattern rule would admit nothing.
-  assert.match(rule, /^Bash\(bash \/.+\.sh:\*\)$/)
+  const prefix = 'Bash(bash '
+  const suffix = ':*)'
+  assert.ok(rule.startsWith(prefix) && rule.endsWith(suffix), 'the rule is a Bash(bash <path>:*) form')
+  assert.equal(rule.slice(prefix.length, rule.length - suffix.length), scriptPath, 'the rule carries the exact full script path')
 
   const scripts = tools.filter(tool => tool.startsWith('Bash(bash '))
   assert.deepEqual(scripts, [rule], 'one rule per script in the folder, and no other')
