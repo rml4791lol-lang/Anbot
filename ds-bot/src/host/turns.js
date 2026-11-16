@@ -7,7 +7,7 @@ import { carrierKeyOf } from '@deepseek-ai/dsh-scope'
 import { HANDOFF_ACK, LATE_ANSWER, MESSAGE_INLINE_MAX, REFERENCE_KIND, REPLY_KIND, SOURCE_KIND, STEER_CUT } from './constants.js'
 import { cleanText } from './diagnostics.js'
 import { absoluteLinks } from './links.js'
-import { splitRef, textOf } from './text.js'
+import { splitRef, stripControlMarkers, textOf } from './text.js'
 import { viaOf } from '../shared/im-platforms.js'
 import { reminderText } from './schedules.js'
 import { usageChunk } from './usage.js'
@@ -37,8 +37,9 @@ export const failureLine = failure => `${failure.code}${failure.status ? ` ${fai
 
 // The reply a sender waits for, sent the way a finished turn sends it: the work it was
 // for closes, and the answer goes up to the Bot that asked. `id` is the Session the
-// answer comes from; `source` is the trigger the turn answered.
-export function answerSender(rt, id, source, text, long) {
+// answer comes from; `source` is the trigger the turn answered. A silent reply is one the
+// sender reads at its next turn: it is kept, and no turn is opened for it.
+export function answerSender(rt, id, source, text, long, silent = false) {
   const back = rt.roomOf(source.senderRoomId)?.sessions?.[source.senderSessionId]
   const name = rt.botOf(rt.selfOf(id))?.name ?? 'The other Bot'
   const work = rt.closeWork?.(source.exchangeId, name, text)
@@ -48,6 +49,11 @@ export function answerSender(rt, id, source, text, long) {
   const marker = late === undefined ? '' : LATE_ANSWER
   const body = marker === '' ? (long?.text ?? text) : `${marker}${long?.text ?? text}`
   const length = long === undefined ? undefined : late === undefined ? long.length : (long.length ?? text.length) + marker.length
+  // An answer with nothing in it wakes the asker for nothing: the work above is already
+  // closed with what came back, and the asker reads it at its next turn. Only punctuation
+  // or space is nothing; one letter, digit or CJK character is an answer. A late answer
+  // and one that went as a file still go out.
+  if (late === undefined && long === undefined && !/[\p{L}\p{N}]/u.test(body)) return
   const exchangeId = randomUUID()
   void rt.deliver({
     fromId: rt.selfOf(id),
@@ -59,6 +65,7 @@ export function answerSender(rt, id, source, text, long) {
     replyTo: source.exchangeId,
     exchangeId,
     ...(work ? { work } : {}),
+    silent,
   }).catch((error) => {
     rt.warn('ds-bot: reply delivery failed: %s', error)
     // The reply never reached the asker: its note goes — the notice below carries
@@ -77,6 +84,7 @@ export function answerSender(rt, id, source, text, long) {
       role: 'reply',
       replyTo: source.exchangeId,
       ...(work ? { work } : {}),
+      silent,
     }).catch(again => rt.warn('ds-bot: reply failure notice not delivered: %s', again))
   })
 }
@@ -466,7 +474,7 @@ export function install(rt) {
   // reply in its Session there while it is still a member. A sender that asked for it
   // while working on another Bot's request goes on with that work when it reads it.
   // `long`: the text as attachLong sends it, when it went as a file.
-  const tellSender = (id, source, text, long) => answerSender(rt, id, source, text, long)
+  const tellSender = (id, source, text, long, silent) => answerSender(rt, id, source, text, long, silent)
 
   // Runs before a deleted Bot leaves the team. Its Sessions stop with it, and the
   // turn/end that follows is no longer the team's, so their activity and turn records go
@@ -477,6 +485,8 @@ export function install(rt) {
     const waiting = new Map()
     for (const id of sessionIds) {
       await stopSubagents(id)
+      // A batch still waiting for this Session never reaches the Bot that is gone.
+      rt.dropWaiting?.(id)
       const entry = live.get(id)
       const held = [entry?.info, entry?.pending, ...(entry?.joined ?? []).map(joined => joined.info)]
       if (entry?.turn !== undefined) {
@@ -1168,7 +1178,9 @@ export function install(rt) {
           }
         }
         const replyText = () => {
-          const reply = (wroteCall ? texts.map(stripWrittenCalls) : texts).join('\n\n').trim()
+          // The chat template's stop markers are not what the turn said: strip them
+          // before the reply is judged empty, stored, or sent (#14).
+          const reply = texts.map(text => stripControlMarkers(wroteCall ? stripWrittenCalls(text) : text)).join('\n\n').trim()
           if (wroteCall && reply === '') return 'Tried to run a tool but wrote the call as text, so it did not run.'
           if (cutOff) return reply === '' && wroteText ? CUT_OFF_NOTE : cutOffText(reply)
           return reply
@@ -1178,7 +1190,14 @@ export function install(rt) {
         // the turn's text (or a stopped-before-answer line), or nothing.
         const name = rt.botOf(rt.selfOf(id))?.name ?? 'The other Bot'
         const answer = (source, reply) => {
-          if (!expectsReply(source) || answersUser(source)) return
+          // A turn that owes this Bot no reply — one opened by a "[Reply from …]", or a
+          // question whose answer is for the user — used to drop its text here. Nothing
+          // said between Bots goes missing (#17): the sender reads it at its next turn,
+          // and no turn is spent on it.
+          if (!expectsReply(source) || answersUser(source)) {
+            if (reply !== '' && source?.kind === SOURCE_KIND && source.senderSessionId !== undefined) tellSender(id, source, reply, undefined, true)
+            return
+          }
           if (failure !== undefined) {
             // The sender was told a reply comes later; without this it would wait forever.
             tellSender(id, source, `${name} could not answer your message: its model call failed (${failureLine(failure)}). Tell the user if it matters; do not retry right away.`)

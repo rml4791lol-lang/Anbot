@@ -2,7 +2,7 @@ import { createElement as h, Fragment, useEffect, useLayoutEffect, useMemo, useR
 import { createPortal } from 'react-dom'
 import { MarkdownText, writeClipboard } from './dsh-primitives.js'
 import { inkText } from './inks.js'
-import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripInternalText, isHiddenTurn, isRelayContext, relaysBefore, relayPart, commRunOf, toolName, toolArgs, elapsedLabel, clockLabel, messageClock } from './text.js'
+import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripInternalText, stripToolCallTags, isHiddenTurn, isRelayContext, relaysBefore, relayPart, commRunOf, toolName, toolArgs, elapsedLabel, clockLabel, messageClock } from './text.js'
 import { SmileIcon, ReplyIcon, DotsIcon, CheckIcon, DownloadIcon, CopyIcon, GoalIcon, MemoryIcon } from './icons.js'
 import { goalEventText } from './goal.js'
 import { colorOf, toolState, BotMark, RoomAvatar } from './mark.js'
@@ -266,8 +266,8 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
   const mentions = useFileMentions({ node, openFile, fileMentions, useTurnData })
   const hidden = Boolean(roster.roomsById[sessionId]) || isHiddenTurn(roster, sessionId, data.turn)
   const texts = groupPart === 'reasoning' ? [] : data.blocks
-    .filter(block => block.kind === 'text' && block.text.trim() !== '')
-    .map(block => stripInternalText(block.text))
+    .filter(block => block.kind === 'text')
+    .map(block => stripInternalText(stripToolCallTags(block.text)))
     .filter(text => text.trim() !== '')
   const running = data.status === 'running'
   const textInteractionSource = data.status === 'settled' && data.finalNode?.messageId !== undefined

@@ -39,3 +39,12 @@ test('client.js registers a factory that exports apply and inject', () => {
   // work-details mode it once held at `verbose`.
   assert.deepEqual(Array.from(exports.inject), ['sessions', 'uiWorkspace', 'uiConversation', 'slots', 'theme', 'layout'])
 })
+
+// The rightbar slot is single: the shell's own session panel already holds it, so
+// claiming the seat throws at registration and the shell group rolls back whole.
+// The board rides the overlay list instead, where it can never collide with a seat.
+test('the team board stays out of DSH\'s single right seat', () => {
+  const source = readFileSync(new URL('../src/client/index.js', import.meta.url), 'utf8')
+  assert.equal(source.includes("shadow('rightbar'"), false, 'the rightbar seat belongs to the shell')
+  assert.equal(source.includes("shadow('shell.overlay', { id: 'bot-team-board'"), true, 'the board renders in the overlay list')
+})

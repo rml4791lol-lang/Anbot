@@ -1,6 +1,7 @@
 // Pure text helpers shared by the host modules: message text, names, model refs,
 // cutting and estimating text, and the clock format of chat anchors.
 import { COLORS, EXTRA_COLORS, LEGACY_COLORS, OWN_CHAT_LINE_MAX } from './constants.js'
+import { stripWireTags } from '../shared/wire-tags.js'
 
 // A color id saved under its legacy name reads as the current one.
 export const currentColor = color => (typeof color === 'string' && Object.hasOwn(LEGACY_COLORS, color) ? LEGACY_COLORS[color] : color)
@@ -11,9 +12,18 @@ export const splitRef = (ref) => {
   return index > 0 ? { provider: ref.slice(0, index), model: ref.slice(index + 1) } : undefined
 }
 
+// A model with nothing to say can end its answer with its chat template's stop marker
+// (`<｜end▁of▁thinking｜>`, `<｜begin_of▁…｜>`). It is not text the Bot said, so it never
+// reaches a ledger, another Bot, or the user. Both the CJK and ASCII pipe forms match;
+// ordinary text with single `<` and `>` is left alone.
+const CONTROL_MARKER = /<[｜|][^<>\n]{0,80}[｜|]>/g
+export const stripControlMarkers = text => String(text ?? '').replace(CONTROL_MARKER, '').trim()
+
+// #1517: a model's tool-call tags and <final> wrapper are wire syntax, not part
+// of the text: they never reach storage, delivery, the search index or a Bot.
 export const textOf = content => (Array.isArray(content) ? content : [])
   .filter(block => block?.type === 'text' && typeof block.text === 'string')
-  .map(block => block.text)
+  .map(block => stripWireTags(block.text))
   .join('\n')
   .trim()
 

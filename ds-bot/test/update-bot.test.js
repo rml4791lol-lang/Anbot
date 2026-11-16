@@ -41,7 +41,15 @@ function start(team = TEAM) {
       resolveModelInfo: async () => ({}),
     },
     sessionController: {
-      resolveAgent: async sessionId => ({ agent: { session: { id: sessionId, seq: 1 }, followup: message => sent.push({ sessionId, message }) } }),
+      resolveAgent: async sessionId => ({
+        agent: {
+          session: { id: sessionId, seq: 1 },
+          followup: message => sent.push({ sessionId, message }),
+          // A profile notice carries no question: it is queued for the Bot's next turn
+          // instead of waking it (see deliver's `silent`).
+          send: (message, target, wakeup) => sent.push({ sessionId, message, target, wakeup }),
+        },
+      }),
       selectModel: async () => {},
     },
     sessionTitle: { rename: async () => {} },
@@ -59,7 +67,7 @@ function start(team = TEAM) {
     await ctx.dispose()
     rmSync(home, { recursive: true, force: true, maxRetries: 5 })
   }
-  return { ctx, tool, call, state, sent, stop }
+  return { ctx, tool, call, state, sent, rt, stop }
 }
 
 test('a Bot changes itself by leaving out bot, or by naming itself', async (t) => {
@@ -102,32 +110,45 @@ test('every Bot sees the update_bot rule in its identity section', async (t) => 
   assert.match(ctx.sections.get('bot-identity').text({ agent: { id: 'm1' } }), /update_bot changes your own settings/)
 })
 
-test('an instructions change lands as a message in the Bot chat', async (t) => {
-  const { call, tool, sent, stop } = start()
+test('an instructions change is queued quietly and kept in the mailbox', async (t) => {
+  const { call, tool, sent, rt, stop } = start()
   t.after(stop)
   assert.equal((await call('update-bot', { id: 'b2', instructions: 'Ship the fix' })).ok, true)
-  // The notice goes out as a follow-up; let the queued delivery run.
+  // The notice still queues for the Bot's next turn without waking it; the mailbox
+  // keeps a copy, so a window that closes before that turn loses nothing.
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 1)
   assert.equal(sent[0].sessionId, 'b2')
+  assert.equal(sent[0].target, 'next-turn')
+  assert.equal(sent[0].wakeup, false)
   const text = sent[0].message.content[0].text
   assert.match(text, /profile was updated/)
   assert.match(text, /Ship the fix/)
-  // A patch that changes nothing sends no message.
+  const kept = rt.inbox.list('b2')
+  assert.equal(kept.length, 1)
+  assert.equal(kept[0].role, 'update')
+  assert.equal(kept[0].sessionId, 'b2')
+  assert.match(kept[0].text, /Your instructions now read:/)
+  assert.match(kept[0].text, /Ship the fix/)
+  // A patch that changes nothing sends no message and adds no note.
   await call('update-bot', { id: 'b2', instructions: 'Ship the fix' })
   await call('update-bot', { id: 'b2', color: 'red' })
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 1)
+  assert.equal(rt.inbox.list('b2').length, 1)
 
   // A Bot editing itself in its own chat just got the tool result; no second
   // turn queues for it. The same edit from a group Session still reaches it.
   assert.equal(await tool('update_bot', { instructions: 'Own fix' }, 'b2'), 'Updated Writer.')
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 1)
+  assert.equal(rt.inbox.list('b2').length, 1)
   assert.equal(await tool('update_bot', { instructions: 'From the group' }, 'g3'), 'Updated Coder.')
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 2)
   assert.equal(sent[1].sessionId, 'b3')
+  assert.equal(rt.inbox.list('b3').length, 1)
+  assert.equal(rt.inbox.list('b3')[0].role, 'update')
 })
 
 test('a Bot whose greeting is still held gets no notice before its model pick', async (t) => {
