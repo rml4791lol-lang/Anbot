@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { GOAL_IDLE_NUDGES, SOURCE_KIND } from './constants.js'
+import { NAME_MAX } from './requests.js'
 import { headOf } from './text.js'
 import { output } from './tools.js'
 
@@ -672,6 +673,7 @@ export function install(rt) {
     parameters: {
       group: { type: 'string', description: 'Exact group chat name from list_bots; leave out inside that group' },
       action: { type: 'string', required: true, enum: ['show', 'draft', 'start', 'revise', 'task', 'pass', 'rework', 'complete', 'pause', 'resume', 'stop'], description: 'What to do' },
+      request_id: { type: 'string', description: `Your own name for this goal change, up to ${NAME_MAX} characters. A repeat with the same content returns the first receipt without changing the goal again.` },
       title: { type: 'string', description: 'Short title, up to 80 characters' },
       brief: { type: 'string', description: 'draft: what the user wants, in their words' },
       objective: { type: 'string', description: 'start, revise: the one outcome the group must reach' },
@@ -734,69 +736,86 @@ export function install(rt) {
       if ((action === 'draft' || action === 'start') && admin === undefined) {
         return `"${room.name}" has no admin, and a goal needs one to run it. Set an admin with update_group first.`
       }
+      const requestName = typeof args.request_id === 'string' ? args.request_id.trim() : ''
+      if (requestName.length > NAME_MAX) return `The request_id is ${requestName.length} characters long; a request name is at most ${NAME_MAX}.`
+      if (action === 'show') return goalLedger(room, member)
       const of = memberOf(room)
       const names = memberNames(room)
-      let result
-      let next = ''
-      let post
-      switch (action) {
-        case 'show':
-          return goalLedger(room, member)
-        case 'draft':
-          result = draftGoal(room, { brief: args.brief, title: args.title, by: self })
-          next = 'Aligning. Ask the user only what is still open, then call group_goal start.'
-          break
-        case 'start':
-          result = startGoal(room, args, self, of, names)
-          next = 'Started. Hand out the tasks of stage 1 now, with @Name in your reply.'
-          break
-        case 'revise':
-          result = reviseGoal(room, args, self, of, names)
-          next = 'Changed. Tell the group what changed, and go on with the current stage.'
-          break
-        case 'task':
-          result = taskGoal(room, args, self, of, names)
-          break
-        case 'pass':
-          result = passGoal(room, args, self)
-          next = result.goal === undefined ? ''
-            : result.goal.stages[result.goal.current] !== undefined
-              ? `Stage ${result.goal.current} passed. Stage ${result.goal.current + 1} "${result.goal.stages[result.goal.current].title}" is current: hand out its tasks with @Name in this reply.`
-              : 'Every stage passed. Check the overall "done when", then call group_goal complete with the evidence and a summary for the user.'
-          break
-        case 'rework':
-          result = reworkGoal(room, args, self, of, names)
-          next = 'Sent back. Call the members again with @Name and say what is missing.'
-          break
-        case 'complete':
-          result = completeGoal(room, args, self)
-          next = 'Complete. Tell the user what was delivered.'
-          break
-        case 'pause':
-          result = pauseGoal(room, self)
-          next = 'Paused. Hand out no stage work until the goal is resumed.'
-          break
-        case 'resume':
-          result = resumeGoal(room, self)
-          next = 'Resumed. Take the next step now.'
-          break
-        case 'stop':
-          result = stopGoal(room, args.reason, self)
-          next = 'Stopped.'
-          // The caller keeps running; the other members' work stops.
-          post = async () => {
-            for (const id of room.members.filter(other => other !== self)) await rt.stopMemberWork?.(room.id, id)
-          }
-          break
-        default:
-          return `Unknown action ${action}.`
+      const runChange = async () => {
+        let result
+        let next = ''
+        let post
+        switch (action) {
+          case 'draft':
+            result = draftGoal(room, { brief: args.brief, title: args.title, by: self })
+            next = 'Aligning. Ask the user only what is still open, then call group_goal start.'
+            break
+          case 'start':
+            result = startGoal(room, args, self, of, names)
+            next = 'Started. Hand out the tasks of stage 1 now, with @Name in your reply.'
+            break
+          case 'revise':
+            result = reviseGoal(room, args, self, of, names)
+            next = 'Changed. Tell the group what changed, and go on with the current stage.'
+            break
+          case 'task':
+            result = taskGoal(room, args, self, of, names)
+            break
+          case 'pass':
+            result = passGoal(room, args, self)
+            next = result.goal === undefined ? ''
+              : result.goal.stages[result.goal.current] !== undefined
+                ? `Stage ${result.goal.current} passed. Stage ${result.goal.current + 1} "${result.goal.stages[result.goal.current].title}" is current: hand out its tasks with @Name in this reply.`
+                : 'Every stage passed. Check the overall "done when", then call group_goal complete with the evidence and a summary for the user.'
+            break
+          case 'rework':
+            result = reworkGoal(room, args, self, of, names)
+            next = 'Sent back. Call the members again with @Name and say what is missing.'
+            break
+          case 'complete':
+            result = completeGoal(room, args, self)
+            next = 'Complete. Tell the user what was delivered.'
+            break
+          case 'pause':
+            result = pauseGoal(room, self)
+            next = 'Paused. Hand out no stage work until the goal is resumed.'
+            break
+          case 'resume':
+            result = resumeGoal(room, self)
+            next = 'Resumed. Take the next step now.'
+            break
+          case 'stop':
+            result = stopGoal(room, args.reason, self)
+            next = 'Stopped.'
+            // The caller keeps running; the other members' work stops.
+            post = async () => {
+              for (const id of room.members.filter(other => other !== self)) await rt.stopMemberWork?.(room.id, id)
+            }
+            break
+          default:
+            return `Unknown action ${action}.`
+        }
+        if (result.error !== undefined) return result.error
+        if (result.reply !== undefined) announce(room, result.reply)
+        await rt.save()
+        if (post !== undefined) await post()
+        const ledger = goalLedger(room, member)
+        return next === '' ? ledger : `${ledger}\n${next}`
       }
-      if (result.error !== undefined) return result.error
-      if (result.reply !== undefined) announce(room, result.reply)
-      await rt.save()
-      if (post !== undefined) await post()
-      const ledger = goalLedger(room, member)
-      return next === '' ? ledger : `${ledger}\n${next}`
+      if (requestName === '') return runChange()
+      const request = rt.requestIdentity({
+        caller: self,
+        context: `group-goal:${room.id}`,
+        name: requestName,
+        payload: Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'request_id' && key !== 'group')),
+      })
+      const outcome = await rt.admitRequest(request, runChange)
+      if (outcome.status === 'replay' || outcome.status === 'sent') return outcome.receipt
+      if (outcome.status === 'conflict') return `Not changed: request_id "${requestName}" was already used for a different goal change. A request_id names one change; send this one under a new name.`
+      if (outcome.status === 'uncertain') return `Not changed again: the outcome of request_id "${requestName}" is not known (the save or the delivery failed, or DS Bot restarted while it was in flight). Check the goal before retrying under a new request_id.`
+      if (outcome.status === 'expired') return `Nothing was changed again: request_id "${requestName}" was admitted before, but its receipt is no longer kept. Check the goal before sending a new request_id.`
+      if (outcome.status === 'readonly') return `Not changed: this window cannot save the Bot team, so it cannot record request_id "${requestName}". Send it from the window that owns the team, or leave the request_id out.`
+      return `Not changed: the request_id "${requestName}" could not be admitted.`
     },
   }))
 

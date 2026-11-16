@@ -114,7 +114,11 @@ export function install(rt) {
   })
 
   let registration
-  const supported = () => typeof ctx.llm?.registerAdapter === 'function'
+  let disposed = false
+  const supported = () => {
+    if (disposed) return false
+    try { return typeof ctx.llm?.registerAdapter === 'function' } catch { return false }
+  }
   const usedRefs = () => [...new Set(Object.values(state.bots ?? {}).flatMap(bot => [bot.model, bot.appliedModel]).filter(Boolean))]
   // A route a Bot runs on stays registered when its CLI goes away: the turn then fails
   // with the repair card, and nothing moves the Bot to another run mode by itself.
@@ -132,12 +136,15 @@ export function install(rt) {
   // Custom agents hold a route whether or not their command resolves yet; a
   // missing one fails at prompt time with a typed error.
   applyRoutes()
-  void scan()
+  void scan().catch(error => {
+    if (!disposed) rt.warn('ds-bot: local-agent scan failed: %s', error)
+  })
   // Custom agents arrive with the state load; their routes register then too.
   void rt.load?.().then(() => applyRoutes()).catch(() => {})
   // The callback returns the disposer: running adapter.dispose() inside the
   // setup would leave the adapter disposed from the moment it installs.
   ctx.effect(() => () => {
+    disposed = true
     void adapter.dispose()
     registration?.()
   }, 'ds-bot: local agents')
@@ -199,7 +206,7 @@ export function install(rt) {
   // ---------------------------------------------------------------------------
   // The Settings page's endpoints.
 
-  const detected = () => [...found.values()].map(entry => ({ route: entry.route, name: entry.name, path: entry.path, version: entry.version ?? null, signIn: entry.signIn, signedIn: entry.signedIn ?? null }))
+  const detected = () => [...found.values()].map(entry => ({ route: entry.route, name: entry.name, path: entry.path, version: entry.version ?? null, signIn: entry.signIn, signedIn: entry.signedIn ?? null, capabilities: ENGINES[entry.route].capabilities }))
   const customView = () => store().custom.map(agent => ({ ...agent, route: customRoute(agent.id) }))
 
   // One CLI's models: the first look starts that CLI, later ones read what it said.
