@@ -775,6 +775,7 @@ export const JA = {
   "Try a Bot name or words from a message": "Bot の名前やメッセージ内の言葉で検索してみてください",
   "Bot exchange": "Bot 間の会話",
   "Bot exchange transcript": "Bot 間の会話ログ",
+  "Open bot exchange": "Bot 間の会話を開く",
   "No messages yet": "まだメッセージはありません",
   "Close Chat": "チャットを閉じる",
   "Show all · {count} characters": "すべて表示 · {count} 文字",
