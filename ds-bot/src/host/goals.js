@@ -8,6 +8,13 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { GOAL_IDLE_NUDGES, SOURCE_KIND } from './constants.js'
 import { headOf } from './text.js'
 import { output } from './tools.js'
+import {
+  evidenceFromEvents,
+  invalidateAcceptance,
+  progressAfterTurn,
+  progressFingerprint,
+  verifyAcceptance,
+} from './task-evidence.js'
 
 const TITLE_MAX = 80
 const BRIEF_MAX = 2000
@@ -25,6 +32,10 @@ const FEEDBACK_MAX = 1000
 const EVENT_TEXT_MAX = 300
 const EVENTS_MAX = 50
 const PAST_MAX = 5
+const CHECKS_MAX = 12
+const CHECK_LABEL_MAX = 300
+const CHECK_PATH_MAX = 500
+const EVIDENCE_MAX = 32
 
 const tooLong = (what, max) => `${what} is too long: at most ${max}.`
 const tooMany = (what, max) => `At most ${max} ${what}.`
@@ -34,9 +45,74 @@ const wrongState = (room, goal, action, allowed) => `The goal of "${room.name}" 
 const pausedRun = room => `The goal of "${room.name}" is paused. The user resumes it; until then, talk with the user and write their corrections in with revise.`
 const allPassed = room => `Every stage of "${room.name}" has passed. Call group_goal complete with the evidence and a summary.`
 
-export const TASK_LABEL = { pending: 'not started', working: 'working', reported: 'reported', done: 'done' }
+export const TASK_LABEL = { pending: 'not started', working: 'working', reported: 'reported', done: 'done', 'needs-review': 'needs review' }
 
 const goalId = () => `goal-${randomUUID().replace(/-/g, '').slice(0, 8)}`
+
+const attemptId = (task, n) => `${task.id}:a${n}`
+
+const pendingVerification = (checks = []) => ({
+  state: 'pending',
+  status: 'pending',
+  checkEvidence: {},
+  evidenceIds: [],
+  checks: checks.filter(check => check.required !== false).map(check => ({ id: check.id, status: 'pending' })),
+  missing: checks.filter(check => check.required !== false).map(check => check.id),
+})
+
+const artifactFacts = (evidence = []) => {
+  const artifacts = {}
+  const diffs = {}
+  for (const item of evidence) {
+    if (item?.artifact?.path && item.artifact.digest) artifacts[item.artifact.path] = item.artifact.digest
+    for (const path of item?.diff?.paths ?? []) if (item.diff.digest) diffs[path] = item.diff.digest
+  }
+  return { artifacts, diffs }
+}
+
+const currentEvidence = task => (Array.isArray(task?.evidence) ? task.evidence : [])
+  .filter(item => task?.attempt?.id === undefined || item?.attemptId === task.attempt.id)
+
+function cleanChecks(list, stageNumber, action) {
+  if (list === undefined) return {}
+  const place = stageNumber === 0 ? 'the goal' : `stage ${stageNumber}`
+  if (!Array.isArray(list)) return { error: required(`${place} checks`, action) }
+  if (list.length > CHECKS_MAX) return { error: tooMany(`checks in ${place}`, CHECKS_MAX) }
+  const checks = []
+  for (const [index, item] of list.entries()) {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+      return { error: `A check in ${place} must be an object.` }
+    }
+    const kind = String(item.kind ?? '').trim()
+    if (!['command', 'artifact', 'diff', 'review', 'manual'].includes(kind)) {
+      return { error: `A check in ${place} needs kind command, artifact, diff, review, or manual.` }
+    }
+    const id = String(item.id ?? `c${index + 1}`).trim()
+    if (id === '' || id.length > 80) return { error: `A check in ${place} has an invalid id.` }
+    const label = String(item.label ?? item.command ?? item.path ?? id).trim()
+    if (label.length > CHECK_LABEL_MAX) return { error: tooLong(`a check label in ${place}`, CHECK_LABEL_MAX) }
+    const command = String(item.command ?? '').trim()
+    const path = String(item.path ?? '').trim()
+    if (kind === 'command' && command === '') return { error: `A command check in ${place} needs command.` }
+    if ((kind === 'artifact' || kind === 'diff') && path === '') return { error: `An ${kind} check in ${place} needs path.` }
+    if (path.length > CHECK_PATH_MAX) return { error: tooLong(`a check path in ${place}`, CHECK_PATH_MAX) }
+    checks.push({
+      id,
+      kind,
+      label,
+      required: item.required !== false,
+      ...(command === '' ? {} : { command }),
+      ...(path === '' ? {} : { path }),
+      ...(item.expect && typeof item.expect === 'object' ? { expect: item.expect } : {}),
+    })
+  }
+  const ids = new Set()
+  for (const check of checks) {
+    if (ids.has(check.id)) return { error: `Check id ${check.id} is repeated in ${place}.` }
+    ids.add(check.id)
+  }
+  return { checks }
+}
 
 // The goal's own stamp on every change: a new revision the client polls, the
 // change in its event list, and the idle bookkeeping reset.
@@ -97,6 +173,8 @@ function cleanStages(room, list, action, memberOf, memberNames) {
     const acceptance = String(item?.acceptance ?? '').trim()
     if (acceptance === '') return { error: required(`stage ${n} acceptance`, action) }
     if (acceptance.length > STAGE_ACCEPTANCE_MAX) return { error: tooLong(`stage ${n} acceptance`, STAGE_ACCEPTANCE_MAX) }
+    const checked = cleanChecks(item?.checks, n, action)
+    if (checked.error !== undefined) return checked
     const items = Array.isArray(item?.tasks) ? item.tasks : []
     if (items.length === 0) return { error: required(`stage ${n} tasks`, action) }
     if (items.length > TASKS_MAX) return { error: tooMany(`tasks in stage ${n}`, TASKS_MAX) }
@@ -108,9 +186,11 @@ function cleanStages(room, list, action, memberOf, memberNames) {
       if (task.length > TASK_MAX) return { error: tooLong(`a task in stage ${n}`, TASK_MAX) }
       const bot = memberOf(name)
       if (bot === undefined) return { error: `${name} is not a member of "${room.name}". Members: ${memberNames.join(', ')}.` }
-      tasks.push({ botId: bot.id, task })
+      const taskChecks = cleanChecks(entry?.checks, n, action)
+      if (taskChecks.error !== undefined) return taskChecks
+      tasks.push({ botId: bot.id, task, ...(taskChecks.checks === undefined ? {} : { checks: taskChecks.checks }) })
     }
-    stages.push({ title, acceptance, tasks })
+    stages.push({ title, acceptance, tasks, ...(checked.checks === undefined ? {} : { checks: checked.checks }) })
   }
   return { stages }
 }
@@ -141,17 +221,31 @@ function cleanFields(input, fields) {
 // A cleaned stage becomes a stored one: fresh ids, tasks pending unless the same
 // member had the same task in the stage this one replaces (a revise keeps it).
 function buildStage(goal, stage, position, previous, status) {
-  return {
+  const stored = {
     id: `s${++goal.counter.stage}`,
     title: stage.title,
     acceptance: stage.acceptance,
     status,
     tasks: stage.tasks.map((task) => {
       const kept = previous?.tasks.find(old => old.botId === task.botId && old.task === task.task)
-      return { id: `t${++goal.counter.task}`, ...task, status: kept?.status ?? 'pending' }
+      const sameChecks = JSON.stringify(kept?.checks ?? null) === JSON.stringify(task.checks ?? null)
+      const preserve = kept !== undefined && sameChecks
+      return {
+        id: `t${++goal.counter.task}`,
+        ...task,
+        status: preserve ? kept.status : 'pending',
+        verification: pendingVerification(task.checks ?? []),
+        ...(preserve && kept.attempt ? { attempt: kept.attempt } : {}),
+        ...(preserve && kept.checkpoint ? { checkpoint: kept.checkpoint } : {}),
+        ...(preserve && kept.progress ? { progress: kept.progress } : {}),
+        ...(preserve && kept.evidence ? { evidence: kept.evidence } : {}),
+      }
     }),
     reworks: 0,
+    verification: pendingVerification(stage.checks ?? []),
   }
+  if (stage.checks !== undefined) stored.checks = stage.checks
+  return stored
 }
 
 export function draftGoal(room, { brief = '', title, by = 'user' } = {}, now = Date.now()) {
@@ -164,7 +258,7 @@ export function draftGoal(room, { brief = '', title, by = 'user' } = {}, now = D
   if (text.length > BRIEF_MAX) return { error: tooLong('brief', BRIEF_MAX) }
   const cut = cleanFields({ title }, [['title', TITLE_MAX]])
   if (cut.error !== undefined) return cut
-  if (goal?.status === 'complete' || goal?.status === 'stopped') archiveGoal(room)
+  if (['complete', 'stopped', 'needs-review'].includes(goal?.status)) archiveGoal(room)
   const drafting = room.goal?.status === 'drafting' ? room.goal : undefined
   if (drafting !== undefined) {
     drafting.brief = text
@@ -190,6 +284,8 @@ export function startGoal(room, input, by, memberOf, memberNames, now = Date.now
   if (cut.error !== undefined) return cut
   const rules = cleanConstraints(input.constraints, 'start')
   if (rules.error !== undefined) return rules
+  const checks = cleanChecks(input.checks, 0, 'start')
+  if (checks.error !== undefined) return checks
   const cleaned = cleanStages(room, input.stages, 'start', memberOf, memberNames)
   if (cleaned.error !== undefined) return cleaned
   if (goal?.status === 'complete' || goal?.status === 'stopped') archiveGoal(room)
@@ -200,6 +296,8 @@ export function startGoal(room, input, by, memberOf, memberNames, now = Date.now
   next.objective = objective
   next.acceptance = acceptance
   next.constraints = rules.constraints ?? []
+  if (checks.checks === undefined) delete next.checks
+  else next.checks = checks.checks
   next.title = String(input.title ?? '').trim() || next.title || objective.split('\n')[0].slice(0, TITLE_MAX)
   delete next.brief
   next.stages = cleaned.stages.map((stage, index) => buildStage(next, stage, index, undefined, index === 0 ? 'active' : 'pending'))
@@ -210,6 +308,7 @@ export function startGoal(room, input, by, memberOf, memberNames, now = Date.now
   delete next.evidence
   delete next.reason
   delete next.pausedBy
+  delete next.verification
   touchGoal(next, { kind: 'start', by }, now)
   return { goal: next, reply: { event: 'start', title: next.title, stage: 1, count: next.stages.length, next: next.stages[0].title } }
 }
@@ -217,7 +316,7 @@ export function startGoal(room, input, by, memberOf, memberNames, now = Date.now
 export function reviseGoal(room, input, by, memberOf, memberNames, now = Date.now()) {
   const goal = room.goal
   if (goal === undefined) return { error: noGoal(room) }
-  if (goal.status !== 'active' && goal.status !== 'paused') return { error: wrongState(room, goal, 'revise', 'active or paused') }
+  if (!['active', 'paused', 'needs-review'].includes(goal.status)) return { error: wrongState(room, goal, 'revise', 'active, paused or needs-review') }
   const reason = String(input.reason ?? '').trim()
   if (reason === '') return { error: required('reason', 'revise') }
   if (reason.length > FEEDBACK_MAX) return { error: tooLong('reason', FEEDBACK_MAX) }
@@ -227,6 +326,8 @@ export function reviseGoal(room, input, by, memberOf, memberNames, now = Date.no
   if (input.acceptance !== undefined && String(input.acceptance).trim() === '') return { error: required('acceptance', 'revise') }
   const rules = cleanConstraints(input.constraints, 'revise')
   if (rules.error !== undefined) return rules
+  const checks = cleanChecks(input.checks, 0, 'revise')
+  if (checks.error !== undefined) return checks
   // Everything validates before anything changes: a refused revise leaves the goal as it was.
   let cleaned
   let keep = []
@@ -240,6 +341,8 @@ export function reviseGoal(room, input, by, memberOf, memberNames, now = Date.no
   if (input.objective !== undefined) goal.objective = String(input.objective).trim()
   if (input.acceptance !== undefined) goal.acceptance = String(input.acceptance).trim()
   if (rules.constraints !== undefined) goal.constraints = rules.constraints
+  if (checks.checks !== undefined) goal.checks = checks.checks
+  delete goal.verification
   if (cleaned !== undefined) {
     const previous = goal.stages[goal.current]
     const replacement = cleaned.stages.map((stage, index) => {
@@ -255,7 +358,7 @@ export function reviseGoal(room, input, by, memberOf, memberNames, now = Date.no
 export function taskGoal(room, input, by, memberOf, memberNames, now = Date.now()) {
   const goal = room.goal
   if (goal === undefined) return { error: noGoal(room) }
-  if (goal.status !== 'active') return { error: wrongState(room, goal, 'task', 'active') }
+  if (!['active', 'needs-review'].includes(goal.status)) return { error: wrongState(room, goal, 'task', 'active or needs-review') }
   const number = input.stage === undefined ? goal.current + 1 : Number(input.stage)
   const stage = Number.isInteger(number) ? goal.stages[number - 1] : undefined
   if (stage === undefined) return { error: `The goal of "${room.name}" has no stage ${number}.` }
@@ -269,7 +372,12 @@ export function taskGoal(room, input, by, memberOf, memberNames, now = Date.now(
   const note = input.note === undefined ? undefined : String(input.note).trim()
   if (status === undefined && note === undefined) return { error: required('status or note', 'task') }
   if (note !== undefined && note.length > NOTE_MAX) return { error: tooLong('note', NOTE_MAX) }
-  if (status !== undefined) task.status = status
+  if (status !== undefined) {
+    if (status === 'working' && task.status !== 'working') startTaskAttempt(task, now)
+    task.status = status
+    if (task.attempt !== undefined) task.attempt.status = status === 'done' ? 'reported' : status
+    if (task.attempt !== undefined) task.attempt.updatedAt = now
+  }
   if (note !== undefined) {
     if (note === '') delete task.note
     else task.note = note
@@ -278,20 +386,133 @@ export function taskGoal(room, input, by, memberOf, memberNames, now = Date.now(
   return { goal }
 }
 
+function startTaskAttempt(task, now, extra = {}) {
+  const n = (task.attempt?.n ?? 0) + 1
+  task.attempt = {
+    id: attemptId(task, n),
+    n,
+    status: 'working',
+    startedAt: now,
+    updatedAt: now,
+    ...extra,
+  }
+  task.progress = {
+    state: 'moving',
+    fingerprint: progressFingerprint(currentEvidence(task)),
+    unchangedTurns: 0,
+    changedAt: now,
+  }
+  task.checkpoint = {
+    at: now,
+    attemptId: task.attempt.id,
+    kind: 'progress',
+    summary: 'Task attempt started.',
+    nextAction: task.task,
+    ...extra,
+    progressFingerprint: task.progress.fingerprint,
+  }
+  return task.attempt
+}
+
+function mergeVerified(results) {
+  const checkEvidence = {}
+  const artifactDigests = {}
+  const diffDigests = {}
+  const missing = []
+  let verifiedAt
+  for (const result of results) {
+    Object.assign(checkEvidence, result.checkEvidence ?? {})
+    Object.assign(artifactDigests, result.artifactDigests ?? {})
+    Object.assign(diffDigests, result.diffDigests ?? {})
+    missing.push(...(result.missing ?? []))
+    if (result.verifiedAt !== undefined) verifiedAt = Math.max(verifiedAt ?? 0, result.verifiedAt)
+  }
+  const evidenceIds = [...new Set(Object.values(checkEvidence))]
+  const checks = results.flatMap(result => result.checks ?? [])
+  return missing.length === 0 && results.length > 0
+    ? { state: 'verified', status: 'verified', checkEvidence, evidenceIds, checks, artifactDigests, diffDigests, missing: [], verifiedAt }
+    : { state: 'pending', status: 'pending', checkEvidence, evidenceIds, checks, artifactDigests, diffDigests, missing: [...new Set(missing)] }
+}
+
+function markBoundEvidence(stage, verification) {
+  if (verification?.state !== 'verified') return
+  const ids = new Set(verification.evidenceIds ?? Object.values(verification.checkEvidence ?? {}))
+  for (const task of stage.tasks) {
+    for (const item of task.evidence ?? []) {
+      if (ids.has(item.id)) {
+        item.trust = 'verified'
+        item.kind = 'verified'
+      }
+    }
+  }
+}
+
+function verifyStage(stage, now) {
+  const aggregate = stage.tasks.flatMap(currentEvidence)
+  const results = []
+  let structured = false
+  if (Array.isArray(stage.checks) && stage.checks.length > 0) {
+    structured = true
+    const result = verifyAcceptance({ checks: stage.checks, evidence: aggregate, now })
+    markBoundEvidence(stage, result)
+    results.push(result)
+  }
+  for (const task of stage.tasks) {
+    if (Array.isArray(task.checks) && task.checks.length > 0) {
+      structured = true
+      task.verification = verifyAcceptance({ checks: task.checks, evidence: currentEvidence(task), now })
+      markBoundEvidence(stage, task.verification)
+      results.push(task.verification)
+    } else if (results.length > 0) {
+      task.verification = results[0]
+    }
+  }
+  if (!structured) {
+    const manual = { state: 'pending', status: 'pending', manual: true, checkEvidence: {}, evidenceIds: [], checks: [], missing: [], reason: 'Legacy acceptance is manual and cannot be verified automatically.' }
+    for (const task of stage.tasks) task.verification = manual
+    stage.verification = manual
+    return manual
+  }
+  stage.verification = mergeVerified(results)
+  for (const task of stage.tasks) if (task.verification === undefined) task.verification = stage.verification
+  return stage.verification
+}
+
 export function passGoal(room, input, by, now = Date.now()) {
   const goal = room.goal
   if (goal === undefined) return { error: noGoal(room) }
   if (goal.status === 'paused') return { error: pausedRun(room) }
-  if (goal.status !== 'active') return { error: wrongState(room, goal, 'pass', 'active') }
+  if (!['active', 'needs-review'].includes(goal.status)) return { error: wrongState(room, goal, 'pass', 'active or needs-review') }
   const stage = goal.stages[goal.current]
   if (stage === undefined) return { error: allPassed(room) }
   const evidence = String(input.evidence ?? '').trim()
   if (evidence === '') return { error: required('evidence', 'pass') }
   if (evidence.length > TEXT_MAX) return { error: tooLong('evidence', TEXT_MAX) }
+  const verification = verifyStage(stage, now)
+  if (stage.verification?.manual !== true && verification.state !== 'verified') {
+    const missing = verification.missing.length > 0 ? verification.missing.join(', ') : 'required checks'
+    return { error: `Acceptance checks are not verified: ${missing}. Supply matching command, artifact, diff, or independent review evidence.` }
+  }
+  goal.status = 'active'
   stage.status = 'passed'
   stage.evidence = evidence
   stage.passedAt = now
-  for (const task of stage.tasks) task.status = 'done'
+  for (const task of stage.tasks) {
+    task.status = 'done'
+    if (task.attempt !== undefined) {
+      task.attempt.status = task.verification?.state === 'verified' ? 'verified' : 'reported'
+      task.attempt.updatedAt = now
+    }
+    task.checkpoint = {
+      at: now,
+      attemptId: task.attempt?.id,
+      kind: task.verification?.state === 'verified' ? 'verified' : 'reported',
+      summary: task.verification?.state === 'verified' ? 'Stage acceptance verified.' : 'Stage passed by reported/manual acceptance.',
+      nextAction: 'Wait for the next stage.',
+      evidenceId: Object.values(task.verification?.checkEvidence ?? {})[0],
+      progressFingerprint: progressFingerprint(currentEvidence(task)),
+    }
+  }
   goal.current += 1
   const next = goal.stages[goal.current]
   if (next !== undefined) next.status = 'active'
@@ -303,7 +524,7 @@ export function reworkGoal(room, input, by, memberOf, memberNames, now = Date.no
   const goal = room.goal
   if (goal === undefined) return { error: noGoal(room) }
   if (goal.status === 'paused') return { error: pausedRun(room) }
-  if (goal.status !== 'active') return { error: wrongState(room, goal, 'rework', 'active') }
+  if (!['active', 'needs-review'].includes(goal.status)) return { error: wrongState(room, goal, 'rework', 'active or needs-review') }
   const stage = goal.stages[goal.current]
   if (stage === undefined) return { error: allPassed(room) }
   const reason = String(input.reason ?? '').trim()
@@ -318,10 +539,15 @@ export function reworkGoal(room, input, by, memberOf, memberNames, now = Date.no
   for (const task of stage.tasks) {
     if (only !== undefined && task.botId !== only.id) continue
     task.status = 'pending'
+    task.verification = pendingVerification(task.checks ?? [])
+    if (task.attempt !== undefined) task.attempt.status = 'reported'
     delete task.note
   }
   stage.reworks += 1
   stage.feedback = reason
+  stage.verification = pendingVerification(stage.checks ?? [])
+  delete goal.verification
+  goal.status = 'active'
   touchGoal(goal, { kind: 'rework', by, stage: stage.id, text: headOf(reason, EVENT_TEXT_MAX) }, now)
   return { goal, reply: { event: 'rework', title: goal.title, stage: goal.current + 1, count: goal.stages.length, text: reason } }
 }
@@ -339,10 +565,36 @@ export function completeGoal(room, input, by, now = Date.now()) {
   const summary = String(input.summary ?? '').trim()
   if (summary === '') return { error: required('summary', 'complete') }
   if (summary.length > TEXT_MAX) return { error: tooLong('summary', TEXT_MAX) }
+  const results = goal.stages
+    .map(stage => stage.verification)
+    .filter(result => result !== undefined && result.manual !== true)
+  let overall
+  if (Array.isArray(goal.checks) && goal.checks.length > 0) {
+    const evidence = goal.stages.flatMap(stage => stage.tasks.flatMap(currentEvidence))
+    overall = verifyAcceptance({ checks: goal.checks, evidence, now })
+    if (overall.state !== 'verified') {
+      const missing = overall.missing.length > 0 ? overall.missing.join(', ') : 'required checks'
+      return { error: `Overall acceptance checks are not verified: ${missing}. Supply matching command, artifact, diff, or independent review evidence.` }
+    }
+    const ids = new Set(overall.evidenceIds ?? Object.values(overall.checkEvidence ?? {}))
+    for (const stage of goal.stages) {
+      for (const task of stage.tasks) {
+        for (const item of task.evidence ?? []) {
+          if (!ids.has(item.id)) continue
+          item.trust = 'verified'
+          item.kind = 'verified'
+        }
+      }
+    }
+    results.push(overall)
+  }
   goal.status = 'complete'
   goal.summary = summary
   goal.evidence = evidence
   goal.endedAt = now
+  goal.verification = results.length > 0 && results.every(result => result.state === 'verified')
+    ? mergeVerified(results)
+    : { state: 'pending', status: 'pending', manual: true, checkEvidence: {}, evidenceIds: [], checks: [], missing: [], reason: 'One or more stages use reported/manual acceptance.' }
   touchGoal(goal, { kind: 'complete', by }, now)
   return { goal, reply: { event: 'complete', title: goal.title, count: goal.stages.length, text: summary } }
 }
@@ -370,8 +622,8 @@ export function resumeGoal(room, by, now = Date.now()) {
 export function stopGoal(room, reason, by, now = Date.now()) {
   const goal = room.goal
   if (goal === undefined) return { error: noGoal(room) }
-  if (!['drafting', 'active', 'paused'].includes(goal.status)) {
-    return { error: wrongState(room, goal, 'stop', 'drafting, active or paused') }
+  if (!['drafting', 'active', 'paused', 'needs-review'].includes(goal.status)) {
+    return { error: wrongState(room, goal, 'stop', 'drafting, active, paused or needs-review') }
   }
   const text = String(reason ?? '').trim()
   if (text === '') return { error: required('reason', 'stop') }
@@ -423,7 +675,8 @@ const NUDGE_LINE = 'Goal check from DS Bot: nothing is running in this group and
 const RESUME_LINE = 'The user resumed the goal. Take the next step now.'
 
 export function install(rt) {
-  const { ctx } = rt
+  const { ctx, state } = rt
+  const callsBySession = new Map()
 
   const memberOf = room => (ref) => {
     const bot = rt.findBot(ref)
@@ -661,9 +914,258 @@ export function install(rt) {
     void rt.save().catch(() => {})
   }
 
-  const mark = (roomId, botId, from, to, note) => {
+  function taskTarget(roomId, botId) {
     const room = rt.roomOf(roomId)
-    if (room !== undefined && markTasks(room, botId, from, to, note)) void rt.save().catch(() => {})
+    const goal = room?.goal
+    if (room === undefined || goal?.status !== 'active') return undefined
+    const stage = goal.stages[goal.current]
+    const tasks = (stage?.tasks ?? []).filter(task => task.botId === botId && task.status !== 'done')
+    if (tasks.length !== 1) return undefined
+    return { room, goal, stage, task: tasks[0] }
+  }
+
+  function targetForSession(sessionId) {
+    const owner = rt.groupOwners.get(sessionId)
+    if (owner !== undefined) return taskTarget(owner.roomId, owner.botId)
+    for (const room of Object.values(state.rooms ?? {})) {
+      for (const botId of room.members ?? []) {
+        if (room.sessions?.[botId] === sessionId) return taskTarget(room.id, botId)
+      }
+    }
+    return undefined
+  }
+
+  function addEvidence(sessionId, event, now = Date.now()) {
+    if (rt.readOnly() !== undefined) return false
+    const callId = String(event?.data?.callId ?? '')
+    if (event?.type === 'tool/call' && callId !== '') {
+      callsBySession.set(`${sessionId}:${callId}`, {
+        seq: Number.isInteger(event.seq) ? event.seq - 1 : 0,
+        type: 'tool/call',
+        time: event.time,
+        data: event.data,
+      })
+      return false
+    }
+    const events = []
+    if (event?.type === 'tool/result') {
+      const call = callsBySession.get(`${sessionId}:${callId}`)
+      if (call !== undefined) events.push(call)
+    }
+    events.push(event)
+    const evidence = evidenceFromEvents({ sessionId, actor: { sessionId }, events })
+    if (evidence.length === 0) return false
+    const paths = evidence.flatMap(item => [item.artifact?.path, ...(item.diff?.paths ?? [])]).filter(Boolean)
+    const invalidated = paths.length > 0 ? invalidatePaths(paths, evidence, now) : false
+    const target = targetForSession(sessionId)
+    if (target === undefined) return invalidated
+    const { task } = target
+    if (task.attempt === undefined) startTaskAttempt(task, now, { sessionId })
+    const tagged = evidence.map(item => ({ ...item, attemptId: task.attempt.id }))
+    const known = new Set((task.evidence ?? []).map(item => item.id))
+    const added = tagged.filter(item => !known.has(item.id))
+    if (added.length === 0) return invalidated
+    task.evidence = [...(task.evidence ?? []), ...added].slice(-EVIDENCE_MAX)
+    const last = added.at(-1)
+    task.checkpoint = {
+      at: now,
+      attemptId: task.attempt.id,
+      kind: last.state,
+      summary: last.command?.text ?? last.artifact?.path ?? last.diff?.paths?.join(', ') ?? headOf(last.summary, NOTE_MAX),
+      nextAction: task.task,
+      sessionId,
+      evidenceId: last.id,
+      progressFingerprint: progressFingerprint(currentEvidence(task)),
+    }
+    task.attempt.updatedAt = now
+    task.progress = { ...task.progress, fingerprint: task.checkpoint.progressFingerprint, state: 'moving' }
+    touchGoal(target.goal, { kind: 'evidence', by: task.botId, stage: target.stage.id, text: headOf(task.checkpoint.summary, EVENT_TEXT_MAX) }, now, { keepNudges: true })
+    void rt.save().catch(() => {})
+    return true
+  }
+
+  function invalidatePaths(paths, evidence, now) {
+    const wanted = new Set(paths)
+    const facts = artifactFacts(evidence)
+    let anyChanged = false
+    for (const room of Object.values(state.rooms ?? {})) {
+      for (const goal of [room.goal, ...(room.pastGoals ?? [])]) {
+        if (goal === undefined) continue
+        let changed = false
+        for (const [index, stage] of goal.stages.entries()) {
+          for (const task of stage.tasks) {
+            if (task.verification?.state !== 'verified') continue
+            const pathsForTask = new Set([
+              ...Object.keys(task.verification.artifactDigests ?? {}),
+              ...Object.keys(task.verification.diffDigests ?? {}),
+            ])
+            if (![...pathsForTask].some(path => wanted.has(path))) continue
+            task.verification = invalidateAcceptance(task.verification, facts, now)
+            if (task.verification.state !== 'stale') continue
+            task.status = 'reported'
+            task.checkpoint = { at: now, attemptId: task.attempt?.id, kind: 'reported', summary: 'A verified artifact or diff changed; acceptance must be checked again.', nextAction: `Re-run: ${stage.acceptance}` }
+            stage.verification = { ...stage.verification, state: 'stale', status: 'stale', invalidatedAt: now, invalidated: task.verification.invalidated }
+            if (stage.status === 'passed') stage.status = 'active'
+            if (goal.current > index) goal.current = index
+            for (const later of goal.stages.slice(index + 1)) if (later.status === 'passed') later.status = 'pending'
+            if (goal.status === 'complete') goal.status = 'needs-review'
+            goal.verification = { ...goal.verification, state: 'stale', status: 'stale', invalidatedAt: now, invalidated: task.verification.invalidated }
+            touchGoal(goal, { kind: 'stale', stage: stage.id, text: 'A verified artifact or diff changed; the stage needs review.' }, now)
+            changed = true
+          }
+        }
+        if (goal.verification?.state === 'verified') {
+          const boundPaths = [
+            ...Object.keys(goal.verification.artifactDigests ?? {}),
+            ...Object.keys(goal.verification.diffDigests ?? {}),
+          ]
+          if (boundPaths.some(path => wanted.has(path))) {
+            goal.verification = invalidateAcceptance(goal.verification, facts, now)
+            if (goal.verification.state === 'stale') {
+              const index = goal.stages.findIndex(stage => stage.tasks.some(task => (task.evidence ?? []).some(item =>
+                wanted.has(item.artifact?.path) || wanted.has(item.diff?.paths?.find(path => wanted.has(path))))))
+              if (index !== -1) {
+                const stage = goal.stages[index]
+                stage.status = 'active'
+                goal.current = index
+                for (const later of goal.stages.slice(index + 1)) if (later.status === 'passed') later.status = 'pending'
+                for (const task of stage.tasks) {
+                  if (task.verification?.state === 'verified') continue
+                  task.status = 'reported'
+                  task.verification = { state: 'stale', status: 'stale', reason: 'A verified overall artifact or diff changed.', invalidatedAt: now }
+                }
+              }
+              if (goal.status === 'complete') goal.status = 'needs-review'
+              touchGoal(goal, { kind: 'stale', text: 'A verified overall artifact or diff changed; the goal needs review.' }, now)
+              changed = true
+            }
+          }
+        }
+        if (changed) {
+          anyChanged = true
+          void rt.save().catch(() => {})
+        }
+      }
+    }
+    return anyChanged
+  }
+
+  function taskByIdentity(taskId, attemptId) {
+    for (const room of Object.values(state.rooms ?? {})) {
+      for (const goal of [room.goal, ...(room.pastGoals ?? [])]) {
+        if (goal === undefined) continue
+        for (const [stageIndex, stage] of goal.stages.entries()) {
+          for (const task of stage.tasks) {
+            if (`goal:${goal.id}:${stage.id}:${task.id}` !== taskId) continue
+            if (attemptId !== undefined && task.attempt?.id !== attemptId) continue
+            return { room, goal, stage, stageIndex, task }
+          }
+        }
+      }
+    }
+    return undefined
+  }
+
+  function matchingTurns(events, trigger) {
+    const turns = new Set()
+    let turn
+    for (const event of events) {
+      if (event.type === 'turn/start' && Number.isInteger(event.data?.turn)) turn = event.data.turn
+      else if (Number.isInteger(event.data?.turn)) turn = event.data.turn
+      if (event.type !== 'user/message') continue
+      const source = event.data?.source ?? {}
+      const sameExchange = trigger?.exchangeId === undefined || source.exchangeId === trigger.exchangeId
+      const sameTask = trigger?.taskId === undefined || source.taskId === trigger.taskId
+      const sameAttempt = trigger?.attemptId === undefined || source.attemptId === trigger.attemptId
+      if (sameExchange && sameTask && sameAttempt && Number.isInteger(turn)) turns.add(turn)
+    }
+    return turns
+  }
+
+  function reconcileEvidence(sessionId, events, trigger) {
+    if (rt.readOnly() !== undefined || !Array.isArray(events) || events.length === 0) return false
+    let target = trigger?.taskId === undefined ? targetForSession(sessionId) : taskByIdentity(trigger.taskId, trigger.attemptId)
+    if (target === undefined && trigger?.taskId === undefined) {
+      target = targetForSession(sessionId)
+    }
+    if (target === undefined) return false
+    const turns = matchingTurns(events, trigger)
+    const scoped = events.filter((event) => {
+      const turn = event.data?.turn
+      return turns.size === 0 || (Number.isInteger(turn) && turns.has(turn))
+    })
+    const evidence = evidenceFromEvents({
+      sessionId,
+      actor: { botId: target.task.botId, sessionId },
+      events: scoped,
+    }).map(item => ({ ...item, attemptId: target.task.attempt.id }))
+    if (evidence.length === 0) return false
+    const known = new Set((target.task.evidence ?? []).map(item => item.id))
+    const added = evidence.filter(item => !known.has(item.id))
+    if (added.length === 0) return false
+    target.task.evidence = [...(target.task.evidence ?? []), ...added].slice(-EVIDENCE_MAX)
+    const last = added.at(-1)
+    target.task.checkpoint = {
+      at: last.at ?? Date.now(),
+      attemptId: target.task.attempt.id,
+      kind: last.state,
+      summary: last.command?.text ?? last.artifact?.path ?? last.diff?.paths?.join(', ') ?? headOf(last.summary, NOTE_MAX),
+      nextAction: target.task.task,
+      sessionId,
+      evidenceId: last.id,
+      progressFingerprint: progressFingerprint(currentEvidence(target.task)),
+    }
+    target.task.progress = { ...target.task.progress, fingerprint: target.task.checkpoint.progressFingerprint, state: 'moving' }
+    touchGoal(target.goal, { kind: 'evidence', by: target.task.botId, stage: target.stage.id, text: 'Recovered pending evidence after restart.' }, Date.now(), { keepNudges: true })
+    void rt.save().catch(() => {})
+    return true
+  }
+
+  function bind(sessionId, info, turn) {
+    if (rt.readOnly() !== undefined) return undefined
+    const target = targetForSession(sessionId)
+    if (target === undefined) return undefined
+    const now = Date.now()
+    if (target.task.attempt === undefined) startTaskAttempt(target.task, now, { sessionId })
+    else target.task.attempt.sessionId = sessionId
+    if (info?.exchangeId !== undefined) target.task.attempt.exchangeId = info.exchangeId
+    if (Number.isInteger(turn)) target.task.attempt.turn = turn
+    target.task.attempt.updatedAt = now
+    void rt.save().catch(() => {})
+    return { taskId: `goal:${target.goal.id}:${target.stage.id}:${target.task.id}`, attemptId: target.task.attempt.id }
+  }
+
+  function finishTurn(sessionId, outcome = 'completed') {
+    if (rt.readOnly() !== undefined || outcome !== 'completed') return false
+    const target = targetForSession(sessionId)
+    if (target === undefined || target.task.attempt === undefined) return false
+    const now = Date.now()
+    target.task.progress = progressAfterTurn(target.task.progress, currentEvidence(target.task), { now })
+    const stalled = target.task.progress.state === 'stalled'
+    if (stalled) {
+      target.task.verification = { state: 'needs-review', status: 'needs-review', reason: 'Two completed turns produced no new diff, command, artifact, or evidence.', missing: target.task.checks?.map(check => check.id) ?? [] }
+      target.task.status = 'reported'
+      target.task.checkpoint = { at: now, attemptId: target.task.attempt.id, kind: 'reported', summary: 'No measurable progress in repeated turns.', nextAction: 'Change the approach or report a blocker; do not repeat the same work.' }
+      touchGoal(target.goal, { kind: 'stalled', stage: target.stage.id, text: `${target.task.id} made no measurable progress in two turns.` }, now)
+    } else {
+      target.task.attempt.updatedAt = now
+    }
+    void rt.save().catch(() => {})
+    return stalled
+  }
+
+  const mark = (roomId, botId, from, to, note, sessionId) => {
+    if (rt.readOnly() !== undefined) return false
+    const room = rt.roomOf(roomId)
+    if (room === undefined || !markTasks(room, botId, from, to, note)) return false
+    const target = taskTarget(roomId, botId)
+    if (target?.task !== undefined) {
+      if (to === 'working' && target.task.attempt === undefined) startTaskAttempt(target.task, Date.now(), sessionId ? { sessionId } : undefined)
+      if (target.task.attempt !== undefined) target.task.attempt.status = to === 'done' ? 'reported' : to
+      if (to === 'reported' && target.task.attempt !== undefined) target.task.checkpoint = { at: Date.now(), attemptId: target.task.attempt.id, kind: 'reported', summary: note ?? 'Task reported complete.', nextAction: 'Verify the declared acceptance checks.' }
+    }
+    void rt.save().catch(() => {})
+    return true
   }
 
   rt.teamTools.push(defineTool({
@@ -676,6 +1178,23 @@ export function install(rt) {
       brief: { type: 'string', description: 'draft: what the user wants, in their words' },
       objective: { type: 'string', description: 'start, revise: the one outcome the group must reach' },
       acceptance: { type: 'string', description: 'start, revise: how to check the whole goal is done: commands or tests to run, files or results to look at, and the evidence to show' },
+      checks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: true,
+          properties: {
+            id: { type: 'string' },
+            kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+            label: { type: 'string' },
+            required: { type: 'boolean' },
+            command: { type: 'string' },
+            path: { type: 'string' },
+            expect: { type: 'object', additionalProperties: true },
+          },
+        },
+        description: 'start, revise: typed overall acceptance checks in addition to each stage check',
+      },
       constraints: { type: 'array', items: { type: 'string' }, description: 'start, revise: rules every member keeps, including the user\'s corrections. Replaces the list' },
       stages: {
         type: 'array',
@@ -687,6 +1206,23 @@ export function install(rt) {
           properties: {
             title: { type: 'string' },
             acceptance: { type: 'string' },
+            checks: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+                properties: {
+                  id: { type: 'string' },
+                  kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+                  label: { type: 'string' },
+                  required: { type: 'boolean' },
+                  command: { type: 'string' },
+                  path: { type: 'string' },
+                  expect: { type: 'object', additionalProperties: true },
+                },
+              },
+              description: 'start, revise: typed acceptance checks. command needs command and expect.exitCode; artifact/diff need path and may pin expect.digest; review needs an independent reviewer; manual is never auto-verified',
+            },
             tasks: {
               type: 'array',
               items: {
@@ -695,6 +1231,22 @@ export function install(rt) {
                 properties: {
                   bot: { type: 'string' },
                   task: { type: 'string' },
+                  checks: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      additionalProperties: true,
+                      properties: {
+                        id: { type: 'string' },
+                        kind: { type: 'string', enum: ['command', 'artifact', 'diff', 'review', 'manual'] },
+                        label: { type: 'string' },
+                        required: { type: 'boolean' },
+                        command: { type: 'string' },
+                        path: { type: 'string' },
+                        expect: { type: 'object', additionalProperties: true },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -802,8 +1354,19 @@ export function install(rt) {
 
   Object.assign(rt, {
     goalBlock, goalLedger, goalDraft, goalControl, goalDrive, goalSettled, goalUserMessage, goalUserStopped,
-    goalTaskWorking: (roomId, botId) => mark(roomId, botId, 'pending', 'working'),
+    goalTaskWorking: (roomId, botId, sessionId) => mark(roomId, botId, 'pending', 'working', undefined, sessionId),
     goalTaskReported: (roomId, botId) => mark(roomId, botId, 'working', 'reported'),
     goalTaskReset: (roomId, botId, note) => mark(roomId, botId, 'working', 'pending', note),
+    goalTaskBinding: (roomId, botId) => {
+      const target = taskTarget(roomId, botId)
+      return target?.task?.attempt === undefined ? undefined : {
+        taskId: `goal:${target.goal.id}:${target.stage.id}:${target.task.id}`,
+        attemptId: target.task.attempt.id,
+      }
+    },
+    noteGoalEvidence: addEvidence,
+    reconcileGoalEvidence: reconcileEvidence,
+    bindGoalAttempt: bind,
+    finishGoalTurn: finishTurn,
   })
 }

@@ -757,6 +757,7 @@ export function install(rt) {
     const seenAt = room.seq
     // Checked before the delivery, which may start the turn at once.
     const busy = rt.live.get(sessionId)?.turn !== undefined || rt.hasSubagents?.(sessionId) === true
+    const binding = rt.goalTaskBinding?.(room.id, member.id)
     const done = new Promise((resolve) => {
       let timer
       let grace
@@ -786,7 +787,7 @@ export function install(rt) {
       signal.addEventListener('abort', () => finish(null), { once: true })
     })
     try {
-      await rt.deliver({ fromId: undefined, toId: member.id, sessionId, role: 'room', roomId: room.id, exchangeId, note, text, images, files, steer: busy, ...(by ? { askedBy: by } : {}) })
+      await rt.deliver({ fromId: undefined, toId: member.id, sessionId, role: 'room', roomId: room.id, exchangeId, note, text, images, files, steer: busy, ...(by ? { askedBy: by } : {}), ...binding })
       // The prompt reached the member: its read position moves on.
       room.seen[member.id] = seenAt
       // Still held by an earlier request: this turn cannot start until the user answers.
@@ -1036,7 +1037,7 @@ export function install(rt) {
     if (callees.length === 0) return
     callIn(round, callees, `${member.name} mentioned you`, member.id)
     // An @Name from the admin hands the member its goal task.
-    if (rt.isAdminOf(room, member.id)) for (const peer of callees) rt.goalTaskWorking?.(room.id, peer.id)
+    if (rt.isAdminOf(room, member.id)) for (const peer of callees) rt.goalTaskWorking?.(room.id, peer.id, room.sessions?.[peer.id])
   }
 
   // A round runs every call that can start, and wakes when a turn ends, a call comes
@@ -1370,7 +1371,7 @@ export function install(rt) {
     const calledByOpener = speakers.filter(member => named.includes(member))
     const openingBatchKey = opener.botId !== undefined && calledByOpener.length > 0 ? registerBatch(room.id, opener.botId, calledByOpener) : undefined
     // The admin's own post that opens a round hands goal tasks the same way a call does.
-    if (rt.isAdminOf(room, opener.botId)) for (const member of calledByOpener) rt.goalTaskWorking?.(room.id, member.id)
+    if (rt.isAdminOf(room, opener.botId)) for (const member of calledByOpener) rt.goalTaskWorking?.(room.id, member.id, room.sessions?.[member.id])
     // The admin alone with the user's message: when it passes, the round ends with
     // nothing said, and the group says so once.
     const admin = room.members.map(rt.botOf).filter(Boolean).find(bot => rt.isAdminOf(room, bot.id))
@@ -1662,7 +1663,7 @@ export function install(rt) {
     callIn(round, by, note ?? `${sender.name} mentioned you`, sender.id, { ordered })
     callIn(round, rest, wake === undefined ? note : finishedNote(wake.names), undefined, { ordered })
     if (wake !== undefined) giveResults(round, extra.askedBy, wake)
-    if (rt.isAdminOf(room, sender.id)) for (const peer of speakers) rt.goalTaskWorking?.(room.id, peer.id)
+    if (rt.isAdminOf(room, sender.id)) for (const peer of speakers) rt.goalTaskWorking?.(room.id, peer.id, room.sessions?.[peer.id])
     if (extra.reportBack) {
       (round.reports ??= []).push({ post: { botId: sender.id, name: sender.name, reportBack: true, ...(extra.sub ? { sub: extra.sub } : {}), ...(extra.fromRoomId ? { fromRoomId: extra.fromRoomId } : {}) }, ids: speakers.map(peer => peer.id), from: room.seq + 1 })
     }

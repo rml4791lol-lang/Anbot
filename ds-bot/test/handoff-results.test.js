@@ -194,6 +194,40 @@ test('a hand-off writes one open row and one close row, with no message text', a
   assert.ok(rows.every(row => !('text' in row) && !('message' in row)))
 })
 
+test('an open hand-off keeps its attempt, checkpoint, and executed evidence', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer do it')
+  await first.tool('message_bot', { to: 'Writer', message: 'run the tests' }, 'a')
+  turns.end('a', 'asked Writer')
+  turns.take('b')
+  first.emit('b', 'tool/call', { callId: 'tests', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
+  first.emit('b', 'tool/result', { callId: 'tests', message: { ok: true, content: textBlock('green') } })
+  first.emitScoped('b', 'tools/result', { callId: 'edit', name: 'edit', arguments: { path: 'src/app.js' } }, {
+    isError: false,
+    value: { meta: { diffs: [{ path: 'src/app.js', oldText: 'a', newText: 'b' }] } },
+  })
+
+  let entries = []
+  for (let count = 0; count < 200; count += 1) {
+    entries = Object.entries(await worksIn(first))
+    if (entries.some(([, work]) => work.evidence?.length > 0)) break
+    await delay(5)
+  }
+  const [workId, work] = entries.find(([, item]) => item.evidence?.length > 0)
+  assert.equal(work.attempt.id, `${workId}:a1`)
+  assert.equal(work.attempt.n, 1)
+  assert.equal(work.checkpoint.kind, 'executed')
+  assert.equal(work.evidence[0].command.text, 'npm test')
+  assert.equal(work.evidence[0].command.exitCode, 0)
+  assert.equal(work.verification.manual, true)
+  assert.equal(work.verification.state, 'pending')
+  const diff = work.evidence.find(item => item.diff !== undefined)
+  assert.deepEqual(diff.diff.paths, ['src/app.js'])
+  assert.match(diff.diff.digest, /^sha256:[a-f0-9]{64}$/)
+})
+
 const LONG = '审查意见。'.repeat(1000)
 
 test('a result longer than 2,000 characters survives a restart before the Bot that asked for it answers', async (t) => {

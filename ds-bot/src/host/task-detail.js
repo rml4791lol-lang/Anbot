@@ -212,13 +212,20 @@ function verificationFor(raw, evidence) {
   const normalized = evidence.map(item => item.trust === 'verified' && !bound.has(item.id) ? { ...item, trust: 'reported' } : item)
   const checks = Array.isArray(declared.checks) ? declared.checks : []
   const checksPass = checks.every(check => check?.status === 'verified' && (check.evidenceId === undefined || bound.has(text(check.evidenceId))))
-  if (declared.status === 'stale') {
+  const declaredStatus = declared.status ?? declared.state
+  if (declaredStatus === 'stale') {
     return {
       evidence: evidence.map(item => item.trust === 'verified' ? { ...item, trust: 'reported' } : item),
       verification: { status: 'stale', reason: redactText(declared.reason) || 'The verified artifact changed after acceptance.' },
     }
   }
-  if (declared.status === 'verified' && bound.size > 0 && checksPass) {
+  if (declaredStatus === 'needs-review') {
+    return {
+      evidence: normalized,
+      verification: { status: 'needs-review', reason: redactText(declared.reason) || 'The task needs review before acceptance.' },
+    }
+  }
+  if (declaredStatus === 'verified' && bound.size > 0 && checksPass) {
     return { evidence: normalized, verification: { status: 'verified', reason: redactText(declared.reason) || 'All declared acceptance checks are bound to fresh evidence.' } }
   }
   return { evidence: normalized, verification: { status: 'pending', reason: redactText(declared.reason) || 'Acceptance verification is not bound to fresh evidence.' } }
