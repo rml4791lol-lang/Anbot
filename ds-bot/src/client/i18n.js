@@ -81,7 +81,7 @@ const ZH = {
   'Open work': '未完成工作',
   Merged: '已合并',
   Closed: '已关闭',
-  Draft: '草稿',
+  Draft: '未就绪',
   'Checks failed': '检查失败',
   'Checks pending': '检查中',
   'Checks passed': '检查通过',
