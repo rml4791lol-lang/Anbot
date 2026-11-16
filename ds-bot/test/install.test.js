@@ -7,10 +7,10 @@ import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
 
 let rt
-function start(state, { config = {}, services } = {}) {
+function start(state, { config = {}, services, context } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-install-'))
   if (state) writeFileSync(join(home, 'state.json'), JSON.stringify(state))
-  const ctx = fakeContext({ services })
+  const ctx = Object.assign(fakeContext({ services }), context)
   const routes = new Map()
   const register = ctx.connection.fetch.register
   ctx.connection.fetch.register = (options) => {
@@ -275,6 +275,29 @@ test('config.browser turns Bot browsers off even in the Desktop profile', (t) =>
   const { stop } = start(TEAM, { config: { browser: false }, services: { profileContext: { name: 'desktop' } } })
   t.after(stop)
   assert.ok(!rt.teamTools.some(d => d.name === 'read_browser'))
+})
+
+test('disposing while local-agent discovery runs does not touch the disposed host', async () => {
+  let registrations = 0
+  let replacements = 0
+  const { stop } = start({ version: 1, localAgents: { custom: [{ id: 'a1', name: 'A', command: 'node', args: [] }], sessions: {} } }, {
+    context: {
+      llm: {
+        listProviders: () => [],
+        listModels: async () => [],
+        resolveModelInfo: async () => ({}),
+        registerAdapter: () => {
+          registrations += 1
+          return Object.assign(() => {}, { replace: () => { replacements += 1 } })
+        },
+      },
+    },
+  })
+  const beforeStop = registrations
+  await stop()
+  await new Promise(resolve => setTimeout(resolve, 50))
+  assert.equal(registrations, beforeStop)
+  assert.equal(replacements, 0)
 })
 
 test('a custom agent keeps the local agents adapter live after install', async (t) => {
