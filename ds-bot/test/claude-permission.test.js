@@ -3,7 +3,7 @@
 // result" and the turn hangs, which is what a review Bot hit on `md5`.
 import assert from 'node:assert/strict'
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { GATE_SCRIPT_DIRS, gateScriptTools, permissionResponse, readOnlyTools } from '../src/host/local-agents/claude.js'
@@ -53,11 +53,15 @@ test("the team's gate scripts run with their arguments, and nothing else", (t) =
   symlinkSync(join(elsewhere, 'evil.sh'), join(dir, 'link.sh'))
 
   const tools = readOnlyTools([dir])
-  const rule = `Bash(bash ${realpathSync(join(dir, 'research-gate.sh'))}:*)`
+  const scriptPath = realpathSync(join(dir, 'research-gate.sh'))
+  const rule = `Bash(bash ${scriptPath}:*)`
   assert.ok(tools.includes(rule), 'a gate script must run without a card')
   // The whole form matters: the CLI takes `Bash(<prefix>:*)`, and a `*` inside the
   // path is matched literally, so a pattern rule would admit nothing.
-  assert.match(rule, /^Bash\(bash \/.+\.sh:\*\)$/)
+  const prefix = 'Bash(bash '
+  const suffix = ':*)'
+  assert.ok(rule.startsWith(prefix) && rule.endsWith(suffix), 'the rule is a Bash(bash <path>:*) form')
+  assert.equal(rule.slice(prefix.length, rule.length - suffix.length), scriptPath, 'the rule carries the exact full script path')
 
   const scripts = tools.filter(tool => tool.startsWith('Bash(bash '))
   assert.deepEqual(scripts, [rule], 'one rule per script in the folder, and no other')
@@ -71,5 +75,9 @@ test("the team's gate scripts run with their arguments, and nothing else", (t) =
 })
 
 test('the gate folders are the team rule folders', () => {
-  assert.deepEqual(GATE_SCRIPT_DIRS, ['/Users/an/Desktop/Atlas/内容/bin', '/Users/an/Desktop/Atlas/任务标准规范规则/bin'])
+  const atlasHome = join(homedir(), 'Desktop', 'Atlas')
+  assert.deepEqual(GATE_SCRIPT_DIRS, [
+    join(atlasHome, '内容', 'bin'),
+    join(atlasHome, '任务标准规范规则', 'bin'),
+  ])
 })
