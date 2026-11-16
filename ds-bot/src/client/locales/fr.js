@@ -1,6 +1,22 @@
 // French (fr) localization for DS Bot client and DSH settings namespaces.
 
 export const FR = {
+  'Improvement proposals': 'Propositions d’amélioration',
+  'Propose improvement': 'Proposer une amélioration',
+  'Reading verified evidence…': 'Lecture des preuves vérifiées…',
+  'No reusable improvement was found in this verified evidence.': 'Aucune amélioration réutilisable n’a été trouvée dans ces preuves vérifiées.',
+  'No improvements have been proposed for this task yet.': 'Aucune amélioration n’a encore été proposée pour cette tâche.',
+  'The improvement proposal could not be created.': 'La proposition d’amélioration n’a pas pu être créée.',
+  'Only verified task evidence can produce an improvement proposal.': 'Seules des preuves de tâche vérifiées peuvent produire une proposition d’amélioration.',
+  'Verified improvement': 'Amélioration vérifiée',
+  'Affects': 'Concerne',
+  'Observed problem': 'Problème observé',
+  'Proposed change': 'Changement proposé',
+  'Expected benefit': 'Bénéfice attendu',
+  'Rollback path': 'Procédure de retour arrière',
+  'Audit': 'Audit',
+  'Review required': 'Révision requise',
+
   "Opening…": "Ouverture…",
   "Still opening…": "Toujours en cours d’ouverture…",
   "Android beta": "Android bêta",

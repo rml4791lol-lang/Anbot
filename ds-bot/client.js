@@ -123,6 +123,21 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  "Improvement proposals": "改善提案",
+  "Propose improvement": "改善を提案",
+  "Reading verified evidence…": "検証済みの根拠を読み込んでいます…",
+  "No reusable improvement was found in this verified evidence.": "この検証済みの根拠には再利用できる改善がありません。",
+  "No improvements have been proposed for this task yet.": "このタスクにはまだ改善提案がありません。",
+  "The improvement proposal could not be created.": "改善提案を作成できませんでした。",
+  "Only verified task evidence can produce an improvement proposal.": "改善提案を作成できるのは検証済みのタスク根拠だけです。",
+  "Verified improvement": "検証済みの改善",
+  "Affects": "影響",
+  "Observed problem": "観察された問題",
+  "Proposed change": "提案する変更",
+  "Expected benefit": "期待される効果",
+  "Rollback path": "ロールバック方法",
+  "Audit": "監査",
+  "Review required": "要確認",
   "Opening…": "開いています…",
   "Still opening…": "まだ開いています…",
   "Android beta": "Android ベータ版",
@@ -2505,6 +2520,21 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  "Improvement proposals": "개선 제안",
+  "Propose improvement": "개선 제안하기",
+  "Reading verified evidence…": "검증된 근거를 읽는 중…",
+  "No reusable improvement was found in this verified evidence.": "이 검증된 근거에서 재사용할 수 있는 개선을 찾지 못했습니다.",
+  "No improvements have been proposed for this task yet.": "이 작업에는 아직 개선 제안이 없습니다.",
+  "The improvement proposal could not be created.": "개선 제안을 만들 수 없습니다.",
+  "Only verified task evidence can produce an improvement proposal.": "검증된 작업 근거만 개선 제안을 만들 수 있습니다.",
+  "Verified improvement": "검증된 개선",
+  "Affects": "영향",
+  "Observed problem": "관찰된 문제",
+  "Proposed change": "제안 변경",
+  "Expected benefit": "기대 효과",
+  "Rollback path": "롤백 방법",
+  "Audit": "감사",
+  "Review required": "검토 필요",
   "Opening…": "여는 중…",
   "Still opening…": "아직 여는 중…",
   "Android beta": "Android 베타",
@@ -4932,6 +4962,21 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  "Improvement proposals": "Propuestas de mejora",
+  "Propose improvement": "Proponer mejora",
+  "Reading verified evidence…": "Leyendo evidencia verificada…",
+  "No reusable improvement was found in this verified evidence.": "No se encontró una mejora reutilizable en esta evidencia verificada.",
+  "No improvements have been proposed for this task yet.": "Aún no se han propuesto mejoras para esta tarea.",
+  "The improvement proposal could not be created.": "No se pudo crear la propuesta de mejora.",
+  "Only verified task evidence can produce an improvement proposal.": "Solo la evidencia de tarea verificada puede generar una propuesta de mejora.",
+  "Verified improvement": "Mejora verificada",
+  "Affects": "Afecta a",
+  "Observed problem": "Problema observado",
+  "Proposed change": "Cambio propuesto",
+  "Expected benefit": "Beneficio esperado",
+  "Rollback path": "Ruta de reversión",
+  "Audit": "Auditoría",
+  "Review required": "Revisión requerida",
   "Opening…": "Abriendo…",
   "Still opening…": "Sigue abriendo…",
   "Android beta": "Android beta",
@@ -7359,6 +7404,21 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  "Improvement proposals": "Propositions d’amélioration",
+  "Propose improvement": "Proposer une amélioration",
+  "Reading verified evidence…": "Lecture des preuves vérifiées…",
+  "No reusable improvement was found in this verified evidence.": "Aucune amélioration réutilisable n’a été trouvée dans ces preuves vérifiées.",
+  "No improvements have been proposed for this task yet.": "Aucune amélioration n’a encore été proposée pour cette tâche.",
+  "The improvement proposal could not be created.": "La proposition d’amélioration n’a pas pu être créée.",
+  "Only verified task evidence can produce an improvement proposal.": "Seules des preuves de tâche vérifiées peuvent produire une proposition d’amélioration.",
+  "Verified improvement": "Amélioration vérifiée",
+  "Affects": "Concerne",
+  "Observed problem": "Problème observé",
+  "Proposed change": "Changement proposé",
+  "Expected benefit": "Bénéfice attendu",
+  "Rollback path": "Procédure de retour arrière",
+  "Audit": "Audit",
+  "Review required": "Révision requise",
   "Opening…": "Ouverture…",
   "Still opening…": "Toujours en cours d’ouverture…",
   "Android beta": "Android bêta",
@@ -9741,6 +9801,21 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  "Improvement proposals": "Verbesserungsvorschläge",
+  "Propose improvement": "Verbesserung vorschlagen",
+  "Reading verified evidence…": "Verifizierte Nachweise werden gelesen…",
+  "No reusable improvement was found in this verified evidence.": "In diesen verifizierten Nachweisen wurde keine wiederverwendbare Verbesserung gefunden.",
+  "No improvements have been proposed for this task yet.": "Für diese Aufgabe wurden noch keine Verbesserungen vorgeschlagen.",
+  "The improvement proposal could not be created.": "Der Verbesserungsvorschlag konnte nicht erstellt werden.",
+  "Only verified task evidence can produce an improvement proposal.": "Nur verifizierte Aufgabennachweise können einen Verbesserungsvorschlag erzeugen.",
+  "Verified improvement": "Verifizierte Verbesserung",
+  "Affects": "Betrifft",
+  "Observed problem": "Beobachtetes Problem",
+  "Proposed change": "Vorgeschlagene Änderung",
+  "Expected benefit": "Erwarteter Nutzen",
+  "Rollback path": "Rückrollpfad",
+  "Audit": "Audit",
+  "Review required": "Überprüfung erforderlich",
   "Opening…": "Wird geöffnet…",
   "Still opening…": "Wird noch geöffnet…",
   "Android beta": "Android-Beta",
@@ -12316,6 +12391,21 @@ var ZH = {
   "Stop current work": "停止当前工作",
   "Abandon wait": "放弃等待",
   "Verification": "验证",
+  "Improvement proposals": "改进提案",
+  "Propose improvement": "提出改进",
+  "Reading verified evidence…": "正在读取已验证依据…",
+  "No reusable improvement was found in this verified evidence.": "这份已验证依据中没有可复用的改进。",
+  "No improvements have been proposed for this task yet.": "此任务还没有改进提案。",
+  "The improvement proposal could not be created.": "无法创建改进提案。",
+  "Only verified task evidence can produce an improvement proposal.": "只有已验证的任务依据才能生成改进提案。",
+  "Verified improvement": "已验证改进",
+  "Affects": "影响",
+  "Observed problem": "观察到的问题",
+  "Proposed change": "建议改动",
+  "Expected benefit": "预期收益",
+  "Rollback path": "回滚方式",
+  "Audit": "审计",
+  "Review required": "需要复核",
   Connectors: "连接器",
   "Search connectors": "搜索连接器",
   "No connectors": "暂无连接器",
@@ -14348,8 +14438,8 @@ function bodyOf(def, paint, flat = false) {
     return "";
   }
 }
-var eyeMarkup = ([cx, cy, w, h69, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h69 / 2}" width="${w}" height="${h69}" rx="${w / 2}"/></g>`;
-var happyEyeMarkup = ([cx, cy, w, h69, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h69 * 0.14}Q0 ${-h69 * 0.42} ${w * 0.62} ${h69 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
+var eyeMarkup = ([cx, cy, w, h70, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h70 / 2}" width="${w}" height="${h70}" rx="${w / 2}"/></g>`;
+var happyEyeMarkup = ([cx, cy, w, h70, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h70 * 0.14}Q0 ${-h70 * 0.42} ${w * 0.62} ${h70 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
 var maskBox = (size) => `maskUnits="userSpaceOnUse" x="${-size}" y="${-size}" width="${size * 3}" height="${size * 3}"`;
 var holes = (def, eyes) => `<rect x="${-def.size}" y="${-def.size}" width="${def.size * 3}" height="${def.size * 3}" fill="#fff"/>${eyes}`;
 var MASK_ID = "%MASK%";
@@ -15256,12 +15346,12 @@ function liveSprings(apply2) {
     const dt = Math.min(0.5, Math.max(1e-3, (now - last) / 1e3));
     last = now;
     const steps = Math.ceil(dt * 240);
-    const h69 = dt / steps;
+    const h70 = dt / steps;
     let moving = false;
     for (const [key, value] of values) {
       for (let index = 0; index < steps; index += 1) {
-        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h69;
-        value.x += value.v * h69;
+        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h70;
+        value.x += value.v * h70;
       }
       if (Math.abs(value.x - value.to) < 0.05 && Math.abs(value.v) < 1) {
         value.x = value.to;
@@ -41037,8 +41127,257 @@ var OPENING_CSS = `
 @keyframes bt-opening-in{from{opacity:0}to{opacity:1}}
 `;
 
-// src/client/team-activity.js
+// src/client/learning-card-model.js
+function proposalPlacement(proposal, turns) {
+  const settled = proposal?.outcome !== void 0;
+  if (!Number.isFinite(proposal?.at) || typeof turns?.values !== "function") return { kind: settled ? "none" : "dock" };
+  const lastBy = (time) => {
+    let found;
+    for (const location2 of turns.values()) {
+      const end = location2?.end?.time;
+      if (location2?.status !== "closed" || !Number.isFinite(end) || end > time) continue;
+      if (found === void 0 || end > found.end.time || end === found.end.time && location2.turn > found.turn) found = location2;
+    }
+    return found;
+  };
+  const turn = (lastBy(proposal.at) ?? lastBy(settled ? proposal.settledAt ?? proposal.at : Infinity))?.turn;
+  if (turn === void 0) return { kind: settled ? "none" : "dock" };
+  return { kind: "turn", turn };
+}
+function fileLines(text) {
+  const body = String(text ?? "").replace(/\n+$/, "");
+  return body === "" ? [] : body.split("\n");
+}
+function editLines(text) {
+  return typeof text === "string" ? text.split(/\r?\n/) : [];
+}
+var DIFF_CELLS = 25e4;
+function lineDiff(before, after) {
+  const a = fileLines(before);
+  const b = fileLines(after);
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) start++;
+  let tail = 0;
+  while (tail < a.length - start && tail < b.length - start && a[a.length - 1 - tail] === b[b.length - 1 - tail]) tail++;
+  const midA = a.slice(start, a.length - tail);
+  const midB = b.slice(start, b.length - tail);
+  const rows2 = b.slice(0, start).map((line, index) => ({ kind: "same", line, number: index + 1 }));
+  const added = (j) => ({ kind: "added", line: midB[j], number: start + j + 1 });
+  if (midA.length * midB.length > DIFF_CELLS) {
+    rows2.push(...midA.map((line) => ({ kind: "removed", line })), ...midB.map((_, j) => added(j)));
+  } else {
+    const keep = Array.from({ length: midA.length + 1 }, () => new Array(midB.length + 1).fill(0));
+    for (let i2 = midA.length - 1; i2 >= 0; i2--) {
+      for (let j2 = midB.length - 1; j2 >= 0; j2--) {
+        keep[i2][j2] = midA[i2] === midB[j2] ? keep[i2 + 1][j2 + 1] + 1 : Math.max(keep[i2 + 1][j2], keep[i2][j2 + 1]);
+      }
+    }
+    let i = 0;
+    let j = 0;
+    while (i < midA.length || j < midB.length) {
+      if (i < midA.length && j < midB.length && midA[i] === midB[j]) {
+        rows2.push({ kind: "same", line: midB[j], number: start + j + 1 });
+        i++;
+        j++;
+      } else if (i < midA.length && (j === midB.length || keep[i + 1][j] >= keep[i][j + 1])) {
+        rows2.push({ kind: "removed", line: midA[i] });
+        i++;
+      } else {
+        rows2.push(added(j));
+        j++;
+      }
+    }
+  }
+  const offset = b.length - tail;
+  rows2.push(...b.slice(offset).map((line, index) => ({ kind: "same", line, number: offset + index + 1 })));
+  return rows2;
+}
+var answerKeepsCard = (failure) => failure?.code !== "bot/stale";
+var withoutEntry = (state, key) => {
+  if (!(key in state)) return state;
+  const next = { ...state };
+  delete next[key];
+  return next;
+};
+function answerFailure(record, proposal, failure) {
+  if (!answerKeepsCard(failure)) return withoutEntry(record, proposal.id);
+  return { ...record, [proposal.id]: { proposal, error: failure?.message ?? String(failure) } };
+}
+function proposalCards({ proposals = [], settled = [], failures = {} }) {
+  const visible = [...settled.filter((entry) => !proposals.some((proposal) => proposal.id === entry.id)), ...proposals];
+  for (const entry of Object.values(failures)) {
+    if (!proposals.some((proposal) => proposal.id === entry.proposal.id) && !visible.some((proposal) => proposal.id === entry.proposal.id)) visible.push(entry.proposal);
+  }
+  return visible.sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
+}
+
+// src/client/learning-card-view.js
 var import_react66 = require("react");
+function ProposalCard({ proposal, initialError = "", onFailure = () => {
+}, onResolved = () => {
+}, actions, disabledReason = "" }) {
+  const outcome = proposal.outcome;
+  const [busy, setBusy] = (0, import_react66.useState)(false);
+  const [error, setError] = (0, import_react66.useState)(initialError);
+  const [open, setOpen] = (0, import_react66.useState)(false);
+  const busyRef = (0, import_react66.useRef)(false);
+  const titleId = (0, import_react66.useId)();
+  const answer = (approve) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setError("");
+    void Promise.resolve().then(() => actions.learningAnswer(proposal.id, approve)).then(() => onResolved(proposal.id, approve), (failure) => {
+      setError(failure?.message ?? String(failure));
+      onFailure(proposal, failure);
+    }).finally(() => {
+      busyRef.current = false;
+      setBusy(false);
+    });
+  };
+  const update = proposal.action === "update";
+  const agents = proposal.kind === "agents";
+  const rows2 = (0, import_react66.useMemo)(() => lineDiff(update ? proposal.previous?.content : "", proposal.content), [update, proposal.previous?.content, proposal.content]);
+  const change = agents ? [
+    (0, import_react66.createElement)(FileBox, { key: "file", name: "AGENTS.md", path: proposal.folder, state: proposal.exists === false ? "Added" : "Modified", blocks: proposal.edits.map((edit) => [
+      ...(edit.op === "add" ? [] : editLines(edit.old)).map((line) => ({ kind: "removed", line })),
+      ...(edit.op === "remove" ? [] : editLines(edit.text)).map((line) => ({ kind: "added", line }))
+    ]) }),
+    ...proposal.edits.map((edit, index) => edit.why ? (0, import_react66.createElement)("p", { className: "bt-learning-why", key: `why-${index}` }, edit.why) : null)
+  ] : [
+    (0, import_react66.createElement)(FileBox, { key: "file", name: "SKILL.md", path: `skills/${proposal.name}`, state: update ? "Updated" : "Added", blocks: [rows2] }),
+    proposal.why ? (0, import_react66.createElement)("p", { className: "bt-learning-why", key: "why" }, proposal.why) : null
+  ];
+  const kind = t(agents ? "AGENTS.md update" : update ? "Skill update" : "New skill");
+  const reviewReason = proposal.requiresReview ? `${t("Review required")}: ${proposal.reviewReason}` : "";
+  if (outcome) {
+    const what = agents ? proposal.folder : proposal.name;
+    return (0, import_react66.createElement)(
+      "section",
+      { className: "bt-q bt-q-settled bt-learning-card bt-learning-settled", role: "group", "aria-label": `${kind} · ${what}`, "data-outcome": outcome },
+      (0, import_react66.createElement)(
+        "button",
+        { type: "button", className: "bt-learning-fold", "aria-expanded": open, onClick: () => setOpen(!open) },
+        (0, import_react66.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react66.createElement)(agents ? PencilIcon : MemoryIcon)),
+        (0, import_react66.createElement)("span", { className: "bt-learning-kind" }, kind),
+        (0, import_react66.createElement)("span", { className: "bt-learning-sum" }, `${t(outcome === "approved" ? "Approved" : "Declined")} · ${what}`)
+      ),
+      open ? [change, proposal.improvement ? (0, import_react66.createElement)(ImprovementDetails, { key: "improvement", improvement: proposal.improvement, proposal }) : null] : null
+    );
+  }
+  const oldDetail = update && typeof proposal.previous?.description === "string" && proposal.previous.description !== proposal.description ? proposal.previous.description : void 0;
+  return (0, import_react66.createElement)(
+    "section",
+    { className: "bt-q bt-learning-card", role: "group", "aria-labelledby": titleId, "aria-busy": busy },
+    agents ? (0, import_react66.createElement)(ProposalHead, { titleId, icon: PencilIcon, title: kind }) : (0, import_react66.createElement)(ProposalHead, { titleId, title: proposal.name, kind, detail: proposal.description, oldDetail }),
+    change,
+    proposal.improvement ? (0, import_react66.createElement)(ImprovementDetails, { improvement: proposal.improvement, proposal }) : null,
+    error ? (0, import_react66.createElement)("div", { className: "bt-learning-error", role: "alert" }, error) : null,
+    (0, import_react66.createElement)(ProposalFoot, { busy, answer, disabledReason, approveDisabledReason: reviewReason })
+  );
+}
+function ImprovementDetails({ improvement, proposal }) {
+  const evidence = [...improvement.evidenceIds ?? [], ...improvement.sourceIds ?? []].join(", ");
+  const audit = proposal.audit;
+  return (0, import_react66.createElement)(
+    "section",
+    { className: "bt-learning-improvement", "aria-label": t("Verified improvement") },
+    (0, import_react66.createElement)("p", { className: "bt-learning-improvement-title" }, t("Verified improvement")),
+    (0, import_react66.createElement)(
+      "dl",
+      null,
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Affects")), (0, import_react66.createElement)("dd", null, `${improvement.affectedBot.name} · ${improvement.scope.label}`)),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Observed problem")), (0, import_react66.createElement)("dd", null, improvement.observedProblem)),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Proposed change")), (0, import_react66.createElement)("dd", null, improvement.proposedChange)),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Expected benefit")), (0, import_react66.createElement)("dd", null, improvement.expectedBenefit)),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Rollback path")), (0, import_react66.createElement)("dd", null, improvement.rollbackPath)),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Source")), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-id" }, `${improvement.taskId} · ${evidence}`))),
+      audit ? (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, t("Audit")), (0, import_react66.createElement)("dd", null, `${t("Version {version}", { version: audit.version })} · ${audit.beforeHash} → ${audit.afterHash}`)) : null
+    ),
+    proposal.requiresReview ? (0, import_react66.createElement)("p", { className: "bt-learning-review", role: "alert" }, `${t("Review required")}: ${proposal.reviewReason}`) : null
+  );
+}
+function ProposalHead({ titleId, icon: icon2 = MemoryIcon, title, kind, detail, oldDetail }) {
+  return (0, import_react66.createElement)(
+    "div",
+    { className: "bt-q-head" },
+    (0, import_react66.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react66.createElement)(icon2)),
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-q-text" },
+      (0, import_react66.createElement)("p", { className: "bt-q-title", id: titleId }, title),
+      kind ? (0, import_react66.createElement)("div", { className: "bt-q-detail" }, kind) : null,
+      oldDetail ? (0, import_react66.createElement)("p", { className: "bt-learning-description bt-learning-old" }, (0, import_react66.createElement)("del", null, oldDetail)) : null,
+      detail ? (0, import_react66.createElement)("p", { className: "bt-learning-description" }, detail) : null
+    ),
+    (0, import_react66.createElement)("span", { className: "bt-q-badge bt-learning-status" }, (0, import_react66.createElement)("span", { className: "bt-learning-dot", "aria-hidden": true }), t("Awaiting approval"))
+  );
+}
+function ProposalFoot({ busy, answer, disabledReason, approveDisabledReason = "" }) {
+  const declineDisabled = busy || Boolean(disabledReason);
+  const approveDisabled = declineDisabled || Boolean(approveDisabledReason);
+  return (0, import_react66.createElement)(
+    "div",
+    { className: "bt-q-foot bt-learning-foot" },
+    (0, import_react66.createElement)("button", { type: "button", className: "bt-learning-btn bt-learning-decline", disabled: declineDisabled, title: disabledReason || void 0, onClick: () => answer(false) }, t("Decline")),
+    (0, import_react66.createElement)(
+      "button",
+      { type: "button", className: "bt-learning-btn bt-learning-approve", disabled: approveDisabled, title: approveDisabledReason || disabledReason || void 0, onClick: () => answer(true) },
+      (0, import_react66.createElement)(CheckIcon),
+      t("Approve")
+    )
+  );
+}
+var COLLAPSE_ROWS = 8;
+var SIGNS = { added: "+", removed: "−", same: "" };
+function FileBox({ name, path: path2, state, blocks }) {
+  const [open, setOpen] = (0, import_react66.useState)(false);
+  const all = blocks.flat();
+  const added = all.filter((row) => row.kind === "added").length;
+  const removed = all.filter((row) => row.kind === "removed").length;
+  const folds = all.length > COLLAPSE_ROWS;
+  const shut = folds && !open;
+  return (0, import_react66.createElement)(
+    "div",
+    { className: "bt-learning-file" },
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-learning-filehead" },
+      (0, import_react66.createElement)("span", { className: "bt-learning-name" }, name),
+      path2 ? (0, import_react66.createElement)("span", { className: "bt-learning-path" }, path2) : null,
+      (0, import_react66.createElement)("span", { className: "bt-learning-spacer" }),
+      added > 0 ? (0, import_react66.createElement)("span", { className: "bt-learning-plus" }, `+${added}`) : null,
+      removed > 0 ? (0, import_react66.createElement)("span", { className: "bt-learning-minus" }, `−${removed}`) : null,
+      (0, import_react66.createElement)("span", { className: `bt-learning-state bt-learning-state-${state.toLowerCase()}` }, t(state))
+    ),
+    (0, import_react66.createElement)(
+      "div",
+      { className: shut ? "bt-learning-code bt-learning-shut" : "bt-learning-code" },
+      blocks.map((rows2, blockIndex) => [
+        blockIndex > 0 ? (0, import_react66.createElement)("div", { className: "bt-learning-gap", key: `gap-${blockIndex}` }) : null,
+        ...rows2.map((row, rowIndex) => (0, import_react66.createElement)(
+          "div",
+          { className: `bt-learning-row bt-learning-${row.kind}`, key: `${blockIndex}-${rowIndex}` },
+          (0, import_react66.createElement)("span", { className: "bt-learning-num", "aria-hidden": true }, row.number ?? ""),
+          (0, import_react66.createElement)("span", { className: "bt-learning-sign", "aria-hidden": true }, SIGNS[row.kind]),
+          (0, import_react66.createElement)("span", { className: "bt-learning-text" }, row.line || " ")
+        ))
+      ])
+    ),
+    folds ? (0, import_react66.createElement)(
+      "div",
+      { className: shut ? "bt-learning-morebar bt-learning-morebar-shut" : "bt-learning-morebar" },
+      (0, import_react66.createElement)(
+        "button",
+        { type: "button", className: "bt-learning-more", "aria-expanded": open, onClick: () => setOpen(!open) },
+        t(open ? "Show less" : "Show all {count} lines", { count: all.length })
+      )
+    ) : null
+  );
+}
+
+// src/client/team-activity.js
+var import_react67 = require("react");
 var copyText = () => ({
   title: t("Team activity"),
   subtitle: t("Real tasks, handoffs, and recent activity"),
@@ -41121,7 +41460,14 @@ var copyText = () => ({
   retryBot: t("Retry Bot"),
   cancelWork: t("Stop current work"),
   abandonWait: t("Abandon wait"),
-  verification: t("Verification")
+  verification: t("Verification"),
+  improvements: t("Improvement proposals"),
+  proposeImprovement: t("Propose improvement"),
+  proposingImprovement: t("Reading verified evidence…"),
+  noImprovement: t("No reusable improvement was found in this verified evidence."),
+  noImprovements: t("No improvements have been proposed for this task yet."),
+  proposalError: t("The improvement proposal could not be created."),
+  verifiedOnly: t("Only verified task evidence can produce an improvement proposal.")
 });
 var sourceLabel = (source, copy2) => source === "goal" ? copy2.goalTask : source === "handoff" ? copy2.handoff : source === "board" ? copy2.board : source === "ledger" ? copy2.ledger : source;
 var permissionOf = (role, copy2) => !role ? "" : role.main ? copy2.mainBot : copy2.member;
@@ -41148,83 +41494,83 @@ var when3 = (at) => {
 };
 function OwnerMark({ task, roster, role, copy: copy2, size }) {
   if (task.ownerKind !== "bot" || !task.ownerId) {
-    return (0, import_react66.createElement)("span", { className: "bt-activity-owner-mark", style: { width: size, height: size }, "aria-label": task.ownerName || copy2.noOwner }, task.ownerKind === "group" ? "G" : "?");
+    return (0, import_react67.createElement)("span", { className: "bt-activity-owner-mark", style: { width: size, height: size }, "aria-label": task.ownerName || copy2.noOwner }, task.ownerKind === "group" ? "G" : "?");
   }
-  return (0, import_react66.createElement)(BotAvatar, { bot: botFor(roster, task, role), size, state: task.displayState ?? "idle", main: role?.main === true });
+  return (0, import_react67.createElement)(BotAvatar, { bot: botFor(roster, task, role), size, state: task.displayState ?? "idle", main: role?.main === true });
 }
 function DialogHead({ copy: copy2, onClose, data, partial, roster }) {
   const lockReason = typeof roster?.readOnly === "string" ? roster.readOnly.trim() : "";
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "header",
     { className: "bt-activity-head" },
-    (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("h2", null, copy2.title), (0, import_react66.createElement)("p", null, copy2.subtitle)),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("h2", null, copy2.title), (0, import_react67.createElement)("p", null, copy2.subtitle)),
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-head-meta" },
-      data ? (0, import_react66.createElement)("span", { className: "bt-activity-mode", "data-mode": data.mode ?? "live" }, data.mode === "live" ? copy2.live : copy2.demo) : null,
-      partial ? (0, import_react66.createElement)("span", { className: "bt-activity-mode", "data-partial": true }, copy2.partial) : null,
-      (0, import_react66.createElement)("span", { className: "bt-activity-mode", "data-host-locked": lockReason || void 0, title: lockReason ? hostText(lockReason) : void 0 }, lockReason ? copy2.readOnlyHost : copy2.readOnly),
-      (0, import_react66.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-activity-close", onClick: onClose }, copy2.close)
+      data ? (0, import_react67.createElement)("span", { className: "bt-activity-mode", "data-mode": data.mode ?? "live" }, data.mode === "live" ? copy2.live : copy2.demo) : null,
+      partial ? (0, import_react67.createElement)("span", { className: "bt-activity-mode", "data-partial": true }, copy2.partial) : null,
+      (0, import_react67.createElement)("span", { className: "bt-activity-mode", "data-host-locked": lockReason || void 0, title: lockReason ? hostText(lockReason) : void 0 }, lockReason ? copy2.readOnlyHost : copy2.readOnly),
+      (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-activity-close", onClick: onClose }, copy2.close)
     )
   );
 }
 function Filter({ label, value, options, allLabel, onChange }) {
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "label",
     { className: "bt-activity-filter" },
-    (0, import_react66.createElement)("span", null, label),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)("span", null, label),
+    (0, import_react67.createElement)(
       "select",
       { className: "bt-select", value, onChange: (event) => onChange(event.target.value) },
-      (0, import_react66.createElement)("option", { value: "all" }, allLabel),
-      options.map((option) => (0, import_react66.createElement)("option", { key: option.value, value: option.value }, option.label))
+      (0, import_react67.createElement)("option", { value: "all" }, allLabel),
+      options.map((option) => (0, import_react67.createElement)("option", { key: option.value, value: option.value }, option.label))
     )
   );
 }
 function RoleStrip({ roles, copy: copy2 }) {
   if (roles.length === 0) return null;
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "div",
     { className: "bt-activity-roster-wrap" },
-    (0, import_react66.createElement)("div", { className: "bt-activity-section-head" }, (0, import_react66.createElement)("span", null, copy2.roster)),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)("div", { className: "bt-activity-section-head" }, (0, import_react67.createElement)("span", null, copy2.roster)),
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-roster", "aria-label": copy2.roster },
-      roles.map((role) => (0, import_react66.createElement)(
+      roles.map((role) => (0, import_react67.createElement)(
         "div",
         { key: role.id, className: "bt-activity-role", "data-main": role.main || void 0 },
-        (0, import_react66.createElement)(BotAvatar, { bot: role, size: 28, main: role.main }),
-        (0, import_react66.createElement)(
+        (0, import_react67.createElement)(BotAvatar, { bot: role, size: 28, main: role.main }),
+        (0, import_react67.createElement)(
           "span",
           { className: "bt-activity-role-copy" },
-          (0, import_react66.createElement)("b", null, role.name),
-          (0, import_react66.createElement)("small", null, role.role || copy2.member)
+          (0, import_react67.createElement)("b", null, role.name),
+          (0, import_react67.createElement)("small", null, role.role || copy2.member)
         ),
-        (0, import_react66.createElement)("em", null, permissionOf(role, copy2))
+        (0, import_react67.createElement)("em", null, permissionOf(role, copy2))
       ))
     )
   );
 }
 function TaskRow3({ task, roster, role, selected, copy: copy2, onSelect }) {
   const roleLabel = task.ownerRole || role?.role;
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "button",
     { type: "button", className: "bt-activity-task", "data-task-id": task.id, "data-source": task.source, "data-status": task.sourceStatus, "data-owner-kind": task.ownerKind, "data-selected": selected || void 0, onClick: () => onSelect(task.id) },
-    (0, import_react66.createElement)(OwnerMark, { task, roster, role, copy: copy2, size: 30 }),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(OwnerMark, { task, roster, role, copy: copy2, size: 30 }),
+    (0, import_react67.createElement)(
       "span",
       { className: "bt-activity-task-main" },
-      (0, import_react66.createElement)("span", { className: "bt-activity-task-title" }, task.title || task.sourceId),
-      (0, import_react66.createElement)("span", { className: "bt-activity-task-meta" }, `${sourceLabel(task.source, copy2)} · ${task.ownerName || copy2.noOwner}${roleLabel ? ` · ${roleLabel}` : ""}`),
-      (0, import_react66.createElement)("span", { className: "bt-activity-task-state", "data-status": task.sourceStatus }, task.sourceStatus)
+      (0, import_react67.createElement)("span", { className: "bt-activity-task-title" }, task.title || task.sourceId),
+      (0, import_react67.createElement)("span", { className: "bt-activity-task-meta" }, `${sourceLabel(task.source, copy2)} · ${task.ownerName || copy2.noOwner}${roleLabel ? ` · ${roleLabel}` : ""}`),
+      (0, import_react67.createElement)("span", { className: "bt-activity-task-state", "data-status": task.sourceStatus }, task.sourceStatus)
     ),
-    (0, import_react66.createElement)("time", { className: "bt-activity-task-time" }, when3(task.updatedAt))
+    (0, import_react67.createElement)("time", { className: "bt-activity-task-time" }, when3(task.updatedAt))
   );
 }
 var trustLabel = (trust, copy2) => trust === "verified" ? copy2.verified : trust === "executed" ? copy2.executed : trust === "requested" ? copy2.requested : trust === "reported" ? copy2.reported : copy2.pending;
 var controlLabel = (id, copy2) => id === "pause-goal" ? copy2.pauseGoal : id === "resume-goal" ? copy2.resumeGoal : id === "stop-goal" ? copy2.stopGoal : id === "retry-bot" ? copy2.retryBot : id === "cancel-work" || id === "cancel-room" ? copy2.cancelWork : id === "abandon-work" ? copy2.abandonWait : id;
 function TraceRow({ item, copy: copy2, selected, onSelect }) {
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "button",
     {
       type: "button",
@@ -41234,21 +41580,21 @@ function TraceRow({ item, copy: copy2, selected, onSelect }) {
       "data-selected": selected || void 0,
       onClick: () => onSelect(item)
     },
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(
       "span",
       { className: "bt-trace-record-main" },
-      (0, import_react66.createElement)("b", null, item.title || item.type),
-      (0, import_react66.createElement)("span", null, item.detail || ""),
-      (0, import_react66.createElement)("small", null, [item.sessionId, item.seq === null || item.seq === void 0 ? "" : `#${item.seq}`].filter(Boolean).join(" · "))
+      (0, import_react67.createElement)("b", null, item.title || item.type),
+      (0, import_react67.createElement)("span", null, item.detail || ""),
+      (0, import_react67.createElement)("small", null, [item.sessionId, item.seq === null || item.seq === void 0 ? "" : `#${item.seq}`].filter(Boolean).join(" · "))
     ),
-    (0, import_react66.createElement)("span", { className: "bt-trace-trust", "data-trust": item.trust }, trustLabel(item.trust, copy2)),
-    (0, import_react66.createElement)("time", null, when3(item.at))
+    (0, import_react67.createElement)("span", { className: "bt-trace-trust", "data-trust": item.trust }, trustLabel(item.trust, copy2)),
+    (0, import_react67.createElement)("time", null, when3(item.at))
   );
 }
 function TraceExplorer({ trace, copy: copy2, view: forcedView, onSelectEvidence = () => {
 } }) {
-  const [localView, setLocalView] = (0, import_react66.useState)("timeline");
-  const [selectedRecordId, setSelectedRecordId] = (0, import_react66.useState)(null);
+  const [localView, setLocalView] = (0, import_react67.useState)("timeline");
+  const [selectedRecordId, setSelectedRecordId] = (0, import_react67.useState)(null);
   const view = forcedView ?? localView;
   const changeView = (next) => {
     if (forcedView === void 0) setLocalView(next);
@@ -41259,32 +41605,32 @@ function TraceExplorer({ trace, copy: copy2, view: forcedView, onSelectEvidence 
   };
   const records = Array.isArray(trace?.timeline) ? trace.timeline : [];
   const relationships = Array.isArray(trace?.relationships) ? trace.relationships : [];
-  const recordRows = records.map((item) => (0, import_react66.createElement)(TraceRow, { key: item.id, item, copy: copy2, selected: selectedRecordId === item.id, onSelect: selectRecord }));
-  const tab = (id, label) => (0, import_react66.createElement)("button", {
+  const recordRows = records.map((item) => (0, import_react67.createElement)(TraceRow, { key: item.id, item, copy: copy2, selected: selectedRecordId === item.id, onSelect: selectRecord }));
+  const tab = (id, label) => (0, import_react67.createElement)("button", {
     type: "button",
     className: "bt-trace-tab",
     "data-view": id,
     "aria-pressed": view === id,
     onClick: () => changeView(id)
   }, label);
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "section",
     { className: "bt-trace-explorer", "aria-label": copy2.traceExplorer },
-    (0, import_react66.createElement)("div", { className: "bt-trace-head" }, (0, import_react66.createElement)("h4", null, copy2.traceExplorer), (0, import_react66.createElement)("small", { className: "bt-activity-id" }, trace?.sourceId || trace?.sourceTaskId || "")),
-    (0, import_react66.createElement)("div", { className: "bt-trace-tabs", role: "tablist" }, tab("timeline", copy2.timeline), tab("relationships", copy2.relationships), tab("records", copy2.records)),
-    trace?.status === "partial" ? (0, import_react66.createElement)("p", { className: "bt-trace-note", role: "status" }, copy2.tracePartial) : null,
-    view === "relationships" ? relationships.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-trace-relations" }, relationships.map((item, index) => (0, import_react66.createElement)(
+    (0, import_react67.createElement)("div", { className: "bt-trace-head" }, (0, import_react67.createElement)("h4", null, copy2.traceExplorer), (0, import_react67.createElement)("small", { className: "bt-activity-id" }, trace?.sourceId || trace?.sourceTaskId || "")),
+    (0, import_react67.createElement)("div", { className: "bt-trace-tabs", role: "tablist" }, tab("timeline", copy2.timeline), tab("relationships", copy2.relationships), tab("records", copy2.records)),
+    trace?.status === "partial" ? (0, import_react67.createElement)("p", { className: "bt-trace-note", role: "status" }, copy2.tracePartial) : null,
+    view === "relationships" ? relationships.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-trace-relations" }, relationships.map((item, index) => (0, import_react67.createElement)(
       "div",
       { key: `${item.kind}:${index}`, className: "bt-trace-relation", "data-kind": item.kind },
-      (0, import_react66.createElement)("b", null, item.kind),
-      (0, import_react66.createElement)("span", null, `${item.from} → ${item.to}`)
-    ))) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace) : records.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-trace-list", role: view === "timeline" ? "list" : void 0 }, recordRows) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace),
-    trace?.truncated ? (0, import_react66.createElement)("p", { className: "bt-trace-note" }, copy2.traceTruncated) : null
+      (0, import_react67.createElement)("b", null, item.kind),
+      (0, import_react67.createElement)("span", null, `${item.from} → ${item.to}`)
+    ))) : (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace) : records.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-trace-list", role: view === "timeline" ? "list" : void 0 }, recordRows) : (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace),
+    trace?.truncated ? (0, import_react67.createElement)("p", { className: "bt-trace-note" }, copy2.traceTruncated) : null
   );
 }
 function EvidenceList({ evidence, selectedId, copy: copy2, onSelect }) {
-  if (evidence.length === 0) return (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noEvidence);
-  return (0, import_react66.createElement)("div", { className: "bt-task-evidence-list" }, evidence.map((item) => (0, import_react66.createElement)(
+  if (evidence.length === 0) return (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noEvidence);
+  return (0, import_react67.createElement)("div", { className: "bt-task-evidence-list" }, evidence.map((item) => (0, import_react67.createElement)(
     "button",
     {
       key: item.id,
@@ -41295,19 +41641,28 @@ function EvidenceList({ evidence, selectedId, copy: copy2, onSelect }) {
       "data-selected": selectedId === item.id || void 0,
       onClick: () => onSelect(item.id)
     },
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(
       "span",
       null,
-      (0, import_react66.createElement)("b", null, item.title || item.text || item.id),
-      item.title && item.text ? (0, import_react66.createElement)("span", null, item.text) : null,
-      (0, import_react66.createElement)("small", null, `${item.sourceId || ""}${item.at ? ` · ${when3(item.at)}` : ""}`)
+      (0, import_react67.createElement)("b", null, item.title || item.text || item.id),
+      item.title && item.text ? (0, import_react67.createElement)("span", null, item.text) : null,
+      (0, import_react67.createElement)("small", null, `${item.sourceId || ""}${item.at ? ` · ${when3(item.at)}` : ""}`)
     ),
-    (0, import_react66.createElement)("em", null, trustLabel(item.trust, copy2))
+    (0, import_react67.createElement)("em", null, trustLabel(item.trust, copy2))
   )));
 }
 function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy: copy2 }) {
-  if (!task) return (0, import_react66.createElement)("aside", { className: "bt-activity-detail" }, (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noDetail));
-  const [selectedEvidenceId, setSelectedEvidenceId] = (0, import_react66.useState)(null);
+  const [selectedEvidenceId, setSelectedEvidenceId] = (0, import_react67.useState)(null);
+  const [improvements, setImprovements] = (0, import_react67.useState)(detail?.improvements ?? { proposals: [], history: [] });
+  const [proposalBusy, setProposalBusy] = (0, import_react67.useState)(false);
+  const [proposalError, setProposalError] = (0, import_react67.useState)("");
+  const [proposalNotice, setProposalNotice] = (0, import_react67.useState)("");
+  (0, import_react67.useEffect)(() => {
+    if (detail?.improvements) setImprovements(detail.improvements);
+    setProposalError("");
+    setProposalNotice("");
+  }, [detail?.taskId, detail?.generatedAt]);
+  if (!task) return (0, import_react67.createElement)("aside", { className: "bt-activity-detail" }, (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noDetail));
   const shown = detail?.task ?? task;
   const role = rolesById.get(shown.ownerId);
   const parent = shown.parentId ? allTasks.find((item) => item.id === shown.parentId) : void 0;
@@ -41327,6 +41682,32 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
   const controls = Array.isArray(detail?.controls) ? detail.controls : [];
   const lockReason = typeof roster?.readOnly === "string" ? roster.readOnly.trim() : "";
   const visibleControls = controls.map((control) => lockReason ? { ...control, enabled: false, reason: lockReason } : control);
+  const verified = detail?.verification?.status === "verified" && detail?.empty !== true;
+  const canPropose = verified && shown.ownerKind === "bot" && Boolean(actions?.proposeImprovement) && !lockReason && !proposalBusy;
+  const proposalDisabledReason = lockReason || (verified ? "" : copy2.verifiedOnly);
+  const proposalCards2 = [...improvements.proposals ?? [], ...improvements.history ?? []];
+  const proposeImprovement = () => {
+    if (!canPropose) return;
+    setProposalBusy(true);
+    setProposalError("");
+    setProposalNotice("");
+    let result;
+    try {
+      result = actions.proposeImprovement(shown.id);
+    } catch (error) {
+      setProposalError(error?.message ?? String(error));
+      setProposalBusy(false);
+      return;
+    }
+    void Promise.resolve(result).then((proposal) => {
+      if (proposal) setImprovements((current) => ({ ...current, proposals: [...current.proposals ?? [], proposal] }));
+      else setProposalNotice(copy2.noImprovement);
+    }, (error) => setProposalError(error?.message ?? String(error))).finally(() => setProposalBusy(false));
+  };
+  const proposalResolved = (id, approve) => setImprovements((current) => ({
+    ...current,
+    proposals: (current.proposals ?? []).map((proposal) => proposal.id === id ? { ...proposal, outcome: approve ? "approved" : "declined" } : proposal)
+  }));
   const runControl = (control) => {
     if (!control.enabled || !actions) return;
     if (control.id === "pause-goal") void actions.goalControl?.(control.roomId, control.goalId, "pause");
@@ -41337,66 +41718,91 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
     else if (control.id === "cancel-room") void actions.stopRoomWork?.(control.roomId);
     else if (control.id === "abandon-work") void actions.abandonWork?.(control.workId);
   };
-  const detailNotice = detailStatus === "loading" && detail === null ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailLoading) : detail?.empty === true ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailUnavailable) : detailError ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "alert" }, detail ? copy2.detailStale : detailError || copy2.detailError, detail ? (0, import_react66.createElement)("span", null, detailError) : null) : null;
-  return (0, import_react66.createElement)(
+  const detailNotice = detailStatus === "loading" && detail === null ? (0, import_react67.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailLoading) : detail?.empty === true ? (0, import_react67.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailUnavailable) : detailError ? (0, import_react67.createElement)("p", { className: "bt-task-detail-state", role: "alert" }, detail ? copy2.detailStale : detailError || copy2.detailError, detail ? (0, import_react67.createElement)("span", null, detailError) : null) : null;
+  return (0, import_react67.createElement)(
     "aside",
     { className: "bt-activity-detail", "aria-label": copy2.detail },
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-detail-head" },
-      (0, import_react66.createElement)(OwnerMark, { task: shown, roster, role, copy: copy2, size: 38 }),
-      (0, import_react66.createElement)(
+      (0, import_react67.createElement)(OwnerMark, { task: shown, roster, role, copy: copy2, size: 38 }),
+      (0, import_react67.createElement)(
         "div",
         null,
-        (0, import_react66.createElement)("b", null, shown.title || shown.sourceId),
-        (0, import_react66.createElement)("span", null, `${sourceLabel(shown.source, copy2)} · ${shown.ownerName || copy2.noOwner}`),
-        (0, import_react66.createElement)("small", { "data-main": role?.main || void 0 }, shown.ownerKind === "group" ? copy2.room : role ? `${shown.ownerRole || role.role || copy2.member} · ${permissionOf(role, copy2)}` : copy2.noOwner)
+        (0, import_react67.createElement)("b", null, shown.title || shown.sourceId),
+        (0, import_react67.createElement)("span", null, `${sourceLabel(shown.source, copy2)} · ${shown.ownerName || copy2.noOwner}`),
+        (0, import_react67.createElement)("small", { "data-main": role?.main || void 0 }, shown.ownerKind === "group" ? copy2.room : role ? `${shown.ownerRole || role.role || copy2.member} · ${permissionOf(role, copy2)}` : copy2.noOwner)
       )
     ),
     detailNotice,
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(
       "dl",
       null,
-      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.status), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-status", "data-status": shown.sourceStatus }, shown.sourceStatus))),
-      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.sourceId), (0, import_react66.createElement)("dd", { className: "bt-activity-id" }, shown.sourceId || shown.id)),
-      ...stageTitle ? [(0, import_react66.createElement)("div", { key: "stage" }, (0, import_react66.createElement)("dt", null, copy2.stage), (0, import_react66.createElement)("dd", null, stageTitle))] : [],
-      ...detail && attempt ? [(0, import_react66.createElement)("div", { key: "attempt" }, (0, import_react66.createElement)("dt", null, copy2.attempt), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-id" }, `${attempt.id || copy2.none}${attempt.number ? ` · ${attempt.number}` : ""}${attempt.status ? ` · ${attempt.status}` : ""}`)))] : [],
-      ...detail && handoff ? [(0, import_react66.createElement)("div", { key: "handoff" }, (0, import_react66.createElement)("dt", null, copy2.handoffRoute), (0, import_react66.createElement)("dd", null, [handoff.from?.name || handoff.from?.id, handoff.to?.name || handoff.to?.id].filter(Boolean).join(" → ") || copy2.none, handoff.status ? ` · ${handoff.status}` : "", handoff.name ? ` · ${handoff.name}` : ""))] : [],
-      ...detail ? [(0, import_react66.createElement)("div", { key: "checkpoint" }, (0, import_react66.createElement)("dt", null, copy2.latestCheckpoint), (0, import_react66.createElement)("dd", null, detail.checkpoint?.text || copy2.none))] : [],
-      ...detail && recovery ? [(0, import_react66.createElement)("div", { key: "recovery" }, (0, import_react66.createElement)("dt", null, copy2.recovery), (0, import_react66.createElement)("dd", null, recovery.records?.length > 0 ? recovery.records.map((item) => `${item.kind}: ${item.summary}`).join(" · ") : copy2.none))] : [],
-      ...detail ? [(0, import_react66.createElement)("div", { key: "next" }, (0, import_react66.createElement)("dt", null, copy2.nextAction), (0, import_react66.createElement)("dd", null, detail.nextAction?.text || copy2.none))] : [],
-      ...detail ? [(0, import_react66.createElement)("div", { key: "blockers" }, (0, import_react66.createElement)("dt", null, copy2.blockers), (0, import_react66.createElement)("dd", null, blockers.length > 0 ? (0, import_react66.createElement)("ul", { className: "bt-task-blockers" }, blockers.map((item) => (0, import_react66.createElement)("li", { key: item.id, "data-kind": item.kind }, item.text))) : copy2.noBlockers))] : [],
-      ...parentText ? [(0, import_react66.createElement)("div", { key: "parent" }, (0, import_react66.createElement)("dt", null, copy2.parent), (0, import_react66.createElement)("dd", null, parentText))] : [],
-      ...children.length > 0 ? [(0, import_react66.createElement)("div", { key: "children" }, (0, import_react66.createElement)("dt", null, copy2.children), (0, import_react66.createElement)(
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("dt", null, copy2.status), (0, import_react67.createElement)("dd", null, (0, import_react67.createElement)("span", { className: "bt-activity-status", "data-status": shown.sourceStatus }, shown.sourceStatus))),
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("dt", null, copy2.sourceId), (0, import_react67.createElement)("dd", { className: "bt-activity-id" }, shown.sourceId || shown.id)),
+      ...stageTitle ? [(0, import_react67.createElement)("div", { key: "stage" }, (0, import_react67.createElement)("dt", null, copy2.stage), (0, import_react67.createElement)("dd", null, stageTitle))] : [],
+      ...detail && attempt ? [(0, import_react67.createElement)("div", { key: "attempt" }, (0, import_react67.createElement)("dt", null, copy2.attempt), (0, import_react67.createElement)("dd", null, (0, import_react67.createElement)("span", { className: "bt-activity-id" }, `${attempt.id || copy2.none}${attempt.number ? ` · ${attempt.number}` : ""}${attempt.status ? ` · ${attempt.status}` : ""}`)))] : [],
+      ...detail && handoff ? [(0, import_react67.createElement)("div", { key: "handoff" }, (0, import_react67.createElement)("dt", null, copy2.handoffRoute), (0, import_react67.createElement)("dd", null, [handoff.from?.name || handoff.from?.id, handoff.to?.name || handoff.to?.id].filter(Boolean).join(" → ") || copy2.none, handoff.status ? ` · ${handoff.status}` : "", handoff.name ? ` · ${handoff.name}` : ""))] : [],
+      ...detail ? [(0, import_react67.createElement)("div", { key: "checkpoint" }, (0, import_react67.createElement)("dt", null, copy2.latestCheckpoint), (0, import_react67.createElement)("dd", null, detail.checkpoint?.text || copy2.none))] : [],
+      ...detail && recovery ? [(0, import_react67.createElement)("div", { key: "recovery" }, (0, import_react67.createElement)("dt", null, copy2.recovery), (0, import_react67.createElement)("dd", null, recovery.records?.length > 0 ? recovery.records.map((item) => `${item.kind}: ${item.summary}`).join(" · ") : copy2.none))] : [],
+      ...detail ? [(0, import_react67.createElement)("div", { key: "next" }, (0, import_react67.createElement)("dt", null, copy2.nextAction), (0, import_react67.createElement)("dd", null, detail.nextAction?.text || copy2.none))] : [],
+      ...detail ? [(0, import_react67.createElement)("div", { key: "blockers" }, (0, import_react67.createElement)("dt", null, copy2.blockers), (0, import_react67.createElement)("dd", null, blockers.length > 0 ? (0, import_react67.createElement)("ul", { className: "bt-task-blockers" }, blockers.map((item) => (0, import_react67.createElement)("li", { key: item.id, "data-kind": item.kind }, item.text))) : copy2.noBlockers))] : [],
+      ...parentText ? [(0, import_react67.createElement)("div", { key: "parent" }, (0, import_react67.createElement)("dt", null, copy2.parent), (0, import_react67.createElement)("dd", null, parentText))] : [],
+      ...children.length > 0 ? [(0, import_react67.createElement)("div", { key: "children" }, (0, import_react67.createElement)("dt", null, copy2.children), (0, import_react67.createElement)(
         "dd",
         null,
-        (0, import_react66.createElement)("ul", { className: "bt-activity-children" }, children.map((child) => (0, import_react66.createElement)("li", { key: child.id }, child.title || child.sourceId)))
+        (0, import_react67.createElement)("ul", { className: "bt-activity-children" }, children.map((child) => (0, import_react67.createElement)("li", { key: child.id }, child.title || child.sourceId)))
       ))] : [],
-      ...shown.roomName ? [(0, import_react66.createElement)("div", { key: "room" }, (0, import_react66.createElement)("dt", null, copy2.room), (0, import_react66.createElement)("dd", null, shown.roomName))] : [],
-      ...shown.acceptance ? [(0, import_react66.createElement)("div", { key: "acceptance" }, (0, import_react66.createElement)("dt", null, copy2.acceptance), (0, import_react66.createElement)("dd", null, shown.acceptance))] : [],
-      ...shown.note ? [(0, import_react66.createElement)("div", { key: "note" }, (0, import_react66.createElement)("dt", null, copy2.note), (0, import_react66.createElement)("dd", null, shown.note))] : [],
-      ...!detail && shown.evidence ? [(0, import_react66.createElement)("div", { key: "evidence" }, (0, import_react66.createElement)("dt", null, copy2.evidence), (0, import_react66.createElement)("dd", null, shown.evidence))] : [],
-      ...detail ? [(0, import_react66.createElement)("div", { key: "verification" }, (0, import_react66.createElement)("dt", null, copy2.verification), (0, import_react66.createElement)("dd", null, `${detail.verification?.status || copy2.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ""}`))] : [],
-      ...warnings.length > 0 ? [(0, import_react66.createElement)("div", { key: "warning", className: "bt-activity-warning" }, (0, import_react66.createElement)("dt", null, copy2.warning), (0, import_react66.createElement)("dd", null, warnings.join(" · ")))] : []
+      ...shown.roomName ? [(0, import_react67.createElement)("div", { key: "room" }, (0, import_react67.createElement)("dt", null, copy2.room), (0, import_react67.createElement)("dd", null, shown.roomName))] : [],
+      ...shown.acceptance ? [(0, import_react67.createElement)("div", { key: "acceptance" }, (0, import_react67.createElement)("dt", null, copy2.acceptance), (0, import_react67.createElement)("dd", null, shown.acceptance))] : [],
+      ...shown.note ? [(0, import_react67.createElement)("div", { key: "note" }, (0, import_react67.createElement)("dt", null, copy2.note), (0, import_react67.createElement)("dd", null, shown.note))] : [],
+      ...!detail && shown.evidence ? [(0, import_react67.createElement)("div", { key: "evidence" }, (0, import_react67.createElement)("dt", null, copy2.evidence), (0, import_react67.createElement)("dd", null, shown.evidence))] : [],
+      ...detail ? [(0, import_react67.createElement)("div", { key: "verification" }, (0, import_react67.createElement)("dt", null, copy2.verification), (0, import_react67.createElement)("dd", null, `${detail.verification?.status || copy2.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ""}`))] : [],
+      ...warnings.length > 0 ? [(0, import_react67.createElement)("div", { key: "warning", className: "bt-activity-warning" }, (0, import_react67.createElement)("dt", null, copy2.warning), (0, import_react67.createElement)("dd", null, warnings.join(" · ")))] : []
     ),
-    detail ? (0, import_react66.createElement)(
+    detail ? (0, import_react67.createElement)(
       "section",
-      { className: "bt-task-section" },
-      (0, import_react66.createElement)("h4", null, copy2.evidence),
-      (0, import_react66.createElement)(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy: copy2, onSelect: setSelectedEvidenceId })
+      { className: "bt-task-section bt-improvement-section" },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-improvement-head" },
+        (0, import_react67.createElement)("h4", null, copy2.improvements),
+        (0, import_react67.createElement)("button", {
+          type: "button",
+          className: "bt-soft bt-soft-sm bt-improvement-propose",
+          disabled: !canPropose,
+          title: proposalDisabledReason || void 0,
+          onClick: proposeImprovement
+        }, proposalBusy ? copy2.proposingImprovement : copy2.proposeImprovement)
+      ),
+      proposalError ? (0, import_react67.createElement)("p", { className: "bt-learning-error", role: "alert" }, `${copy2.proposalError} ${proposalError}`) : null,
+      proposalNotice ? (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty", role: "status" }, proposalNotice) : null,
+      proposalCards2.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-improvement-list" }, proposalCards2.map((proposal) => (0, import_react67.createElement)(ProposalCard, {
+        key: proposal.id,
+        proposal,
+        actions,
+        onResolved: proposalResolved,
+        disabledReason: proposal.outcome ? "" : lockReason
+      }))) : (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noImprovements)
     ) : null,
-    detail ? (0, import_react66.createElement)(
+    detail ? (0, import_react67.createElement)(
       "section",
       { className: "bt-task-section" },
-      (0, import_react66.createElement)("h4", null, copy2.artifacts),
-      artifacts.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-task-artifacts" }, artifacts.map((item, index) => (0, import_react66.createElement)("div", {
+      (0, import_react67.createElement)("h4", null, copy2.evidence),
+      (0, import_react67.createElement)(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy: copy2, onSelect: setSelectedEvidenceId })
+    ) : null,
+    detail ? (0, import_react67.createElement)(
+      "section",
+      { className: "bt-task-section" },
+      (0, import_react67.createElement)("h4", null, copy2.artifacts),
+      artifacts.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-task-artifacts" }, artifacts.map((item, index) => (0, import_react67.createElement)("div", {
         key: `${item.path}:${item.digest ?? index}`,
         className: "bt-task-artifact",
         "data-trust": item.trust
-      }, (0, import_react66.createElement)("b", null, item.name || item.path), (0, import_react66.createElement)("span", { className: "bt-activity-id" }, item.path), (0, import_react66.createElement)("small", null, item.digest || "")))) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noArtifacts)
+      }, (0, import_react67.createElement)("b", null, item.name || item.path), (0, import_react67.createElement)("span", { className: "bt-activity-id" }, item.path), (0, import_react67.createElement)("small", null, item.digest || "")))) : (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noArtifacts)
     ) : null,
-    detail && detail.empty !== true ? (0, import_react66.createElement)(TraceExplorer, { trace: detail.trace, copy: copy2, onSelectEvidence: setSelectedEvidenceId }) : null,
-    visibleControls.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-detail-controls", "aria-label": copy2.detail }, visibleControls.map((control) => (0, import_react66.createElement)("button", {
+    detail && detail.empty !== true ? (0, import_react67.createElement)(TraceExplorer, { trace: detail.trace, copy: copy2, onSelectEvidence: setSelectedEvidenceId }) : null,
+    visibleControls.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-detail-controls", "aria-label": copy2.detail }, visibleControls.map((control) => (0, import_react67.createElement)("button", {
       key: control.id,
       type: "button",
       className: "bt-soft bt-soft-sm bt-detail-control",
@@ -41415,19 +41821,19 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
   const partialData = data;
   const partialWarnings = Array.isArray(partialData?.warnings) ? partialData.warnings.map((item) => item.message).filter(Boolean) : [];
   if (status === "error" && !data) {
-    return (0, import_react66.createElement)(
+    return (0, import_react67.createElement)(
       "section",
       { className: "bt-team-activity", role: "dialog", "aria-modal": true, "aria-label": copy2.title, "aria-busy": false, "data-leaving": leaving || void 0 },
-      (0, import_react66.createElement)(DialogHead, { copy: copy2, onClose, roster }),
-      (0, import_react66.createElement)("p", { className: "bt-error bt-activity-error", role: "alert" }, error || copy2.error)
+      (0, import_react67.createElement)(DialogHead, { copy: copy2, onClose, roster }),
+      (0, import_react67.createElement)("p", { className: "bt-error bt-activity-error", role: "alert" }, error || copy2.error)
     );
   }
   if (status === "loading" && !data) {
-    return (0, import_react66.createElement)(
+    return (0, import_react67.createElement)(
       "section",
       { className: "bt-team-activity", role: "dialog", "aria-modal": true, "aria-label": copy2.title, "aria-busy": true, "data-leaving": leaving || void 0 },
-      (0, import_react66.createElement)(DialogHead, { copy: copy2, onClose, roster }),
-      (0, import_react66.createElement)("div", { className: "bt-activity-skeleton", role: "status", "aria-label": copy2.loading }, (0, import_react66.createElement)("span"), (0, import_react66.createElement)("span"), (0, import_react66.createElement)("span"))
+      (0, import_react67.createElement)(DialogHead, { copy: copy2, onClose, roster }),
+      (0, import_react67.createElement)("div", { className: "bt-activity-skeleton", role: "status", "aria-label": copy2.loading }, (0, import_react67.createElement)("span"), (0, import_react67.createElement)("span"), (0, import_react67.createElement)("span"))
     );
   }
   const view = filterActivityModel(data, filters);
@@ -41446,15 +41852,15 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
   const warningMessages = partialWarnings.length > 0 ? partialWarnings : allTasks.flatMap((task) => task.warnings ?? []);
   const partial = data?.partial === true || warningMessages.length > 0;
   const lockReason = typeof roster?.readOnly === "string" ? roster.readOnly.trim() : "";
-  const heatmap = (data?.heatmap ?? []).map((cell) => (0, import_react66.createElement)("span", {
+  const heatmap = (data?.heatmap ?? []).map((cell) => (0, import_react67.createElement)("span", {
     key: cell.day,
     className: "bt-activity-heat-cell",
     "data-day": cell.day,
     "data-count": cell.count,
     style: { "--bt-heat": Math.min(4, cell.count) / 4 },
     title: `${cell.day} · ${cell.count}`
-  }, (0, import_react66.createElement)("b", null, String(cell.count)), (0, import_react66.createElement)("small", null, cell.day.slice(5))));
-  const taskRows = tasks.map((task) => (0, import_react66.createElement)(TaskRow3, {
+  }, (0, import_react67.createElement)("b", null, String(cell.count)), (0, import_react67.createElement)("small", null, cell.day.slice(5))));
+  const taskRows = tasks.map((task) => (0, import_react67.createElement)(TaskRow3, {
     key: task.id,
     task,
     roster,
@@ -41463,7 +41869,7 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
     copy: copy2,
     onSelect
   }));
-  const activityRows = activity.slice(0, 12).map((item) => (0, import_react66.createElement)(
+  const activityRows = activity.slice(0, 12).map((item) => (0, import_react67.createElement)(
     "div",
     {
       key: item.id,
@@ -41471,52 +41877,52 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
       "data-source": item.source,
       "data-kind": item.kind
     },
-    (0, import_react66.createElement)("b", null, item.botName || "DS Bot"),
-    (0, import_react66.createElement)("span", null, `${sourceLabel(item.source, copy2)}${item.kind ? ` · ${item.kind}` : ""} · ${item.text}`),
-    (0, import_react66.createElement)("time", null, when3(item.at))
+    (0, import_react67.createElement)("b", null, item.botName || "DS Bot"),
+    (0, import_react67.createElement)("span", null, `${sourceLabel(item.source, copy2)}${item.kind ? ` · ${item.kind}` : ""} · ${item.text}`),
+    (0, import_react67.createElement)("time", null, when3(item.at))
   ));
   const taskMessage = noMatch ? copy2.noMatch : noCurrentTasks ? copy2.noCurrentTasks : "";
-  const body = empty ? (0, import_react66.createElement)("div", { className: "bt-empty bt-activity-empty", role: "status" }, copy2.empty) : (0, import_react66.createElement)(
+  const body = empty ? (0, import_react67.createElement)("div", { className: "bt-empty bt-activity-empty", role: "status" }, copy2.empty) : (0, import_react67.createElement)(
     "div",
     { className: "bt-activity-body" },
-    (0, import_react66.createElement)("div", { className: "bt-activity-list" }, taskMessage ? (0, import_react66.createElement)("p", { className: "bt-empty bt-activity-no-task" }, taskMessage) : taskRows),
-    (0, import_react66.createElement)(Detail2, { task: selected, detail: selectedDetail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy: copy2 }),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)("div", { className: "bt-activity-list" }, taskMessage ? (0, import_react67.createElement)("p", { className: "bt-empty bt-activity-no-task" }, taskMessage) : taskRows),
+    (0, import_react67.createElement)(Detail2, { task: selected, detail: selectedDetail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy: copy2 }),
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-recent" },
-      (0, import_react66.createElement)("h3", null, copy2.recent),
-      activityRows.length > 0 ? activityRows : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.empty)
+      (0, import_react67.createElement)("h3", null, copy2.recent),
+      activityRows.length > 0 ? activityRows : (0, import_react67.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.empty)
     )
   );
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "section",
     { className: "bt-team-activity", role: "dialog", "aria-modal": true, "aria-label": copy2.title, "data-leaving": leaving || void 0, "data-partial": partial || void 0 },
-    (0, import_react66.createElement)(DialogHead, { copy: copy2, onClose, data, partial, roster }),
-    error ? (0, import_react66.createElement)("p", { className: "bt-activity-stale", role: "status" }, copy2.stale, (0, import_react66.createElement)("span", null, error)) : null,
-    lockReason ? (0, import_react66.createElement)("p", { className: "bt-activity-host-read-only", role: "status" }, copy2.readOnlyHost, (0, import_react66.createElement)("span", null, hostText(lockReason))) : null,
-    partial ? (0, import_react66.createElement)("p", { className: "bt-activity-partial-note", role: "status" }, `${copy2.partial}: ${warningMessages.join(" · ")}`) : null,
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(DialogHead, { copy: copy2, onClose, data, partial, roster }),
+    error ? (0, import_react67.createElement)("p", { className: "bt-activity-stale", role: "status" }, copy2.stale, (0, import_react67.createElement)("span", null, error)) : null,
+    lockReason ? (0, import_react67.createElement)("p", { className: "bt-activity-host-read-only", role: "status" }, copy2.readOnlyHost, (0, import_react67.createElement)("span", null, hostText(lockReason))) : null,
+    partial ? (0, import_react67.createElement)("p", { className: "bt-activity-partial-note", role: "status" }, `${copy2.partial}: ${warningMessages.join(" · ")}`) : null,
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-summary" },
-      (0, import_react66.createElement)("span", null, (0, import_react66.createElement)("b", null, String(data?.summary?.active ?? 0)), copy2.active),
-      (0, import_react66.createElement)("span", null, (0, import_react66.createElement)("b", null, String(data?.summary?.waiting ?? 0)), copy2.waiting),
-      (0, import_react66.createElement)("span", null, (0, import_react66.createElement)("b", null, String(data?.summary?.attention ?? 0)), copy2.attention),
-      (0, import_react66.createElement)("span", null, (0, import_react66.createElement)("b", null, String(data?.summary?.activity ?? 0)), copy2.activity)
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, String(data?.summary?.active ?? 0)), copy2.active),
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, String(data?.summary?.waiting ?? 0)), copy2.waiting),
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, String(data?.summary?.attention ?? 0)), copy2.attention),
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, String(data?.summary?.activity ?? 0)), copy2.activity)
     ),
-    (0, import_react66.createElement)(RoleStrip, { roles, copy: copy2 }),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(RoleStrip, { roles, copy: copy2 }),
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-heat-wrap" },
-      (0, import_react66.createElement)("div", { className: "bt-activity-section-head" }, (0, import_react66.createElement)("span", null, copy2.sevenDay), (0, import_react66.createElement)("small", null, copy2.activityOnly)),
-      (0, import_react66.createElement)("div", { className: "bt-activity-heatmap", "aria-label": copy2.sevenDay }, heatmap)
+      (0, import_react67.createElement)("div", { className: "bt-activity-section-head" }, (0, import_react67.createElement)("span", null, copy2.sevenDay), (0, import_react67.createElement)("small", null, copy2.activityOnly)),
+      (0, import_react67.createElement)("div", { className: "bt-activity-heatmap", "aria-label": copy2.sevenDay }, heatmap)
     ),
-    (0, import_react66.createElement)(
+    (0, import_react67.createElement)(
       "div",
       { className: "bt-activity-toolbar" },
-      (0, import_react66.createElement)(Filter, { label: copy2.role, value: filters.role ?? "all", allLabel: copy2.all, options: roles.map((role) => ({ value: role.id, label: role.role ? `${role.name} · ${role.role}` : role.name })), onChange: (value) => onFilter({ ...filters, role: value }) }),
-      (0, import_react66.createElement)(Filter, { label: copy2.source, value: filters.source ?? "all", allLabel: copy2.all, options: sourceKeys.map((source) => ({ value: source, label: sourceLabel(source, copy2) })), onChange: (value) => onFilter({ ...filters, source: value }) }),
-      (0, import_react66.createElement)(Filter, { label: copy2.status, value: filters.status ?? "all", allLabel: copy2.all, options: statuses, onChange: (value) => onFilter({ ...filters, status: value }) }),
-      (0, import_react66.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-activity-attention", "aria-pressed": filters.attention === true, "data-active": filters.attention || void 0, onClick: () => onFilter({ ...filters, attention: !filters.attention }) }, copy2.waitingAttention)
+      (0, import_react67.createElement)(Filter, { label: copy2.role, value: filters.role ?? "all", allLabel: copy2.all, options: roles.map((role) => ({ value: role.id, label: role.role ? `${role.name} · ${role.role}` : role.name })), onChange: (value) => onFilter({ ...filters, role: value }) }),
+      (0, import_react67.createElement)(Filter, { label: copy2.source, value: filters.source ?? "all", allLabel: copy2.all, options: sourceKeys.map((source) => ({ value: source, label: sourceLabel(source, copy2) })), onChange: (value) => onFilter({ ...filters, source: value }) }),
+      (0, import_react67.createElement)(Filter, { label: copy2.status, value: filters.status ?? "all", allLabel: copy2.all, options: statuses, onChange: (value) => onFilter({ ...filters, status: value }) }),
+      (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-activity-attention", "aria-pressed": filters.attention === true, "data-active": filters.attention || void 0, onClick: () => onFilter({ ...filters, attention: !filters.attention }) }, copy2.waitingAttention)
     ),
     body
   );
@@ -41528,17 +41934,17 @@ async function requestTaskDetail(callImpl, taskId) {
 }
 function TeamActivity({ roster, actions, onClose = () => {
 }, callImpl = call, leaving = false }) {
-  const [data, setData] = (0, import_react66.useState)(null);
-  const [status, setStatus] = (0, import_react66.useState)("loading");
-  const [error, setError] = (0, import_react66.useState)("");
-  const [selectedId, setSelectedId] = (0, import_react66.useState)(null);
-  const [filters, setFilters] = (0, import_react66.useState)({ role: "all", source: "all", status: "all", attention: false });
-  const [detail, setDetail] = (0, import_react66.useState)(null);
-  const [detailStatus, setDetailStatus] = (0, import_react66.useState)("idle");
-  const [detailError, setDetailError] = (0, import_react66.useState)("");
-  const detailRef = (0, import_react66.useRef)(null);
+  const [data, setData] = (0, import_react67.useState)(null);
+  const [status, setStatus] = (0, import_react67.useState)("loading");
+  const [error, setError] = (0, import_react67.useState)("");
+  const [selectedId, setSelectedId] = (0, import_react67.useState)(null);
+  const [filters, setFilters] = (0, import_react67.useState)({ role: "all", source: "all", status: "all", attention: false });
+  const [detail, setDetail] = (0, import_react67.useState)(null);
+  const [detailStatus, setDetailStatus] = (0, import_react67.useState)("idle");
+  const [detailError, setDetailError] = (0, import_react67.useState)("");
+  const detailRef = (0, import_react67.useRef)(null);
   useEscape(onClose);
-  (0, import_react66.useEffect)(() => {
+  (0, import_react67.useEffect)(() => {
     let alive = true;
     let loaded = false;
     let inFlight = false;
@@ -41572,7 +41978,7 @@ function TeamActivity({ roster, actions, onClose = () => {
   const selectedTask = visibleTasks.find((task) => task.id === selectedId) ?? visibleTasks[0];
   const selectedTaskId = selectedTask?.id ?? null;
   const selectedTaskVersion = selectedTask === void 0 ? "" : `${selectedTask.sourceStatus}:${selectedTask.evidenceState ?? ""}:${selectedTask.updatedAt ?? ""}`;
-  (0, import_react66.useEffect)(() => {
+  (0, import_react67.useEffect)(() => {
     if (selectedTaskId === null) {
       detailRef.current = null;
       setDetail(null);
@@ -41597,11 +42003,11 @@ function TeamActivity({ roster, actions, onClose = () => {
       alive = false;
     };
   }, [selectedTaskId, selectedTaskVersion, callImpl]);
-  return (0, import_react66.createElement)(
+  return (0, import_react67.createElement)(
     "div",
     { className: "bt-activity-layer", "data-leaving": leaving || void 0 },
-    (0, import_react66.createElement)("div", { className: "bt-scrim", onMouseDown: onClose }),
-    (0, import_react66.createElement)(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose })
+    (0, import_react67.createElement)("div", { className: "bt-scrim", onMouseDown: onClose }),
+    (0, import_react67.createElement)(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose })
   );
 }
 var TEAM_ACTIVITY_CSS = `
@@ -41662,6 +42068,7 @@ var TEAM_ACTIVITY_CSS = `
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:10px;line-height:14px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:10px;line-height:14px;color:var(--bt-ink-3)}
 .bt-detail-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-detail-control:disabled{opacity:.45;cursor:not-allowed}
+.bt-improvement-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.bt-improvement-head h4{margin:0}.bt-improvement-propose:disabled{opacity:.45;cursor:not-allowed}.bt-improvement-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.bt-improvement-section .bt-learning-card{margin:0}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}
 .bt-activity-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;line-height:16px!important}
 .bt-activity-children{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-activity-warning dd{color:var(--bt-danger)}
@@ -41675,7 +42082,7 @@ var TEAM_ACTIVITY_CSS = `
 `;
 
 // src/client/overlays.js
-var import_react67 = require("react");
+var import_react68 = require("react");
 var import_react_dom11 = require("react-dom");
 var DIALOG_EXIT_MS2 = 160;
 var MENU_EXIT_MS3 = 120;
@@ -41686,8 +42093,8 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
   const frameSnap = useFrame ? useFrame((value) => value) : { viewport: window.innerWidth, sidebarWidth: FALLBACK_SIDEBAR_WIDTH, collapsedWidth: 0 };
   const pref = useSidebarPref ? useSidebarPref((value) => value) : "open";
   const current = useSessions((list) => Object.values(list.byId).find((session) => (session?.retainedBy?.mainView ?? 0) > 0)?.id ?? null);
-  const previous = (0, import_react67.useRef)(current);
-  (0, import_react67.useEffect)(() => {
+  const previous = (0, import_react68.useRef)(current);
+  (0, import_react68.useEffect)(() => {
     if (previous.current === current) return;
     previous.current = current;
     if (current) actions.followPanel?.(current);
@@ -41701,8 +42108,8 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
     panel: open ? { view: open.view, yielded: ui2.panelYield === true } : null
   });
   const shown = open !== null && layout.panel !== "folded" ? open : null;
-  const [kept, setKept] = (0, import_react67.useState)(shown);
-  (0, import_react67.useEffect)(() => {
+  const [kept, setKept] = (0, import_react68.useState)(shown);
+  (0, import_react68.useEffect)(() => {
     if (shown) {
       setKept(shown);
       return void 0;
@@ -41724,20 +42131,20 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
   const [menu, menuLeaving] = useLinger(ui2.menu, MENU_EXIT_MS3);
   const [teamActivity, teamActivityLeaving] = useLinger(ui2.teamActivity ? true : null, DIALOG_EXIT_MS2);
   const opening = openingModel({ pending: ui2.pendingOpen ?? null, current, roster });
-  return (0, import_react67.createElement)(
-    import_react67.Fragment,
+  return (0, import_react68.createElement)(
+    import_react68.Fragment,
     null,
-    opening ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
-    pane ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === "overlay", roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,
-    ui2.newChat ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(NewChat, { key: `${ui2.newChat}:${ui2.newChatSection ?? ""}`, mode: ui2.newChat, sectionId: ui2.newChatSection ?? null, paneLeft: layout.column, roster, actions }), document.body) : null,
-    ui2.palette ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(CommandPalette, { key: ui2.palette.token, start: ui2.palette.query, token: ui2.palette.token, roster, actions, useSessions }), document.body) : null,
-    ui2.groupSearch && roster.roomsById[ui2.groupSearch.roomId] ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(GroupSearch, { key: ui2.groupSearch.token, room: roster.roomsById[ui2.groupSearch.roomId], roster, token: ui2.groupSearch.token, actions }), document.body) : null,
-    ui2.exchange ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(ExchangeDialog, { pair: ui2.exchange, paneLeft: layout.column, roster, actions }), document.body) : null,
-    ui2.voice ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(VoiceMode, { key: ui2.voice, sessionId: ui2.voice, paneLeft: layout.column, roster, actions, useSessions, useSessionStatus }), document.body) : null,
-    menu ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(ContextMenu, { key: `${menu.kind ?? ""}:${menu.id}:${menu.x}:${menu.y}`, menu, roster, actions, useWork, leaving: menuLeaving }), document.body) : null,
-    settings ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(SettingsDialog, { page: settings.page, id: settings.id, roster, actions, useUpdate, leaving: settingsLeaving }), document.body) : null,
-    owner ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(MemoryDialog, { key: owner.id, owner, actions, leaving: memoryLeaving }), document.body) : null,
-    teamActivity ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(TeamActivity, { roster, actions, onClose: actions.closeTeamActivity, leaving: teamActivityLeaving }), document.body) : null
+    opening ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
+    pane ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === "overlay", roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,
+    ui2.newChat ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(NewChat, { key: `${ui2.newChat}:${ui2.newChatSection ?? ""}`, mode: ui2.newChat, sectionId: ui2.newChatSection ?? null, paneLeft: layout.column, roster, actions }), document.body) : null,
+    ui2.palette ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(CommandPalette, { key: ui2.palette.token, start: ui2.palette.query, token: ui2.palette.token, roster, actions, useSessions }), document.body) : null,
+    ui2.groupSearch && roster.roomsById[ui2.groupSearch.roomId] ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(GroupSearch, { key: ui2.groupSearch.token, room: roster.roomsById[ui2.groupSearch.roomId], roster, token: ui2.groupSearch.token, actions }), document.body) : null,
+    ui2.exchange ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(ExchangeDialog, { pair: ui2.exchange, paneLeft: layout.column, roster, actions }), document.body) : null,
+    ui2.voice ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(VoiceMode, { key: ui2.voice, sessionId: ui2.voice, paneLeft: layout.column, roster, actions, useSessions, useSessionStatus }), document.body) : null,
+    menu ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(ContextMenu, { key: `${menu.kind ?? ""}:${menu.id}:${menu.x}:${menu.y}`, menu, roster, actions, useWork, leaving: menuLeaving }), document.body) : null,
+    settings ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(SettingsDialog, { page: settings.page, id: settings.id, roster, actions, useUpdate, leaving: settingsLeaving }), document.body) : null,
+    owner ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(MemoryDialog, { key: owner.id, owner, actions, leaving: memoryLeaving }), document.body) : null,
+    teamActivity ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(TeamActivity, { roster, actions, onClose: actions.closeTeamActivity, leaving: teamActivityLeaving }), document.body) : null
   );
 }
 
@@ -42731,7 +43138,7 @@ function serveBrowserReads({ browsers, post, clientId = globalThis.crypto.random
 }
 
 // src/client/team-board.js
-var import_react68 = require("react");
+var import_react69 = require("react");
 var DEFAULT_CONFIG = Object.freeze({ defaultOpen: true, sort: "section", density: "two", showHistory: true });
 var CONFIG_URL = "./team-board.config.json";
 var SORTS = /* @__PURE__ */ new Set(["section", "role"]);
@@ -42838,33 +43245,33 @@ function Row4({ bot, doing, waiting, since, now, main }) {
   const running = doing !== void 0;
   const state = botState(running, running ? "working" : void 0, waiting);
   const line = running ? `${COPY.worked} ${durationOf(now - since)}` : waiting ? `${COPY.waited} ${durationOf(now - since)}` : COPY.idleFor;
-  return (0, import_react68.createElement)(
+  return (0, import_react69.createElement)(
     "article",
     { className: "tb-row", "data-running": running || void 0, "data-waiting": !running && waiting || void 0, "data-main": main || void 0 },
-    (0, import_react68.createElement)("div", { className: "tb-avatar" }, (0, import_react68.createElement)(BotAvatar, { bot, size: main ? 44 : 34, state, live: running, main })),
-    (0, import_react68.createElement)(
+    (0, import_react69.createElement)("div", { className: "tb-avatar" }, (0, import_react69.createElement)(BotAvatar, { bot, size: main ? 44 : 34, state, live: running, main })),
+    (0, import_react69.createElement)(
       "div",
       { className: "tb-body" },
-      (0, import_react68.createElement)(
+      (0, import_react69.createElement)(
         "div",
         { className: "tb-line" },
-        (0, import_react68.createElement)("span", { className: "tb-name" }, nameOf2(bot)),
-        roleOf(bot) === "" ? null : (0, import_react68.createElement)("span", { className: "tb-role" }, roleOf(bot)),
-        running ? (0, import_react68.createElement)("span", { className: "tb-pulse", "aria-hidden": true }) : null
+        (0, import_react69.createElement)("span", { className: "tb-name" }, nameOf2(bot)),
+        roleOf(bot) === "" ? null : (0, import_react69.createElement)("span", { className: "tb-role" }, roleOf(bot)),
+        running ? (0, import_react69.createElement)("span", { className: "tb-pulse", "aria-hidden": true }) : null
       ),
-      (0, import_react68.createElement)("div", { className: "tb-task" }, (0, import_react68.createElement)("span", { className: "tb-label" }, `${COPY.task}：`), (0, import_react68.createElement)("span", { className: "tb-phrase" }, running ? workPhrase(doing) : COPY.standby)),
-      (0, import_react68.createElement)("div", { className: "tb-who" }, `${COPY.who}：${nameOf2(bot)} · ${line}`)
+      (0, import_react69.createElement)("div", { className: "tb-task" }, (0, import_react69.createElement)("span", { className: "tb-label" }, `${COPY.task}：`), (0, import_react69.createElement)("span", { className: "tb-phrase" }, running ? workPhrase(doing) : COPY.standby)),
+      (0, import_react69.createElement)("div", { className: "tb-who" }, `${COPY.who}：${nameOf2(bot)} · ${line}`)
     )
   );
 }
 function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.now }) {
-  const [config, setConfig] = (0, import_react68.useState)(DEFAULT_CONFIG);
-  const [stamp, setStamp] = (0, import_react68.useState)(() => now());
-  const [tick, setTick] = (0, import_react68.useState)(0);
-  const [history, setHistory] = (0, import_react68.useState)({ status: "loading", rows: [] });
-  const [historyOpen, setHistoryOpen] = (0, import_react68.useState)(false);
-  const sinceRef = (0, import_react68.useRef)(/* @__PURE__ */ new Map());
-  (0, import_react68.useEffect)(() => {
+  const [config, setConfig] = (0, import_react69.useState)(DEFAULT_CONFIG);
+  const [stamp, setStamp] = (0, import_react69.useState)(() => now());
+  const [tick, setTick] = (0, import_react69.useState)(0);
+  const [history, setHistory] = (0, import_react69.useState)({ status: "loading", rows: [] });
+  const [historyOpen, setHistoryOpen] = (0, import_react69.useState)(false);
+  const sinceRef = (0, import_react69.useRef)(/* @__PURE__ */ new Map());
+  (0, import_react69.useEffect)(() => {
     let alive = true;
     const load = () => {
       readBoardConfig(configUrl).then((next) => {
@@ -42879,8 +43286,8 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
       window.removeEventListener("focus", onFocus);
     };
   }, [configUrl]);
-  const bots = (0, import_react68.useMemo)(() => visibleBots(roster), [roster]);
-  const doingById = (0, import_react68.useMemo)(() => {
+  const bots = (0, import_react69.useMemo)(() => visibleBots(roster), [roster]);
+  const doingById = (0, import_react69.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     for (const bot of bots) {
       const doing = entryOf(bot, work);
@@ -42888,7 +43295,7 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
     }
     return map;
   }, [bots, work]);
-  const waitingById = (0, import_react68.useMemo)(() => {
+  const waitingById = (0, import_react69.useMemo)(() => {
     const map = /* @__PURE__ */ new Set();
     for (const bot of bots) if (!doingById.has(bot.id) && isWaiting(roster, work, bot)) map.add(bot.id);
     return map;
@@ -42897,7 +43304,7 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
   const waitingCount = waitingById.size;
   const idleCount = Math.max(0, bots.length - runningCount - waitingCount);
   const runningKey = [...doingById.keys()].sort().join(",");
-  (0, import_react68.useEffect)(() => {
+  (0, import_react69.useEffect)(() => {
     const at2 = now();
     const since = sinceRef.current;
     for (const id of since.keys()) {
@@ -42906,14 +43313,14 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
     for (const id of doingById.keys()) if (!since.has(id)) since.set(id, at2);
     for (const id of waitingById.keys()) if (!since.has(id)) since.set(id, at2);
   }, [runningKey, waitingCount]);
-  (0, import_react68.useEffect)(() => setStamp(now()), [roster, work]);
-  (0, import_react68.useEffect)(() => {
+  (0, import_react69.useEffect)(() => setStamp(now()), [roster, work]);
+  (0, import_react69.useEffect)(() => {
     if (reducedMotion()) return void 0;
     if (runningCount === 0) return void 0;
     const timer = setTimeout(() => setTick((value) => value + 1), 1e3);
     return () => clearTimeout(timer);
   }, [tick, runningCount]);
-  (0, import_react68.useEffect)(() => {
+  (0, import_react69.useEffect)(() => {
     const api = globalThis.window?.dsbot?.panelHistory;
     if (typeof api !== "function") {
       setHistory({ status: "absent", rows: [] });
@@ -42934,35 +43341,35 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
   const at = now();
   const groups = groupBots(bots, roster, config.sort);
   const showHistory = config.showHistory !== false && history.status !== "absent";
-  return (0, import_react68.createElement)(
+  return (0, import_react69.createElement)(
     "section",
     { className: "tb-board", "data-density": config.density, "aria-label": "团队看板" },
-    (0, import_react68.createElement)(
+    (0, import_react69.createElement)(
       "header",
       { className: "tb-head" },
-      (0, import_react68.createElement)(
+      (0, import_react69.createElement)(
         "div",
         { className: "tb-counts" },
-        (0, import_react68.createElement)("span", { className: "tb-count", "data-kind": "running" }, (0, import_react68.createElement)("b", null, String(runningCount)), COPY.running),
-        (0, import_react68.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
-        (0, import_react68.createElement)("span", { className: "tb-count", "data-kind": "waiting" }, (0, import_react68.createElement)("b", null, String(waitingCount)), COPY.waiting),
-        (0, import_react68.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
-        (0, import_react68.createElement)("span", { className: "tb-count", "data-kind": "idle" }, (0, import_react68.createElement)("b", null, String(idleCount)), COPY.idle)
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "running" }, (0, import_react69.createElement)("b", null, String(runningCount)), COPY.running),
+        (0, import_react69.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "waiting" }, (0, import_react69.createElement)("b", null, String(waitingCount)), COPY.waiting),
+        (0, import_react69.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "idle" }, (0, import_react69.createElement)("b", null, String(idleCount)), COPY.idle)
       ),
-      (0, import_react68.createElement)("div", { className: "tb-stamp" }, `${COPY.updated} `, (0, import_react68.createElement)("time", { dateTime: new Date(stamp).toISOString() }, clockOf(stamp))),
-      typeof onClose === "function" ? (0, import_react68.createElement)("button", { type: "button", className: "tb-close", "aria-label": COPY.close, title: COPY.close, onClick: onClose }, "×") : null
+      (0, import_react69.createElement)("div", { className: "tb-stamp" }, `${COPY.updated} `, (0, import_react69.createElement)("time", { dateTime: new Date(stamp).toISOString() }, clockOf(stamp))),
+      typeof onClose === "function" ? (0, import_react69.createElement)("button", { type: "button", className: "tb-close", "aria-label": COPY.close, title: COPY.close, onClick: onClose }, "×") : null
     ),
-    bots.length === 0 ? (0, import_react68.createElement)("div", { className: "tb-empty", role: "status" }, COPY.empty) : (0, import_react68.createElement)(
+    bots.length === 0 ? (0, import_react69.createElement)("div", { className: "tb-empty", role: "status" }, COPY.empty) : (0, import_react69.createElement)(
       "div",
       { className: "tb-groups" },
-      groups.map((group) => (0, import_react68.createElement)(
+      groups.map((group) => (0, import_react69.createElement)(
         "div",
         { className: "tb-group", key: group.id },
-        group.name === "" ? null : (0, import_react68.createElement)("div", { className: "tb-group-name" }, (0, import_react68.createElement)("span", null, group.name), (0, import_react68.createElement)("span", { className: "tb-group-count" }, String(group.bots.length))),
-        (0, import_react68.createElement)(
+        group.name === "" ? null : (0, import_react69.createElement)("div", { className: "tb-group-name" }, (0, import_react69.createElement)("span", null, group.name), (0, import_react69.createElement)("span", { className: "tb-group-count" }, String(group.bots.length))),
+        (0, import_react69.createElement)(
           "div",
           { className: "tb-rows" },
-          group.bots.map((bot) => (0, import_react68.createElement)(Row4, {
+          group.bots.map((bot) => (0, import_react69.createElement)(Row4, {
             key: bot.id,
             bot,
             doing: doingById.get(bot.id),
@@ -42974,22 +43381,22 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
         )
       ))
     ),
-    showHistory ? (0, import_react68.createElement)(
+    showHistory ? (0, import_react69.createElement)(
       "footer",
       { className: "tb-history" },
-      (0, import_react68.createElement)("button", {
+      (0, import_react69.createElement)("button", {
         type: "button",
         className: "tb-history-toggle",
         "aria-expanded": historyOpen,
         onClick: () => setHistoryOpen((value) => !value)
-      }, (0, import_react68.createElement)("span", null, COPY.history), (0, import_react68.createElement)("span", { className: "tb-history-caret", "aria-hidden": true }, historyOpen ? "▾" : "▸")),
-      historyOpen ? history.status === "rows" ? (0, import_react68.createElement)("ul", { className: "tb-history-rows" }, history.rows.slice(0, 50).map((row, index) => (0, import_react68.createElement)(
+      }, (0, import_react69.createElement)("span", null, COPY.history), (0, import_react69.createElement)("span", { className: "tb-history-caret", "aria-hidden": true }, historyOpen ? "▾" : "▸")),
+      historyOpen ? history.status === "rows" ? (0, import_react69.createElement)("ul", { className: "tb-history-rows" }, history.rows.slice(0, 50).map((row, index) => (0, import_react69.createElement)(
         "li",
         { key: `${row?.ts ?? index}:${row?.bot ?? ""}` },
-        (0, import_react68.createElement)("span", { className: "tb-history-bot" }, String(row?.bot ?? "")),
-        (0, import_react68.createElement)("span", { className: "tb-history-state" }, historyState(row?.state)),
-        row?.doing ? (0, import_react68.createElement)("span", { className: "tb-history-doing" }, String(row.doing)) : null
-      ))) : (0, import_react68.createElement)("p", { className: "tb-history-note" }, COPY.historyPending) : null
+        (0, import_react69.createElement)("span", { className: "tb-history-bot" }, String(row?.bot ?? "")),
+        (0, import_react69.createElement)("span", { className: "tb-history-state" }, historyState(row?.state)),
+        row?.doing ? (0, import_react69.createElement)("span", { className: "tb-history-doing" }, String(row.doing)) : null
+      ))) : (0, import_react69.createElement)("p", { className: "tb-history-note" }, COPY.historyPending) : null
     ) : null
   );
 }
@@ -43043,7 +43450,7 @@ var TEAM_BOARD_CSS = `
 `;
 
 // src/client/team-board-host.js
-var import_react69 = require("react");
+var import_react70 = require("react");
 var TEAM_BOARD_CONFIG_URL = "/api/bot/team-board.config.json";
 var TEAM_BOARD_HOST_CSS = `
 /* At 521px and up the panel keeps a 204px column of the page beside it (100vw - 204px);
@@ -43060,8 +43467,8 @@ var TEAM_BOARD_HOST_CSS = `
 function TeamBoardHost({ useRoster, useWork }) {
   const roster = useRoster((value) => value);
   const work = useWork((value) => value);
-  const [open, setOpen] = (0, import_react69.useState)(true);
-  (0, import_react69.useEffect)(() => {
+  const [open, setOpen] = (0, import_react70.useState)(true);
+  (0, import_react70.useEffect)(() => {
     let live = true;
     readBoardConfig(TEAM_BOARD_CONFIG_URL).then((config) => {
       if (live) setOpen(config.defaultOpen);
@@ -43071,244 +43478,25 @@ function TeamBoardHost({ useRoster, useWork }) {
     };
   }, []);
   if (!open) {
-    return (0, import_react69.createElement)("button", { className: "tbh-toggle", type: "button", title: "Team board", onClick: () => setOpen(true) }, "团队看板");
+    return (0, import_react70.createElement)("button", { className: "tbh-toggle", type: "button", title: "Team board", onClick: () => setOpen(true) }, "团队看板");
   }
-  return (0, import_react69.createElement)(
+  return (0, import_react70.createElement)(
     "aside",
     { className: "tbh", "aria-label": "Team board" },
-    (0, import_react69.createElement)(TeamBoard, { roster, work, onClose: () => setOpen(false), configUrl: TEAM_BOARD_CONFIG_URL })
+    (0, import_react70.createElement)(TeamBoard, { roster, work, onClose: () => setOpen(false), configUrl: TEAM_BOARD_CONFIG_URL })
   );
-}
-
-// src/client/learning-card-model.js
-function proposalPlacement(proposal, turns) {
-  const settled = proposal?.outcome !== void 0;
-  if (!Number.isFinite(proposal?.at) || typeof turns?.values !== "function") return { kind: settled ? "none" : "dock" };
-  const lastBy = (time) => {
-    let found;
-    for (const location2 of turns.values()) {
-      const end = location2?.end?.time;
-      if (location2?.status !== "closed" || !Number.isFinite(end) || end > time) continue;
-      if (found === void 0 || end > found.end.time || end === found.end.time && location2.turn > found.turn) found = location2;
-    }
-    return found;
-  };
-  const turn = (lastBy(proposal.at) ?? lastBy(settled ? proposal.settledAt ?? proposal.at : Infinity))?.turn;
-  if (turn === void 0) return { kind: settled ? "none" : "dock" };
-  return { kind: "turn", turn };
-}
-function fileLines(text) {
-  const body = String(text ?? "").replace(/\n+$/, "");
-  return body === "" ? [] : body.split("\n");
-}
-function editLines(text) {
-  return typeof text === "string" ? text.split(/\r?\n/) : [];
-}
-var DIFF_CELLS = 25e4;
-function lineDiff(before, after) {
-  const a = fileLines(before);
-  const b = fileLines(after);
-  let start = 0;
-  while (start < a.length && start < b.length && a[start] === b[start]) start++;
-  let tail = 0;
-  while (tail < a.length - start && tail < b.length - start && a[a.length - 1 - tail] === b[b.length - 1 - tail]) tail++;
-  const midA = a.slice(start, a.length - tail);
-  const midB = b.slice(start, b.length - tail);
-  const rows2 = b.slice(0, start).map((line, index) => ({ kind: "same", line, number: index + 1 }));
-  const added = (j) => ({ kind: "added", line: midB[j], number: start + j + 1 });
-  if (midA.length * midB.length > DIFF_CELLS) {
-    rows2.push(...midA.map((line) => ({ kind: "removed", line })), ...midB.map((_, j) => added(j)));
-  } else {
-    const keep = Array.from({ length: midA.length + 1 }, () => new Array(midB.length + 1).fill(0));
-    for (let i2 = midA.length - 1; i2 >= 0; i2--) {
-      for (let j2 = midB.length - 1; j2 >= 0; j2--) {
-        keep[i2][j2] = midA[i2] === midB[j2] ? keep[i2 + 1][j2 + 1] + 1 : Math.max(keep[i2 + 1][j2], keep[i2][j2 + 1]);
-      }
-    }
-    let i = 0;
-    let j = 0;
-    while (i < midA.length || j < midB.length) {
-      if (i < midA.length && j < midB.length && midA[i] === midB[j]) {
-        rows2.push({ kind: "same", line: midB[j], number: start + j + 1 });
-        i++;
-        j++;
-      } else if (i < midA.length && (j === midB.length || keep[i + 1][j] >= keep[i][j + 1])) {
-        rows2.push({ kind: "removed", line: midA[i] });
-        i++;
-      } else {
-        rows2.push(added(j));
-        j++;
-      }
-    }
-  }
-  const offset = b.length - tail;
-  rows2.push(...b.slice(offset).map((line, index) => ({ kind: "same", line, number: offset + index + 1 })));
-  return rows2;
-}
-var answerKeepsCard = (failure) => failure?.code !== "bot/stale";
-var withoutEntry = (state, key) => {
-  if (!(key in state)) return state;
-  const next = { ...state };
-  delete next[key];
-  return next;
-};
-function answerFailure(record, proposal, failure) {
-  if (!answerKeepsCard(failure)) return withoutEntry(record, proposal.id);
-  return { ...record, [proposal.id]: { proposal, error: failure?.message ?? String(failure) } };
-}
-function proposalCards({ proposals = [], settled = [], failures = {} }) {
-  const visible = [...settled.filter((entry) => !proposals.some((proposal) => proposal.id === entry.id)), ...proposals];
-  for (const entry of Object.values(failures)) {
-    if (!proposals.some((proposal) => proposal.id === entry.proposal.id) && !visible.some((proposal) => proposal.id === entry.proposal.id)) visible.push(entry.proposal);
-  }
-  return visible.sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
 }
 
 // src/client/learning-card.js
-var import_react70 = require("react");
+var import_react71 = require("react");
 var failedAnswers = /* @__PURE__ */ new Map();
-function ProposalCard({ proposal, initialError = "", onFailure, onResolved, actions }) {
-  const outcome = proposal.outcome;
-  const [busy, setBusy] = (0, import_react70.useState)(false);
-  const [error, setError] = (0, import_react70.useState)(initialError);
-  const [open, setOpen] = (0, import_react70.useState)(false);
-  const busyRef = (0, import_react70.useRef)(false);
-  const titleId = (0, import_react70.useId)();
-  const answer = (approve) => {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
-    setError("");
-    void Promise.resolve().then(() => actions.learningAnswer(proposal.id, approve)).then(() => onResolved(proposal.id), (failure) => {
-      setError(failure?.message ?? String(failure));
-      onFailure(proposal, failure);
-    }).finally(() => {
-      busyRef.current = false;
-      setBusy(false);
-    });
-  };
-  const update = proposal.action === "update";
-  const agents = proposal.kind === "agents";
-  const rows2 = (0, import_react70.useMemo)(() => lineDiff(update ? proposal.previous?.content : "", proposal.content), [update, proposal.previous?.content, proposal.content]);
-  const change = agents ? [
-    (0, import_react70.createElement)(FileBox, { key: "file", name: "AGENTS.md", path: proposal.folder, state: proposal.exists === false ? "Added" : "Modified", blocks: proposal.edits.map((edit) => [
-      ...(edit.op === "add" ? [] : editLines(edit.old)).map((line) => ({ kind: "removed", line })),
-      ...(edit.op === "remove" ? [] : editLines(edit.text)).map((line) => ({ kind: "added", line }))
-    ]) }),
-    ...proposal.edits.map((edit, index) => edit.why ? (0, import_react70.createElement)("p", { className: "bt-learning-why", key: `why-${index}` }, edit.why) : null)
-  ] : [
-    (0, import_react70.createElement)(FileBox, { key: "file", name: "SKILL.md", path: `skills/${proposal.name}`, state: update ? "Updated" : "Added", blocks: [rows2] }),
-    proposal.why ? (0, import_react70.createElement)("p", { className: "bt-learning-why", key: "why" }, proposal.why) : null
-  ];
-  const kind = t(agents ? "AGENTS.md update" : update ? "Skill update" : "New skill");
-  if (outcome) {
-    const what = agents ? proposal.folder : proposal.name;
-    return (0, import_react70.createElement)(
-      "section",
-      { className: "bt-q bt-q-settled bt-learning-card bt-learning-settled", role: "group", "aria-label": `${kind} · ${what}`, "data-outcome": outcome },
-      (0, import_react70.createElement)(
-        "button",
-        { type: "button", className: "bt-learning-fold", "aria-expanded": open, onClick: () => setOpen(!open) },
-        (0, import_react70.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react70.createElement)(agents ? PencilIcon : MemoryIcon)),
-        (0, import_react70.createElement)("span", { className: "bt-learning-kind" }, kind),
-        (0, import_react70.createElement)("span", { className: "bt-learning-sum" }, `${t(outcome === "approved" ? "Approved" : "Declined")} · ${what}`)
-      ),
-      open ? change : null
-    );
-  }
-  const oldDetail = update && typeof proposal.previous?.description === "string" && proposal.previous.description !== proposal.description ? proposal.previous.description : void 0;
-  return (0, import_react70.createElement)(
-    "section",
-    { className: "bt-q bt-learning-card", role: "group", "aria-labelledby": titleId, "aria-busy": busy },
-    agents ? (0, import_react70.createElement)(ProposalHead, { titleId, icon: PencilIcon, title: kind }) : (0, import_react70.createElement)(ProposalHead, { titleId, title: proposal.name, kind, detail: proposal.description, oldDetail }),
-    change,
-    error ? (0, import_react70.createElement)("div", { className: "bt-learning-error", role: "alert" }, error) : null,
-    (0, import_react70.createElement)(ProposalFoot, { busy, answer })
-  );
-}
-function ProposalHead({ titleId, icon: icon2 = MemoryIcon, title, kind, detail, oldDetail }) {
-  return (0, import_react70.createElement)(
-    "div",
-    { className: "bt-q-head" },
-    (0, import_react70.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react70.createElement)(icon2)),
-    (0, import_react70.createElement)(
-      "div",
-      { className: "bt-q-text" },
-      (0, import_react70.createElement)("p", { className: "bt-q-title", id: titleId }, title),
-      kind ? (0, import_react70.createElement)("div", { className: "bt-q-detail" }, kind) : null,
-      oldDetail ? (0, import_react70.createElement)("p", { className: "bt-learning-description bt-learning-old" }, (0, import_react70.createElement)("del", null, oldDetail)) : null,
-      detail ? (0, import_react70.createElement)("p", { className: "bt-learning-description" }, detail) : null
-    ),
-    (0, import_react70.createElement)("span", { className: "bt-q-badge bt-learning-status" }, (0, import_react70.createElement)("span", { className: "bt-learning-dot", "aria-hidden": true }), t("Awaiting approval"))
-  );
-}
-function ProposalFoot({ busy, answer }) {
-  return (0, import_react70.createElement)(
-    "div",
-    { className: "bt-q-foot bt-learning-foot" },
-    (0, import_react70.createElement)("button", { type: "button", className: "bt-learning-btn bt-learning-decline", disabled: busy, onClick: () => answer(false) }, t("Decline")),
-    (0, import_react70.createElement)(
-      "button",
-      { type: "button", className: "bt-learning-btn bt-learning-approve", disabled: busy, onClick: () => answer(true) },
-      (0, import_react70.createElement)(CheckIcon),
-      t("Approve")
-    )
-  );
-}
-var COLLAPSE_ROWS = 8;
-var SIGNS = { added: "+", removed: "−", same: "" };
-function FileBox({ name, path: path2, state, blocks }) {
-  const [open, setOpen] = (0, import_react70.useState)(false);
-  const all = blocks.flat();
-  const added = all.filter((row) => row.kind === "added").length;
-  const removed = all.filter((row) => row.kind === "removed").length;
-  const folds = all.length > COLLAPSE_ROWS;
-  const shut = folds && !open;
-  return (0, import_react70.createElement)(
-    "div",
-    { className: "bt-learning-file" },
-    (0, import_react70.createElement)(
-      "div",
-      { className: "bt-learning-filehead" },
-      (0, import_react70.createElement)("span", { className: "bt-learning-name" }, name),
-      path2 ? (0, import_react70.createElement)("span", { className: "bt-learning-path" }, path2) : null,
-      (0, import_react70.createElement)("span", { className: "bt-learning-spacer" }),
-      added > 0 ? (0, import_react70.createElement)("span", { className: "bt-learning-plus" }, `+${added}`) : null,
-      removed > 0 ? (0, import_react70.createElement)("span", { className: "bt-learning-minus" }, `−${removed}`) : null,
-      (0, import_react70.createElement)("span", { className: `bt-learning-state bt-learning-state-${state.toLowerCase()}` }, t(state))
-    ),
-    (0, import_react70.createElement)(
-      "div",
-      { className: shut ? "bt-learning-code bt-learning-shut" : "bt-learning-code" },
-      blocks.map((rows2, blockIndex) => [
-        blockIndex > 0 ? (0, import_react70.createElement)("div", { className: "bt-learning-gap", key: `gap-${blockIndex}` }) : null,
-        ...rows2.map((row, rowIndex) => (0, import_react70.createElement)(
-          "div",
-          { className: `bt-learning-row bt-learning-${row.kind}`, key: `${blockIndex}-${rowIndex}` },
-          (0, import_react70.createElement)("span", { className: "bt-learning-num", "aria-hidden": true }, row.number ?? ""),
-          (0, import_react70.createElement)("span", { className: "bt-learning-sign", "aria-hidden": true }, SIGNS[row.kind]),
-          (0, import_react70.createElement)("span", { className: "bt-learning-text" }, row.line || " ")
-        ))
-      ])
-    ),
-    folds ? (0, import_react70.createElement)(
-      "div",
-      { className: shut ? "bt-learning-morebar bt-learning-morebar-shut" : "bt-learning-morebar" },
-      (0, import_react70.createElement)(
-        "button",
-        { type: "button", className: "bt-learning-more", "aria-expanded": open, onClick: () => setOpen(!open) },
-        t(open ? "Show less" : "Show all {count} lines", { count: all.length })
-      )
-    ) : null
-  );
-}
 function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   const roster = useRoster((value) => value);
   const facts = useTurnFacts(sessionId, actions);
-  const [failed, setFailed] = (0, import_react70.useState)({});
+  const [failed, setFailed] = (0, import_react71.useState)({});
   const bot = roster.byId?.[sessionId];
   const settledIds = (bot === void 0 ? [] : roster.learningSettled?.[bot.id] ?? []).map((entry) => entry.id);
-  (0, import_react70.useEffect)(() => {
+  (0, import_react71.useEffect)(() => {
     const gone = Object.keys(failed).filter((id) => settledIds.includes(id));
     if (gone.length === 0) return;
     for (const id of gone) failedAnswers.delete(id);
@@ -43333,10 +43521,10 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
     failedAnswers.delete(id);
     return withoutEntry(current, id);
   });
-  return (0, import_react70.createElement)("div", { className: dock ? "bt-learning-stack bt-learning-dock" : "bt-learning-stack" }, cards.map((proposal) => (0, import_react70.createElement)(
+  return (0, import_react71.createElement)("div", { className: dock ? "bt-learning-stack bt-learning-dock" : "bt-learning-stack" }, cards.map((proposal) => (0, import_react71.createElement)(
     "div",
     { className: "bt-q-inline", key: proposal.id },
-    (0, import_react70.createElement)(ProposalCard, {
+    (0, import_react71.createElement)(ProposalCard, {
       proposal,
       initialError: failed[proposal.id]?.error ?? failedAnswers.get(proposal.id)?.error,
       onFailure,
@@ -43346,10 +43534,10 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   )));
 }
 function LearningTurnTail(props) {
-  return (0, import_react70.createElement)(LearningProposals, { ...props, dock: false });
+  return (0, import_react71.createElement)(LearningProposals, { ...props, dock: false });
 }
 function LearningDock(props) {
-  return (0, import_react70.createElement)(LearningProposals, { ...props, dock: true });
+  return (0, import_react71.createElement)(LearningProposals, { ...props, dock: true });
 }
 var LEARNING_CSS = `
 .bt-learning-stack{display:flex;flex-direction:column;gap:4px}
@@ -43407,6 +43595,10 @@ var LEARNING_CSS = `
 .bt-learning-sum{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;line-height:20px;color:var(--bt-ink-2)}
 .bt-learning-fold:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px;border-radius:8px}
 .bt-learning-error{font-size:12px;line-height:16px;color:var(--bt-danger)}
+.bt-learning-improvement{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-q-rule)}
+.bt-learning-improvement-title{margin:0 0 6px;font-size:12px;line-height:16px;font-weight:600;color:var(--bt-ink)}
+.bt-learning-improvement dl{display:grid;gap:6px;margin:0}.bt-learning-improvement dl div{display:grid;grid-template-columns:minmax(84px,.35fr) minmax(0,1fr);gap:8px}.bt-learning-improvement dt{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-learning-improvement dd{margin:0;font-size:12px;line-height:17px;color:var(--bt-ink-2);overflow-wrap:anywhere}
+.bt-learning-review{margin:8px 0 0;font-size:12px;line-height:17px;color:var(--bt-danger)}
 `;
 
 // src/client/right-panel.js
@@ -43439,7 +43631,7 @@ function createSwitchWindow(settle) {
 }
 
 // src/client/queue-dock.js
-var import_react71 = require("react");
+var import_react72 = require("react");
 var OWN_QUEUE_KINDS = /* @__PURE__ */ new Set(["user", "schedule", "user-question-reply"]);
 var EMPTY_QUEUE = [];
 var QUEUE_TEXT_FACTS = { collapseWhitespace: true, trimWhitespace: true };
@@ -43456,17 +43648,17 @@ function queueAttachments(content) {
 var fileSizeText2 = (bytes) => typeof bytes !== "number" || !Number.isFinite(bytes) ? "" : bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 function QueueFile({ attachment, label }) {
   const size = fileSizeText2(attachment.bytes);
-  return (0, import_react71.createElement)(
+  return (0, import_react72.createElement)(
     "span",
     { className: "bt-queue-file", "aria-label": label, title: attachment.name },
-    (0, import_react71.createElement)("span", { className: "bt-queue-fileicon", "aria-hidden": true }, (0, import_react71.createElement)(PaperclipIcon)),
-    (0, import_react71.createElement)("span", { className: "bt-queue-filename" }, attachment.name),
-    size !== "" ? (0, import_react71.createElement)("span", { className: "bt-queue-filesize" }, size) : null
+    (0, import_react72.createElement)("span", { className: "bt-queue-fileicon", "aria-hidden": true }, (0, import_react72.createElement)(PaperclipIcon)),
+    (0, import_react72.createElement)("span", { className: "bt-queue-filename" }, attachment.name),
+    size !== "" ? (0, import_react72.createElement)("span", { className: "bt-queue-filesize" }, size) : null
   );
 }
 function QueueThumb({ attachment, loadImage, label }) {
-  const [url, setUrl] = (0, import_react71.useState)(null);
-  (0, import_react71.useEffect)(() => {
+  const [url, setUrl] = (0, import_react72.useState)(null);
+  (0, import_react72.useEffect)(() => {
     let alive = true;
     loadImage(attachment).then((resolved) => {
       if (alive) setUrl(resolved);
@@ -43476,22 +43668,22 @@ function QueueThumb({ attachment, loadImage, label }) {
       alive = false;
     };
   }, [attachment, loadImage]);
-  return url === null ? (0, import_react71.createElement)("span", { className: "bt-queue-thumb", "aria-hidden": true }) : (0, import_react71.createElement)("img", { className: "bt-queue-thumb", src: url, alt: label });
+  return url === null ? (0, import_react72.createElement)("span", { className: "bt-queue-thumb", "aria-hidden": true }) : (0, import_react72.createElement)("img", { className: "bt-queue-thumb", src: url, alt: label });
 }
 function Preview({ text, renderFactorySlot }) {
   const rendered = renderFactorySlot?.("conversation.user.text", { text, facts: QUEUE_TEXT_FACTS, interactive: false, ellipsis: true });
-  return (0, import_react71.createElement)("span", { className: "bt-queue-preview" }, rendered ?? text);
+  return (0, import_react72.createElement)("span", { className: "bt-queue-preview" }, rendered ?? text);
 }
 function EditField({ text, onChange, onSave, onCancel }) {
-  const field = (0, import_react71.useRef)(null);
-  (0, import_react71.useEffect)(() => {
+  const field = (0, import_react72.useRef)(null);
+  (0, import_react72.useEffect)(() => {
     const node = field.current;
     if (node === null) return;
     node.focus();
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight}px`;
   }, [text]);
-  return (0, import_react71.createElement)("textarea", {
+  return (0, import_react72.createElement)("textarea", {
     ref: field,
     className: "bt-queue-edit",
     value: text,
@@ -43510,28 +43702,28 @@ function EditField({ text, onChange, onSave, onCancel }) {
   });
 }
 function RowButton({ label, title, disabled, onClick, children }) {
-  return (0, import_react71.createElement)("button", { type: "button", className: "bt-queue-action", "aria-label": label, title: title ?? label, disabled, onClick }, children);
+  return (0, import_react72.createElement)("button", { type: "button", className: "bt-queue-action", "aria-label": label, title: title ?? label, disabled, onClick }, children);
 }
 function QueueDock({ useSession, useProjection, updateQueue, loadImage, renderFactorySlot, actions }) {
   const inbox = useProjection?.("inbox");
   const pendingSubmissions = useSession?.((s) => s.pendingSubmissions) ?? EMPTY_QUEUE;
-  const queue = (0, import_react71.useMemo)(() => {
+  const queue = (0, import_react72.useMemo)(() => {
     const rows2 = (inbox?.["next-turn"] ?? EMPTY_QUEUE).filter((row) => OWN_QUEUE_KINDS.has(row.source?.kind));
     const inChat = new Set(pendingSubmissions.filter((item) => item.placement === "transcript").map((item) => item.requestId));
     return inChat.size === 0 ? rows2 : rows2.filter(({ source }) => source === null || typeof source !== "object" || !("rpcId" in source) || !inChat.has(source.rpcId));
   }, [inbox, pendingSubmissions]);
-  const pendingQueue = (0, import_react71.useMemo)(() => {
+  const pendingQueue = (0, import_react72.useMemo)(() => {
     const admitted = new Set(queue.flatMap(({ source }) => source !== null && typeof source === "object" && "rpcId" in source ? [source.rpcId] : []));
     return pendingSubmissions.filter((submission) => submission.placement === "queued" && !admitted.has(submission.requestId));
   }, [pendingSubmissions, queue]);
   const rowCount = queue.length + pendingQueue.length;
   const running = useSession?.((s) => s.running) === true;
   const queueMutable = useSession?.((s) => s.subagent === null || s.subagent === void 0 || s.subagent.address?.mode === "continuable") ?? true;
-  const [editing, setEditing] = (0, import_react71.useState)(null);
-  const [busy, setBusy] = (0, import_react71.useState)(null);
-  const [collapsed, setCollapsed] = (0, import_react71.useState)(true);
-  const listId = (0, import_react71.useId)();
-  (0, import_react71.useEffect)(() => {
+  const [editing, setEditing] = (0, import_react72.useState)(null);
+  const [busy, setBusy] = (0, import_react72.useState)(null);
+  const [collapsed, setCollapsed] = (0, import_react72.useState)(true);
+  const listId = (0, import_react72.useId)();
+  (0, import_react72.useEffect)(() => {
     if (rowCount === 0 && !collapsed) setCollapsed(true);
     if (editing !== null && (!queueMutable || !queue.some((row) => row.id === editing.id))) setEditing(null);
   }, [collapsed, editing, queue, queueMutable, rowCount]);
@@ -43559,77 +43751,77 @@ function QueueDock({ useSession, useProjection, updateQueue, loadImage, renderFa
     if (editing === null || editing.text.trim() === "") return;
     if (await applyAction(editing.id, { kind: "edit", content: [{ type: "text", text: editing.text }] }, t("Couldn’t edit the queued message — it may have started already."))) setEditing(null);
   };
-  return (0, import_react71.createElement)(
+  return (0, import_react72.createElement)(
     "div",
     { className: "bt-queue-dock", "data-queue-dock": "" },
-    (0, import_react71.createElement)(
+    (0, import_react72.createElement)(
       "div",
       { className: "bt-queue-panel" },
-      rowCount > 1 && (0, import_react71.createElement)(
+      rowCount > 1 && (0, import_react72.createElement)(
         "button",
         { type: "button", className: "bt-queue-head", "aria-controls": listId, "aria-expanded": expanded, disabled: interactionActive, onClick: () => setCollapsed((value) => !value) },
-        (0, import_react71.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react71.createElement)(QueueIcon)),
-        (0, import_react71.createElement)("span", { className: "bt-queue-count" }, t("{n} queued messages", { n: rowCount })),
-        !listVisible && pendingQueue.length > 0 && (0, import_react71.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
-        (0, import_react71.createElement)("span", { className: "bt-queue-chev", "aria-hidden": true }, expanded ? (0, import_react71.createElement)(ChevronDownIcon) : (0, import_react71.createElement)(ChevronUpIcon))
+        (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+        (0, import_react72.createElement)("span", { className: "bt-queue-count" }, t("{n} queued messages", { n: rowCount })),
+        !listVisible && pendingQueue.length > 0 && (0, import_react72.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
+        (0, import_react72.createElement)("span", { className: "bt-queue-chev", "aria-hidden": true }, expanded ? (0, import_react72.createElement)(ChevronDownIcon) : (0, import_react72.createElement)(ChevronUpIcon))
       ),
-      (0, import_react71.createElement)(
+      (0, import_react72.createElement)(
         "ul",
         { id: listId, className: "bt-queue-list", hidden: !listVisible },
         listVisible && queue.map((row) => {
           const attachments = queueAttachments(row.content);
           const text = textOf(row.content);
-          return (0, import_react71.createElement)(
+          return (0, import_react72.createElement)(
             "li",
             { key: row.id, className: "bt-queue-row" },
-            rowCount === 1 && (0, import_react71.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react71.createElement)(QueueIcon)),
-            editing?.id === row.id ? (0, import_react71.createElement)(EditField, { text: editing.text, onChange: (text2) => setEditing({ id: row.id, text: text2 }), onSave: saveEdit, onCancel: () => setEditing(null) }) : (0, import_react71.createElement)(
-              import_react71.Fragment,
+            rowCount === 1 && (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+            editing?.id === row.id ? (0, import_react72.createElement)(EditField, { text: editing.text, onChange: (text2) => setEditing({ id: row.id, text: text2 }), onSave: saveEdit, onCancel: () => setEditing(null) }) : (0, import_react72.createElement)(
+              import_react72.Fragment,
               null,
-              attachments.length > 0 && (0, import_react71.createElement)(
+              attachments.length > 0 && (0, import_react72.createElement)(
                 "span",
                 { className: "bt-queue-attachments" },
-                attachments.map((item, index) => item.type === "image" ? (0, import_react71.createElement)(QueueThumb, { key: `${item.attachment.attachmentId}:${index}`, attachment: item.attachment, loadImage, label: t("Queued image") }) : (0, import_react71.createElement)(QueueFile, { key: `${item.attachment.attachmentId}:${item.attachment.name}:${index}`, attachment: item.attachment, label: t("Queued file {name}", { name: item.attachment.name }) }))
+                attachments.map((item, index) => item.type === "image" ? (0, import_react72.createElement)(QueueThumb, { key: `${item.attachment.attachmentId}:${index}`, attachment: item.attachment, loadImage, label: t("Queued image") }) : (0, import_react72.createElement)(QueueFile, { key: `${item.attachment.attachmentId}:${item.attachment.name}:${index}`, attachment: item.attachment, label: t("Queued file {name}", { name: item.attachment.name }) }))
               ),
-              (0, import_react71.createElement)(Preview, { text: row.content.filter((block) => block.type === "text").map((block) => block.text).join(""), renderFactorySlot })
+              (0, import_react72.createElement)(Preview, { text: row.content.filter((block) => block.type === "text").map((block) => block.text).join(""), renderFactorySlot })
             ),
-            queueMutable && (0, import_react71.createElement)(
+            queueMutable && (0, import_react72.createElement)(
               "div",
               { className: "bt-queue-actions" },
-              editing?.id === row.id ? (0, import_react71.createElement)(
-                import_react71.Fragment,
+              editing?.id === row.id ? (0, import_react72.createElement)(
+                import_react72.Fragment,
                 null,
-                (0, import_react71.createElement)(RowButton, { label: t("Save queued message"), disabled: busy !== null || editing.text.trim() === "", onClick: saveEdit }, (0, import_react71.createElement)(CheckIcon)),
-                (0, import_react71.createElement)(RowButton, { label: t("Cancel editing"), disabled: busy !== null, onClick: () => setEditing(null) }, (0, import_react71.createElement)(CloseIcon))
-              ) : (0, import_react71.createElement)(
-                import_react71.Fragment,
+                (0, import_react72.createElement)(RowButton, { label: t("Save queued message"), disabled: busy !== null || editing.text.trim() === "", onClick: saveEdit }, (0, import_react72.createElement)(CheckIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Cancel editing"), disabled: busy !== null, onClick: () => setEditing(null) }, (0, import_react72.createElement)(CloseIcon))
+              ) : (0, import_react72.createElement)(
+                import_react72.Fragment,
                 null,
-                (0, import_react71.createElement)(RowButton, { label: t("Edit queued message"), title: text === null ? t("Contains non-text content, so editing is not supported yet") : void 0, disabled: busy !== null || text === null, onClick: () => {
+                (0, import_react72.createElement)(RowButton, { label: t("Edit queued message"), title: text === null ? t("Contains non-text content, so editing is not supported yet") : void 0, disabled: busy !== null || text === null, onClick: () => {
                   if (text !== null) setEditing({ id: row.id, text });
-                } }, (0, import_react71.createElement)(PencilIcon)),
-                (0, import_react71.createElement)(RowButton, { label: t("Delete queued message"), disabled: busy !== null, onClick: () => applyAction(row.id, { kind: "remove" }, t("Couldn’t delete the queued message — it may have started already.")) }, (0, import_react71.createElement)(TrashIcon)),
-                (0, import_react71.createElement)(RowButton, { label: t("Steer queued message"), title: running ? void 0 : t("Only while a turn is running"), disabled: busy !== null || !running, onClick: () => applyAction(row.id, { kind: "steer" }, t("Couldn’t steer the queued message. Try again.")) }, (0, import_react71.createElement)(ArrowUpIcon))
+                } }, (0, import_react72.createElement)(PencilIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Delete queued message"), disabled: busy !== null, onClick: () => applyAction(row.id, { kind: "remove" }, t("Couldn’t delete the queued message — it may have started already.")) }, (0, import_react72.createElement)(TrashIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Steer queued message"), title: running ? void 0 : t("Only while a turn is running"), disabled: busy !== null || !running, onClick: () => applyAction(row.id, { kind: "steer" }, t("Couldn’t steer the queued message. Try again.")) }, (0, import_react72.createElement)(ArrowUpIcon))
               )
             )
           );
         }),
-        listVisible && pendingQueue.map((submission) => (0, import_react71.createElement)(
+        listVisible && pendingQueue.map((submission) => (0, import_react72.createElement)(
           "li",
           { key: submission.requestId, className: "bt-queue-row bt-queue-pending" },
-          rowCount === 1 && (0, import_react71.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react71.createElement)(QueueIcon)),
-          submission.attachments.length > 0 && (0, import_react71.createElement)(
+          rowCount === 1 && (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+          submission.attachments.length > 0 && (0, import_react72.createElement)(
             "span",
             { className: "bt-queue-attachments" },
-            submission.attachments.map((attachment, index) => attachment.type === "image" ? (0, import_react71.createElement)("img", { key: `${attachment.value.previewUrl}:${index}`, className: "bt-queue-thumb", src: attachment.value.previewUrl, alt: t("Queued image") }) : (0, import_react71.createElement)(QueueFile, { key: `${attachment.value.attachmentId}:${attachment.value.name}:${index}`, attachment: attachment.value, label: t("Queued file {name}", { name: attachment.value.name }) }))
+            submission.attachments.map((attachment, index) => attachment.type === "image" ? (0, import_react72.createElement)("img", { key: `${attachment.value.previewUrl}:${index}`, className: "bt-queue-thumb", src: attachment.value.previewUrl, alt: t("Queued image") }) : (0, import_react72.createElement)(QueueFile, { key: `${attachment.value.attachmentId}:${attachment.value.name}:${index}`, attachment: attachment.value, label: t("Queued file {name}", { name: attachment.value.name }) }))
           ),
-          (0, import_react71.createElement)(Preview, { text: submission.text, renderFactorySlot }),
-          (0, import_react71.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
-          queueMutable && (0, import_react71.createElement)(
+          (0, import_react72.createElement)(Preview, { text: submission.text, renderFactorySlot }),
+          (0, import_react72.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
+          queueMutable && (0, import_react72.createElement)(
             "div",
             { className: "bt-queue-actions" },
-            (0, import_react71.createElement)(RowButton, { label: t("Edit queued message"), title: t("Sending…"), disabled: true }, (0, import_react71.createElement)(PencilIcon)),
-            (0, import_react71.createElement)(RowButton, { label: t("Delete queued message"), title: t("Sending…"), disabled: true }, (0, import_react71.createElement)(TrashIcon)),
-            (0, import_react71.createElement)(RowButton, { label: t("Steer queued message"), title: t("Sending…"), disabled: true }, (0, import_react71.createElement)(ArrowUpIcon))
+            (0, import_react72.createElement)(RowButton, { label: t("Edit queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(PencilIcon)),
+            (0, import_react72.createElement)(RowButton, { label: t("Delete queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(TrashIcon)),
+            (0, import_react72.createElement)(RowButton, { label: t("Steer queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(ArrowUpIcon))
           )
         ))
       )
@@ -44196,6 +44388,7 @@ function apply(ctx) {
   const actions = {
     ...teamActions({ call, after, partFor, roster, ui: ui2, live, cards, heldCards, turnClock, panelFolded }),
     learningAnswer: (id, approve) => after(call("learning-answer", { id, approve })),
+    proposeImprovement: (taskId) => after(call("task-improvement-propose", { taskId })),
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: (id) => isAgentSessionId(id),

@@ -1,121 +1,12 @@
-import { createElement as h, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { createElement as h, useEffect, useState } from 'react'
 import { useTurnFacts } from './btw.js'
-import { answerFailure, answerKeepsCard, editLines, lineDiff, proposalCards, proposalPlacement, withoutEntry } from './learning-card-model.js'
+import { answerFailure, answerKeepsCard, proposalCards, proposalPlacement, withoutEntry } from './learning-card-model.js'
 import { currentPart } from './text.js'
-import { t } from './i18n.js'
-import { CheckIcon, MemoryIcon, PencilIcon } from './icons.js'
 import { spring, SPRING_TAP } from './motion.js'
+import { ProposalCard } from './learning-card-view.js'
 
 // One entry per proposal still waiting for another try, kept across remounts.
 const failedAnswers = new Map()
-
-// `proposal.outcome` set: an answered card, read-only and folded to one row (what
-// it was, how it ended, its name); the row opens the change.
-function ProposalCard({ proposal, initialError = '', onFailure, onResolved, actions }) {
-  const outcome = proposal.outcome
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(initialError)
-  const [open, setOpen] = useState(false)
-  const busyRef = useRef(false)
-  const titleId = useId()
-  const answer = approve => {
-    if (busyRef.current) return
-    busyRef.current = true
-    setBusy(true)
-    setError('')
-    void Promise.resolve().then(() => actions.learningAnswer(proposal.id, approve))
-      .then(() => onResolved(proposal.id), failure => {
-        setError(failure?.message ?? String(failure))
-        onFailure(proposal, failure)
-      })
-      .finally(() => {
-        busyRef.current = false
-        setBusy(false)
-      })
-  }
-  const update = proposal.action === 'update'
-  const agents = proposal.kind === 'agents'
-  const rows = useMemo(() => lineDiff(update ? proposal.previous?.content : '', proposal.content), [update, proposal.previous?.content, proposal.content])
-  const change = agents
-    ? [
-      h(FileBox, { key: 'file', name: 'AGENTS.md', path: proposal.folder, state: proposal.exists === false ? 'Added' : 'Modified', blocks: proposal.edits.map(edit => [
-        ...(edit.op === 'add' ? [] : editLines(edit.old)).map(line => ({ kind: 'removed', line })),
-        ...(edit.op === 'remove' ? [] : editLines(edit.text)).map(line => ({ kind: 'added', line })),
-      ]) }),
-      ...proposal.edits.map((edit, index) => edit.why ? h('p', { className: 'bt-learning-why', key: `why-${index}` }, edit.why) : null),
-    ]
-    : [
-      h(FileBox, { key: 'file', name: 'SKILL.md', path: `skills/${proposal.name}`, state: update ? 'Updated' : 'Added', blocks: [rows] }),
-      proposal.why ? h('p', { className: 'bt-learning-why', key: 'why' }, proposal.why) : null,
-    ]
-  const kind = t(agents ? 'AGENTS.md update' : update ? 'Skill update' : 'New skill')
-  if (outcome) {
-    const what = agents ? proposal.folder : proposal.name
-    return h('section', { className: 'bt-q bt-q-settled bt-learning-card bt-learning-settled', role: 'group', 'aria-label': `${kind} · ${what}`, 'data-outcome': outcome },
-      h('button', { type: 'button', className: 'bt-learning-fold', 'aria-expanded': open, onClick: () => setOpen(!open) },
-        h('span', { className: 'bt-learning-icon', 'aria-hidden': true }, h(agents ? PencilIcon : MemoryIcon)),
-        h('span', { className: 'bt-learning-kind' }, kind),
-        h('span', { className: 'bt-learning-sum' }, `${t(outcome === 'approved' ? 'Approved' : 'Declined')} · ${what}`)),
-      open ? change : null)
-  }
-  const oldDetail = update && typeof proposal.previous?.description === 'string' && proposal.previous.description !== proposal.description ? proposal.previous.description : undefined
-  return h('section', { className: 'bt-q bt-learning-card', role: 'group', 'aria-labelledby': titleId, 'aria-busy': busy },
-    agents
-      ? h(ProposalHead, { titleId, icon: PencilIcon, title: kind })
-      : h(ProposalHead, { titleId, title: proposal.name, kind, detail: proposal.description, oldDetail }),
-    change,
-    error ? h('div', { className: 'bt-learning-error', role: 'alert' }, error) : null,
-    h(ProposalFoot, { busy, answer }))
-}
-
-function ProposalHead({ titleId, icon = MemoryIcon, title, kind, detail, oldDetail }) {
-  return h('div', { className: 'bt-q-head' },
-    h('span', { className: 'bt-learning-icon', 'aria-hidden': true }, h(icon)),
-    h('div', { className: 'bt-q-text' },
-      h('p', { className: 'bt-q-title', id: titleId }, title),
-      kind ? h('div', { className: 'bt-q-detail' }, kind) : null,
-      oldDetail ? h('p', { className: 'bt-learning-description bt-learning-old' }, h('del', null, oldDetail)) : null,
-      detail ? h('p', { className: 'bt-learning-description' }, detail) : null),
-    h('span', { className: 'bt-q-badge bt-learning-status' }, h('span', { className: 'bt-learning-dot', 'aria-hidden': true }), t('Awaiting approval')))
-}
-
-function ProposalFoot({ busy, answer }) {
-  return h('div', { className: 'bt-q-foot bt-learning-foot' },
-    h('button', { type: 'button', className: 'bt-learning-btn bt-learning-decline', disabled: busy, onClick: () => answer(false) }, t('Decline')),
-    h('button', { type: 'button', className: 'bt-learning-btn bt-learning-approve', disabled: busy, onClick: () => answer(true) },
-      h(CheckIcon), t('Approve')))
-}
-
-const COLLAPSE_ROWS = 8
-const SIGNS = { added: '+', removed: '\u2212', same: '' }
-
-function FileBox({ name, path, state, blocks }) {
-  const [open, setOpen] = useState(false)
-  const all = blocks.flat()
-  const added = all.filter(row => row.kind === 'added').length
-  const removed = all.filter(row => row.kind === 'removed').length
-  const folds = all.length > COLLAPSE_ROWS
-  const shut = folds && !open
-  return h('div', { className: 'bt-learning-file' },
-    h('div', { className: 'bt-learning-filehead' },
-      h('span', { className: 'bt-learning-name' }, name),
-      path ? h('span', { className: 'bt-learning-path' }, path) : null,
-      h('span', { className: 'bt-learning-spacer' }),
-      added > 0 ? h('span', { className: 'bt-learning-plus' }, `+${added}`) : null,
-      removed > 0 ? h('span', { className: 'bt-learning-minus' }, `\u2212${removed}`) : null,
-      h('span', { className: `bt-learning-state bt-learning-state-${state.toLowerCase()}` }, t(state))),
-    h('div', { className: shut ? 'bt-learning-code bt-learning-shut' : 'bt-learning-code' },
-      blocks.map((rows, blockIndex) => [
-        blockIndex > 0 ? h('div', { className: 'bt-learning-gap', key: `gap-${blockIndex}` }) : null,
-        ...rows.map((row, rowIndex) => h('div', { className: `bt-learning-row bt-learning-${row.kind}`, key: `${blockIndex}-${rowIndex}` },
-          h('span', { className: 'bt-learning-num', 'aria-hidden': true }, row.number ?? ''),
-          h('span', { className: 'bt-learning-sign', 'aria-hidden': true }, SIGNS[row.kind]),
-          h('span', { className: 'bt-learning-text' }, row.line || '\u00a0'))),
-      ])),
-    folds ? h('div', { className: shut ? 'bt-learning-morebar bt-learning-morebar-shut' : 'bt-learning-morebar' },
-      h('button', { type: 'button', className: 'bt-learning-more', 'aria-expanded': open, onClick: () => setOpen(!open) },
-        t(open ? 'Show less' : 'Show all {count} lines', { count: all.length }))) : null)
-}
 
 function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   const roster = useRoster(value => value)
@@ -230,4 +121,8 @@ export const LEARNING_CSS = `
 .bt-learning-sum{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;line-height:20px;color:var(--bt-ink-2)}
 .bt-learning-fold:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px;border-radius:8px}
 .bt-learning-error{font-size:12px;line-height:16px;color:var(--bt-danger)}
+.bt-learning-improvement{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-q-rule)}
+.bt-learning-improvement-title{margin:0 0 6px;font-size:12px;line-height:16px;font-weight:600;color:var(--bt-ink)}
+.bt-learning-improvement dl{display:grid;gap:6px;margin:0}.bt-learning-improvement dl div{display:grid;grid-template-columns:minmax(84px,.35fr) minmax(0,1fr);gap:8px}.bt-learning-improvement dt{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-learning-improvement dd{margin:0;font-size:12px;line-height:17px;color:var(--bt-ink-2);overflow-wrap:anywhere}
+.bt-learning-review{margin:8px 0 0;font-size:12px;line-height:17px;color:var(--bt-danger)}
 `
