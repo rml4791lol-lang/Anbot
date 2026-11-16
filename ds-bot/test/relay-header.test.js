@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { stripHeader } from '../src/client/text.js'
+import { previewOf, stripHeader, stripInternalText } from '../src/client/text.js'
 
 test('relay headers with brackets in a Bot or group name leave the body intact', () => {
   const body = 'Hello [team]\n[notes](https://example.test)\n[Keep this line]'
@@ -29,4 +29,23 @@ test('a header strip never reaches into a later body line or unrelated bracketed
   for (const text of ['[Message from Writer\n[Keep this line]', '[Someone else]\nHello', 'Hello\n[Message from Writer]']) {
     assert.equal(stripHeader(text), text)
   }
+})
+
+test('internal control notices are removed from replies and sidebar previews', () => {
+  assert.equal(stripInternalText('收到：[SCHEDULE CHANGE] A task changed.\nA scheduled task involving this session was updated.\nShip it.'), 'Ship it.')
+  assert.equal(stripInternalText('收到：[SCHEDULE REMINDER] ping'), '')
+  assert.equal(stripInternalText('[Your profile was updated — follow the latest version] Your role changed.'), '')
+  const list = {
+    byId: {
+      b: {
+        projectionValues: {
+          turnOutline: [
+            { turn: 1, prompt: '[SCHEDULE REMINDER] raw task prompt' },
+            { turn: 2, response: '收到：[SCHEDULE CHANGE] A task changed.\nShip it.' },
+          ],
+        },
+      },
+    },
+  }
+  assert.equal(previewOf(list, 'b'), 'Ship it.')
 })

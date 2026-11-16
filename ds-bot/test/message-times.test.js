@@ -69,6 +69,17 @@ test('a user message shows when it was sent, in its own chat as in a group', () 
   }
 })
 
+test('a scheduled task or Bot-to-Bot relay never becomes a user bubble', () => {
+  assert.equal(UserMessageCell(userProps({ source: { kind: 'schedule' } })), null)
+  assert.equal(UserMessageCell(userProps({
+    source: { kind: 'bot', role: 'request', senderSessionId: 'writer' },
+  })), null)
+  // A member's group post is still a message the group can read.
+  assert.notEqual(UserMessageCell(userProps({
+    source: { kind: 'bot', role: 'post', senderSessionId: 'writer' },
+  }, 'room-1')), null)
+})
+
 test('a user message without a real time draws no time node', () => {
   assert.equal(times(UserMessageCell(userProps({ time: undefined }))).length, 0)
   assert.equal(times(UserMessageCell(userProps({ time: 'later' }))).length, 0)

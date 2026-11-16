@@ -1139,6 +1139,20 @@ body[data-bt-layout=flat] .bt-think{max-width:calc(var(--bt-flat-w) * 100%)}
 .bt-think-text[data-fade=bottom]{mask-image:linear-gradient(to top,transparent,#000 18px)}
 .bt-think-text[data-fade=both]{mask-image:linear-gradient(to bottom,transparent,#000 18px,#000 calc(100% - 18px),transparent)}
 .bt-event{display:flex;justify-content:center;align-items:center;gap:2px;min-height:24px;margin:2px 0;font-size:12px;line-height:16px;color:var(--bt-ink-2);flex-wrap:wrap}
+/* Bot-to-Bot traffic is context, not conversation. It stays one quiet disclosure row
+   so the user can open the exchange without letting the exchange lead the transcript. */
+.bt-event.bt-event-quiet{display:block;justify-content:flex-start;margin:1px 0 3px;color:var(--bt-ink-3);font-size:11px;line-height:16px}
+.bt-event-quiet>summary{display:flex;align-items:center;gap:5px;width:fit-content;max-width:100%;min-height:22px;padding:0 5px;border-radius:6px;cursor:pointer;list-style:none;transition:background-color .12s ease,color .12s ease}
+.bt-event-quiet>summary::-webkit-details-marker{display:none}
+.bt-event-quiet>summary:hover{background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-event-quiet>summary:focus-visible{outline:2px solid var(--bt-accent);outline-offset:1px}
+.bt-event-caret{flex:none;width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:5px solid currentColor;transform-origin:40% 50%;transition:rotate .12s ease}
+.bt-event-quiet[open] .bt-event-caret{rotate:90deg}
+.bt-event-summary-label{flex:none;font-weight:500}
+.bt-event-summary-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt-event-summary-name::before{content:"·";margin-right:5px;color:var(--bt-ink-3)}
+.bt-event-body{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:calc(var(--bt-msg-w) * 100%);margin:2px 0 4px 16px;padding:6px 8px;border-left:1px solid var(--bt-line-2)}
+.bt-event-detail{max-height:144px;overflow-y:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--bt-ink-2);font-size:12px;line-height:18px}
 .bt-event>span{padding:0 2px}
 .bt-event button:not(.bt-soft){border:0;background:none;color:inherit;font:inherit;display:inline-flex;align-items:center;gap:4px;cursor:pointer;height:24px;padding:4px 6px 4px 4px;border-radius:999px;box-sizing:border-box;transition:background-color .12s ease}
 .bt-event button:not(.bt-soft):hover{background:var(--bt-hover)}
@@ -1190,6 +1204,9 @@ html[data-platform=darwin] header[class*="_header"]:has(.bt-head) :is(a,button,i
 /* DSH's turn tail keeps what plugins put in it (delivered files, the Bot's separators),
    without its copy and branch row; a tail with nothing in it takes no room. */
 [data-turn-tail]>:not([data-slot="conversation.chat.turnTail"]){display:none!important}
+/* The shell's usage trigger is turn chrome, not part of the reply. Usage stays in
+   Details, where the same numbers have a label and a stable home. Keep the clock. */
+[data-turn-tail] [class*="_endInfo"]>:not([class*="_timeEnd"]){display:none!important}
 [class*="_flowItem"][data-chat-flow-kind="turn-tail"]:not(:has([data-slot="conversation.chat.turnTail"]:not(:empty))){display:none!important}
 /* Every team Session belongs to a Bot or a group, so a blank one is an empty chat, not
    the shell's new-session hero: no headline, no workspace or mode picker, and the
@@ -1294,6 +1311,7 @@ body[data-bt-goal] [class*="_scroll"]:has(> [class*="_column"]){padding-top:calc
    toolbar sits below the message instead of over it; its secondary buttons are 36px,
    so the pill stays shorter than the primary touch controls. */
 @media (hover:none){
+  .bt-event-quiet>summary{min-height:32px;padding:0 8px}
   .bt-msg{position:relative}
   .bt-msg-line{position:static}
   .bt-tools{top:100%;bottom:auto;left:auto;right:4px;margin-left:0;margin-top:2px;border-radius:999px;padding:2px;background:var(--bt-card);box-shadow:inset 0 0 0 .5px var(--bt-line-2),0 4px 14px rgba(0,0,0,.14)}

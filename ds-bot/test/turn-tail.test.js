@@ -102,6 +102,34 @@ test('the turn tail entry notes when the turn ended and shows the pause before t
   assert.equal(find(out, node => node.props?.className === 'bt-time-sep').length, 1)
 })
 
+test('a relay that arrives beside a reply is context, not a second transcript', () => {
+  const { props } = cellProps()
+  props.node.data = {
+    turn: 3, step: 1, seq: 10, time: 10, status: 'done', finalNode: { seq: 10 },
+    blocks: [{ kind: 'text', text: 'The brief is ready.' }],
+  }
+  props.useTurnSteps = () => [
+    { step: 0, time: 1, status: 'closed', blocks: [{ kind: 'text', text: 'Starting.' }] },
+    { step: 1, time: 10, status: 'done', blocks: [{ kind: 'text', text: 'The brief is ready.' }] },
+  ]
+  props.useTurnContext = () => [{
+    time: 5,
+    source: { kind: 'bot', role: 'request', senderSessionId: 'writer' },
+    content: [{ type: 'text', text: '[Message from Writer]\nPlease check the draft.' }],
+  }]
+  const out = expand(AssistantCell(props), ['Bubbles', 'Bubble'])
+  const line = find(out, node => node.props?.quiet === true)[0]
+  assert.equal(line.props.quiet, true)
+  assert.equal(line.props.summary, 'Bot exchange')
+  assert.equal(line.props.detail, 'Please check the draft.')
+})
+
+test('an internal schedule marker in a reply does not reach the reader', () => {
+  const { props } = cellProps()
+  props.node.data.blocks = [{ kind: 'text', text: '收到：[SCHEDULE CHANGE] A task changed here.\n还有别的要我盯的吗？' }]
+  assert.deepEqual(markdownOf(props).map(node => node.props.text), ['还有别的要我盯的吗？'])
+})
+
 // #206: the user reads a Bot's reply in its own chat, so it folds only where rendering
 // all of it would slow the chat down.
 test('a Bot reply in its own chat stays whole up to 20,000 characters', () => {

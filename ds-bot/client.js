@@ -897,6 +897,7 @@ var JA = {
   "Try a Bot name or words from a message": "Bot の名前やメッセージ内の言葉で検索してみてください",
   "Bot exchange": "Bot 間の会話",
   "Bot exchange transcript": "Bot 間の会話ログ",
+  "Open bot exchange": "Bot 間の会話を開く",
   "No messages yet": "まだメッセージはありません",
   "Close Chat": "チャットを閉じる",
   "Show all · {count} characters": "すべて表示 · {count} 文字",
@@ -3233,6 +3234,7 @@ var KO = {
   // Bot exchange
   "Bot exchange": "Bot 간 대화",
   "Bot exchange transcript": "Bot 간 대화 기록",
+  "Open bot exchange": "Bot 간 대화 열기",
   "No messages yet": "아직 메시지 없음",
   "Close Chat": "닫기",
   "Show all · {count} characters": "전체 표시 · {count}자",
@@ -5587,6 +5589,7 @@ var ES = {
   // Bot exchange
   "Bot exchange": "Conversación entre Bots",
   "Bot exchange transcript": "Registro de conversación entre Bots",
+  "Open bot exchange": "Abrir conversación entre Bots",
   "No messages yet": "Aún no hay mensajes",
   "Close Chat": "Cerrar chat",
   "Show all · {count} characters": "Mostrar todo · {count} caracteres",
@@ -7914,6 +7917,7 @@ var FR = {
   "Try a Bot name or words from a message": "Essayez le nom d’un Bot ou des mots d’un message",
   "Bot exchange": "Échange entre Bots",
   "Bot exchange transcript": "Transcription de l’échange entre Bots",
+  "Open bot exchange": "Ouvrir l’échange entre Bots",
   "No messages yet": "Aucun message pour le moment",
   "Close Chat": "Fermer",
   "Show all · {count} characters": "Tout afficher · {count} caractères",
@@ -10250,6 +10254,7 @@ var DE = {
   // Bot exchange
   "Bot exchange": "Bot-Austausch",
   "Bot exchange transcript": "Protokoll des Bot-Austauschs",
+  "Open bot exchange": "Bot-Austausch öffnen",
   "No messages yet": "Noch keine Nachrichten",
   "Close Chat": "Schließen",
   "Show all · {count} characters": "Alles anzeigen · {count} Zeichen",
@@ -12605,6 +12610,7 @@ var ZH = {
   // Bot exchange
   "Bot exchange": "Bot 间对话",
   "Bot exchange transcript": "Bot 间对话记录",
+  "Open bot exchange": "查看 Bot 间对话",
   "No messages yet": "还没有消息",
   "Close Chat": "关闭",
   "Show all · {count} characters": "显示全部 · {count} 字",
@@ -14555,6 +14561,14 @@ function elapsedLabel(ms) {
 }
 var contentText = (content) => (content ?? []).filter((block) => block?.type === "text").map((block) => block.text).join("\n");
 var HEADER = /^\[(Message from|Reply from|Group chat|Group post from|Bot team setup|Handoff · part|Secret card)(?:[^\r\n]*\]\r?\n|[^\]\r\n]*\])/;
+var INTERNAL_TEXT = /\[\s*(?:SCHEDULE CHANGE|SCHEDULE REMINDER|Retry after a failed turn|Your profile was updated\b[^\]]*|Message from\b[^\]]*|Reply from\b[^\]]*|Group post from\b[^\]]*)\]/i;
+var INTERNAL_LINE = /^(?:A scheduled task involving this session|Your profile was updated\b)/i;
+function stripInternalText(text) {
+  return String(text ?? "").split("\n").filter((line) => {
+    const trimmed2 = line.trim();
+    return !INTERNAL_TEXT.test(trimmed2) && !INTERNAL_LINE.test(trimmed2) && !/^收到[：:]\s*$/u.test(trimmed2);
+  }).join("\n").trim();
+}
 var currentPart = (bot) => bot.sessionId ?? bot.id;
 function reminderPrompts(text) {
   const one = /^reminder_prompt_json: (.*)$/m.exec(text);
@@ -14675,8 +14689,8 @@ function previewOf(list, id, hiddenTurns = []) {
   for (let index = outline.length - 1; index >= 0; index -= 1) {
     const entry = outline[index];
     if (hiddenTurns.includes(entry.turn)) continue;
-    const text = entry.response || entry.prompt || "";
-    if (text !== "") return stripHeader(text).replace(/\s+/g, " ").trim();
+    const text = stripHeader(stripInternalText(entry.response || entry.prompt || "")).replace(/\s+/g, " ").trim();
+    if (text !== "") return text;
   }
   return "";
 }
@@ -16224,6 +16238,20 @@ body[data-bt-layout=flat] .bt-think{max-width:calc(var(--bt-flat-w) * 100%)}
 .bt-think-text[data-fade=bottom]{mask-image:linear-gradient(to top,transparent,#000 18px)}
 .bt-think-text[data-fade=both]{mask-image:linear-gradient(to bottom,transparent,#000 18px,#000 calc(100% - 18px),transparent)}
 .bt-event{display:flex;justify-content:center;align-items:center;gap:2px;min-height:24px;margin:2px 0;font-size:12px;line-height:16px;color:var(--bt-ink-2);flex-wrap:wrap}
+/* Bot-to-Bot traffic is context, not conversation. It stays one quiet disclosure row
+   so the user can open the exchange without letting the exchange lead the transcript. */
+.bt-event.bt-event-quiet{display:block;justify-content:flex-start;margin:1px 0 3px;color:var(--bt-ink-3);font-size:11px;line-height:16px}
+.bt-event-quiet>summary{display:flex;align-items:center;gap:5px;width:fit-content;max-width:100%;min-height:22px;padding:0 5px;border-radius:6px;cursor:pointer;list-style:none;transition:background-color .12s ease,color .12s ease}
+.bt-event-quiet>summary::-webkit-details-marker{display:none}
+.bt-event-quiet>summary:hover{background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-event-quiet>summary:focus-visible{outline:2px solid var(--bt-accent);outline-offset:1px}
+.bt-event-caret{flex:none;width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:5px solid currentColor;transform-origin:40% 50%;transition:rotate .12s ease}
+.bt-event-quiet[open] .bt-event-caret{rotate:90deg}
+.bt-event-summary-label{flex:none;font-weight:500}
+.bt-event-summary-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt-event-summary-name::before{content:"·";margin-right:5px;color:var(--bt-ink-3)}
+.bt-event-body{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:calc(var(--bt-msg-w) * 100%);margin:2px 0 4px 16px;padding:6px 8px;border-left:1px solid var(--bt-line-2)}
+.bt-event-detail{max-height:144px;overflow-y:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--bt-ink-2);font-size:12px;line-height:18px}
 .bt-event>span{padding:0 2px}
 .bt-event button:not(.bt-soft){border:0;background:none;color:inherit;font:inherit;display:inline-flex;align-items:center;gap:4px;cursor:pointer;height:24px;padding:4px 6px 4px 4px;border-radius:999px;box-sizing:border-box;transition:background-color .12s ease}
 .bt-event button:not(.bt-soft):hover{background:var(--bt-hover)}
@@ -16275,6 +16303,9 @@ html[data-platform=darwin] header[class*="_header"]:has(.bt-head) :is(a,button,i
 /* DSH's turn tail keeps what plugins put in it (delivered files, the Bot's separators),
    without its copy and branch row; a tail with nothing in it takes no room. */
 [data-turn-tail]>:not([data-slot="conversation.chat.turnTail"]){display:none!important}
+/* The shell's usage trigger is turn chrome, not part of the reply. Usage stays in
+   Details, where the same numbers have a label and a stable home. Keep the clock. */
+[data-turn-tail] [class*="_endInfo"]>:not([class*="_timeEnd"]){display:none!important}
 [class*="_flowItem"][data-chat-flow-kind="turn-tail"]:not(:has([data-slot="conversation.chat.turnTail"]:not(:empty))){display:none!important}
 /* Every team Session belongs to a Bot or a group, so a blank one is an empty chat, not
    the shell's new-session hero: no headline, no workspace or mode picker, and the
@@ -16379,6 +16410,7 @@ body[data-bt-goal] [class*="_scroll"]:has(> [class*="_column"]){padding-top:calc
    toolbar sits below the message instead of over it; its secondary buttons are 36px,
    so the pill stays shorter than the primary touch controls. */
 @media (hover:none){
+  .bt-event-quiet>summary{min-height:32px;padding:0 8px}
   .bt-msg{position:relative}
   .bt-msg-line{position:static}
   .bt-tools{top:100%;bottom:auto;left:auto;right:4px;margin-left:0;margin-top:2px;border-radius:999px;padding:2px;background:var(--bt-card);box-shadow:inset 0 0 0 .5px var(--bt-line-2),0 4px 14px rgba(0,0,0,.14)}
@@ -26144,6 +26176,7 @@ var ViaTag = ({ via }) => (0, import_react31.createElement)("span", { className:
 function UserMessageCell({ node, sessionId, useRoster, actions, renderMessageImages, openFile, openSkill }) {
   const roster = useRoster((value) => value);
   const data = node.data ?? {};
+  if (data.source?.kind === "schedule" || isRelayContext(data)) return null;
   const { text, attachments, rest } = contentParts(data.content);
   const referenceLabels = data.referenceLabels ?? [];
   const references = openFile && openSkill ? { openFile, openSkill } : void 0;
@@ -26476,7 +26509,7 @@ function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, use
   const contexts = useTurnContext(String(data.turn));
   const mentions = useFileMentions({ node, openFile, fileMentions, useTurnData });
   const hidden = Boolean(roster.roomsById[sessionId]) || isHiddenTurn(roster, sessionId, data.turn);
-  const texts2 = groupPart === "reasoning" ? [] : data.blocks.filter((block) => block.kind === "text" && block.text.trim() !== "").map((block) => block.text);
+  const texts2 = groupPart === "reasoning" ? [] : data.blocks.filter((block) => block.kind === "text" && block.text.trim() !== "").map((block) => stripInternalText(block.text)).filter((text) => text.trim() !== "");
   const running = data.status === "running";
   const textInteractionSource = data.status === "settled" && data.finalNode?.messageId !== void 0;
   const members = steps.length ? steps : [data];
@@ -26505,7 +26538,10 @@ function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, use
         onOpen: () => {
           if (sender.id) actions.openExchange(selfId, sender.id);
         },
-        whole: true
+        whole: true,
+        quiet: true,
+        summary: t("Bot exchange"),
+        detail: stripHeader(contentText(relay.content))
       });
     }),
     head ? (0, import_react32.createElement)(SpeakerHead, { bot: speaker, time: data.time }) : null,
@@ -26523,7 +26559,27 @@ function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, use
   );
 }
 var activityParts = (line) => line.split("`").map((part, index) => index % 2 === 1 ? (0, import_react32.createElement)("code", { key: index }, part) : part);
-function EventLine({ prefix, bots, joiner = t("and"), onOpen, whole = false }) {
+function EventLine({ prefix, bots, joiner = t("and"), onOpen, whole = false, quiet = false, summary, detail }) {
+  const names = bots.map((bot) => bot.name || t("a Bot")).join(` ${joiner} `);
+  if (quiet) {
+    return (0, import_react32.createElement)(
+      "details",
+      { className: "bt-event bt-event-quiet" },
+      (0, import_react32.createElement)(
+        "summary",
+        { className: "bt-event-summary", title: detail || void 0 },
+        (0, import_react32.createElement)("span", { className: "bt-event-caret", "aria-hidden": true }),
+        (0, import_react32.createElement)("span", { className: "bt-event-summary-label" }, summary ?? t("Bot exchange")),
+        (0, import_react32.createElement)("span", { className: "bt-event-summary-name" }, names)
+      ),
+      (0, import_react32.createElement)(
+        "div",
+        { className: "bt-event-body" },
+        detail ? (0, import_react32.createElement)("div", { className: "bt-event-detail" }, detail) : (0, import_react32.createElement)("div", { className: "bt-event-detail" }, `${prefix} ${names}`),
+        onOpen && bots[0] ? (0, import_react32.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: () => onOpen(bots[0]) }, t("Open bot exchange")) : null
+      )
+    );
+  }
   if (whole && bots.length === 1) {
     return (0, import_react32.createElement)(
       "div",
@@ -26875,9 +26931,17 @@ function chatRow(row, key, { sessionId, selfId, roster, actions, useUi, onBtwDel
       if (row.role === "report") return (0, import_react32.createElement)(GroupEvent, { key, prefix: t("Replies from"), room: roster.roomsById[row.roomId], name: t("a group chat"), roster, actions });
       const other = roster.byId[row.botId] ?? { id: row.botId, name: row.name ?? t("a Bot"), color: "gray" };
       const prefix = { stopped: t("Stopped by"), reply: t("Reply from") }[row.role] ?? t("Message from");
-      return (0, import_react32.createElement)(EventLine, { key, prefix, bots: [other], onOpen: () => {
-        if (selfId && other.id) actions.openExchange(selfId, other.id);
-      }, whole: true });
+      return (0, import_react32.createElement)(EventLine, {
+        key,
+        prefix,
+        bots: [other],
+        whole: true,
+        quiet: true,
+        summary: t("Bot exchange"),
+        onOpen: () => {
+          if (selfId && other.id) actions.openExchange(selfId, other.id);
+        }
+      });
     }
     default:
       return null;
@@ -26961,15 +27025,17 @@ function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnClock, us
         prefix: source.role === "stopped" ? t("Stopped by") : count > 1 ? t("{count} messages with", { count }) : t("Message from"),
         bots,
         onOpen: (bot) => actions.openExchange(selfId, bot.id),
-        whole: true
+        whole: true,
+        quiet: true,
+        summary: t("Bot exchange"),
+        detail: stripHeader(contentText(data.content))
       });
     }
-    if (source.kind === "schedule") {
-      const prompts = reminderPrompts(contentText(data.content));
-      return (0, import_react32.createElement)("div", { className: "bt-event" }, prompts.length > 0 ? t("Scheduled task: {text}", { text: prompts.join(" · ").slice(0, 80) }) : t("Routine started"));
-    }
+    if (source.kind === "schedule") return null;
     if (source.kind === "user-question-reply" || source.kind === "goal") return null;
-    return (0, import_react32.createElement)("div", { className: "bt-event" }, contentText(data.content).slice(0, 80) || t("Update"));
+    const eventText = contentText(data.content).trim();
+    const safeText = eventText.startsWith("<") ? "" : eventText.slice(0, 80);
+    return (0, import_react32.createElement)("div", { className: "bt-event" }, safeText || t("Update"));
   }
 }
 function NewDivider() {
@@ -27368,12 +27434,12 @@ function renderCall(call2, { sessionId, roster, actions, useUi, useWork, findBot
     case "message_bot": {
       const target = findBot(arg("to")) ?? { name: arg("to") ?? "…", color: "gray" };
       if (done && call2.isError) return (0, import_react32.createElement)("div", { className: "bt-event" }, t("Couldn't message {name}", { name: target.name }));
-      return (0, import_react32.createElement)(EventLine, { prefix: t("Messaged"), bots: [target], onOpen: (bot) => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true });
+      return (0, import_react32.createElement)(EventLine, { prefix: t("Messaged"), bots: [target], onOpen: (bot) => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true, quiet: true, summary: t("Bot exchange") });
     }
     case "stop_bot": {
       const target = findBot(arg("bot")) ?? { name: arg("bot") ?? "…", color: "gray" };
       if (done && call2.isError) return (0, import_react32.createElement)("div", { className: "bt-event" }, t("Couldn't stop {name}", { name: target.name }));
-      return (0, import_react32.createElement)(EventLine, { prefix: t("Stopped"), bots: [target], onOpen: (bot) => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true });
+      return (0, import_react32.createElement)(EventLine, { prefix: t("Stopped"), bots: [target], onOpen: (bot) => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true, quiet: true, summary: t("Bot exchange") });
     }
     case "create_bot": {
       const created = findBot(arg("name"));
