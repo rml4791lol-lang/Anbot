@@ -52,6 +52,7 @@ async function start(seed) {
         calls,
         status: 'idle',
         followup(message) { calls.push(['followup', message]) },
+        send(message, target, wakeup) { calls.push(['send', message, target, wakeup]) },
         steer(message) { calls.push(['steer', message]) },
         inject(message) { calls.push(['inject', message]) },
         cancel(cause) { calls.push(['cancel', cause]) },
@@ -141,18 +142,27 @@ test('message_bot steers by default; on an idle Bot it opens the next turn', asy
 })
 
 test('message_bot when "queue" waits for the current work, and reply_to "user" always queues', async (t) => {
-  const { agents, emit, tool, stop } = await start(team())
+  const { agents, ctx, emit, tool, stop } = await start(team())
   t.after(stop)
 
   emit('b', 'turn/start', { turn: 1 })
   const queued = await tool('message_bot', { to: 'Writer', message: 'later', when: 'queue' }, 'a')
   assert.equal(queued, 'Queued for Writer: it reads your message after its current work. Its reply will arrive later as a new message; do not wait for it. Writer now: working in its own chat for less than a minute, for the user.')
+  // R59: a task is not a note. Folded into a batch it would end up as a counting
+  // line, so it goes out on its own instead of waiting for the end of the turn.
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
+  assert.match(textOf(agents.get('b').calls[0][1].content), /^\[Message from Chief\][^\n]*\nlater$/)
 
+  // A message for the user is not a plain relay: it goes out as it came.
   const toUser = await tool('message_bot', { to: 'Writer', message: 'tell them', reply_to: 'user', when: 'now' }, 'a')
   assert.equal(toUser, 'Delivered to Writer. It will answer the user in its own chat; nothing comes back to you, so point the user to Writer\'s chat instead of relaying. Writer now: working in its own chat for less than a minute, for the user; not read yet: 1 from Chief.')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
   assert.equal(agents.get('b').calls[1][1].source.audience, 'user')
+
+  emit('b', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+  for (const listener of ctx.listeners.get('agent/status') ?? []) listener({ agent: agents.get('b'), status: 'idle' })
+  for (let count = 0; count < 40; count += 1) await delay(5)
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
 })
 
 test('a Bot busy in a group gets the message in its own chat, and the sender is told', async (t) => {
@@ -328,9 +338,13 @@ test('stop_bot cancels the running turns and tells the Bot why in a new turn', a
   emit('gb', 'turn/start', { turn: 1 })
   const out = await tool('stop_bot', { bot: 'Writer', reason: 'that command deletes data' }, 'a')
   assert.match(out, /Stopped Writer in its own chat and group "Ops"/)
-  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['cancel', 'followup'])
+  // A stop receipt carries no question: it is read at the Bot's next turn and does
+  // not spend a turn of its own (see deliver's `silent`).
+  assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['cancel', 'send'])
   assert.deepEqual(agents.get('b').calls[0][1], { kind: 'hook', reason: 'ds-bot/stopped' })
   assert.deepEqual(agents.get('gb').calls.map(([kind]) => kind), ['cancel'])
+  assert.equal(agents.get('b').calls[1][2], 'next-turn')
+  assert.equal(agents.get('b').calls[1][3], false)
   const notice = agents.get('b').calls[1][1]
   assert.match(textOf(notice.content), /^\[Stopped by Chief\]\nthat command deletes data$/)
   assert.equal(notice.source.role, 'stopped')

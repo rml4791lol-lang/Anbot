@@ -10,6 +10,7 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node
 import { join } from 'node:path'
 import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
+import { installTaskLog } from './task-ledger.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
@@ -26,6 +27,7 @@ const forHowLong = since => {
 
 export function install(rt) {
   const { ctx, state } = rt
+  const logTask = installTaskLog(rt)
   const works = () => (state.works ??= {})
   // What came back, whole; state.json keeps the start of each.
   const whole = new Map()
@@ -111,6 +113,7 @@ export function install(rt) {
     works()[id] = { ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}), ...(fromRoom ? { fromRoom } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}), open: [], results: [], at: Date.now() }
     if (above !== undefined) above.open.push(id)
     save()
+    logTask({ kind: 'open', id, from, to, parent, room, child, name })
   }
 
   // The answer to work `id` is on its way, with `result` from `name`. Returns the work
@@ -119,6 +122,7 @@ export function install(rt) {
     const work = works()[id]
     if (work === undefined) return undefined
     delete works()[id]
+    logTask({ kind: 'close', id, from: work.from, to: work.to, parent: work.parent, room: work.room, outcome: extra.abandoned === true ? 'abandoned' : 'answered', chars: text.length })
     // What it still waits for comes back to it alone.
     for (const child of Object.values(works())) if (child.parent === id) delete child.parent
     const above = works()[work.parent]

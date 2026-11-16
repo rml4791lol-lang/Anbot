@@ -1,7 +1,8 @@
 #!/bin/sh
 # One-command check of this checkout on both ends, with the mock model only:
 #   unit     npm test
-#   build    client.js matches src/client (build-client.mjs --check)
+#   build    client.js and link.js match their sources (build-client.mjs --check,
+#            build-link.mjs --check)
 #   lint     npm run lint (warnings do not fail)
 #   smoke    a fresh smoke bench and dev/smoke.mjs
 #   web      a fresh Web bench and dev/ui-shots.mjs (sidebar, private chat, group, settings)
@@ -11,8 +12,8 @@
 #
 #   dev/check.sh [--skip step,step] [--only step,step] [--out <dir>]
 #
-# Screenshots and logs go to --out (default: shots/check-<YYYYMMDD-HHMM> beside ds-bot/ in
-# the main worktree).
+# Screenshots and logs go to --out (default: shots/check-<YYYYMMDD-HHMM-SS-PID> beside ds-bot/
+# in the main worktree).
 # Ports follow SLOT=n (0-9, default 0): Web 31n0/88n0, smoke 31n1/88n1, and the Desktop
 # ports of desktop.sh. Bench data: <checkout>/.dsh-test-check-web, -check-smoke and
 # .dsh-test-desktop-check. Web shots need Chrome or Chromium (CHROME_BIN, see ui-shots.mjs);
@@ -33,14 +34,14 @@ while [ $# -gt 0 ]; do
     --skip) SKIP=$(echo "$2" | tr ',' ' '); shift 2 ;;
     --only) ONLY=$(echo "$2" | tr ',' ' '); shift 2 ;;
     --out) OUT=$2; shift 2 ;;
-    -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option $1 (see --help)" >&2; exit 2 ;;
   esac
 done
 for step in $SKIP $ONLY; do
   case " $STEPS " in *" $step "*) ;; *) echo "unknown step $step; steps: $STEPS" >&2; exit 2 ;; esac
 done
-OUT=${OUT:-"$MAIN/shots/check-$(date +%Y%m%d-%H%M)"}
+OUT=${OUT:-"$MAIN/shots/check-$(date +%Y%m%d-%H%M-%S-$$)"}
 mkdir -p "$OUT/logs"
 OUT="$(cd "$OUT" && pwd)"
 
@@ -84,7 +85,7 @@ need_ports() {
 }
 
 step_unit() { cd "$PLUGIN" && npm test; }
-step_build() { cd "$PLUGIN" && node scripts/build-client.mjs --check; }
+step_build() { cd "$PLUGIN" && node scripts/build-client.mjs --check && node scripts/build-link.mjs --check; }
 step_lint() { cd "$PLUGIN" && npm run lint; }
 step_smoke() {
   cd "$PLUGIN" || return 1

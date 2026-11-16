@@ -10,13 +10,37 @@ import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const plugin = resolve(import.meta.dirname, '..')
+const installed = join(plugin, 'dev', 'harness')
+// The DSH version the tests are written against, as `npm run harness` pins it. A checkout
+// found in a folder above ds-bot is only used at that version: an older join left there
+// used to satisfy the imports, so the suite passed against a DSH the plugin does not
+// support. An explicit DSH_HARNESS stays the caller's choice, unversioned.
+const pinned = (() => {
+  try {
+    const wanted = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8')).dependencies?.['@deepseek-ai/dsh']
+    return typeof wanted === 'string' ? wanted.replace(/^[~^]/, '') : undefined
+  } catch {
+    return undefined
+  }
+})()
+const versionOf = (dir) => {
+  try { return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version } catch { return undefined }
+}
+const ignored = []
+const isPinned = (dir) => {
+  if (pinned === undefined) return true
+  const version = versionOf(dir)
+  if (version === pinned || version === `v${pinned}`) return true
+  ignored.push(`${dir} (${version ?? 'no package.json'})`)
+  return false
+}
 const above = (start) => {
   for (let dir = start; ; dir = dirname(dir)) {
-    if (existsSync(join(dir, 'deepseek-harness'))) return join(dir, 'deepseek-harness')
+    const candidate = join(dir, 'deepseek-harness')
+    if (existsSync(candidate) && isPinned(candidate)) return candidate
     if (dirname(dir) === dir) return undefined
   }
 }
-const installed = join(plugin, 'dev', 'harness')
 const findHarness = () => {
   if (process.env.DSH_HARNESS) return process.env.DSH_HARNESS
   if (existsSync(join(installed, 'node_modules'))) return installed
@@ -25,10 +49,18 @@ const findHarness = () => {
   const beside = resolve(plugin, '../deepseek-harness')
   try {
     const git = (...args) => execFileSync('git', ['-C', dirname(plugin), 'rev-parse', ...args], { encoding: 'utf8' }).trim()
-    return above(join(dirname(git('--path-format=absolute', '--git-common-dir')), git('--show-prefix'))) ?? beside
-  } catch {
-    return beside
-  }
+    const fromWorktree = above(join(dirname(git('--path-format=absolute', '--git-common-dir')), git('--show-prefix')))
+    if (fromWorktree) return fromWorktree
+  } catch {}
+  if (existsSync(beside) && isPinned(beside)) return beside
+  // Nothing usable: say so once, clearly, instead of letting every test fail on a missing
+  // package and hiding the cause.
+  throw new Error([
+    `test: no DeepSeek Harness ${pinned ?? ''} found, so the suite cannot load its packages — a setup problem, not a test failure.`,
+    ignored.length > 0 ? `  ignored: ${[...new Set(ignored)].join(', ')}` : '',
+    '  fix: npm run harness   (installs the pinned DSH into ds-bot/dev/harness)',
+    '       or: DSH_HARNESS=/path/to/deepseek-harness npm test',
+  ].filter(Boolean).join('\n'))
 }
 const harness = findHarness()
 // Tests that load other harness packages (jsdom) read the same checkout.

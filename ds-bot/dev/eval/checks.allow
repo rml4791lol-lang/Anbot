@@ -1,0 +1,4 @@
+# Commands a golden-set check may run. One per line; no shell metacharacters needed.
+# Keep this list short: every entry is code that runs unattended.
+node dev/eval/check-golden.mjs
+node dev/eval/turn-economy.mjs --self-test

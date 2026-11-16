@@ -11,8 +11,12 @@
 // watch the client reopen the agent.
 //   contains "devin-team" / "devin-other" -> the same, in the shape Devin CLI 3000.12.28 sends
 //   contains "show-mode"    -> answers with the mode the session is in
+//   contains "wait-gate"    -> keeps its turn open until $FAKE_ACP_GATE/open exists,
+//                              so a test can send input to a turn that is running
 // `--cursor-modes` lists the modes cursor-agent 2026.11.05 does (agent, plan, ask)
 // and refuses any other, as it does.
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 const exitAfterTurn = process.argv.includes('--exit-after-turn')
 const cursorModes = process.argv.includes('--cursor-modes')
 const MODES = cursorModes ? ['agent', 'plan', 'ask'] : ['ask', 'accept-edits', 'bypass']
@@ -49,6 +53,14 @@ async function runPrompt(session, prompt, requestId) {
     reply(requestId, { stopReason: 'end_turn' })
   }
   if (/\bhang\b/.test(text)) return // session/cancel releases it below
+  if (text.includes('wait-gate')) {
+    // Keeps this turn open until the test writes $FAKE_ACP_GATE/open, so a
+    // second message can arrive while the first turn still runs.
+    const open = join(process.env.FAKE_ACP_GATE ?? '', 'open')
+    while (!existsSync(open)) await new Promise(resolve => setTimeout(resolve, 10))
+    finish(`ok: ${text.slice(0, 60)}`)
+    return
+  }
   if (text.includes('show-mode')) { finish(`mode: ${session.mode}; refused: ${refusedModes}`); return }
   if (text.includes('ask-permission')) {
     // Like Devin: the call's kind and input arrive with its tool_call update;
