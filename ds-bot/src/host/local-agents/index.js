@@ -114,7 +114,15 @@ export function install(rt) {
   })
 
   let registration
-  const supported = () => typeof ctx.llm?.registerAdapter === 'function'
+  let disposed = false
+  const supported = () => {
+    if (disposed) return false
+    try {
+      return typeof ctx.llm?.registerAdapter === 'function'
+    } catch {
+      return false
+    }
+  }
   const usedRefs = () => [...new Set(Object.values(state.bots ?? {}).flatMap(bot => [bot.model, bot.appliedModel]).filter(Boolean))]
   // A route a Bot runs on stays registered when its CLI goes away: the turn then fails
   // with the repair card, and nothing moves the Bot to another run mode by itself.
@@ -138,6 +146,7 @@ export function install(rt) {
   // The callback returns the disposer: running adapter.dispose() inside the
   // setup would leave the adapter disposed from the moment it installs.
   ctx.effect(() => () => {
+    disposed = true
     void adapter.dispose()
     registration?.()
   }, 'ds-bot: local agents')

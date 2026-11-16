@@ -12,12 +12,13 @@ import { frameLayout, FALLBACK_SIDEBAR_WIDTH } from './frame-layout.js'
 import { MemoryDialog } from './memory-panel.js'
 import { useLinger } from './motion.js'
 import { OpeningCover, openingModel } from './opening.js'
+import { TeamOverviewPanel, TeamOverviewTab } from './team-overview.js'
 
 // How long a closing dialog or menu stays for its exit (see their [data-leaving] CSS).
 const DIALOG_EXIT_MS = 160
 const MENU_EXIT_MS = 120
 
-export function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity, useWork, useRegistry, useBrowserPages, useBrowserTabs, useBrowserHolds, useUpdate, useFrame, useSidebarPref, useSettingsShellHeld, actions }) {
+export function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity, useWork, useRegistry, useBrowserPages, useBrowserTabs, useBrowserHolds, useUpdate, useFrame, useSidebarPref, useSettingsShellHeld, useSurface, actions }) {
   const roster = useRoster(value => value)
   const ui = useUi(value => value)
   useRegistry(value => value)
@@ -62,11 +63,14 @@ export function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useA
   const [memory, memoryLeaving] = useLinger(ui.memory && memoryOwner(ui.memory) ? ui.memory : null, DIALOG_EXIT_MS)
   const owner = memory ? memoryOwner(memory) : null
   const [menu, menuLeaving] = useLinger(ui.menu, MENU_EXIT_MS)
+  const [teamOverview, teamOverviewLeaving] = useLinger(ui.teamOverview, DIALOG_EXIT_MS)
   // A Session the Host made a moment ago is not in the shell's list yet: the asked-for
   // Bot fills the conversation area instead of the chat that was there before.
   const opening = openingModel({ pending: ui.pendingOpen ?? null, current, roster })
   return h(Fragment, null,
+    h(TeamOverviewTab, { useUi, useSurface, actions }),
     opening ? createPortal(h(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
+    teamOverview ? createPortal(h(TeamOverviewPanel, { useRoster, useWork, useSessionStatus, useUi, actions, leaving: teamOverviewLeaving }), document.body) : null,
     pane ? createPortal(h(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === 'overlay', roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,
     ui.newChat ? createPortal(h(NewChat, { key: `${ui.newChat}:${ui.newChatSection ?? ''}`, mode: ui.newChat, sectionId: ui.newChatSection ?? null, paneLeft: layout.column, roster, actions }), document.body) : null,
     ui.palette ? createPortal(h(CommandPalette, { key: ui.palette.token, start: ui.palette.query, token: ui.palette.token, roster, actions, useSessions }), document.body) : null,

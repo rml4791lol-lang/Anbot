@@ -21,7 +21,7 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     ui.set(state => ({ ...state, details: sessionId, view: 'side', side: chatId ?? null, renaming: false, tab: null, panelYield: yieldTo(state, 'side') }))
   }
   // `id` opens one Bot (page 'bots') or one group chat (page 'groups').
-  const openSettings = (page = 'general', id = null) => { ui.set(state => ({ ...state, settings: { page, id }, menu: null, palette: null, newChat: null })) }
+  const openSettings = (page = 'general', id = null) => { ui.set(state => ({ ...state, settings: { page, id }, teamOverview: false, menu: null, palette: null, newChat: null })) }
   return {
     // The pane starts at the rail's edge, so a floating drawer would stick out from under it.
     openNewChat: (mode, sectionId = null) => { ui.set(state => ({ ...state, newChat: mode, newChatSection: sectionId ?? null, menu: null, palette: null, leftDrawer: false })) },
@@ -60,6 +60,16 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     // Opening the conversation would move focus to its composer and blur the name field.
     renameBot: (id) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: true, tab: null, panelYield: yieldTo(state, 'details') })) },
     openSettings,
+    openTeamOverview: () => { ui.set(state => ({ ...state, teamOverview: true, details: null, view: 'details', renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, settings: null, memory: null })) },
+    closeTeamOverview: () => { ui.set(state => (state.teamOverview ? { ...state, teamOverview: false } : state)) },
+    teamOverviewInsights: fresh => call('team-overview-insights', { fresh: fresh === true }),
+    sites: () => call('sites'),
+    siteSave: body => call('site-save', body),
+    siteArchive: (id, archived = true) => call('site-archive', { id, archived }),
+    siteGroupSave: body => call('site-group-save', body),
+    siteGroupDelete: id => call('site-group-delete', { id }),
+    siteCheck: id => call('site-check', { id }),
+    openMemoryFromOverview: id => { ui.set(state => ({ ...state, teamOverview: false, memory: id, menu: null, palette: null })) },
     // DS Bot's own Models page: the providers DSH serves, their keys and models.
     openModels: () => openSettings('models'),
     closeSettings: () => { ui.set(state => (state.settings ? { ...state, settings: null } : state)) },
