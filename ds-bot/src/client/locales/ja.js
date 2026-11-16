@@ -1,6 +1,22 @@
 // Japanese (ja) localization for DS Bot client and DSH settings namespaces.
 
 export const JA = {
+  'Improvement proposals': '改善提案',
+  'Propose improvement': '改善を提案',
+  'Reading verified evidence…': '検証済みの根拠を読み込んでいます…',
+  'No reusable improvement was found in this verified evidence.': 'この検証済みの根拠には再利用できる改善がありません。',
+  'No improvements have been proposed for this task yet.': 'このタスクにはまだ改善提案がありません。',
+  'The improvement proposal could not be created.': '改善提案を作成できませんでした。',
+  'Only verified task evidence can produce an improvement proposal.': '改善提案を作成できるのは検証済みのタスク根拠だけです。',
+  'Verified improvement': '検証済みの改善',
+  'Affects': '影響',
+  'Observed problem': '観察された問題',
+  'Proposed change': '提案する変更',
+  'Expected benefit': '期待される効果',
+  'Rollback path': 'ロールバック方法',
+  'Audit': '監査',
+  'Review required': '要確認',
+
   "Opening…": "開いています…",
   "Still opening…": "まだ開いています…",
   "Android beta": "Android ベータ版",

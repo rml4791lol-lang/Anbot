@@ -4,6 +4,7 @@ import { createElement as h, useEffect, useRef, useState } from 'react'
 import { call as apiCall } from './api.js'
 import { hostText, t } from './i18n.js'
 import { BotAvatar } from './mark.js'
+import { ProposalCard } from './learning-card-view.js'
 import { SPRING_SHAPE } from './motion.js'
 import { useEscape } from './overlay-hooks.js'
 
@@ -87,6 +88,13 @@ const copyText = () => ({
   cancelWork: t('Stop current work'),
   abandonWait: t('Abandon wait'),
   verification: t('Verification'),
+  improvements: t('Improvement proposals'),
+  proposeImprovement: t('Propose improvement'),
+  proposingImprovement: t('Reading verified evidence…'),
+  noImprovement: t('No reusable improvement was found in this verified evidence.'),
+  noImprovements: t('No improvements have been proposed for this task yet.'),
+  proposalError: t('The improvement proposal could not be created.'),
+  verifiedOnly: t('Only verified task evidence can produce an improvement proposal.'),
 })
 
 const sourceLabel = (source, copy) => source === 'goal' ? copy.goalTask
@@ -249,8 +257,17 @@ function EvidenceList({ evidence, selectedId, copy, onSelect }) {
 }
 
 function Detail({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy }) {
-  if (!task) return h('aside', { className: 'bt-activity-detail' }, h('p', { className: 'bt-activity-detail-empty' }, copy.noDetail))
   const [selectedEvidenceId, setSelectedEvidenceId] = useState(null)
+  const [improvements, setImprovements] = useState(detail?.improvements ?? { proposals: [], history: [] })
+  const [proposalBusy, setProposalBusy] = useState(false)
+  const [proposalError, setProposalError] = useState('')
+  const [proposalNotice, setProposalNotice] = useState('')
+  useEffect(() => {
+    if (detail?.improvements) setImprovements(detail.improvements)
+    setProposalError('')
+    setProposalNotice('')
+  }, [detail?.taskId, detail?.generatedAt])
+  if (!task) return h('aside', { className: 'bt-activity-detail' }, h('p', { className: 'bt-activity-detail-empty' }, copy.noDetail))
   const shown = detail?.task ?? task
   const role = rolesById.get(shown.ownerId)
   const parent = shown.parentId ? allTasks.find(item => item.id === shown.parentId) : undefined
@@ -267,6 +284,34 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
   const controls = Array.isArray(detail?.controls) ? detail.controls : []
   const lockReason = typeof roster?.readOnly === 'string' ? roster.readOnly.trim() : ''
   const visibleControls = controls.map(control => lockReason ? { ...control, enabled: false, reason: lockReason } : control)
+  const verified = detail?.verification?.status === 'verified' && detail?.empty !== true
+  const canPropose = verified && shown.ownerKind === 'bot' && Boolean(actions?.proposeImprovement) && !lockReason && !proposalBusy
+  const proposalDisabledReason = lockReason || (verified ? '' : copy.verifiedOnly)
+  const proposalCards = [...(improvements.proposals ?? []), ...(improvements.history ?? [])]
+  const proposeImprovement = () => {
+    if (!canPropose) return
+    setProposalBusy(true)
+    setProposalError('')
+    setProposalNotice('')
+    let result
+    try {
+      result = actions.proposeImprovement(shown.id)
+    } catch (error) {
+      setProposalError(error?.message ?? String(error))
+      setProposalBusy(false)
+      return
+    }
+    void Promise.resolve(result).then(proposal => {
+      if (proposal) setImprovements(current => ({ ...current, proposals: [...(current.proposals ?? []), proposal] }))
+      else setProposalNotice(copy.noImprovement)
+    }, error => setProposalError(error?.message ?? String(error))).finally(() => setProposalBusy(false))
+  }
+  const proposalResolved = (id, approve) => setImprovements(current => ({
+    ...current,
+    proposals: (current.proposals ?? []).map(proposal => proposal.id === id
+      ? { ...proposal, outcome: approve ? 'approved' : 'declined' }
+      : proposal),
+  }))
   const runControl = (control) => {
     if (!control.enabled || !actions) return
     if (control.id === 'pause-goal') void actions.goalControl?.(control.roomId, control.goalId, 'pause')
@@ -306,6 +351,24 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
       ...(!detail && shown.evidence ? [h('div', { key: 'evidence' }, h('dt', null, copy.evidence), h('dd', null, shown.evidence))] : []),
       ...(detail ? [h('div', { key: 'verification' }, h('dt', null, copy.verification), h('dd', null, `${detail.verification?.status || copy.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ''}`))] : []),
       ...(warnings.length > 0 ? [h('div', { key: 'warning', className: 'bt-activity-warning' }, h('dt', null, copy.warning), h('dd', null, warnings.join(' · ')))] : [])),
+    detail ? h('section', { className: 'bt-task-section bt-improvement-section' },
+      h('div', { className: 'bt-improvement-head' },
+        h('h4', null, copy.improvements),
+        h('button', {
+          type: 'button', className: 'bt-soft bt-soft-sm bt-improvement-propose',
+          disabled: !canPropose, title: proposalDisabledReason || undefined, onClick: proposeImprovement,
+        }, proposalBusy ? copy.proposingImprovement : copy.proposeImprovement)),
+      proposalError ? h('p', { className: 'bt-learning-error', role: 'alert' }, `${copy.proposalError} ${proposalError}`) : null,
+      proposalNotice ? h('p', { className: 'bt-activity-detail-empty', role: 'status' }, proposalNotice) : null,
+      proposalCards.length > 0
+        ? h('div', { className: 'bt-improvement-list' }, proposalCards.map(proposal => h(ProposalCard, {
+          key: proposal.id,
+          proposal,
+          actions,
+          onResolved: proposalResolved,
+          disabledReason: proposal.outcome ? '' : lockReason,
+        })))
+        : h('p', { className: 'bt-activity-detail-empty' }, copy.noImprovements)) : null,
     detail ? h('section', { className: 'bt-task-section' },
       h('h4', null, copy.evidence),
       h(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy, onSelect: setSelectedEvidenceId })) : null,
@@ -544,6 +607,7 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:10px;line-height:14px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:10px;line-height:14px;color:var(--bt-ink-3)}
 .bt-detail-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-detail-control:disabled{opacity:.45;cursor:not-allowed}
+.bt-improvement-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.bt-improvement-head h4{margin:0}.bt-improvement-propose:disabled{opacity:.45;cursor:not-allowed}.bt-improvement-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.bt-improvement-section .bt-learning-card{margin:0}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}
 .bt-activity-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;line-height:16px!important}
 .bt-activity-children{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-activity-warning dd{color:var(--bt-danger)}

@@ -286,3 +286,54 @@ test('unknown and group owners do not invent member permissions', () => {
   assert.match(text(group), /Group chat/)
   assert.doesNotMatch(text(group), /Member · Member/)
 })
+
+test('task detail creates and renders evidence-linked improvement proposals through learning cards', async () => {
+  const calls = []
+  const improvement = {
+    taskId: 'goal:g1:s1:t1',
+    evidenceIds: ['e-verified'],
+    sourceIds: ['room-s1:8'],
+    affectedBot: { id: 'forge', name: 'Forge' },
+    scope: { kind: 'skill', target: 'verified-delivery-checks', label: 'Skill · verified-delivery-checks' },
+    observedProblem: 'The Bot trusted a completion report without rerunning acceptance.',
+    proposedChange: 'Create a learned skill that reruns the declared acceptance checks.',
+    expectedBenefit: 'Release work will be checked against fresh evidence.',
+    rollbackPath: 'Remove the learned skill from Forge.',
+  }
+  const pending = {
+    id: 'improvement-1', kind: 'skill', action: 'create', botId: 'forge', name: 'verified-delivery-checks',
+    description: 'Use when verifying a release.', content: 'Rerun the acceptance checks.', improvement,
+  }
+  const settled = { ...pending, id: 'improvement-0', outcome: 'declined', improvement: { ...improvement, taskId: 'goal:old' } }
+  const actions = {
+    proposeImprovement: (...args) => calls.push(['proposeImprovement', ...args]),
+    learningAnswer: (...args) => calls.push(['learningAnswer', ...args]),
+  }
+  const common = { data, roster, status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {}, actions }
+  const view = mod.TeamActivityView({ ...common, detail: { ...detailData, improvements: { proposals: [pending], history: [settled] } }, detailStatus: 'ready' })
+  assert.match(text(view), /Propose improvement/)
+  assert.match(text(view), /Observed problem/)
+  assert.match(text(view), /completion report without rerunning acceptance/)
+  assert.match(text(view), /Expected benefit/)
+  assert.match(text(view), /Rollback path/)
+  assert.match(text(view), /Affects/)
+  assert.match(text(view), /Forge · Skill · verified-delivery-checks/)
+  assert.match(text(view), /e-verified/)
+  assert.equal(all(view, 'bt-learning-card').length, 2)
+  all(view, 'bt-improvement-propose')[0].props.onClick()
+  assert.deepEqual(calls.at(-1), ['proposeImprovement', 'goal:g1:s1:t1'])
+  all(view, 'bt-learning-approve')[0].props.onClick()
+  await Promise.resolve()
+  assert.deepEqual(calls.at(-1), ['learningAnswer', 'improvement-1', true])
+
+  const locked = mod.TeamActivityView({ ...common, roster: { ...roster, readOnly: 'Another host owns this team' }, detail: { ...detailData, improvements: { proposals: [], history: [] } }, detailStatus: 'ready' })
+  assert.equal(all(locked, 'bt-improvement-propose')[0].props.disabled, true)
+
+  const stale = mod.TeamActivityView({ ...common, detail: { ...detailData, verification: { status: 'stale', reason: 'artifact changed' }, improvements: { proposals: [], history: [] } }, detailStatus: 'ready' })
+  assert.equal(all(stale, 'bt-improvement-propose')[0].props.disabled, true)
+  assert.match(all(stale, 'bt-improvement-propose')[0].props.title, /verified task evidence/)
+  const reviewed = mod.TeamActivityView({ ...common, detail: { ...detailData, improvements: { proposals: [{ ...pending, requiresReview: true, reviewReason: 'The task evidence is stale.' }], history: [] } }, detailStatus: 'ready' })
+  assert.match(text(reviewed), /Review required/)
+  assert.equal(all(reviewed, 'bt-learning-approve')[0].props.disabled, true)
+  assert.equal(all(reviewed, 'bt-learning-decline')[0].props.disabled, false)
+})
