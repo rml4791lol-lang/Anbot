@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "scenario": "chief-forge-prism-mcp-repair",
-  "generatedAt": "2026-11-16T16:05:20.465Z",
+  "generatedAt": "2026-11-16T16:18:40.511Z",
   "outcome": "verified",
   "mocking": "scripted-model-acceptance-only",
   "chief": {
@@ -33,11 +33,11 @@
   },
   "forge": {
     "role": "Engineer",
-    "taskId": "goal:goal-166939ef:s1:t1",
+    "taskId": "goal:goal-45d6d9f4:s1:t1",
     "attemptId": "t1:a1",
     "worktree": {
       "isolated": true,
-      "baselineCommit": "782f7109e6dff82fb25ab5f825a9aaeea5c9c589",
+      "baselineCommit": "4b48417251365d0ad5c9a1f5bb958cee6e8fd050",
       "changedPaths": [
         "ds-bot/src/host/local-agents/mcp.js"
       ]
@@ -89,7 +89,7 @@
   "restart": {
     "boundary": "after-forge-durable-result-before-prism-pickup",
     "hostStarts": 2,
-    "sameTaskId": "goal:goal-166939ef:s2:t2",
+    "sameTaskId": "goal:goal-45d6d9f4:s2:t2",
     "sameAttemptId": "t2:a1",
     "queuedBeforeRestart": true,
     "prismPickupsBeforeRestart": 0,
@@ -97,9 +97,9 @@
     "recoveryKind": "resent"
   },
   "prism": {
-    "taskId": "goal:goal-166939ef:s2:t2",
+    "taskId": "goal:goal-45d6d9f4:s2:t2",
     "attemptId": "t2:a1",
-    "handoffTaskId": "handoff:2a1b36e1-205e-4409-bcd7-e22c29b567b4",
+    "handoffTaskId": "handoff:56315efe-cb66-4af0-9626-0eaac433d97c",
     "checks": {
       "diff": {
         "verified": true,
@@ -110,7 +110,7 @@
         "verified": true,
         "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
         "exitCode": 0,
-        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.742083ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 147.563917"
+        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208"
       },
       "inventory": {
         "verified": true,
@@ -140,7 +140,7 @@
         "name": "Prism",
         "role": "Reviewer"
       },
-      "taskId": "goal:goal-166939ef:s2:t2",
+      "taskId": "goal:goal-45d6d9f4:s2:t2",
       "attemptId": "t2:a1",
       "checks": {
         "diff": {
@@ -152,7 +152,7 @@
           "verified": true,
           "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
           "exitCode": 0,
-          "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.742083ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 147.563917"
+          "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208"
         },
         "inventory": {
           "verified": true,
@@ -187,14 +187,14 @@
       "id": "t2:a1",
       "number": 1,
       "status": "working",
-      "startedAt": 1794845116280,
-      "updatedAt": 1794845119553,
+      "startedAt": 1794845916288,
+      "updatedAt": 1794845919563,
       "sessionId": "prism",
-      "exchangeId": "2a1b36e1-205e-4409-bcd7-e22c29b567b4",
+      "exchangeId": "56315efe-cb66-4af0-9626-0eaac433d97c",
       "turn": 1
     },
     "handoff": {
-      "id": "2a1b36e1-205e-4409-bcd7-e22c29b567b4",
+      "id": "56315efe-cb66-4af0-9626-0eaac433d97c",
       "parentId": null,
       "name": "Review the MCP repair",
       "status": "active",
@@ -211,15 +211,15 @@
     },
     "checkpoint": {
       "text": "Task attempt started.",
-      "at": 1794845116280,
+      "at": 1794845916288,
       "kind": "progress"
     },
     "recovery": {
       "state": "recovered",
       "records": [
         {
-          "id": "t2:a1:resent:2a1b36e1-205e-4409-bcd7-e22c29b567b4",
-          "at": 1794845119553,
+          "id": "t2:a1:resent:56315efe-cb66-4af0-9626-0eaac433d97c",
+          "at": 1794845919563,
           "attemptId": "t2:a1",
           "kind": "resent",
           "summary": "The queued handoff was delivered again after the host restarted.",
@@ -244,7 +244,7 @@
       "id": "ev:tool-result:prism:prism-1-node-test-test-acceptance-fixtures-mcp-i",
       "trust": "verified",
       "title": "",
-      "text": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.742083ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 147.563917",
+      "text": "✔ the MCP inventory contains only MCP tools and is stable across input order (1.193125ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 165.656208",
       "sourceId": "tool-result"
     },
     {
