@@ -2,6 +2,7 @@
 // stdin takes user/control JSON messages; stdout streams the assistant's
 // events until a `result` ends the turn.
 import { readdirSync, realpathSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { join, sep } from 'node:path'
 import { cleanEnv, spawnAgent } from './discover.js'
 
@@ -16,9 +17,10 @@ const READ_ONLY_COMMANDS = ['md5', 'md5sum', 'shasum', 'ffprobe', 'stat', 'wc']
 // (research-gate.sh and its neighbours). Each rule names one file that exists on
 // disk, read from the folder at session start. A shell pattern would also match a
 // path that climbs out of the folder, so no pattern is used.
+const atlasHome = join(homedir(), 'Desktop', 'Atlas')
 export const GATE_SCRIPT_DIRS = [
-  '/Users/an/Desktop/Atlas/内容/bin',
-  '/Users/an/Desktop/Atlas/任务标准规范规则/bin',
+  join(atlasHome, '内容', 'bin'),
+  join(atlasHome, '任务标准规范规则', 'bin'),
 ]
 
 const gateScriptsIn = (dir) => {

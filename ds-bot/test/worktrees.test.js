@@ -135,9 +135,9 @@ test('porcelain blocks carry path, HEAD, branch and the detached/bare markers', 
 })
 
 test('the issue comes from wt-<n> or fix|feat/<n>, and stays empty otherwise', () => {
-  assert.equal(issueOf({ path: '/Users/x/DS-Bot-wt-13', branch: 'fix/13-bot-durability' }), '13')
-  assert.equal(issueOf({ path: '/Users/x/DS-Bot-wt-t17', branch: 'feat/17-local-gate' }), '17')
-  assert.equal(issueOf({ path: '/Users/x/DS-Bot-wt-agentskills', branch: 'docs/agent-skills-setup' }), '')
+  assert.equal(issueOf({ path: '/repo/DS-Bot-wt-13', branch: 'fix/13-bot-durability' }), '13')
+  assert.equal(issueOf({ path: '/repo/DS-Bot-wt-t17', branch: 'feat/17-local-gate' }), '17')
+  assert.equal(issueOf({ path: '/repo/DS-Bot-wt-agentskills', branch: 'docs/agent-skills-setup' }), '')
   assert.equal(issueOf({ path: '/private/tmp/dsbot-base', branch: null }), '')
 })
 

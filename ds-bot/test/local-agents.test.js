@@ -15,6 +15,7 @@ import { cleanEnv } from '../src/host/local-agents/discover.js'
 import { validateCustom, isLocalAgentRoute, cliMode, acpMode } from '../src/host/local-agents/engines.js'
 import { install as partsInstall } from '../src/host/parts.js'
 import { install as modelsInstall } from '../src/host/models.js'
+import { install as localAgentsInstall } from '../src/host/local-agents/index.js'
 import { fakeContext } from './fake-ctx.js'
 
 const FIXTURE = name => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))
@@ -71,6 +72,39 @@ async function collect(stream) {
   }
   return out
 }
+
+test('a disposed local-agent install does not touch the dead llm service', async () => {
+  const ctx = fakeContext()
+  const llm = ctx.llm
+  let inactive = false
+  Object.defineProperty(ctx, 'llm', {
+    configurable: true,
+    get() {
+      if (inactive) throw new Error('cannot get property "llm" without inject')
+      return llm
+    },
+  })
+  const warnings = []
+  const rt = {
+    ctx,
+    state: { bots: {} },
+    warn: (...args) => warnings.push(args),
+    save: async () => {},
+    botOf: () => undefined,
+    selfOf: id => id,
+    roomOf: () => undefined,
+    groupOwners: new Map(),
+    teamTools: [],
+    resolveAgent: async () => ({}),
+    workDirOf: () => undefined,
+    teamFolder: () => tmpdir(),
+  }
+  localAgentsInstall(rt)
+  await ctx.dispose()
+  inactive = true
+  await assert.doesNotReject(() => rt.localAgentsEndpoint('local-agents', {}))
+  assert.deepEqual(warnings, [])
+})
 
 const options = (sessionId, messages, extra = {}) => ({ provider: 'local-acp-fake', model: 'default', sessionId, messages, tools: [{ name: 'message_bot' }], signal: AbortSignal.timeout(60_000), ...extra })
 
