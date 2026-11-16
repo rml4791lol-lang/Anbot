@@ -31,8 +31,8 @@ const SECTION_TITLES = [
   '### 8. Failure handling',
 ]
 
-// 25 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
-const RULE_COUNTS = { main: 34, worker: 25 }
+// 26 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
+const RULE_COUNTS = { main: 35, worker: 26 }
 
 test('Bots get the eight rule sections in order, with every rule exactly once', (t) => {
   const { ctx, prompt } = start()
@@ -75,6 +75,22 @@ test('Bots are told how to open a PDF the user attached, once, in the shared pre
     assert.match(rule[0], /office skill/)
     assert.match(rule[0], /office_render/)
     assert.match(rule[0], /never answer only that the file cannot be read/)
+  }
+  assert.equal(prompt('group-worker'), prompt('worker'))
+})
+
+// L1: a note that repeats a question the conversation already answered is not fresh work.
+test('Bots are told not to redo a question this conversation already answered, once, in the shared prefix', (t) => {
+  const { ctx, prompt } = start()
+  t.after(() => ctx.dispose())
+  for (const id of ['main', 'worker']) {
+    const rule = prompt(id).split('\n').filter(line => line.startsWith('- A note or a message that repeats a question'))
+    assert.equal(rule.length, 1)
+    assert.match(rule[0], /this conversation already answered/)
+    assert.match(rule[0], /same sender, same question/)
+    assert.match(rule[0], /is not new work/)
+    assert.match(rule[0], /points back to the earlier conclusion/)
+    assert.match(rule[0], /genuinely still open/)
   }
   assert.equal(prompt('group-worker'), prompt('worker'))
 })

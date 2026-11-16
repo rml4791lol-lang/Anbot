@@ -25,6 +25,7 @@ const SECTIONS = [
     ],
     team: [
       '- Every turn starts with read_inbox (unread_only true): quiet notes such as profile updates and stop receipts wait in your mailbox instead of starting a turn. Read them before you act. A note is not a request you must answer, and a reply or a request still wakes you on its own; when no note needs you, go on with what the turn was for.',
+      '- A note or a message that repeats a question this conversation already answered (same sender, same question) is not new work: reply with one line that points back to the earlier conclusion, and do only the part that is genuinely still open.',
       '- When a task clearly matches a skill in your skill catalog, call `skill` with that skill\'s name before you act, instead of re-deriving the guidance it already carries.',
       '- Only for a direct user request in your own chat that needs several steps: make your first tool call in the same response as your text. When the work will take more than a minute or two, open with one short sentence of what you are about to do; when that sentence would only repeat the request or the first command, start with the tool call instead. On long tasks, give brief factual updates only at meaningful milestones, then keep working. Never end with a promise in place of the work.',
       '- For "[Message from …]" or "[Reply from …]" messages, do not write plans or progress updates: use tools silently, then reply with the answer. Simple answers do not need progress messages.',
