@@ -1,0 +1,1350 @@
+{
+  "$schema": "code-reuse-registry.schema.json",
+  "schemaVersion": 1,
+  "snapshotDate": "2026-11-16",
+  "timeZone": "Asia/Shanghai",
+  "scope": "DS-Bot AI-OS reuse audit and decision assets",
+  "statusMeanings": {
+    "native": "已具备",
+    "partial": "部分具备",
+    "missing": "缺失"
+  },
+  "reuseModes": {
+    "A": "direct code reuse",
+    "B": "SDK, official API, protocol or format",
+    "C": "extracted module with adapter",
+    "D": "reference design only",
+    "E": "build in DS-Bot"
+  },
+  "nativeSources": [
+    {
+      "id": "ds-bot",
+      "version": "0.3.6",
+      "commit": "26228dfa",
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "deepseek-harness",
+      "version": "0.2.2-rc.1",
+      "commit": "66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db",
+      "upstreamVersionInspected": "0.2.2-rc.3",
+      "upstreamCommitInspected": "39163dd30f70",
+      "license": "MIT"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "deepseek-harness",
+      "name": "DeepSeek Harness",
+      "repository": "https://github.com/deepseek-ai/deepseek-harness",
+      "inspectedVersion": "0.2.2-rc.1 pinned; 0.2.2-rc.3 upstream inspected",
+      "inspectedCommit": "66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db (pinned); 39163dd30f70 (upstream)",
+      "commitDate": "2026-11-04 pinned; 2026-11-13 upstream",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "TypeScript/Node service and plugin packages",
+      "sourcePaths": [
+        "packages/session/session-persistence/src/index.ts",
+        "packages/session/session-projection/src/index.ts",
+        "packages/session-query/session-query/src/index.ts",
+        "packages/jobs/jobs/src/index.ts",
+        "packages/schedule/schedule/src/index.ts",
+        "packages/workflow/workflow/src/index.ts",
+        "packages/subagent/subagent/src/index.ts",
+        "packages/experimental/agent-team/src/index.ts",
+        "packages/compaction/compaction-basic/src/index.ts",
+        "packages/skill/skill/src/index.ts",
+        "packages/mcp/mcp-client/src/index.ts",
+        "packages/interaction/user-approval/src/index.ts",
+        "packages/interaction/permission-presets/src/index.ts",
+        "packages/telemetry/otel/src/index.ts",
+        "packages/llm/llm/src/index.ts",
+        "packages/llm/llm-retry/src/index.ts",
+        "packages/llm/token-meter/src/index.ts",
+        "packages/browser-use/browser-use/src/index.ts",
+        "packages/computer-use/computer-use/src/index.ts",
+        "packages/sandbox/sandbox-policy/src/index.ts",
+        "packages/ssh/ssh/src/index.ts"
+      ],
+      "testPaths": [
+        "docs/subsystems/*",
+        "packages/telemetry/otel/tests/session-log.spec.ts",
+        "package-local tests"
+      ],
+      "reusableMechanisms": [
+        "agent loop and session event lifecycle",
+        "session persistence/query/projection",
+        "jobs/schedule/workflow/subagent/agent-team",
+        "compaction",
+        "skills and MCP",
+        "approval and permission presets",
+        "model retry and token metering",
+        "OTel seam"
+      ],
+      "limitations": [
+        "jobs-local is process-local",
+        "workflow has no journal/resume",
+        "experimental Agent Teams has a lead/subagent identity model",
+        "must not patch internal files"
+      ],
+      "reuseMode": "A/B (already adopted)",
+      "finalDecision": "Use as the sole Agent Runtime and documented execution substrate",
+      "adoptedCode": true,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "ds-bot",
+      "name": "DS-Bot",
+      "repository": "https://github.com/Fei2411/DS-Bot",
+      "inspectedVersion": "0.3.6",
+      "inspectedCommit": "26228dfa",
+      "commitDate": "2026-11-16 local baseline",
+      "license": "Apache-2.0",
+      "maintained": true,
+      "runtime": "ESM Node DSH plugin, React client, Electron app",
+      "sourcePaths": [
+        "ds-bot/src/host/",
+        "ds-bot/src/client/",
+        "app/",
+        "mobile/",
+        "link/"
+      ],
+      "testPaths": [
+        "ds-bot/test/",
+        "app/test/",
+        "mobile/"
+      ],
+      "reusableMechanisms": [
+        "Bot roster and Main Bot rights",
+        "rooms, goals, handoffs",
+        "memory",
+        "capabilities and MCP",
+        "browser/computer",
+        "schedules and connectors",
+        "usage, diagnostics and indexes",
+        "desktop/web UI"
+      ],
+      "limitations": [
+        "message path has multiple persistence write sites",
+        "group-goal task graph is stage-based",
+        "no generic distributed durable executor",
+        "control center is fragmented across settings/pages"
+      ],
+      "reuseMode": "Product authority",
+      "finalDecision": "Keep as the sole product and organization authority",
+      "adoptedCode": true,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "hermes-agent",
+      "name": "Hermes Agent",
+      "repository": "https://github.com/NousResearch/hermes-agent",
+      "inspectedVersion": "v0.23.1",
+      "inspectedCommit": "e96221fa73d2",
+      "commitDate": "2026-11-16",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Python 3.14, uv, desktop/Node and Rust components",
+      "sourcePaths": [
+        "agent/conversation_loop.py",
+        "agent/context_compressor.py",
+        "agent/memory_manager.py",
+        "agent/memory_context.py",
+        "agent/delegation_context.py",
+        "agent/skill_bundles.py",
+        "cron/scheduler.py",
+        "cron/occurrences.py",
+        "cron/delivery_queue.py",
+        "gateway/session_handoff.py"
+      ],
+      "testPaths": [
+        "tests/acp_adapter/test_approval_isolation.py",
+        "tests/ and tests-js/ trees",
+        "cron tests",
+        "memory/context tests",
+        "tests/agent/test_concurrent_interrupt.py",
+        "tests/agent/test_context_compressor.py",
+        "tests/acp_adapter/test_permissions.py",
+        "apps/desktop/e2e/group-turn-integrity.spec.ts",
+        "evals/compaction/"
+      ],
+      "reusableMechanisms": [
+        "run-budget wrap-up",
+        "bounded compression",
+        "delegated-child fencing",
+        "skill bundles",
+        "cron stale-claim guards",
+        "reference handoff restoration"
+      ],
+      "limitations": [
+        "large Python runtime",
+        "own gateway/cron/session model",
+        "would duplicate DSH"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Reference design only; no runtime import or copied code",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "hermes-bot-mode",
+      "name": "Hermes Bot Mode",
+      "repository": "https://github.com/NousResearch/Hermes-Bot-Mode",
+      "inspectedVersion": "no release",
+      "inspectedCommit": "80fee22582b8",
+      "commitDate": "2026-08-17",
+      "license": "MIT",
+      "maintained": false,
+      "runtime": "JavaScript plugin for Hermes desktop gateway",
+      "sourcePaths": [
+        "plugin.js"
+      ],
+      "testPaths": [
+        "tests/group-chat.test.mjs",
+        "tests/mention-handoff-quoting.test.mjs",
+        "tests/canonical-chat-creation.test.mjs",
+        "tests/roster-groups.test.mjs",
+        "tests/routine-owner.test.mjs"
+      ],
+      "reusableMechanisms": [
+        "canonical Bot chat pinning",
+        "roster watermarks",
+        "group rounds",
+        "mention handoff quoting",
+        "routine ownership"
+      ],
+      "limitations": [
+        "archived",
+        "bound to Hermes gateway APIs",
+        "6461-line monolithic plugin",
+        "now bundled into Hermes Agent"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Do not integrate; DS-Bot already owns equivalent product behavior",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "openmausbot",
+      "name": "OpenMausBot",
+      "repository": "https://github.com/milind-soni/OpenMausBot",
+      "inspectedVersion": "v0.1.161",
+      "inspectedCommit": "5c919b7adb10",
+      "commitDate": "2026-11-16",
+      "license": "Apache-2.0",
+      "maintained": true,
+      "runtime": "Node >=24, pnpm workspace, own server/Electron/cloud",
+      "sourcePaths": [
+        "server/room-queue.ts",
+        "server/room-round-turns.ts",
+        "server/decider/room-routing.ts",
+        "server/host/room-sessions.ts",
+        "server/bot-automations.ts",
+        "server/agent-tool-policy.ts",
+        "server/routine-schedules.ts",
+        "server/permission-proxy.ts"
+      ],
+      "testPaths": [
+        "server/room-queue.test.ts",
+        "server/room-coordination.e2e.test.ts",
+        "server/room-recovery.e2e.test.ts",
+        "server/room-turn-timeout.test.ts",
+        "server/permission-proxy.test.ts",
+        "server/routine-*.test.ts"
+      ],
+      "reusableMechanisms": [
+        "sequential room queue",
+        "one-turn-per-round accounting",
+        "delta room prompt",
+        "bounded model room router",
+        "bot-owned automation cleanup",
+        "read-only tool annotations"
+      ],
+      "limitations": [
+        "complete own runtime",
+        "would duplicate rooms, Bot access and approval"
+      ],
+      "reuseMode": "C/D",
+      "finalDecision": "Conformance reference; only a small pure helper may be extracted after a failing DS-Bot test",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "agentmemoryrepo",
+      "name": "Agent Memory Repo",
+      "repository": "https://github.com/AgentMemoryRepo/agentmemoryrepo",
+      "inspectedVersion": "no release",
+      "inspectedCommit": "8798cb26c817",
+      "commitDate": "2026-10-06",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Format specification and skills",
+      "sourcePaths": [
+        "SPEC.md",
+        "README.md",
+        "skills/"
+      ],
+      "testPaths": [],
+      "reusableMechanisms": [
+        "MEMORY.md entry point",
+        "bullet entries with open metadata",
+        "topic cross-links",
+        "source and added provenance"
+      ],
+      "limitations": [
+        "not a complete memory runtime",
+        "no scoped permissions, BM25, journal, snapshots or undo",
+        "repository contains no implementation engine or tests"
+      ],
+      "reuseMode": "B/D (format)",
+      "finalDecision": "Keep the adopted format; DS-Bot implementation remains authoritative",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "repository": "https://github.com/anomalyco/opencode",
+      "inspectedVersion": "v2.3.0 (release feed; GitHub /latest metadata inconsistent)",
+      "inspectedCommit": "0fad04b3d5a8",
+      "commitDate": "2026-11-16",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Bun/TypeScript monorepo",
+      "sourcePaths": [
+        "packages/core/src/session/runner/step.ts",
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/inbox.ts",
+        "packages/core/src/permission.ts",
+        "packages/core/src/job.ts",
+        "packages/core/src/job/recovery.ts",
+        "packages/core/src/agent.ts",
+        "packages/core/src/tool/runtime.ts"
+      ],
+      "testPaths": [
+        "packages/core/test",
+        "provider recorded tests",
+        "session runner/recovery tests",
+        "permission/compaction tests"
+      ],
+      "reusableMechanisms": [
+        "pre-durable-output compaction",
+        "cooperative tool stop",
+        "permission rulesets",
+        "retry before durable output",
+        "session restart and subagent report"
+      ],
+      "limitations": [
+        "complete competing runner/database/session model",
+        "Effect coupling",
+        "GitHub /latest metadata returned v1.19.5 while the release feed contained v2.3.0"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Reference design only; DSH remains the runner",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "goose",
+      "name": "Goose",
+      "repository": "https://github.com/block/goose",
+      "inspectedVersion": "v1.59.1",
+      "inspectedCommit": "0bf8b6240720",
+      "commitDate": "2026-11-16",
+      "license": "Apache-2.0",
+      "maintained": true,
+      "runtime": "Rust workspace and native app",
+      "sourcePaths": [
+        "crates/goose/src/agents/state_machine/mod.rs",
+        "crates/goose/src/agents/state_machine/tool_approval.rs",
+        "crates/goose/src/agents/state_machine/proactive_compaction.rs",
+        "crates/goose/src/agents/subagent_handler.rs",
+        "crates/goose/src/agents/tool_execution.rs",
+        "crates/goose/src/config/permission.rs",
+        "crates/goose/src/permission/permission_judge.rs",
+        "crates/goose-context-management/"
+      ],
+      "testPaths": [
+        "crates/goose/src/agents/state_machine/tests",
+        "crates/goose-agent/tests/tool_approval.rs",
+        "crates/goose-agent/tests/subagent.rs"
+      ],
+      "reusableMechanisms": [
+        "explicit operation state machine",
+        "permission levels and smart approval",
+        "proactive compaction",
+        "subagent lifecycle",
+        "cooperative cancellation"
+      ],
+      "limitations": [
+        "Rust runtime",
+        "separate provider/session architecture"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Reference design only",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "pi",
+      "name": "Pi",
+      "repository": "https://github.com/badlogic/pi-mono",
+      "inspectedVersion": "v1.5.2",
+      "inspectedCommit": "22fc026b872b",
+      "commitDate": "2026-11-15",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Node >=22.19, npm workspace",
+      "sourcePaths": [
+        "packages/agent/src/agent-loop.ts",
+        "packages/agent/src/agent.ts",
+        "packages/agent/src/types.ts",
+        "packages/coding-agent/docs/compaction.md",
+        "packages/coding-agent/docs/sessions.md",
+        "packages/coding-agent/docs/session-format.md"
+      ],
+      "testPaths": [
+        "packages/agent/test/agent-loop.test.ts",
+        "packages/agent/test/agent.test.ts",
+        "packages/agent/test/e2e.test.ts",
+        "coding-agent session/compaction tests"
+      ],
+      "reusableMechanisms": [
+        "sequential/parallel tool policy",
+        "tool-loadout diffs",
+        "truncated tool-call refusal",
+        "append-only Session tree",
+        "branch summaries",
+        "context edits"
+      ],
+      "limitations": [
+        "alternative Session format and agent loop",
+        "would duplicate DSH"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Reference design only",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "obelisk",
+      "name": "Obelisk",
+      "repository": "https://github.com/tommy0103/obelisk",
+      "inspectedVersion": "v0.2.5",
+      "inspectedCommit": "cc75c2dd1aea",
+      "commitDate": "2026-11-09",
+      "license": "AGPL-3.0",
+      "maintained": true,
+      "runtime": "Node >=22.13 CLI/Electron + TypeScript + built-in SQLite",
+      "sourcePaths": [
+        "packages/core/src/indexer.ts",
+        "packages/core/src/schema.sql",
+        "packages/core/src/query.ts",
+        "packages/core/src/provider-indexing.ts",
+        "app/src/main/indexer-service.ts"
+      ],
+      "testPaths": [
+        "tests/indexer.test.mjs",
+        "tests/indexer-readonly.test.mjs",
+        "tests/indexer-upsert-drift.test.mjs",
+        "tests/provider-indexing.test.mjs"
+      ],
+      "reusableMechanisms": [
+        "FTS5 external-content tables",
+        "BM25 ordering",
+        "cursor/drift tracking",
+        "message/tool/subagent/workflow relations",
+        "read-only index builds"
+      ],
+      "limitations": [
+        "AGPL",
+        "separate Electron/provider schema",
+        "DS-Bot already implements FTS5/BM25"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Do not copy or link; keep DS-Bot chat-index implementation",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "openviking",
+      "name": "OpenViking",
+      "repository": "https://github.com/volcengine/OpenViking",
+      "inspectedVersion": "v0.5.5",
+      "inspectedCommit": "5f53cbf01128",
+      "commitDate": "2026-11-16",
+      "license": "Server AGPL-3.0; @openviking/sdk 0.1.0 and @openviking/dsh-memory-plugin 0.5.36 are Apache-2.0",
+      "maintained": true,
+      "runtime": "Python >=3.10 server, Rust crates, FastAPI, vector backends, optional Redis/MySQL; TS SDK Node >=18; DSH plugin Node ^22.19 || >=24",
+      "sourcePaths": [
+        "openviking/core/context.py",
+        "openviking/core/retrieval_targets.py",
+        "openviking/core/skill_loader.py",
+        "openviking/retrieve/context_assembler/pipeline.py",
+        "openviking/retrieve/context_assembler/tiers.py",
+        "openviking/retrieve/context_assembler/budget.py",
+        "openviking/retrieve/memory_lifecycle.py",
+        "openviking/retrieve/skill_package_retriever.py",
+        "openviking/service/memory_compile.py",
+        "openviking/storage/context_update_plan.py",
+        "openviking/retrieve/hierarchical_retriever.py",
+        "openviking/session/memory/memory_updater.py",
+        "openviking/session/checkpoints.py",
+        "examples/dsh-memory-plugin/index.mjs",
+        "examples/dsh-memory-plugin/runtime.mjs"
+      ],
+      "testPaths": [
+        "tests/",
+        "examples/dsh-memory-plugin tests (16 files)",
+        "retrieval/context/memory/skill/storage/server tests"
+      ],
+      "reusableMechanisms": [
+        "URI-first tiers",
+        "breadth-first context budget",
+        "cross-turn recall dedup",
+        "resource/memory/skill URIs",
+        "memory compile/lifecycle",
+        "directory-scoped hierarchical retrieval",
+        "persistent pending capture queue with single-flight drain",
+        "turn checkpoint summaries"
+      ],
+      "limitations": [
+        "AGPL",
+        "service-scale deployment",
+        "vector backend outside current memory design",
+        "would become second memory authority",
+        "DSH plugin peer packages target an older DSH version and require a compatibility spike",
+        "server and SDK/plugin have different licenses; only the Apache-2.0 plugin/SDK may cross the product boundary"
+      ],
+      "reuseMode": "B (future external service) / D now",
+      "finalDecision": "Do not add by default; consume the Apache-2.0 DSH plugin/SDK against an external server only after DSH compatibility, AGPL-boundary and measured-gap review",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "temporal",
+      "name": "Temporal",
+      "repository": "https://github.com/temporalio/temporal",
+      "inspectedVersion": "v1.32.2",
+      "inspectedCommit": "170fb83dca48",
+      "commitDate": "2026-11-14",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Go 1.27.3 server, persistence/visibility stores, workers, task queues and cluster deployment",
+      "sourcePaths": [
+        "service/history/workflow/mutable_state_impl.go",
+        "service/history/workflow/task_refresher.go",
+        "service/history/workflow/workflow_task_state_machine.go",
+        "service/history/workflow/retry.go",
+        "service/history/tasks/activity_retry_timer.go",
+        "common/backoff/retrypolicy.go"
+      ],
+      "testPaths": [
+        "service/history/workflow tests",
+        "tests/workflow_*.go",
+        "tests/retry_delay_floor_test.go",
+        "tests/workflow_timer_test.go"
+      ],
+      "reusableMechanisms": [
+        "replayable mutable state",
+        "workflow/activity tasks",
+        "timers",
+        "retry policies",
+        "worker leases and fencing"
+      ],
+      "limitations": [
+        "full distributed service",
+        "database and cluster operations",
+        "not a small extractable module"
+      ],
+      "reuseMode": "B later / D now",
+      "finalDecision": "Conditional TaskRuntime backend only after a measured local recovery failure",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "langgraph",
+      "name": "LangGraph",
+      "repository": "https://github.com/langchain-ai/langgraph",
+      "inspectedVersion": "1.2.22",
+      "inspectedCommit": "41fb001df931",
+      "commitDate": "2026-11-15",
+      "license": "MIT",
+      "maintained": true,
+      "runtime": "Python >=3.10, checkpoint/state graph libraries",
+      "sourcePaths": [
+        "libs/langgraph/langgraph/pregel/_checkpoint.py",
+        "libs/langgraph/langgraph/pregel/_loop.py",
+        "libs/langgraph/langgraph/pregel/_retry.py",
+        "libs/langgraph/langgraph/pregel/_task_status.py",
+        "libs/langgraph/langgraph/graph/state.py"
+      ],
+      "testPaths": [
+        "libs/langgraph/tests/test_interruption.py",
+        "libs/langgraph/tests/test_interrupt_state.py",
+        "libs/langgraph/tests/test_checkpoint_migration.py",
+        "libs/langgraph/tests/test_pregel.py"
+      ],
+      "reusableMechanisms": [
+        "checkpoint ids and channel versions",
+        "pending task/interrupt identity",
+        "deterministic replay",
+        "per-task writes",
+        "parallel subgraph interruption"
+      ],
+      "limitations": [
+        "Python state-graph runtime",
+        "would be a second Agent Runtime"
+      ],
+      "reuseMode": "D",
+      "finalDecision": "Do not integrate; use checkpoint/interrupt invariants for TaskRuntime tests",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "litellm",
+      "name": "LiteLLM",
+      "repository": "https://github.com/BerriAI/litellm",
+      "inspectedVersion": "v1.109.1",
+      "inspectedCommit": "8d200a4f981a",
+      "commitDate": "2026-11-16",
+      "license": "MIT outside litellm/enterprise/; enterprise tree is separately licensed and requires commercial authorization",
+      "maintained": true,
+      "runtime": "Python proxy/SDK and Rust core",
+      "sourcePaths": [
+        "litellm/router.py",
+        "litellm/router_strategy/lowest_tpm_rpm.py",
+        "litellm/cost_calculator.py",
+        "litellm/proxy/proxy_server.py"
+      ],
+      "testPaths": [
+        "tests/code_coverage_tests/router_code_coverage.py",
+        "router strategy tests",
+        "e2e budget/rate-limit/cost tests",
+        "Rust router tests"
+      ],
+      "reusableMechanisms": [
+        "deployment routing",
+        "fallback/cooldown",
+        "TPM/RPM accounting",
+        "cost calculation",
+        "spend tracking",
+        "provider catalog"
+      ],
+      "limitations": [
+        "full gateway/auth/storage/admin UI",
+        "enterprise directory has separate license",
+        "DSH already owns provider routing/retry/token metering"
+      ],
+      "reuseMode": "D; C for cost data/calculator only",
+      "finalDecision": "Do not integrate router/proxy; a user-deployed LiteLLM may be an external OpenAI-compatible endpoint, and USD cost support uses price data plus a thin adapter only",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "mcp",
+      "name": "Model Context Protocol",
+      "repository": "https://github.com/modelcontextprotocol/modelcontextprotocol",
+      "inspectedVersion": "spec 2026-07-28; TypeScript SDK 2.4.0; servers 2.4.0",
+      "inspectedCommit": "5f5440bb26a6 (spec release); 2be673cfa630 (spec docs head); 919bb8ea88b8 (SDK); e1dc4b18dbb9 (servers)",
+      "commitDate": "2026-11-10..15",
+      "license": "Apache-2.0/MIT transition; docs CC-BY-4.0",
+      "maintained": true,
+      "runtime": "TypeScript SDK Node >=20; protocol/servers",
+      "sourcePaths": [
+        "schema/",
+        "docs/specification/",
+        "packages/client",
+        "packages/server",
+        "src/ (MCP servers)"
+      ],
+      "testPaths": [
+        "typescript-sdk tests",
+        "MCP conformance tests",
+        "servers package tests"
+      ],
+      "reusableMechanisms": [
+        "tool/resource protocol",
+        "transports",
+        "OAuth/resource server patterns",
+        "conformance vocabulary"
+      ],
+      "limitations": [
+        "licensing transition",
+        "servers are independent products",
+        "do not vendor a second registry",
+        "DS-Bot loopback server hand-writes the 2025-03-26 initialize protocol while the official SDK supports the 2026-07-28 modern era",
+        "DSH and DS-Bot currently carry different MCP client package versions"
+      ],
+      "reuseMode": "B (already adopted)",
+      "finalDecision": "Use DSH mcp-client for outbound servers; replace the hand-written loopback server with the official server SDK and unify package versions",
+      "adoptedCode": true,
+      "noticeRequiredNow": false
+    },
+    {
+      "id": "opentelemetry-js",
+      "name": "OpenTelemetry JavaScript",
+      "repository": "https://github.com/open-telemetry/opentelemetry-js",
+      "inspectedVersion": "v3.1.1 upstream; current DSH app lock uses 2.11.0/0.222.0/API 1.9.1",
+      "inspectedCommit": "5a78e6ae",
+      "commitDate": "2026-11-13",
+      "license": "Apache-2.0",
+      "maintained": true,
+      "runtime": "Node/browser SDK, providers and OTLP exporters",
+      "sourcePaths": [
+        "packages/sdk-trace-base",
+        "packages/sdk-metrics",
+        "packages/sdk-logs",
+        "experimental/packages/exporter-trace-otlp-http",
+        "experimental/packages/otlp-exporter-base"
+      ],
+      "testPaths": [
+        "sdk trace/metric/log tests",
+        "exporter conformance tests",
+        "DSH packages/telemetry/otel/tests/session-log.spec.ts"
+      ],
+      "reusableMechanisms": [
+        "resource/scope attribution",
+        "batched channels",
+        "OTLP export",
+        "explicit shutdown ownership"
+      ],
+      "limitations": [
+        "no global provider by default",
+        "lossy best-effort export",
+        "dsh-otel is not in current app dependency set",
+        "OTel 3.1.1/0.301.1/API 1.10 requires coordinated DSH upgrade and Node >=22.15"
+      ],
+      "reuseMode": "B through DSH",
+      "finalDecision": "Do not add a direct SDK or global provider; use DSH ctx.otel and coordinate any upgrade through DSH",
+      "adoptedCode": false,
+      "noticeRequiredNow": false
+    }
+  ],
+  "features": [
+    {
+      "id": "chief-agent",
+      "title": "Chief Agent",
+      "status": "partial",
+      "existingDsBot": "Main Bot rights, group admin and group goals; no dedicated Chief product object",
+      "existingDsh": "agent loop and orchestration primitives",
+      "candidateIds": [
+        "hermes-agent",
+        "langgraph",
+        "temporal"
+      ],
+      "reuseMode": "D/E",
+      "integrationCost": "S–M",
+      "dependencies": "Existing Main Bot and group-goal services",
+      "compatibility": "No new identity or runtime required",
+      "finalDecision": "Present Chief as a product role over Main Bot + goals; do not add another runtime",
+      "migration": "Add role projection and prompts only after existing Main Bot behavior is frozen",
+      "acceptance": "A Main Bot can receive a goal, organize members, supervise execution and return verifiable completion evidence"
+    },
+    {
+      "id": "bot-lifecycle",
+      "title": "Bot lifecycle management",
+      "status": "native",
+      "existingDsBot": "roster.js, store.js, agents.js, turns.js and create/delete/duplicate actions",
+      "existingDsh": "Session persistence, agent lifecycle and scoped tools",
+      "candidateIds": [
+        "hermes-bot-mode",
+        "openmausbot"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot state + DSH sessions",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep DS-Bot lifecycle; no external roster import",
+      "migration": "No migration",
+      "acceptance": "Existing roster/delete/restart tests remain green"
+    },
+    {
+      "id": "bot-identity",
+      "title": "Bot identity and roles",
+      "status": "native",
+      "existingDsBot": "Main Bot list, instructions, character, model, workspace, group admin and capability attachment",
+      "existingDsh": "Execution Session identity and model selection",
+      "candidateIds": [
+        "hermes-bot-mode",
+        "openmausbot"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot state + DSH session",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep current identity model; DSH owns only execution identity",
+      "migration": "No migration",
+      "acceptance": "Roles and authorization tests pass across restart and model switch"
+    },
+    {
+      "id": "multi-agent-organization",
+      "title": "Multi-Agent organization",
+      "status": "native",
+      "existingDsBot": "Main Bots, members, groups, sections, local-agent Bots and team board",
+      "existingDsh": "Subagents and experimental Agent Teams",
+      "candidateIds": [
+        "hermes-agent",
+        "hermes-bot-mode",
+        "openmausbot",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None for current; M for optional DAG",
+      "dependencies": "DS-Bot roster and rooms",
+      "compatibility": "DSH Agent Teams has a different lead/subagent identity model",
+      "finalDecision": "Keep DS-Bot organization; extend task graph only after a failing test",
+      "migration": "No roster migration",
+      "acceptance": "A dynamic team can be assembled and its members remain independently addressable after restart"
+    },
+    {
+      "id": "bot-communication",
+      "title": "Bot-to-Bot communication",
+      "status": "native",
+      "existingDsBot": "delivery.js, ledger.js, inbox.js, backlog.js and request/response envelopes",
+      "existingDsh": "agent.send, steer, followup, Session inbox and events",
+      "candidateIds": [
+        "hermes-agent",
+        "openmausbot",
+        "opencode"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None now; M for envelope split",
+      "dependencies": "Durable ledger/inbox + DSH sessions",
+      "compatibility": "Current send funnel is the only product authority",
+      "finalDecision": "Keep delivery; apply the architecture blueprint's envelope/queue/waker split before new modes",
+      "migration": "Behavior-preserving extraction with table tests",
+      "acceptance": "Messages survive restart, coalesce correctly and never silently disappear"
+    },
+    {
+      "id": "group-chat",
+      "title": "Group chat and message routing",
+      "status": "native",
+      "existingDsBot": "groups.js rounds, mentions, relays, room logs, admin and group sessions",
+      "existingDsh": "Session primitives and message delivery",
+      "candidateIds": [
+        "hermes-bot-mode",
+        "openmausbot"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot rooms + DSH sessions",
+      "compatibility": "External room schemas are similar but incompatible",
+      "finalDecision": "Keep DS-Bot rooms; use external behavior as conformance cases",
+      "migration": "No migration",
+      "acceptance": "Mention, relay, admin, pause, timeout and recovery tests pass"
+    },
+    {
+      "id": "agent-dispatch",
+      "title": "Agent dispatch and scheduling",
+      "status": "native",
+      "existingDsBot": "turns.js, delivery.js, groups.js and steer.js",
+      "existingDsh": "Agent loop, step lifecycle, concurrency and cancellation",
+      "candidateIds": [
+        "hermes-agent",
+        "opencode",
+        "pi",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DSH agent loop",
+      "compatibility": "No second loop can be introduced",
+      "finalDecision": "Keep DSH dispatch; no runtime adapter",
+      "migration": "No migration",
+      "acceptance": "A user, Bot, group and scheduled trigger all run through the same turn path"
+    },
+    {
+      "id": "task-planning",
+      "title": "Task planning",
+      "status": "partial",
+      "existingDsBot": "Group goals with stages, acceptance, constraints and assigned tasks",
+      "existingDsh": "Plan/todo services and experimental shared task DAG",
+      "candidateIds": [
+        "langgraph",
+        "openmausbot",
+        "opencode"
+      ],
+      "reuseMode": "C/D",
+      "integrationCost": "M",
+      "dependencies": "Existing goals, handoffs and task ledger",
+      "compatibility": "Stage-based goals are not an arbitrary dependency graph",
+      "finalDecision": "Extend the existing goal model with dependencies/parallel branches only when required",
+      "migration": "Versioned goal schema migration with archived goals read-only",
+      "acceptance": "A goal with dependencies, one parallel branch and a blocked task is visible and executable without a second task store"
+    },
+    {
+      "id": "long-running-tasks",
+      "title": "Long-running task management",
+      "status": "partial",
+      "existingDsBot": "Group idle driver, handoffs, schedules, resume journal and task ledger",
+      "existingDsh": "Process-local jobs, schedule and non-resumable workflow",
+      "candidateIds": [
+        "temporal",
+        "langgraph",
+        "hermes-agent"
+      ],
+      "reuseMode": "D now; B later",
+      "integrationCost": "M now; L for Temporal",
+      "dependencies": "DS-Bot persistent task records + DSH execution primitives",
+      "compatibility": "Temporal would add a cluster; DSH jobs are not durable",
+      "finalDecision": "Keep local task path; define TaskRuntime seam; Temporal only after measured failure",
+      "migration": "Introduce TaskRuntime view before new storage; add backend adapter behind feature flag if needed",
+      "acceptance": "A task can be observed, paused, restarted and completed exactly once with an evidence trail"
+    },
+    {
+      "id": "session-management",
+      "title": "Session management",
+      "status": "native",
+      "existingDsBot": "Bot parts, group own-parts, current/earlier Session switching and archive",
+      "existingDsh": "Session format v4, persistence, projection, query and title services",
+      "candidateIds": [
+        "hermes-agent",
+        "opencode",
+        "pi"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot mapping + DSH session services",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep DSH persistence/query; DS-Bot only owns product mapping",
+      "migration": "No migration",
+      "acceptance": "Parts, archival and cross-restart Session reads pass"
+    },
+    {
+      "id": "context-compression",
+      "title": "Context compression",
+      "status": "native",
+      "existingDsBot": "steward.js, checkpoint/handoff summaries and memory snapshots",
+      "existingDsh": "Compaction engine, pruning and image offload",
+      "candidateIds": [
+        "hermes-agent",
+        "opencode",
+        "pi",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DSH compaction + DS-Bot Steward",
+      "compatibility": "Current path is already layered",
+      "finalDecision": "Keep DSH compaction and Steward; no copied or parallel compressor",
+      "migration": "No migration",
+      "acceptance": "Long turn, context pressure and checkpoint tests pass"
+    },
+    {
+      "id": "handoff",
+      "title": "Handoff",
+      "status": "native",
+      "existingDsBot": "Parent/child work tree, persistent result files, abandonment and restart recovery",
+      "existingDsh": "Agent messaging and subagent result delivery",
+      "candidateIds": [
+        "hermes-agent",
+        "hermes-bot-mode",
+        "openmausbot"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot handoff + DSH transport",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep DS-Bot handoff contract",
+      "migration": "No migration",
+      "acceptance": "Long result, nested work, abandonment and restart tests pass"
+    },
+    {
+      "id": "checkpoint",
+      "title": "Checkpoint and recovery",
+      "status": "partial",
+      "existingDsBot": "Session parts, inflight notes, handoff result files and ledger books",
+      "existingDsh": "Session replay; workflow has no journal/resume",
+      "candidateIds": [
+        "langgraph",
+        "temporal"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "M",
+      "dependencies": "DSH session event log + DS-Bot recovery records",
+      "compatibility": "No generic step checkpoint yet",
+      "finalDecision": "Use Session replay as the checkpoint base; add idempotency keys only after a reproduced duplicate",
+      "migration": "Define checkpoint fields alongside TaskRuntime view",
+      "acceptance": "Recovery from kill/restart leaves no duplicate external side effect and no lost pending message"
+    },
+    {
+      "id": "task-recovery",
+      "title": "Task recovery after restart",
+      "status": "partial",
+      "existingDsBot": "resume.js, handoff recovery tests and durable task ledger",
+      "existingDsh": "Session log replay; process-local jobs die with the process",
+      "candidateIds": [
+        "temporal",
+        "langgraph"
+      ],
+      "reuseMode": "D now; B later",
+      "integrationCost": "M now; L for Temporal",
+      "dependencies": "Existing DS-Bot durable files + DSH sessions",
+      "compatibility": "Local recovery exists but generic long-task recovery is incomplete",
+      "finalDecision": "Fix local gaps first; Temporal is conditional",
+      "migration": "Add a restart acceptance suite before any cluster",
+      "acceptance": "A multi-step task resumes after process kill with exact status, owner and next action"
+    },
+    {
+      "id": "long-term-memory",
+      "title": "Long-term memory",
+      "status": "native",
+      "existingDsBot": "Bot/group/team Markdown memory, journal, snapshots, summaries and archive",
+      "existingDsh": "Context injection points; no competing product memory store",
+      "candidateIds": [
+        "agentmemoryrepo",
+        "openviking"
+      ],
+      "reuseMode": "B/D",
+      "integrationCost": "None now; L for optional OpenViking adapter",
+      "dependencies": "Filesystem + DSH prompt context",
+      "compatibility": "Current format is already adopted and tested",
+      "finalDecision": "Keep local Markdown as source of truth; OpenViking is optional external adapter",
+      "migration": "No migration; adapter preserves scopes, ids, expiry, pin and undo semantics",
+      "acceptance": "Memory survives restart and every reader sees the same scoped fact"
+    },
+    {
+      "id": "memory-retrieval",
+      "title": "Memory retrieval",
+      "status": "native",
+      "existingDsBot": "BM25 ranking, auto-recall, recall tool, scope filters and prompt budget",
+      "existingDsh": "Context/session references and compaction",
+      "candidateIds": [
+        "openviking",
+        "obelisk"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None now",
+      "dependencies": "Local index + prompt assembly",
+      "compatibility": "Current implementation fits local-first product",
+      "finalDecision": "Keep local BM25; evaluate OpenViking tiers only on measured retrieval failure",
+      "migration": "No migration",
+      "acceptance": "Relevant facts are recalled under budget, with no cross-scope leak"
+    },
+    {
+      "id": "memory-correction",
+      "title": "Memory correction",
+      "status": "native",
+      "existingDsBot": "Append-only journal, retired.jsonl, batch undo, move/restore/forget, pin and expiry",
+      "existingDsh": "Session history only",
+      "candidateIds": [
+        "openviking",
+        "agentmemoryrepo"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot memory journal",
+      "compatibility": "Current semantics already exceed candidate runtime",
+      "finalDecision": "Keep journal and undo; do not replace with vector metadata",
+      "migration": "No migration",
+      "acceptance": "Every mutation has a reversible evidence row and stale/expired facts disappear"
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "status": "native",
+      "existingDsBot": "Shared capability library, skill/pack attachment and learning proposals",
+      "existingDsh": "Skill registry, discovery, catalog and tools",
+      "candidateIds": [
+        "hermes-agent",
+        "opencode",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DSH skills + DS-Bot capabilities",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep DSH skill registry and DS-Bot packs",
+      "migration": "No migration",
+      "acceptance": "Skill discovery, attachment, approval and next-turn activation pass"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP",
+      "status": "native",
+      "existingDsBot": "capabilities.js and local-agent adapter use DSH MCP plus official client 2.4.0; local-agents/mcp.js still hand-writes a 2025-03-26 loopback server",
+      "existingDsh": "MCP client, resources, transports and tool registration",
+      "candidateIds": [
+        "mcp"
+      ],
+      "reuseMode": "B",
+      "integrationCost": "None",
+      "dependencies": "DSH MCP + official MCP server/client SDK; one coordinated package version",
+      "compatibility": "Official protocol boundary; already compatible",
+      "finalDecision": "Use DSH mcp-client for outbound servers; replace the hand-written loopback server with the official server SDK and keep only the token/onCall adapter",
+      "migration": "Introduce official server transport behind the existing LoopbackMcp interface, then remove hand-written JSON-RPC",
+      "acceptance": "MCP server tools/resources pass conformance and permission tests"
+    },
+    {
+      "id": "tool-runtime",
+      "title": "Tool invocation",
+      "status": "native",
+      "existingDsBot": "Scoped team tools, hidden-tool mask and per-Bot capability attachment",
+      "existingDsh": "Tool registry, hooks, execution modes and step tool sets",
+      "candidateIds": [
+        "opencode",
+        "goose",
+        "pi"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DSH tools",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep DSH tool registry as the only path",
+      "migration": "No migration",
+      "acceptance": "Every visible tool is registered, scoped, authorized and audited"
+    },
+    {
+      "id": "browser",
+      "title": "Browser automation",
+      "status": "native",
+      "existingDsBot": "Bot-owned browser sessions, tasks, refs and script runner",
+      "existingDsh": "browser-use package and tools",
+      "candidateIds": [
+        "hermes-agent",
+        "openmausbot",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot browser bridge + DSH browser-use",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep Bot-owned browser lease and consent",
+      "migration": "No migration",
+      "acceptance": "Separate Bots cannot interfere and browser actions remain auditable"
+    },
+    {
+      "id": "computer",
+      "title": "Computer operation",
+      "status": "native",
+      "existingDsBot": "Computer leases, Mac helper, app grants, approvals and live indicators",
+      "existingDsh": "computer-use, sandbox and native adapters",
+      "candidateIds": [
+        "openmausbot",
+        "hermes-agent",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot computer gate + DSH computer-use",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Keep current consent/lease model",
+      "migration": "No migration",
+      "acceptance": "Foreground/background control, stop and app grant tests pass"
+    },
+    {
+      "id": "filesystem",
+      "title": "Filesystem and workspace",
+      "status": "native",
+      "existingDsBot": "Bot/group folders, scoped files, preview and save",
+      "existingDsh": "Workspace, filesystem, shell, sandbox and spill",
+      "candidateIds": [
+        "opencode",
+        "pi",
+        "goose"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DS-Bot folder policy + DSH filesystem",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Reuse DSH sandbox/filesystem; DS-Bot owns selection only",
+      "migration": "No migration",
+      "acceptance": "Traversal, scope, attachment and cross-platform file tests pass"
+    },
+    {
+      "id": "scheduled-tasks",
+      "title": "Scheduled tasks",
+      "status": "native",
+      "existingDsBot": "Schedules page, owner validation and Bot/group delivery",
+      "existingDsh": "Schedule service, recurrence, catch-up and historical Session changes",
+      "candidateIds": [
+        "hermes-agent",
+        "openmausbot"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None",
+      "dependencies": "DSH schedule + DS-Bot ownership",
+      "compatibility": "Current behavior is authoritative",
+      "finalDecision": "Use DSH schedule service and DS-Bot UI/ownership",
+      "migration": "No migration",
+      "acceptance": "Recurring, one-shot, catch-up, timeout and restart tests pass"
+    },
+    {
+      "id": "connectors",
+      "title": "Email, calendar and external connectors",
+      "status": "partial",
+      "existingDsBot": "Mail/IM/phone connectors and MCP connector catalog; no unified calendar model",
+      "existingDsh": "MCP/resources and connector runtime",
+      "candidateIds": [
+        "mcp",
+        "openmausbot"
+      ],
+      "reuseMode": "B/E",
+      "integrationCost": "M",
+      "dependencies": "MCP servers + OAuth/key boundaries + DSH tools",
+      "compatibility": "Do not create a fourth inbox or scheduler",
+      "finalDecision": "Add calendar only behind the existing connector/event boundary",
+      "migration": "Normalize external events into one typed model while retaining source ids",
+      "acceptance": "Connection, consent, retry, disconnect and scoped delivery tests pass"
+    },
+    {
+      "id": "model-runtime",
+      "title": "Model provider and DeepSeek runtime",
+      "status": "native",
+      "existingDsBot": "Per-Bot model, provider/key settings, model refresh and usage display",
+      "existingDsh": "llm providers, DeepSeek/pi-ai adapters, retry and token meter",
+      "candidateIds": [
+        "litellm"
+      ],
+      "reuseMode": "D; C for cost data only; external endpoint configuration only",
+      "integrationCost": "None now; S for external gateway",
+      "dependencies": "DSH provider registry; optional LiteLLM endpoint",
+      "compatibility": "No second router in DS-Bot",
+      "finalDecision": "Keep DSH as the sole model router; LiteLLM is only a user-deployed OpenAI-compatible endpoint. USD cost uses price data plus a thin adapter.",
+      "migration": "No migration",
+      "acceptance": "DeepSeek primary, fallback, rate-limit, cost and per-Bot model tests pass"
+    },
+    {
+      "id": "model-upgrade",
+      "title": "Model upgrade and compatibility",
+      "status": "partial",
+      "existingDsBot": "DSH pin, update flow, model refresh and provider tests",
+      "existingDsh": "Provider packages and exact release compatibility",
+      "candidateIds": [
+        "deepseek-harness",
+        "litellm"
+      ],
+      "reuseMode": "B",
+      "integrationCost": "S–M",
+      "dependencies": "Pinned DSH release + provider credentials",
+      "compatibility": "Upstream rc.3 is not yet the pinned baseline",
+      "finalDecision": "Separate compatibility branch and release gate; no local model catalog fork",
+      "migration": "Upgrade DSH pin with migration notes and rollback pin",
+      "acceptance": "A real Bot turn, tool call, MCP call and fallback pass on the new pin"
+    },
+    {
+      "id": "permissions",
+      "title": "Permissions, approval and sandbox",
+      "status": "native",
+      "existingDsBot": "Bot/group permissions, approval cards and privacy/secret checks",
+      "existingDsh": "Approval service, permission presets and sandbox policy",
+      "candidateIds": [
+        "goose",
+        "opencode",
+        "hermes-agent"
+      ],
+      "reuseMode": "D",
+      "integrationCost": "None now; M for governance audit",
+      "dependencies": "DS-Bot authorization + DSH approval/sandbox",
+      "compatibility": "Do not create a second policy engine",
+      "finalDecision": "Route every action through DSH approval/preset; add append-only product audit view",
+      "migration": "No migration; add audit event mapping",
+      "acceptance": "High-risk action is blocked without approval and appears in the audit trail"
+    },
+    {
+      "id": "observability",
+      "title": "Logging, metrics and traces",
+      "status": "partial",
+      "existingDsBot": "usage.sqlite, diagnostics, turn metrics, chat/task ledgers",
+      "existingDsh": "Session telemetry and ctx.otel seam; current coordinated OTel 2.11.0/0.222.0/API 1.9.1 line",
+      "candidateIds": [
+        "opentelemetry-js",
+        "obelisk"
+      ],
+      "reuseMode": "B through DSH",
+      "integrationCost": "S–M",
+      "dependencies": "DSH dsh-otel + coordinated OTel package line; no standalone NodeSDK",
+      "compatibility": "Current app does not mount dsh-otel by default",
+      "finalDecision": "Keep local-first; optional OTel export through ctx.otel only",
+      "migration": "Mount service in opt-in profile; keep local logs unchanged",
+      "acceptance": "Exported trace/metric/log has consent, redaction, bounded queue, coordinated version and shutdown proof"
+    },
+    {
+      "id": "control-center",
+      "title": "Control Center",
+      "status": "partial",
+      "existingDsBot": "Existing React shell, settings pages, team board, command palette and live activity",
+      "existingDsh": "UI slots, settings shell, client primitives and host services",
+      "candidateIds": [
+        "ds-bot"
+      ],
+      "reuseMode": "E",
+      "integrationCost": "M–L",
+      "dependencies": "Existing DS-Bot client stack",
+      "compatibility": "No external admin template is compatible",
+      "finalDecision": "Extend existing shell into Dashboard/Chat/Organization/Tasks; no second navigation",
+      "migration": "Add read-only pages first, then mutations through existing teamActions",
+      "acceptance": "Dashboard, Chat, Organization and Tasks render real data with loading/empty/error states and pass responsive visual checks"
+    },
+    {
+      "id": "information-hub",
+      "title": "Information Hub",
+      "status": "partial",
+      "existingDsBot": "Connectors, IM, mail, activity feed and Bot inbox",
+      "existingDsh": "MCP/web/browser and Session events",
+      "candidateIds": [
+        "mcp",
+        "openmausbot"
+      ],
+      "reuseMode": "C/E",
+      "integrationCost": "M",
+      "dependencies": "Connector adapters + normalized event type",
+      "compatibility": "No existing unified external-event schema",
+      "finalDecision": "Create one typed external-event model over connectors; no new scheduler or memory inbox",
+      "migration": "Backfill existing connector rows by source id",
+      "acceptance": "A mail/IM/web event reaches the inbox, is classified, linked to a task and can trigger an approved action"
+    },
+    {
+      "id": "evolution",
+      "title": "Evolution Engine",
+      "status": "partial",
+      "existingDsBot": "learning.js, goal skills and learning cards",
+      "existingDsh": "Skill registry and evaluation infrastructure",
+      "candidateIds": [
+        "hermes-agent",
+        "goose",
+        "opencode"
+      ],
+      "reuseMode": "E",
+      "integrationCost": "M",
+      "dependencies": "Learning, task runtime and reuse registry",
+      "compatibility": "No drop-in product equivalent",
+      "finalDecision": "Extend learning into a measured capability-gap -> research -> test -> integrate loop",
+      "migration": "Reuse registry is the durable decision memory",
+      "acceptance": "A repeated gap produces a tested skill or adapter with rollback and measured improvement"
+    },
+    {
+      "id": "execution-nodes",
+      "title": "Execution Nodes",
+      "status": "partial",
+      "existingDsBot": "Desktop/web, local-agent CLIs, workspaces and phone relay",
+      "existingDsh": "SSH, workspace, subprocess and schedule remote-host primitives",
+      "candidateIds": [
+        "temporal",
+        "openmausbot",
+        "hermes-agent"
+      ],
+      "reuseMode": "D/E",
+      "integrationCost": "M–L",
+      "dependencies": "DSH SSH/workspace primitives and current desktop bridge",
+      "compatibility": "No distributed node registry",
+      "finalDecision": "Use DSH primitives before designing a node protocol; no microservice split for appearance",
+      "migration": "Define node identity/health/lease only after local remote execution proves insufficient",
+      "acceptance": "A task can run on a remote workstation and return status/results after disconnect"
+    }
+  ],
+  "implementationOrder": [
+    "freeze the current delivery/message baseline with a plainRelay table test",
+    "split delivery envelope, queue and waker behind the existing public funnel",
+    "define a single TaskRuntime read model over goals, handoffs, task ledger, board archive and resume records",
+    "add a read-only Control Center projection before mutations",
+    "evaluate the pinned DSH upgrade in an isolated compatibility branch"
+  ],
+  "verification": [
+    "npm test",
+    "node scripts/build-client.mjs --check",
+    "npm run lint",
+    "dev/bench.sh smoke 3096 8796 reset && node dev/smoke.mjs smoke 3096 for host changes"
+  ]
+}
