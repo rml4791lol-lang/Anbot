@@ -43656,7 +43656,7 @@ function DataTabs({ tab, setTab, model, projectCount, agentCount, siteCount, bus
     }, (0, import_react67.createElement)(Icon), (0, import_react67.createElement)("span", null, label), count === null ? null : (0, import_react67.createElement)("i", null, count)))),
     tab === "team" ? null : (0, import_react67.createElement)(
       "button",
-      { type: "button", className: "bt-teamov-refresh", disabled: busy, onClick: refresh },
+      { type: "button", className: "bt-teamov-refresh", disabled: busy, "aria-label": busy ? t("Refreshing…") : t("Refresh"), title: busy ? t("Refreshing…") : t("Refresh"), onClick: refresh },
       (0, import_react67.createElement)(RefreshIcon),
       (0, import_react67.createElement)("span", null, busy ? t("Refreshing…") : t("Refresh"))
     )
@@ -44469,6 +44469,8 @@ function TeamOverviewTab({ useUi, useSurface, actions }) {
 var TEAM_OVERVIEW_CSS = `
 .bt-teamov-tab{position:fixed;z-index:29;right:0;top:44%;display:flex;flex-direction:column;align-items:center;gap:6px;width:30px;min-height:104px;padding:9px 0;border:.5px solid var(--bt-line-2);border-right:0;border-radius:10px 0 0 10px;background:var(--bt-glass-bg);color:var(--bt-ink-3);box-shadow:var(--bt-glass-shadow);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);font-family:var(--bt-font);cursor:pointer;transition:width .16s ease,color .12s ease,background-color .12s ease}
 .bt-teamov-tab:hover{width:34px;color:var(--bt-ink);background:var(--bt-card)}
+body:has(.tbh) .bt-teamov-tab{right:calc(min(380px,100vw - 204px) + 8px)}
+body:has(.tbh-toggle) .bt-teamov-tab{right:42px}
 .bt-teamov-tab svg{flex:none;width:14px;height:14px}
 .bt-teamov-tab span{writing-mode:vertical-rl;font-size:9px;line-height:14px;letter-spacing:.08em}
 .bt-teamov-tab:focus-visible{outline:2px solid var(--bt-accent);outline-offset:-2px}
@@ -44869,6 +44871,7 @@ var TEAM_OVERVIEW_CSS = `
 @media (max-width:980px){.bt-teamov-projects{grid-template-columns:1fr}.bt-teamov-agents{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-teamov-project-insights{grid-template-columns:1fr}}
 @media (max-width:640px){.bt-teamov-tab{top:78px;width:26px;min-height:88px}.bt-teamov-tab:hover{width:30px}.bt-teamov-tab span{font-size:8px}.bt-teamov-layer{padding:0}.bt-teamov{width:100%;height:100%;max-height:none;border:0;border-radius:0}.bt-teamov-top{height:68px;padding-inline:14px}.bt-teamov-summary{grid-template-columns:50px minmax(0,1fr);gap:12px;padding-inline:14px}.bt-teamov-ring{width:50px;height:50px}.bt-teamov-ring::before{inset:6px}.bt-teamov-stats{grid-template-columns:1fr 1fr;gap:7px 0}.bt-teamov-stat{padding-inline:9px}.bt-teamov-stat:nth-child(3){padding-left:0;border-left:0}.bt-teamov-body{padding-inline:14px}.bt-teamov-portfolio{padding-inline:14px;grid-template-columns:42px minmax(0,1fr);gap:9px}.bt-teamov-portfolio-stats{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr))}.bt-teamov-portfolio-stats>span{padding-inline:7px}.bt-teamov-portfolio-stats b{font-size:15px}.bt-teamov-portfolio-stats small{font-size:8px}.bt-teamov-databar{padding-inline:10px}.bt-teamov-tabitem{padding-inline:8px}.bt-teamov-tabitem svg{display:none}.bt-teamov-refresh span{display:none}.bt-teamov-project-side{max-width:46%}.bt-teamov-project-state{justify-content:flex-end;text-align:right;white-space:normal}.bt-teamov-project-progress{padding-left:12px}.bt-teamov-standards-grid{grid-template-columns:1fr}.bt-teamov-standard-block:last-child{grid-column:auto}.bt-teamov-standards-library-grid{grid-template-columns:1fr}.bt-teamov-completion-grid{grid-template-columns:1fr}.bt-teamov-project-insights{grid-template-columns:1fr}.bt-teamov-knowledge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-teamov-signal>small{min-height:0}.bt-teamov-agents{grid-template-columns:1fr}.bt-teamov-projects{grid-template-columns:1fr}.bt-teamov-memory-topic{display:none}.bt-teamov-add-project{flex-wrap:wrap}.bt-teamov-add-project input{flex-basis:100%}}
 @media (max-width:640px){.bt-teamov-work-toolbar{align-items:flex-start;flex-direction:column}.bt-teamov-work-row{grid-template-columns:39px minmax(0,1fr) 12px}.bt-teamov-work-row>time{display:none}.bt-teamov-work-signals{grid-column:2;justify-content:flex-start}.bt-teamov-work-row>svg{grid-column:3;grid-row:1/3}.bt-teamov-work-foot{align-items:center}.bt-teamov-work-empty{flex-wrap:wrap}.bt-teamov-work-empty .bt-soft{margin-left:28px}}
+@media (max-width:520px){body:has(.tbh) .bt-teamov-tab{top:calc(46vh + 12px);right:0}body:has(.tbh-toggle) .bt-teamov-tab{right:0}}
 ${SITES_CSS}
 `;
 
