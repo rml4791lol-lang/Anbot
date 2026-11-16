@@ -256,6 +256,9 @@ var JA = {
   "Warning": "警告",
   "No owner": "担当者なし",
   "Source": "ソース",
+  "Attempt": "試行",
+  "Handoff route": "ハンドオフ経路",
+  "Recovery": "復旧",
   "Latest checkpoint": "最新チェックポイント",
   "Next action": "次のアクション",
   "Blockers": "ブロッカー",
@@ -2637,6 +2640,9 @@ var KO = {
   "Warning": "경고",
   "No owner": "담당자 없음",
   "Source": "소스",
+  "Attempt": "시도",
+  "Handoff route": "핸드오프 경로",
+  "Recovery": "복구",
   "Latest checkpoint": "최근 체크포인트",
   "Next action": "다음 작업",
   "Blockers": "차단 요인",
@@ -5061,6 +5067,9 @@ var ES = {
   "Warning": "Aviso",
   "No owner": "Sin responsable",
   "Source": "Origen",
+  "Attempt": "Intento",
+  "Handoff route": "Ruta de traspaso",
+  "Recovery": "Recuperación",
   "Latest checkpoint": "Último punto de control",
   "Next action": "Siguiente acción",
   "Blockers": "Bloqueos",
@@ -7483,6 +7492,9 @@ var FR = {
   "Warning": "Avertissement",
   "No owner": "Sans responsable",
   "Source": "Source",
+  "Attempt": "Tentative",
+  "Handoff route": "Chemin de transfert",
+  "Recovery": "Récupération",
   "Latest checkpoint": "Dernier point de contrôle",
   "Next action": "Prochaine action",
   "Blockers": "Blocages",
@@ -9864,6 +9876,9 @@ var DE = {
   "Warning": "Warnung",
   "No owner": "Kein Verantwortlicher",
   "Source": "Quelle",
+  "Attempt": "Versuch",
+  "Handoff route": "Übergabeweg",
+  "Recovery": "Wiederherstellung",
   "Latest checkpoint": "Letzter Kontrollpunkt",
   "Next action": "Nächste Aktion",
   "Blockers": "Blockierungen",
@@ -12268,6 +12283,9 @@ var ZH = {
   "Warning": "警告",
   "No owner": "未指定负责人",
   "Source": "来源",
+  Attempt: "尝试",
+  "Handoff route": "交接路径",
+  Recovery: "恢复",
   "Latest checkpoint": "最近进度",
   "Next action": "下一步",
   "Blockers": "阻塞",
@@ -41070,6 +41088,9 @@ var copyText = () => ({
   stage: t("Stage"),
   warning: t("Warning"),
   noOwner: t("No owner"),
+  attempt: t("Attempt"),
+  handoffRoute: t("Handoff route"),
+  recovery: t("Recovery"),
   latestCheckpoint: t("Latest checkpoint"),
   nextAction: t("Next action"),
   blockers: t("Blockers"),
@@ -41298,6 +41319,9 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
   ];
   const stageTitle = detail?.location?.stageTitle || shown.stageTitle;
   const blockers = Array.isArray(detail?.blockers) ? detail.blockers : [];
+  const attempt = detail?.attempt;
+  const handoff = detail?.handoff;
+  const recovery = detail?.recovery;
   const evidence = Array.isArray(detail?.evidence) ? detail.evidence : [];
   const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : [];
   const controls = Array.isArray(detail?.controls) ? detail.controls : [];
@@ -41336,7 +41360,10 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
       (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.status), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-status", "data-status": shown.sourceStatus }, shown.sourceStatus))),
       (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.sourceId), (0, import_react66.createElement)("dd", { className: "bt-activity-id" }, shown.sourceId || shown.id)),
       ...stageTitle ? [(0, import_react66.createElement)("div", { key: "stage" }, (0, import_react66.createElement)("dt", null, copy2.stage), (0, import_react66.createElement)("dd", null, stageTitle))] : [],
+      ...detail && attempt ? [(0, import_react66.createElement)("div", { key: "attempt" }, (0, import_react66.createElement)("dt", null, copy2.attempt), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-id" }, `${attempt.id || copy2.none}${attempt.number ? ` · ${attempt.number}` : ""}${attempt.status ? ` · ${attempt.status}` : ""}`)))] : [],
+      ...detail && handoff ? [(0, import_react66.createElement)("div", { key: "handoff" }, (0, import_react66.createElement)("dt", null, copy2.handoffRoute), (0, import_react66.createElement)("dd", null, [handoff.from?.name || handoff.from?.id, handoff.to?.name || handoff.to?.id].filter(Boolean).join(" → ") || copy2.none, handoff.status ? ` · ${handoff.status}` : "", handoff.name ? ` · ${handoff.name}` : ""))] : [],
       ...detail ? [(0, import_react66.createElement)("div", { key: "checkpoint" }, (0, import_react66.createElement)("dt", null, copy2.latestCheckpoint), (0, import_react66.createElement)("dd", null, detail.checkpoint?.text || copy2.none))] : [],
+      ...detail && recovery ? [(0, import_react66.createElement)("div", { key: "recovery" }, (0, import_react66.createElement)("dt", null, copy2.recovery), (0, import_react66.createElement)("dd", null, recovery.records?.length > 0 ? recovery.records.map((item) => `${item.kind}: ${item.summary}`).join(" · ") : copy2.none))] : [],
       ...detail ? [(0, import_react66.createElement)("div", { key: "next" }, (0, import_react66.createElement)("dt", null, copy2.nextAction), (0, import_react66.createElement)("dd", null, detail.nextAction?.text || copy2.none))] : [],
       ...detail ? [(0, import_react66.createElement)("div", { key: "blockers" }, (0, import_react66.createElement)("dt", null, copy2.blockers), (0, import_react66.createElement)("dd", null, blockers.length > 0 ? (0, import_react66.createElement)("ul", { className: "bt-task-blockers" }, blockers.map((item) => (0, import_react66.createElement)("li", { key: item.id, "data-kind": item.kind }, item.text))) : copy2.noBlockers))] : [],
       ...parentText ? [(0, import_react66.createElement)("div", { key: "parent" }, (0, import_react66.createElement)("dt", null, copy2.parent), (0, import_react66.createElement)("dd", null, parentText))] : [],

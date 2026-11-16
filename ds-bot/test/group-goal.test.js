@@ -509,6 +509,27 @@ test('a paused goal and a room at work do not get a goal check', async (t) => {
   assert.equal(host.takeGoal(), undefined)
 })
 
+test('an explicit goal task identity binds evidence from the Bot own chat', async (t) => {
+  const host = await start(t)
+  await startGoal(host)
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const task = goal(host).stages[0].tasks[0]
+  const taskId = `goal:${goal(host).id}:${goal(host).stages[0].id}:${task.id}`
+  host.emit('b', 'turn/start', { turn: 1 })
+  host.emit('b', 'user/message', {
+    content: [{ type: 'text', text: 'Run the checks.' }],
+    source: { kind: 'ds-bot', taskId, attemptId: task.attempt.id, exchangeId: 'explicit-task' },
+  })
+  host.emit('b', 'tool/call', { callId: 'c1', name: 'shell', arguments: JSON.stringify({ command: 'npm test' }) })
+  host.emit('b', 'tool/result', { callId: 'c1', exitCode: 0, message: { ok: true, exitCode: 0, content: [{ type: 'text', text: 'green' }] } })
+  await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === 1)
+  const current = goal(host).stages[0].tasks[0]
+  assert.equal(current.attempt.id, task.attempt.id)
+  assert.equal(current.attempt.sessionId, 'b')
+  assert.equal(current.evidence[0].attemptId, task.attempt.id)
+  assert.equal(current.evidence[0].command.text, 'npm test')
+})
+
 test('the goal tracks tasks as the admin calls and members answer', async (t) => {
   const host = await start(t)
   await startGoal(host)

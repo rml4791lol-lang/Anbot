@@ -84,6 +84,9 @@ const detailData = {
     { id: 'e-verified', trust: 'verified', title: 'Acceptance', text: 'All checks matched', at: 12, sourceId: 'room-s1:8', artifact: { path: 'dist/app.zip', digest: 'sha256:abc' } },
   ],
   artifacts: [{ path: 'dist/app.zip', name: 'app.zip', digest: 'sha256:abc', trust: 'verified', at: 12, sourceId: 'room-s1:8' }],
+  attempt: { id: 't1:a1', number: 1, status: 'working', startedAt: 5, updatedAt: 12, sessionId: 'room-s1', exchangeId: 'review-1', turn: 7 },
+  handoff: { id: 'w1', parentId: 'w0', name: 'Review the repair', status: 'active', from: { id: 'chief', name: 'Chief' }, to: { id: 'forge', name: 'Forge' }, open: 0, results: 0 },
+  recovery: { state: 'recovered', records: [{ id: 't1:a1:resumed:review-1', at: 9, attemptId: 't1:a1', kind: 'resumed', summary: 'Same attempt resumed after restart.' }] },
   verification: { status: 'verified', reason: 'All declared acceptance checks matched.' },
   trace: {
     status: 'ready', sourceTaskId: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', sessionIds: ['room-s1'], truncated: false,
@@ -170,6 +173,11 @@ test('TeamActivityView renders the selected task operating detail, evidence ladd
   assert.match(text(view), /Latest checkpoint/)
   assert.match(text(view), /Implementation complete/)
   assert.match(text(view), /Next action/)
+  assert.match(text(view), /Attempt/)
+  assert.match(text(view), /t1:a1/)
+  assert.match(text(view), /Chief.*Forge/)
+  assert.match(text(view), /Recovery/)
+  assert.match(text(view), /Same attempt resumed after restart/)
   assert.match(text(view), /Run the acceptance checks/)
   assert.match(text(view), /Blockers/)
   assert.match(text(view), /Waiting for w2 to return/)

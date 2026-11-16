@@ -11,6 +11,7 @@ import { output } from './tools.js'
 import {
   evidenceFromEvents,
   invalidateAcceptance,
+  noteAttemptRecovery,
   progressAfterTurn,
   progressFingerprint,
   verifyAcceptance,
@@ -677,6 +678,7 @@ const RESUME_LINE = 'The user resumed the goal. Take the next step now.'
 export function install(rt) {
   const { ctx, state } = rt
   const callsBySession = new Map()
+  const tasksBySession = new Map()
 
   const memberOf = room => (ref) => {
     const bot = rt.findBot(ref)
@@ -957,7 +959,7 @@ export function install(rt) {
     if (evidence.length === 0) return false
     const paths = evidence.flatMap(item => [item.artifact?.path, ...(item.diff?.paths ?? [])]).filter(Boolean)
     const invalidated = paths.length > 0 ? invalidatePaths(paths, evidence, now) : false
-    const target = targetForSession(sessionId)
+    const target = tasksBySession.get(sessionId) ?? targetForSession(sessionId)
     if (target === undefined) return invalidated
     const { task } = target
     if (task.attempt === undefined) startTaskAttempt(task, now, { sessionId })
@@ -1123,21 +1125,26 @@ export function install(rt) {
 
   function bind(sessionId, info, turn) {
     if (rt.readOnly() !== undefined) return undefined
-    const target = targetForSession(sessionId)
+    const target = info?.taskId === undefined
+      ? targetForSession(sessionId)
+      : taskByIdentity(info.taskId, info.attemptId)
     if (target === undefined) return undefined
+    tasksBySession.set(sessionId, target)
     const now = Date.now()
     if (target.task.attempt === undefined) startTaskAttempt(target.task, now, { sessionId })
     else target.task.attempt.sessionId = sessionId
     if (info?.exchangeId !== undefined) target.task.attempt.exchangeId = info.exchangeId
     if (Number.isInteger(turn)) target.task.attempt.turn = turn
     target.task.attempt.updatedAt = now
+    noteAttemptRecovery(target.task, { attemptId: target.task.attempt.id, info, sessionId, now })
     void rt.save().catch(() => {})
     return { taskId: `goal:${target.goal.id}:${target.stage.id}:${target.task.id}`, attemptId: target.task.attempt.id }
   }
 
   function finishTurn(sessionId, outcome = 'completed') {
     if (rt.readOnly() !== undefined || outcome !== 'completed') return false
-    const target = targetForSession(sessionId)
+    const target = tasksBySession.get(sessionId) ?? targetForSession(sessionId)
+    tasksBySession.delete(sessionId)
     if (target === undefined || target.task.attempt === undefined) return false
     const now = Date.now()
     target.task.progress = progressAfterTurn(target.task.progress, currentEvidence(target.task), { now })

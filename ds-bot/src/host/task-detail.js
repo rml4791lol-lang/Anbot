@@ -402,6 +402,57 @@ export function taskSessionIds({ state, activity, taskId } = {}) {
   return ids.slice(0, 4)
 }
 
+function attemptFor(raw) {
+  const attempt = raw?.task?.attempt ?? raw?.work?.attempt
+  if (!attempt || typeof attempt !== 'object') return null
+  return {
+    id: text(attempt.id),
+    number: Number.isInteger(attempt.n) ? attempt.n : null,
+    status: text(attempt.status) || 'unknown',
+    startedAt: timeOf(attempt.startedAt),
+    updatedAt: timeOf(attempt.updatedAt),
+    ...(text(attempt.sessionId) ? { sessionId: text(attempt.sessionId) } : {}),
+    ...(text(attempt.exchangeId) ? { exchangeId: text(attempt.exchangeId) } : {}),
+    ...(Number.isInteger(attempt.turn) ? { turn: attempt.turn } : {}),
+  }
+}
+
+function handoffFor(raw, state) {
+  const ids = raw?.work ?? raw?.task?.handoff
+  if (!ids || typeof ids !== 'object') return null
+  const fromId = text(ids.from)
+  const toId = text(ids.to)
+  const open = Array.isArray(ids.open) ? ids.open.length : Number.isInteger(ids.open) ? ids.open : 0
+  const results = Array.isArray(ids.results) ? ids.results.length : Number.isInteger(ids.results) ? ids.results : 0
+  return {
+    id: text(raw?.work ? raw.id : ids.id),
+    parentId: text(ids.parent) || null,
+    name: redactText(ids.name),
+    status: text(ids.status) || (open > 0 ? 'waiting' : 'active'),
+    from: { id: fromId || null, name: redactText(state?.bots?.[fromId]?.name ?? ids.fromName) },
+    to: { id: toId || null, name: redactText(state?.bots?.[toId]?.name ?? ids.toName) },
+    open,
+    results,
+  }
+}
+
+function recoveryFor(raw) {
+  const declared = raw?.task?.recovery ?? raw?.work?.recovery
+  const records = (Array.isArray(declared) ? declared : []).filter(item => item && typeof item === 'object').map(item => ({
+    id: text(item.id),
+    at: timeOf(item.at ?? item.time),
+    attemptId: text(item.attemptId) || null,
+    kind: text(item.kind) || 'recovery',
+    summary: redactText(item.summary ?? item.text),
+    ...(text(item.sessionId) ? { sessionId: text(item.sessionId) } : {}),
+  }))
+  if (records.length === 0 && raw?.work?.late === true) records.push({
+    id: `${text(raw.id)}:late`, at: null, attemptId: text(raw.work.attempt?.id) || null,
+    kind: 'late', summary: 'This request reached its owner only after a restart.',
+  })
+  return { state: records.length === 0 ? 'none' : 'recovered', records }
+}
+
 function blockersFor(raw, task) {
   const blockers = []
   for (const warning of Array.isArray(task.warnings) ? task.warnings : []) {
@@ -476,6 +527,9 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
       missing: activityTask.ownerKind === 'unknown',
     },
     location: locationFor(activityTask, raw),
+    attempt: attemptFor(raw),
+    handoff: handoffFor(raw, state),
+    recovery: recoveryFor(raw),
     checkpoint: checkpointFor(raw, activityTask),
     nextAction: nextActionFor(raw, activityTask),
     blockers,

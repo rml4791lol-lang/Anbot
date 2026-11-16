@@ -36,6 +36,22 @@ const commandOf = (argumentsText) => {
   return typeof command === 'string' && command.trim() !== '' ? command.trim() : undefined
 }
 
+export function noteAttemptRecovery(record, { attemptId, info, sessionId, now = Date.now() } = {}) {
+  const kind = info?.resumed === true ? 'resumed' : info?.resent === true ? 'resent' : undefined
+  if (!record || typeof record !== 'object' || kind === undefined || attemptId === undefined) return false
+  const exchangeId = text(info?.exchangeId)
+  const id = `${attemptId}:${kind}:${exchangeId || text(sessionId)}`
+  const summary = kind === 'resumed'
+    ? 'The same task attempt resumed after the host restarted.'
+    : 'The queued handoff was delivered again after the host restarted.'
+  record.recovery = [
+    ...(Array.isArray(record.recovery) ? record.recovery.filter(item => item?.id !== id) : []),
+    { id, at: now, attemptId, kind, summary, ...(text(sessionId) ? { sessionId: text(sessionId) } : {}), ...(exchangeId ? { exchangeId } : {}) },
+  ].slice(-16)
+  record.attempt = { ...record.attempt, recoveredAt: now }
+  return true
+}
+
 export function evidenceFromEvents({ sessionId, actor, events } = {}) {
   const evidence = []
   const calls = new Map()
