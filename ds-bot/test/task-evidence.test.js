@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import {
+  evidenceFromEvents,
+  invalidateAcceptance,
+  progressAfterTurn,
+  verifyAcceptance,
+} from '../src/host/task-evidence.js'
+
+const textBlock = text => [{ type: 'text', text }]
+
+test('only an exact successful command result satisfies a command check', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    actor: { botId: 'b1' },
+    events: [
+      { seq: 1, time: 10, type: 'assistant/message', data: { message: { content: textBlock('done') } } },
+      { seq: 2, time: 11, type: 'tool/call', data: { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) } },
+      { seq: 3, time: 12, type: 'tool/result', data: { callId: 'c1', message: { ok: true, content: textBlock('tests pass') } } },
+    ],
+  })
+  assert.deepEqual(evidence.map(item => item.state), ['reported', 'executed'])
+  assert.equal(evidence[1].command.text, 'npm test')
+  assert.equal(evidence[1].command.exitCode, 0)
+  assert.match(evidence[1].command.outputDigest, /^sha256:[a-f0-9]{64}$/)
+
+  const check = { id: 'c1', kind: 'command', label: 'tests', required: true, command: 'npm test', expect: { exitCode: 0 } }
+  assert.equal(verifyAcceptance({ checks: [check], evidence, now: 13 }).state, 'verified')
+  assert.equal(verifyAcceptance({ checks: [{ ...check, command: 'npm run test' }], evidence, now: 13 }).state, 'pending')
+  assert.equal(verifyAcceptance({ checks: [{ ...check, expect: { exitCode: 1 } }], evidence, now: 13 }).state, 'pending')
+})
+
+test('artifact and diff checks bind exact digests and go stale when those change', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    events: [
+      { seq: 1, time: 10, type: 'deliverables/presented', data: { files: [{ path: 'dist/app.zip', digest: 'sha256:artifact' }] } },
+      { seq: 2, time: 11, type: 'tool/call', data: { callId: 'd1', name: 'edit', arguments: '{}' } },
+      { seq: 3, time: 12, type: 'tool/result', data: { callId: 'd1', message: { ok: true, content: textBlock('edited'), meta: { diffs: [{ path: 'src/app.js', oldText: 'a', newText: 'b' }] } } } },
+    ],
+  })
+  const diff = evidence.find(item => item.state === 'executed' && item.diff !== undefined)
+  assert.deepEqual(diff.diff.paths, ['src/app.js'])
+  assert.match(diff.diff.digest, /^sha256:[a-f0-9]{64}$/)
+
+  const checks = [
+    { id: 'artifact', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:artifact' } },
+    { id: 'diff', kind: 'diff', path: 'src/app.js', expect: { digest: diff.diff.digest } },
+  ]
+  const verified = verifyAcceptance({ checks, evidence, now: 13 })
+  assert.equal(verified.state, 'verified')
+  assert.deepEqual(verified.artifactDigests, { 'dist/app.zip': 'sha256:artifact' })
+  assert.deepEqual(verified.diffDigests, { 'src/app.js': diff.diff.digest })
+
+  const stale = invalidateAcceptance(verified, {
+    artifacts: { 'dist/app.zip': 'sha256:changed' },
+    diffs: { 'src/app.js': 'sha256:changed-diff' },
+  }, 14)
+  assert.equal(stale.state, 'stale')
+  assert.deepEqual(stale.invalidated, ['dist/app.zip', 'src/app.js'])
+})
+
+test('every required check must bind its own matching evidence', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    events: [
+      { seq: 1, time: 10, type: 'tool/call', data: { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) } },
+      { seq: 2, time: 11, type: 'tool/result', data: { callId: 'c1', message: { ok: true, content: textBlock('green') } } },
+    ],
+  })
+  const checks = [
+    { id: 'tests', kind: 'command', command: 'npm test', expect: { exitCode: 0 } },
+    { id: 'artifact', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:app' } },
+  ]
+  const verification = verifyAcceptance({ checks, evidence, now: 12 })
+  assert.equal(verification.state, 'pending')
+  assert.deepEqual(verification.missing, ['artifact'])
+  assert.deepEqual(verification.checks.map(item => [item.id, item.status]), [['tests', 'verified'], ['artifact', 'pending']])
+})
+
+test('one evidence record cannot satisfy two declared checks', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    events: [
+      { seq: 1, time: 10, type: 'tool/call', data: { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) } },
+      { seq: 2, time: 11, type: 'tool/result', data: { callId: 'c1', message: { ok: true, content: textBlock('green') } } },
+    ],
+  })
+  const verification = verifyAcceptance({
+    checks: [
+      { id: 'first', kind: 'command', command: 'npm test', expect: { exitCode: 0 } },
+      { id: 'second', kind: 'command', command: 'npm test', expect: { exitCode: 0 } },
+    ],
+    evidence,
+    now: 12,
+  })
+  assert.equal(verification.state, 'pending')
+  assert.deepEqual(verification.missing, ['second'])
+})
+
+test('two completed turns without new executed evidence stall the task', () => {
+  const reported = name => [{ id: name, state: 'reported', summary: name }]
+  const first = progressAfterTurn(undefined, reported('looks good'), { now: 10, limit: 2 })
+  assert.deepEqual([first.state, first.unchangedTurns], ['moving', 1])
+  const second = progressAfterTurn(first, reported('still looks good'), { now: 11, limit: 2 })
+  assert.deepEqual([second.state, second.unchangedTurns], ['stalled', 2])
+})
+
+test('new executed evidence resets the no-progress count', () => {
+  const first = progressAfterTurn(undefined, [], { now: 10, limit: 2 })
+  const executed = [{ id: 'ev-1', state: 'executed', source: 'tool-result', command: { text: 'npm test', exitCode: 0 }, at: 11 }]
+  const second = progressAfterTurn(first, executed, { now: 11, limit: 2 })
+  assert.deepEqual([second.state, second.unchangedTurns], ['moving', 0])
+  const third = progressAfterTurn(second, executed, { now: 12, limit: 2 })
+  assert.deepEqual([third.state, third.unchangedTurns], ['moving', 1])
+})
+
+test('command exit and artifact digest must be present, not merely implied', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    events: [
+      { seq: 1, time: 10, type: 'tool/call', data: { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) } },
+      { seq: 2, time: 11, type: 'tool/result', data: { callId: 'c1', message: { content: textBlock('unknown') } } },
+      { seq: 3, time: 12, type: 'deliverables/presented', data: { files: [{ path: 'dist/app.zip' }] } },
+    ],
+  })
+  assert.equal(verifyAcceptance({
+    checks: [{ id: 'tests', kind: 'command', command: 'npm test', expect: { exitCode: 0 } }],
+    evidence,
+    now: 13,
+  }).state, 'pending')
+  assert.equal(verifyAcceptance({
+    checks: [{ id: 'artifact', kind: 'artifact', path: 'dist/app.zip' }],
+    evidence,
+    now: 13,
+  }).state, 'pending')
+})

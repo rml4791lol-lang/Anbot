@@ -97,6 +97,8 @@ const triggerOf = info => ({
   ...(info.senderSessionId ? { senderSessionId: info.senderSessionId } : {}),
   ...(info.roomId ? { roomId: info.roomId } : {}),
   ...(info.work ? { work: info.work } : {}),
+  ...(info.taskId ? { taskId: info.taskId } : {}),
+  ...(info.attemptId ? { attemptId: info.attemptId } : {}),
   ...(info.audience ? { audience: info.audience } : {}),
   ...(info.askedBy ? { askedBy: info.askedBy } : {}),
   ...(info.senderRoomId ? { senderRoomId: info.senderRoomId } : {}),
@@ -318,6 +320,10 @@ export function install(rt) {
     const bot = rt.botOf(record.botId)
     if (bot === undefined) return
     const text = resumeText(record)
+    const identity = {
+      ...(record.trigger?.taskId ? { taskId: record.trigger.taskId } : {}),
+      ...(record.trigger?.attemptId ? { attemptId: record.trigger.attemptId } : {}),
+    }
     if (record.roomId !== undefined) {
       const room = rt.roomOf(record.roomId)
       if (room === undefined || !room.members.includes(bot.id)) return
@@ -325,18 +331,18 @@ export function install(rt) {
       // A turn already picked up once and cut off again stays stopped: a restart loop
       // must not run it forever.
       if (record.resumed) return
-      await rt.deliver({ toId: bot.id, sessionId: room.sessions?.[bot.id] ?? sessionId, role: 'room', roomId: room.id, note: 'picking up after a restart', resumed: true, text, ...(record.trigger?.askedBy ? { askedBy: record.trigger.askedBy } : {}) })
+      await rt.deliver({ toId: bot.id, sessionId: room.sessions?.[bot.id] ?? sessionId, role: 'room', roomId: room.id, note: 'picking up after a restart', resumed: true, text, ...identity, ...(record.trigger?.askedBy ? { askedBy: record.trigger.askedBy } : {}) })
       return
     }
     if (record.resumed) return
     const trigger = record.trigger
     if ((trigger?.role === 'request' || trigger?.role === 'stopped') && trigger.senderSessionId && trigger.audience !== 'user' && rt.botOf(trigger.senderSessionId)) {
       // The sender still waits for this turn's answer, so it goes on under the same exchange.
-      await rt.deliver({ fromId: trigger.senderSessionId, toId: bot.id, role: trigger.role, ...(trigger.exchangeId ? { exchangeId: trigger.exchangeId } : {}), ...(trigger.senderRoomId ? { fromRoomId: trigger.senderRoomId } : {}), resumed: true, text })
+      await rt.deliver({ fromId: trigger.senderSessionId, toId: bot.id, role: trigger.role, ...(trigger.exchangeId ? { exchangeId: trigger.exchangeId } : {}), ...(trigger.senderRoomId ? { fromRoomId: trigger.senderRoomId } : {}), ...identity, resumed: true, text })
       return
     }
     // A turn that went on with work another Bot asked for still owes that Bot its answer.
-    await rt.deliver({ toId: bot.id, role: 'resume', resumed: true, text, ...(trigger?.work ? { work: trigger.work } : {}) })
+    await rt.deliver({ toId: bot.id, role: 'resume', resumed: true, text, ...(trigger?.work ? { work: trigger.work } : {}), ...identity })
   }
 
   // Where a queued note goes now: its Session if it still is one, else the
@@ -531,6 +537,15 @@ export function install(rt) {
         const key = sessionFor(oldId, item.args) ?? oldId
         queued = { ...queued, [key]: [...(queued[key] ?? []), item] }
       }
+    }
+    for (const [sessionId, record] of Object.entries(noted)) {
+      const events = await logOf(sessionId).catch((error) => {
+        rt.warn('ds-bot: evidence for %s could not be read after restart: %s', sessionId, error)
+        return undefined
+      })
+      if (events === undefined) continue
+      rt.reconcileGoalEvidence?.(sessionId, events, record.trigger)
+      rt.reconcileWorkEvidence?.(sessionId, events, record.trigger)
     }
     persist()
     // Agents and inboxes are read before anything wakes their Sessions.
