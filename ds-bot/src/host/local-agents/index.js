@@ -115,7 +115,10 @@ export function install(rt) {
 
   let registration
   let disposed = false
-  const supported = () => !disposed && typeof ctx.llm?.registerAdapter === 'function'
+  const supported = () => {
+    if (disposed) return false
+    try { return typeof ctx.llm?.registerAdapter === 'function' } catch { return false }
+  }
   const usedRefs = () => [...new Set(Object.values(state.bots ?? {}).flatMap(bot => [bot.model, bot.appliedModel]).filter(Boolean))]
   // A route a Bot runs on stays registered when its CLI goes away: the turn then fails
   // with the repair card, and nothing moves the Bot to another run mode by itself.
@@ -133,7 +136,9 @@ export function install(rt) {
   // Custom agents hold a route whether or not their command resolves yet; a
   // missing one fails at prompt time with a typed error.
   applyRoutes()
-  void scan().catch(error => { if (!disposed) rt.warn('ds-bot: local-agent scan failed: %s', error) })
+  void scan().catch(error => {
+    if (!disposed) rt.warn('ds-bot: local-agent scan failed: %s', error)
+  })
   // Custom agents arrive with the state load; their routes register then too.
   void rt.load?.().then(() => applyRoutes()).catch(() => {})
   // The callback returns the disposer: running adapter.dispose() inside the
