@@ -914,6 +914,7 @@ export const KO = {
   // Bot exchange
   'Bot exchange': 'Bot 간 대화',
   'Bot exchange transcript': 'Bot 간 대화 기록',
+  'Open bot exchange': 'Bot 간 대화 열기',
   'No messages yet': '아직 메시지 없음',
   'Close Chat': '닫기',
   'Show all · {count} characters': '전체 표시 · {count}자',

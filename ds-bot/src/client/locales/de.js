@@ -914,6 +914,7 @@ export const DE = {
   // Bot exchange
   'Bot exchange': 'Bot-Austausch',
   'Bot exchange transcript': 'Protokoll des Bot-Austauschs',
+  'Open bot exchange': 'Bot-Austausch öffnen',
   'No messages yet': 'Noch keine Nachrichten',
   'Close Chat': 'Schließen',
   'Show all · {count} characters': 'Alles anzeigen · {count} Zeichen',

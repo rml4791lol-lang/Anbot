@@ -906,6 +906,7 @@ export const FR = {
   "Try a Bot name or words from a message": "Essayez le nom d’un Bot ou des mots d’un message",
   "Bot exchange": "Échange entre Bots",
   "Bot exchange transcript": "Transcription de l’échange entre Bots",
+  "Open bot exchange": "Ouvrir l’échange entre Bots",
   "No messages yet": "Aucun message pour le moment",
   "Close Chat": "Fermer",
   "Show all · {count} characters": "Tout afficher · {count} caractères",
