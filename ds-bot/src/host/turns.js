@@ -50,9 +50,10 @@ export function answerSender(rt, id, source, text, long, silent = false) {
   const body = marker === '' ? (long?.text ?? text) : `${marker}${long?.text ?? text}`
   const length = long === undefined ? undefined : late === undefined ? long.length : (long.length ?? text.length) + marker.length
   // An answer with nothing in it wakes the asker for nothing: the work above is already
-  // closed with what came back, and the asker reads it at its next turn. A late answer
+  // closed with what came back, and the asker reads it at its next turn. Only punctuation
+  // or space is nothing; one letter, digit or CJK character is an answer. A late answer
   // and one that went as a file still go out.
-  if (late === undefined && long === undefined && body.trim() === '') return
+  if (late === undefined && long === undefined && !/[\p{L}\p{N}]/u.test(body)) return
   const exchangeId = randomUUID()
   void rt.deliver({
     fromId: rt.selfOf(id),
@@ -484,6 +485,8 @@ export function install(rt) {
     const waiting = new Map()
     for (const id of sessionIds) {
       await stopSubagents(id)
+      // A batch still waiting for this Session never reaches the Bot that is gone.
+      rt.dropWaiting?.(id)
       const entry = live.get(id)
       const held = [entry?.info, entry?.pending, ...(entry?.joined ?? []).map(joined => joined.info)]
       if (entry?.turn !== undefined) {

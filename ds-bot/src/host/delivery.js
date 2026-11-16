@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { HISTORY_TIMEOUT_MS, LONG_HEAD, MESSAGE_INLINE_MAX, READ_LINE_MAX, SOURCE_KIND, TEXT_KEPT, TEXT_SHOW_MAX } from './constants.js'
 import { headOf, stripControlMarkers, textOf } from './text.js'
+import { WAITING_MAX_MS, WAITING_QUIET_MS, mergeBacklog, plainRelay } from './backlog.js'
 import { stripWireTags } from '../shared/wire-tags.js'
 
 export function install(rt) {
@@ -13,6 +14,40 @@ export function install(rt) {
     if ('error' in resolved) throw Object.assign(new Error(resolved.error?.message ?? 'Session unavailable'), { code: resolved.error?.code })
     rt.hideBotUnusedTools(resolved.agent)
     return resolved.agent
+  }
+
+  // R59: what a Bot was told while it was in the middle of a turn. Plain notes wait here
+  // and are read together when that turn ends, so a burst of notes costs one turn, not one
+  // turn each. Anything with a reply target, an image or a room goes out as it came.
+  const waiting = new Map()
+
+  const flushTimers = new Map()
+  // Cleared with the batch: a quiet window and a deadline both end in one flush.
+  const unarm = (sessionId) => {
+    const timer = flushTimers.get(sessionId)
+    if (timer === undefined) return
+    clearTimeout(timer.quiet)
+    clearTimeout(timer.deadline)
+    flushTimers.delete(sessionId)
+  }
+  const later = (sessionId, at) => {
+    const handle = setTimeout(() => void flushWaiting(sessionId), at)
+    handle?.unref?.()
+    return handle
+  }
+  // `quiet` (after a turn ends) restarts on every note; `deadline` starts with the
+  // first note and is not moved, so a slow trickle is read within WAITING_MAX_MS.
+  const arm = (sessionId, { quiet = false, deadline = false } = {}) => {
+    let timer = flushTimers.get(sessionId)
+    if (timer === undefined) {
+      timer = { quiet: undefined, deadline: undefined }
+      flushTimers.set(sessionId, timer)
+    }
+    if (deadline && timer.deadline === undefined) timer.deadline = later(sessionId, WAITING_MAX_MS)
+    if (quiet) {
+      clearTimeout(timer.quiet)
+      timer.quiet = later(sessionId, WAITING_QUIET_MS)
+    }
   }
 
   const headerFor = (role, fromName, roomName, audience, note = 'new message', deferred = false, { resumed = false, retried = false, resent = false, abandoned = false, asker } = {}) => {
@@ -86,7 +121,7 @@ export function install(rt) {
   // question in it (a profile update, a stop receipt) is put in the queue and read at the
   // recipient's next turn instead of waking it; a turn spent acknowledging a note is a turn
   // the user reads as an answer that never came.
-  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
+  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, queue = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work }) {
     // #1517: a model that writes its tool call in DSML form leaves wire tags in
     // the text it hands delivery; neither the book nor the recipient sees them.
     text = stripWireTags(text)
@@ -127,6 +162,22 @@ export function install(rt) {
       rt.ledger.append(book, { id: exchangeId, from: fromId, to: toId, role, text, time: Date.now(), ...(length !== undefined ? { length, files } : {}), ...(replyTo ? { replyTo } : {}), ...(audience === 'user' ? { audience } : {}), ...(roomId ? { roomId } : {}) })
       await rt.ledger.written(book)
     }
+    // The silent notes are the only ones a mailbox keeps: they never open a turn, so
+    // without a record a window that closed before the next turn would drop them. The
+    // routing below is unchanged; a reply or a request still goes to its Session.
+    if (silent) {
+      await rt.inbox.append(toId, {
+        from: fromId ?? null,
+        fromName,
+        role,
+        sessionId: targetSessionId,
+        senderRoomId: fromRoomId ?? null,
+        exchangeId,
+        roomId,
+        text,
+        time: Date.now(),
+      }).catch(error => rt.warn('ds-bot: a silent message to %s was not saved to its mailbox: %s', toId, error?.message ?? error))
+    }
     await rt.ensureCapabilities(targetSessionId)
     const agent = await resolveAgent(targetSessionId)
     // A steered message cuts into a running turn at its next step; a follow-up
@@ -141,6 +192,19 @@ export function install(rt) {
       ],
       source,
     })
+    const busy = rt.live.get(targetSessionId)?.turn !== undefined
+    // A window already counting down is still a batch in the making: a note that
+    // lands there joins it instead of starting a turn of its own.
+    const arming = flushTimers.get(targetSessionId) !== undefined
+    if ((busy || arming) && plainRelay({ role, text, replyTo, roomId, audience, work, fromRoomId, silent, steer, queue, deferred, resumed, retried, merged, abandoned, images, files })) {
+      const queued = waiting.get(targetSessionId) ?? []
+      queued.push({ text, role, fromName, roomName: room?.name, audience, note, deferred, replyTo, source, exchangeId, book })
+      waiting.set(targetSessionId, queued)
+      // A first note starts the longest wait; a later one restarts a quiet window
+      // already counting down after the turn ended.
+      arm(targetSessionId, { deadline: queued.length === 1, quiet: flushTimers.get(targetSessionId)?.quiet !== undefined })
+      return exchangeId
+    }
     if (steer) agent.steer(message)
     else if (silent) agent.send(message, 'next-turn', false)
     else agent.followup(message)
@@ -165,6 +229,82 @@ export function install(rt) {
     }
     return exchangeId
   }
+
+  // The turn ended, or the batch has waited long enough: the notes that waited go out
+  // as one message. The newest one keeps its words; replies before it keep theirs under
+  // their own headers, and only folded requests are counted as unseen (R59).
+  async function flushWaiting(sessionId) {
+    const queued = waiting.get(sessionId)
+    if (queued === undefined || queued.length === 0) {
+      unarm(sessionId)
+      return
+    }
+    unarm(sessionId)
+    waiting.delete(sessionId)
+    const folded = mergeBacklog(queued)
+    if (folded === undefined) return
+    if (folded.rest.length > 0) {
+      waiting.set(sessionId, folded.rest)
+      arm(sessionId, { deadline: true })
+    }
+    const newest = folded.batch[folded.batch.length - 1]
+    // Every exchange the batch took in travels with it, so none is sent again when
+    // this process stops before a turn takes the message up (resume.js).
+    const source = { ...newest.source, exchangeIds: folded.batch.map(entry => entry.exchangeId) }
+    const message = createUserMessage({
+      content: [{ type: 'text', text: `${headerFor(newest.role, newest.fromName, newest.roomName, newest.audience, newest.note, newest.deferred)}\n${folded.text}` }],
+      source,
+    })
+    let agent
+    try {
+      agent = await resolveAgent(sessionId)
+    } catch (error) {
+      // Not lost: the batch stays queued and is tried again at the Bot's next turn.
+      rt.warn('ds-bot: notes held for %s not delivered: %s', sessionId, error)
+      waiting.set(sessionId, [...folded.batch, ...folded.rest])
+      arm(sessionId, { deadline: true })
+      return
+    }
+    try {
+      agent.followup(message)
+      await ctx.sessions.flush(agent.session)
+    } catch (error) {
+      // The batch left `waiting` before it was handed over; putting it back keeps a
+      // rejected flush from dropping every reply it carried until the next restart.
+      rt.warn('ds-bot: notes held for %s not delivered: %s', sessionId, error)
+      waiting.set(sessionId, [...folded.batch, ...(waiting.get(sessionId) ?? [])])
+      arm(sessionId, { deadline: true })
+      return
+    }
+    for (const entry of folded.batch) {
+      if (entry.book === undefined) continue
+      rt.ledger.append(entry.book, { event: 'delivered', id: entry.exchangeId, sessionId, time: Date.now() })
+      await rt.ledger.written(entry.book).catch(() => {})
+    }
+  }
+
+  // A deleted Bot's Sessions will never read what waited for them.
+  const dropWaiting = (sessionId) => {
+    unarm(sessionId)
+    const queued = waiting.get(sessionId)
+    waiting.delete(sessionId)
+    return queued?.length ?? 0
+  }
+
+  ctx.on('agent/status', ({ agent, status }) => {
+    if (status !== 'idle') return
+    const sessionId = agent?.session?.id ?? agent?.id
+    if (sessionId === undefined || !waiting.has(sessionId)) return
+    // A quiet window, not an immediate send: a note that comes right after the turn
+    // ends still joins the same batch.
+    arm(sessionId, { quiet: true })
+  })
+
+  // A shutdown leaves no timer behind for a batch that can no longer go out.
+  ctx.effect?.(() => () => {
+    for (const sessionId of flushTimers.keys()) unarm(sessionId)
+    waiting.clear()
+  }, 'ds-bot: waiting notes')
 
   // A message between Bots, whole, from the Session it was delivered to: the message
   // there is its header line, then the text. `whole` is false when only the start could
@@ -238,5 +378,5 @@ export function install(rt) {
     return { ...record, ledger: true }
   }
 
-  Object.assign(rt, { resolveAgent, deliver, exchangeText, attachLong, fileText, exchangesOf, exchangeOf })
+  Object.assign(rt, { resolveAgent, deliver, flushWaiting, exchangeText, attachLong, fileText, exchangesOf, exchangeOf, dropWaiting })
 }

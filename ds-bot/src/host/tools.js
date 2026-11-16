@@ -3,6 +3,8 @@
 import { randomUUID } from 'node:crypto'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { readAvatar } from './avatar.js'
+import { INBOX_READ_MAX } from './inbox.js'
+import { writeTeamBoard } from './team-board-feed.js'
 import { COLORS, EXTRA_COLORS, MESSAGE_INLINE_MAX, ROOM_MODES, SOURCE_KIND, TEXT_KEPT } from './constants.js'
 import { within } from './folders.js'
 import { missingFileRefs } from './claims.js'
@@ -331,7 +333,7 @@ export function install(rt) {
         if (joins) rt.forgetDelivery?.(exchangeId)
         else if (!toUser) rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work })
         try {
-          await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}) })
+          await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}) })
         } catch (error) {
           // The delivery stays noted for the next start while its Bot exists
           // (resume.js), and the resent request still answers up the tree, so the
@@ -952,6 +954,9 @@ export function install(rt) {
     const id = agent.session?.id
     const owns = rt.isBotSession(id)
     const relayOnly = !owns && rt.roomOf(id) !== undefined
+    // A group Session has no team tools of its own, but it still has a Bot behind it:
+    // it can post for that Bot and read that Bot's quiet notes.
+    const relayTools = new Set(['group_relay', 'read_inbox'])
     const wanted = owns || relayOnly
     let held = scoped.get(id)
     // The local-agent tools (the CLI permission bridge) join the scope only of
@@ -973,7 +978,7 @@ export function install(rt) {
     // join that scope. Register what it is missing, so the next request is whole.
     if (held?.tools === true) {
       for (const def of [...rt.teamTools, ...(localBot ? (rt.localAgentTools ?? []) : [])]) {
-        if (relayOnly && def.name !== 'group_relay') continue
+        if (relayOnly && !relayTools.has(def.name)) continue
         if (held.added?.has(def.name) === true) continue
         try {
           const dispose = agent.ctx.tools.register(def)
@@ -1008,7 +1013,7 @@ export function install(rt) {
     const failed = []
     const registered = []
     for (const def of [...rt.teamTools, ...(localBot ? (rt.localAgentTools ?? []) : [])]) {
-      if (relayOnly && def.name !== 'group_relay') continue
+      if (relayOnly && !relayTools.has(def.name)) continue
       try {
         const dispose = agent.ctx.tools.register(def)
         if (typeof dispose === 'function') {
@@ -1372,6 +1377,111 @@ export function install(rt) {
       },
     }))
   }
+
+  // Rendered from the structured gaps, never from prose kept beside them, so the two
+  // cannot name different stretches.
+  const gapText = (gaps) => (gaps.length === 0 ? '' : `\n\nMailbox gaps: some notes could not be saved and are not here.\n${gaps.map((gap) => {
+    const span = gap.to === null ? `since ${rt.clock(gap.from)}` : `${rt.clock(gap.from)} to ${rt.clock(gap.to)}`
+    return `· ${gap.count === 1 ? '1 note' : `${gap.count} notes`} could not be saved ${span}: ${gap.reason}`
+  }).join('\n')}\nAsk the sender to resend anything that still matters.`)
+
+  rt.teamTools.push(defineTool({
+    name: 'read_inbox',
+    description: 'Read your mailbox: the quiet notes from the team that did not start a turn, such as a profile update or a stop receipt. With unread_only (the default), only unread notes are returned and marked read; each shows its id, sender, time and the first 200 characters. limit is at most 20, oldest first. gaps lists any stretch of notes that could not be saved to the mailbox, oldest first; it is empty when every note landed, so a stretch here means records are missing and the sender may need to resend. Replies and requests still wake you and are not kept here. A note is not a request you must answer, and reading it never starts a turn: look at the inbox at the start of every turn, and act only when a note asks you to.',
+    parameters: {
+      unread_only: { type: 'boolean', description: 'Only notes not read yet; the default is true' },
+      limit: { type: 'integer', description: `How many notes to show, oldest first; at most ${INBOX_READ_MAX}` },
+    },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          text: { type: 'string', required: true },
+          gaps: {
+            type: 'array',
+            required: true,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                from: { type: 'number', required: true },
+                to: { oneOf: [{ type: 'number' }, { type: 'null' }], required: true },
+                reason: { type: 'string', required: true },
+                count: { type: 'integer', required: true },
+              },
+            },
+          },
+        },
+      },
+      render: (_args, value) => [{ type: 'text', text: `${String(value.text)}${gapText(value.gaps ?? [])}` }],
+    },
+    async execute(args, exec) {
+      await rt.load()
+      const bot = callerBot(exec)
+      if (bot === undefined) return { text: 'Only Bots on the team have a mailbox.', gaps: [] }
+      const asked = Number.isFinite(args.limit) ? Math.trunc(args.limit) : 10
+      const limit = Math.min(Math.max(asked, 1), INBOX_READ_MAX)
+      const unreadOnly = args.unread_only !== false
+      const entries = rt.inbox.list(bot.id, { unreadOnly, limit })
+      const unread = entries.filter(entry => entry.unread)
+      const before = rt.inbox.unreadCount(bot.id)
+      const marked = await rt.inbox.markRead(bot.id, unread.map(entry => entry.id))
+      const gaps = rt.inbox.gaps(bot.id)
+      if (entries.length === 0) {
+        const text = unreadOnly
+          ? 'No unread notes. Nothing in your mailbox needs you; read notes never come back as unread.'
+          : 'Your mailbox is empty.'
+        return { text, gaps }
+      }
+      const lines = entries.map(entry => {
+        const what = entry.role === 'update' ? 'profile update' : entry.role === 'stopped' ? 'stop receipt' : String(entry.role ?? 'note')
+        const head = String(entry.text ?? '').replace(/\s+/g, ' ').slice(0, 200)
+        return `#${entry.id} · ${entry.fromName ?? 'another Bot'} · ${what} · ${rt.clock(entry.time)}\n${head}`
+      })
+      const left = before - marked
+      const footer = marked > 0
+        ? `Read ${marked}; ${left} unread ${left === 1 ? 'note stays' : 'notes stay'} in the mailbox. Read notes never come back as unread and never start a turn.`
+        : `${left} unread ${left === 1 ? 'note is' : 'notes are'} still waiting. Read notes never start a turn.`
+      return { text: `${entries.length} note${entries.length === 1 ? '' : 's'} for ${bot.name}:\n${lines.join('\n\n')}\n\n${footer}`, gaps }
+    },
+  }))
+
+  rt.teamTools.push(defineTool({
+    name: 'update_team_board',
+    description: 'Publish the lines the team board shows for you. Each call replaces your own entry, never another Bot\'s: the board keeps at most 3 of your newest lines, sorted by at. kind is delivery (done), decision (waiting for the user) or blocked (stuck); a line with another kind is dropped when the board is read. Missing fields are stored as null. at is an ISO time with a timezone, such as 2026-11-15T02:00:01+08:00.',
+    parameters: {
+      lines: {
+        type: 'array',
+        required: true,
+        description: 'Your board lines, newest first; at most 3 are shown',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            kind: { type: 'string', description: 'delivery, decision or blocked' },
+            what: { type: 'string', description: 'One line: what happened or what is waiting' },
+            number: { type: 'string', description: 'The number that carries the line, if any' },
+            evidence: { type: 'string', description: 'Path or command output that shows it' },
+            needs: { type: 'string', description: 'What you need from the user, if anything' },
+            default: { type: 'string', description: 'What happens if the user says nothing' },
+            deadline: { type: 'string', description: 'When it stops mattering, if it does' },
+            at: { type: 'string', description: 'ISO time with a timezone, used to sort' },
+          },
+        },
+      },
+    },
+    output,
+    async execute(args, exec) {
+      await rt.load()
+      const bot = callerBot(exec)
+      if (bot === undefined) return 'Only Bots on the team have a board entry.'
+      const count = writeTeamBoard(bot.name, args.lines)
+      return count === 0
+        ? `Your board entry is empty: nothing of yours is on the board now. The other Bots' entries are untouched.`
+        : `Your board entry now holds ${count} line${count === 1 ? '' : 's'}; the board shows at most 3 of your newest, sorted by at. Another Bot's entry is never written.`
+    },
+  }))
 
   Object.assign(rt, { pickRoom, hideBotUnusedTools, syncScopedTools, addTeamTool, removeTeamTool, reapplyToolMasks })
 }

@@ -8,6 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { test } from 'node:test'
 import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
+import { readTaskLedger } from '../src/host/task-ledger.js'
 import { scopeTarget } from '@deepseek-ai/dsh-scope'
 
 let rt
@@ -198,6 +199,8 @@ test('giving up one wait closes that branch and the work above it goes on', asyn
   assert.equal(after[parent].results[0].abandoned, true)
   assert.match(after[parent].results[0].text, /No reply came back from Tester/)
   assert.match(after[parent].results[0].text, /gave up waiting/)
+  const tasks = readTaskLedger(join(host.home, 'ledger'), 0, Number.MAX_SAFE_INTEGER).rows
+  assert.equal(tasks.find(row => row.kind === 'close' && row.id === child)?.outcome, 'abandoned')
   const quiet = (await call('state', {})).value.work.waiting
   assert.equal(quiet.b, undefined)
 

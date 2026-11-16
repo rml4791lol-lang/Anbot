@@ -69,7 +69,7 @@ for (const { id, file } of files) {
   const events = zlib.zstdDecompressSync(fs.readFileSync(file)).toString('utf8').split('\n').filter(Boolean).map(JSON.parse)
   const turns = []
   for (let i = 0; i < events.length; i += 1) {
-    if (events[i].type === 'turn/start') turns.push({ index: i, turn: events[i].data?.turn, start: events[i].time, injected: {}, seed: null, tools: [], files: [], chars: 0, hash: '' })
+    if (events[i].type === 'turn/start') turns.push({ index: i, turn: events[i].data?.turn, start: events[i].time, injected: {}, seed: null, tools: [], skills: [], files: [], chars: 0, hash: '' })
   }
   if (!turns.length) continue
   // The turn running at `index`, or the next one when the item is queued ahead of a start.
@@ -104,9 +104,11 @@ for (const { id, file } of files) {
     if (ev.type === 'tool/call') {
       const turn = running(i)
       if (!turn) continue
-      turn.tools.push(ev.data?.name ?? '?')
+      const name = ev.data?.name ?? '?'
+      turn.tools.push(name)
       try {
         const callArgs = JSON.parse(ev.data?.arguments ?? '{}')
+        if (name === 'skill' && typeof callArgs.name === 'string' && callArgs.name !== '') turn.skills.push(callArgs.name)
         for (const key of ['path', 'file', 'file_path', 'target']) if (typeof callArgs[key] === 'string') turn.files.push(callArgs[key])
       } catch { /* arguments are opaque */ }
       continue
@@ -139,6 +141,7 @@ const lines = fresh.map(r => JSON.stringify({
   seed: r.seed,
   context: { bytes: Object.values(r.injected).reduce((a, b) => a + b, 0), sources: r.injected },
   tools: { offered: offeredFor(botOf.get(r.session) ?? ''), used: r.tools, errors: r.toolErrors ?? 0 },
+  skills: r.skills,
   files: r.files,
   duration_ms: r.end ? r.end - r.start : null,
   final_chars: r.chars,

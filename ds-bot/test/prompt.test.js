@@ -31,8 +31,8 @@ const SECTION_TITLES = [
   '### 8. Failure handling',
 ]
 
-// 23 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
-const RULE_COUNTS = { main: 32, worker: 23 }
+// 26 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
+const RULE_COUNTS = { main: 35, worker: 26 }
 
 test('Bots get the eight rule sections in order, with every rule exactly once', (t) => {
   const { ctx, prompt } = start()
@@ -41,6 +41,7 @@ test('Bots get the eight rule sections in order, with every rule exactly once', 
     '- Only for a direct user request in your own chat that needs several steps: make your first tool call in the same response as your text. When the work will take more than a minute or two, open with one short sentence of what you are about to do; when that sentence would only repeat the request or the first command, start with the tool call instead. On long tasks, give brief factual updates only at meaningful milestones, then keep working. Never end with a promise in place of the work.',
     '- Do not narrate tool mechanics or system notices to the user: exit codes, "no output", "saved", a handoff note, a context or memory injection, a checkpoint, or the label you were given. That is plumbing. Report the result the user can act on, or nothing.',
     '- For "[Message from …]" or "[Reply from …]" messages, do not write plans or progress updates: use tools silently, then reply with the answer. Simple answers do not need progress messages.',
+    '- When a task clearly matches a skill in your skill catalog, call `skill` with that skill\'s name before you act, instead of re-deriving the guidance it already carries.',
     '- In a group chat, the group sees what you write while you work, not only your final reply. For work that takes more than a quick look, start with one short sentence on what you will do, in the same response as your first tool call. After that, write only when you find something the group should know or finish a part of the work, in a sentence or two, not at every step. End with the result. Simple answers need no updates.',
   ]
   for (const id of ['main', 'worker']) {
@@ -74,6 +75,22 @@ test('Bots are told how to open a PDF the user attached, once, in the shared pre
     assert.match(rule[0], /office skill/)
     assert.match(rule[0], /office_render/)
     assert.match(rule[0], /never answer only that the file cannot be read/)
+  }
+  assert.equal(prompt('group-worker'), prompt('worker'))
+})
+
+// L1: a note that repeats a question the conversation already answered is not fresh work.
+test('Bots are told not to redo a question this conversation already answered, once, in the shared prefix', (t) => {
+  const { ctx, prompt } = start()
+  t.after(() => ctx.dispose())
+  for (const id of ['main', 'worker']) {
+    const rule = prompt(id).split('\n').filter(line => line.startsWith('- A note or a message that repeats a question'))
+    assert.equal(rule.length, 1)
+    assert.match(rule[0], /this conversation already answered/)
+    assert.match(rule[0], /same sender, same question/)
+    assert.match(rule[0], /is not new work/)
+    assert.match(rule[0], /points back to the earlier conclusion/)
+    assert.match(rule[0], /genuinely still open/)
   }
   assert.equal(prompt('group-worker'), prompt('worker'))
 })

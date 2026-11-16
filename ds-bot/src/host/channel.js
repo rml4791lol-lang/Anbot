@@ -1,14 +1,29 @@
 // Client channel: the team view the browser renders, and the POST /api/bot endpoints.
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { install as installBtw } from './btw.js'
 import { install as installSide } from './side.js'
 import { handoffReply, questionReply, viewReply } from './parts.js'
 import { validateViewAnswer } from 'deep-view/core'
+import { readTeamBoardLines } from './team-board-feed.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
 
 const STAGED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const STAGED_MS = 30 * 60_000
+
+// The team board's settings: a file in the Bot home, so the board can change
+// without a rebuild. A missing or unreadable file means the shipped defaults.
+const TEAM_BOARD_DEFAULTS = Object.freeze({ defaultOpen: true, sort: 'section', density: 'two', showHistory: true })
+const teamBoardConfig = (home) => {
+  try {
+    const raw = JSON.parse(readFileSync(join(home, 'team-board.config.json'), 'utf8'))
+    return { ...TEAM_BOARD_DEFAULTS, ...(raw && typeof raw === 'object' ? raw : {}) }
+  } catch {
+    return { ...TEAM_BOARD_DEFAULTS }
+  }
+}
 
 const LANGUAGES = {
   zh: 'Chinese (简体中文)',
@@ -868,6 +883,36 @@ export function install(rt) {
 
   Object.assign(rt, { sendUser, answerQuestion })
 
+  // The board reads this on mount and on window focus; `no-store` keeps a check
+  // for new settings from being answered by a stale copy.
+  ctx.effect(() => ctx.connection.fetch.register({
+    path: `${ROUTE}/team-board.config.json`,
+    methods: ['GET'],
+    fetch: async () => new Response(JSON.stringify(teamBoardConfig(rt.home)), {
+      status: 200,
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    }),
+  }), 'ds-bot: team board config')
+
+  // The board's lines, merged from the one file each Bot owns. A boot reads this on
+  // mount and on focus, and `no-store` keeps a check from being answered by a stale copy.
+  ctx.effect(() => ctx.connection.fetch.register({
+    path: `${ROUTE}/team-board.feed.json`,
+    methods: ['GET'],
+    fetch: async () => {
+      let body
+      try {
+        body = { ok: true, value: { lines: readTeamBoardLines(undefined, message => ctx.logger?.warn?.(message)) } }
+      } catch (error) {
+        body = { ok: false, error: String(error?.message ?? error) }
+      }
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      })
+    },
+  }), 'ds-bot: team board feed')
+
   // An exact Fetch route on the shared /api channel; the browser authenticates with its session cookie.
   ctx.effect(() => ctx.connection.fetch.register({
     path: ROUTE,
@@ -880,6 +925,7 @@ export function install(rt) {
       return new Response(JSON.stringify(result), { status: 200, headers: { 'content-type': 'application/json' } })
     },
   }), 'ds-bot: api route')
+
 
   ctx.effect(() => {
     void rt.load()
