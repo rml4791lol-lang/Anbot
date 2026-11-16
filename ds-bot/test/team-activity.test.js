@@ -388,7 +388,12 @@ test('buildTeamActivity projects goal tasks and open handoffs as real source row
       },
     },
     works: {
-      w1: { from: 'chief', to: 'forge', at: NOW - 2_000, open: [], results: [] },
+      w1: {
+        from: 'chief', to: 'forge', at: NOW - 2_000, open: [], results: [],
+        attempt: { updatedAt: NOW - 300 },
+        checkpoint: { at: NOW - 200 },
+        evidence: [{ at: NOW - 100 }],
+      },
       w2: { from: 'chief', room: 'r1', at: NOW - 3_000, open: [], results: [] },
     },
   }
@@ -416,6 +421,7 @@ test('buildTeamActivity projects goal tasks and open handoffs as real source row
   assert.equal(work.parentId, null)
   assert.equal(work.statusSource, 'work.open')
   assert.equal(work.displayState, 'working')
+  assert.equal(work.updatedAt, NOW - 100)
   assert.match(work.title, /Forge/)
   const groupWork = value.tasks.find(task => task.id === 'handoff:w2')
   assert.equal(groupWork.ownerId, null)

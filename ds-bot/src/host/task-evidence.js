@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 
+const COMMAND_TOOLS = new Set(['bash', 'pwsh'])
+
 const text = value => (value === undefined || value === null ? '' : String(value))
 
 const contentText = (content) => {
@@ -145,10 +147,11 @@ export function evidenceFromEvents({ sessionId, actor, events } = {}) {
         record: { sessionId, seq },
       })
     } else if (event?.type === 'tool/call') {
+      const tool = text(event.data?.name)
       calls.set(text(event.data?.callId), {
-        tool: text(event.data?.name),
+        tool,
         arguments: text(event.data?.arguments),
-        command: commandOf(event.data?.arguments),
+        command: COMMAND_TOOLS.has(tool) ? commandOf(event.data?.arguments) : undefined,
       })
     } else if (event?.type === 'tool/result') {
       const callId = text(event.data?.callId ?? event.data?.message?.toolCallId)
@@ -264,16 +267,25 @@ export function progressFingerprint(evidence = []) {
   const facts = []
   for (const item of evidence) {
     if (item?.state !== 'executed' && item?.state !== 'verified') continue
-    facts.push({
+    const fact = {
       source: item.source,
-      command: item.command,
-      artifact: item.artifact,
-      diff: item.diff,
-      id: item.id,
-      at: item.at,
-    })
+      command: item.command === undefined ? undefined : {
+        text: item.command.text,
+        exitCode: item.command.exitCode,
+        outputDigest: item.command.outputDigest,
+      },
+      artifact: item.artifact === undefined ? undefined : {
+        path: item.artifact.path,
+        digest: item.artifact.digest,
+      },
+      diff: item.diff === undefined ? undefined : {
+        paths: item.diff.paths,
+        digest: item.diff.digest,
+      },
+    }
+    facts.push([canonicalDigest(fact), fact])
   }
-  return canonicalDigest(facts.sort((a, b) => text(a.id).localeCompare(text(b.id))))
+  return canonicalDigest(facts.sort(([a], [b]) => a.localeCompare(b)).map(([, fact]) => fact))
 }
 
 export function progressAfterTurn(progress, evidence = [], { now = Date.now(), limit = 2 } = {}) {

@@ -1,6 +1,7 @@
-// A deterministic acceptance run over the real DS Bot runtime and official MCP
-// loopback. Only the agents' model/tool stream is scripted: the team tools, durable
-// goal/work records, restart queue, task-detail projection and MCP client are real.
+// A deterministic component-level acceptance run over the real DS Bot runtime and
+// official MCP loopback. The DSH AgentLoop is not executed here: only the agents'
+// Session event and model/tool stream is scripted, while team tools, durable goal/work
+// records, restart queue, task-detail projection and MCP client are real.
 import { createHash, randomUUID } from 'node:crypto'
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -194,7 +195,7 @@ async function waitFor(check, timeout = 8000) {
 
 function emitCommand(host, sessionId, turn, item) {
   const callId = `${sessionId}-${turn}-${item.command.replace(/\W+/g, '-').slice(0, 40)}`
-  host.emit(sessionId, 'tool/call', { callId, name: 'shell', arguments: JSON.stringify({ command: item.command }) })
+  host.emit(sessionId, 'tool/call', { callId, name: 'bash', arguments: JSON.stringify({ command: item.command }) })
   const output = outputOf(item)
   host.emit(sessionId, 'tool/result', {
     callId,
@@ -404,11 +405,21 @@ export async function runRealityGate() {
     if (detail.verification?.status !== 'verified') throw new Error(`unexpected verification: ${JSON.stringify(detail.verification)}`)
     const typedEvidence = detail.evidence.filter(item => ['executed', 'verified'].includes(item.trust))
     const result = {
-      schema: 1,
+      schema: 2,
       scenario: 'chief-forge-prism-mcp-repair',
       generatedAt: new Date().toISOString(),
-      outcome: 'verified',
+      outcome: 'component-verified',
       mocking: 'scripted-model-acceptance-only',
+      agentLoop: {
+        executed: false,
+        mode: 'scripted-session-events',
+        seam: 'The DSH Session event and model/tool stream is supplied by this harness instead of @deepseek-ai/dsh-agent-loop-testkit.',
+      },
+      followUpGate: {
+        required: true,
+        status: 'not-run',
+        requirement: 'Before claiming end-to-end AgentLoop or production-model verification, run this scenario through @deepseek-ai/dsh-agent-loop-testkit with the real DS Bot tools and real DSH Session events.',
+      },
       chief: {
         role: 'Coordinator',
         view: 'Reality Gate',
@@ -458,8 +469,9 @@ export async function runRealityGate() {
         'the isolated git worktree is created and removed only by this harness',
       ],
       limitations: [
-        'The model choice and tool sequence are scripted; no production model claim is made.',
-        'The run proves the existing DS Bot runtime, team tools, persistence, recovery and official MCP loopback behavior under that scripted seam.',
+        'The DSH AgentLoop is not executed; its Session events and model/tool choice are scripted, and no production model claim is made.',
+        'This is component-level evidence for the existing DS Bot runtime, team tools, persistence, recovery, task projections and official MCP loopback under that scripted seam.',
+        'A real AgentLoop testkit run remains a required follow-up gate before calling this end-to-end or production verification.',
         'No commit, push, deployment, external message or paid operation is performed.',
       ],
     }

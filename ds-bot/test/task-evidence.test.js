@@ -32,6 +32,22 @@ test('only an exact successful command result satisfies a command check', () => 
   assert.equal(verifyAcceptance({ checks: [{ ...check, expect: { exitCode: 1 } }], evidence, now: 13 }).state, 'pending')
 })
 
+test('a spoofed tool name cannot create command evidence', () => {
+  const evidence = evidenceFromEvents({
+    sessionId: 's1',
+    events: [
+      { seq: 1, time: 10, type: 'tool/call', data: { callId: 'c1', name: 'report_command', arguments: JSON.stringify({ command: 'npm test' }) } },
+      { seq: 2, time: 11, type: 'tool/result', data: { callId: 'c1', message: { ok: true, content: textBlock('green') } } },
+    ],
+  })
+  assert.equal(evidence[0].command, undefined)
+  assert.equal(verifyAcceptance({
+    checks: [{ id: 'tests', kind: 'command', command: 'npm test', expect: { exitCode: 0 } }],
+    evidence,
+    now: 12,
+  }).state, 'pending')
+})
+
 test('artifact and diff checks bind exact digests and go stale when those change', () => {
   const evidence = evidenceFromEvents({
     sessionId: 's1',
@@ -115,6 +131,24 @@ test('new executed evidence resets the no-progress count', () => {
   assert.deepEqual([second.state, second.unchangedTurns], ['moving', 0])
   const third = progressAfterTurn(second, executed, { now: 12, limit: 2 })
   assert.deepEqual([third.state, third.unchangedTurns], ['moving', 1])
+})
+
+test('repeating the same measurable evidence later does not look like progress', () => {
+  const turn = (id, at, outputDigest = 'sha256:same') => [{
+    id,
+    state: 'executed',
+    source: 'tool-result',
+    command: { text: 'npm test', exitCode: 0, outputDigest },
+    artifact: { path: 'dist/app.zip', digest: 'sha256:app' },
+    diff: { paths: ['src/app.js'], digest: 'sha256:diff' },
+    at,
+  }]
+  const first = progressAfterTurn(undefined, turn('ev-1', 10), { now: 10, limit: 2 })
+  const repeated = progressAfterTurn(first, turn('ev-2', 11), { now: 11, limit: 2 })
+  const repeatedAgain = progressAfterTurn(repeated, turn('ev-3', 12), { now: 12, limit: 2 })
+  assert.deepEqual([repeated.state, repeated.unchangedTurns], ['moving', 1])
+  assert.deepEqual([repeatedAgain.state, repeatedAgain.unchangedTurns], ['stalled', 2])
+  assert.notEqual(progressFingerprint(turn('ev-4', 13, 'sha256:changed')), progressFingerprint(turn('ev-5', 14)))
 })
 
 test('the turn-end baseline lets repeated productive evidence stay moving', () => {

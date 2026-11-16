@@ -41667,6 +41667,11 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
   const role = rolesById.get(shown.ownerId);
   const parent = shown.parentId ? allTasks.find((item) => item.id === shown.parentId) : void 0;
   const children = allTasks.filter((item) => item.parentId === shown.id);
+  const linkedHandoffs = Array.isArray(detail?.handoffs) ? detail.handoffs : [];
+  const childRows = [
+    ...children,
+    ...linkedHandoffs.filter((item) => !children.some((child) => child.id === item.id))
+  ];
   const parentText = parent?.title || (shown.source === "goal" && shown.subtitle ? `${copy2.goal}: ${shown.subtitle}` : shown.parentId);
   const warnings = [
     ...Array.isArray(shown.warnings) ? shown.warnings : [],
@@ -41748,10 +41753,10 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
       ...detail ? [(0, import_react67.createElement)("div", { key: "next" }, (0, import_react67.createElement)("dt", null, copy2.nextAction), (0, import_react67.createElement)("dd", null, detail.nextAction?.text || copy2.none))] : [],
       ...detail ? [(0, import_react67.createElement)("div", { key: "blockers" }, (0, import_react67.createElement)("dt", null, copy2.blockers), (0, import_react67.createElement)("dd", null, blockers.length > 0 ? (0, import_react67.createElement)("ul", { className: "bt-task-blockers" }, blockers.map((item) => (0, import_react67.createElement)("li", { key: item.id, "data-kind": item.kind }, item.text))) : copy2.noBlockers))] : [],
       ...parentText ? [(0, import_react67.createElement)("div", { key: "parent" }, (0, import_react67.createElement)("dt", null, copy2.parent), (0, import_react67.createElement)("dd", null, parentText))] : [],
-      ...children.length > 0 ? [(0, import_react67.createElement)("div", { key: "children" }, (0, import_react67.createElement)("dt", null, copy2.children), (0, import_react67.createElement)(
+      ...childRows.length > 0 ? [(0, import_react67.createElement)("div", { key: "children" }, (0, import_react67.createElement)("dt", null, copy2.children), (0, import_react67.createElement)(
         "dd",
         null,
-        (0, import_react67.createElement)("ul", { className: "bt-activity-children" }, children.map((child) => (0, import_react67.createElement)("li", { key: child.id }, child.title || child.sourceId)))
+        (0, import_react67.createElement)("ul", { className: "bt-activity-children" }, childRows.map((child) => (0, import_react67.createElement)("li", { key: child.id }, child.title || child.sourceId || child.id)))
       ))] : [],
       ...shown.roomName ? [(0, import_react67.createElement)("div", { key: "room" }, (0, import_react67.createElement)("dt", null, copy2.room), (0, import_react67.createElement)("dd", null, shown.roomName))] : [],
       ...shown.acceptance ? [(0, import_react67.createElement)("div", { key: "acceptance" }, (0, import_react67.createElement)("dt", null, copy2.acceptance), (0, import_react67.createElement)("dd", null, shown.acceptance))] : [],
@@ -41932,6 +41937,40 @@ async function requestTaskDetail(callImpl, taskId) {
   if (value?.taskId !== taskId) throw new Error("Task detail did not match the selected task");
   return value;
 }
+var FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function trapDialogFocus(root) {
+  if (!root?.ownerDocument) return () => {
+  };
+  const document2 = root.ownerDocument;
+  const trigger = document2.activeElement;
+  const focusable = () => [...root.querySelectorAll(FOCUSABLE)].filter((element) => element.getAttribute("aria-hidden") !== "true" && element.closest("[inert]") === null);
+  const onKeyDown = (event) => {
+    if (event.key !== "Tab") return;
+    const items = focusable();
+    if (items.length === 0) {
+      event.preventDefault();
+      if (typeof root.focus === "function") root.focus();
+      return;
+    }
+    const first = items[0];
+    const last = items.at(-1);
+    const active = document2.activeElement;
+    if (event.shiftKey && (active === first || !root.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !root.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  document2.addEventListener("keydown", onKeyDown);
+  const initial = focusable()[0] ?? root;
+  if (typeof initial.focus === "function") initial.focus();
+  return () => {
+    document2.removeEventListener("keydown", onKeyDown);
+    if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
+  };
+}
 function TeamActivity({ roster, actions, onClose = () => {
 }, callImpl = call, leaving = false }) {
   const [data, setData] = (0, import_react67.useState)(null);
@@ -41943,7 +41982,9 @@ function TeamActivity({ roster, actions, onClose = () => {
   const [detailStatus, setDetailStatus] = (0, import_react67.useState)("idle");
   const [detailError, setDetailError] = (0, import_react67.useState)("");
   const detailRef = (0, import_react67.useRef)(null);
+  const layerRef = (0, import_react67.useRef)(null);
   useEscape(onClose);
+  (0, import_react67.useEffect)(() => trapDialogFocus(layerRef.current), []);
   (0, import_react67.useEffect)(() => {
     let alive = true;
     let loaded = false;
@@ -42005,7 +42046,7 @@ function TeamActivity({ roster, actions, onClose = () => {
   }, [selectedTaskId, selectedTaskVersion, callImpl]);
   return (0, import_react67.createElement)(
     "div",
-    { className: "bt-activity-layer", "data-leaving": leaving || void 0 },
+    { ref: layerRef, className: "bt-activity-layer", "data-leaving": leaving || void 0 },
     (0, import_react67.createElement)("div", { className: "bt-scrim", onMouseDown: onClose }),
     (0, import_react67.createElement)(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose })
   );

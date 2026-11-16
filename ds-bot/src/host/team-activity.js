@@ -16,6 +16,11 @@ const timeOf = value => {
   const time = Date.parse(text(value))
   return Number.isFinite(time) ? time : undefined
 }
+const timestampOf = value => Number.isFinite(value) ? value : timeOf(value)
+const latestTimestamp = (values) => {
+  const times = values.map(timestampOf).filter(Number.isFinite)
+  return times.length === 0 ? undefined : Math.max(...times)
+}
 
 const evidenceStateOf = task => {
   const verification = task?.verification
@@ -177,7 +182,9 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
       subtitle: '',
       stageTitle: '',
       stageId: null,
-      parentId: work.parent ? `handoff:${text(work.parent)}` : null,
+      parentId: text(work.goalTask?.taskId) || (work.parent ? `handoff:${text(work.parent)}` : null),
+      goalTaskId: text(work.goalTask?.taskId) || null,
+      goalTaskAttemptId: text(work.goalTask?.attemptId) || null,
       ownerId: ownerId || null,
       ownerName,
       ownerKind: owner ? 'bot' : roomName ? 'group' : 'unknown',
@@ -192,7 +199,12 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
       acceptance: '',
       evidence: null,
       note: text(work.held) || null,
-      updatedAt: Number.isFinite(work.at) ? work.at : null,
+      updatedAt: latestTimestamp([
+        work.at,
+        work.attempt?.updatedAt,
+        work.checkpoint?.at,
+        ...(Array.isArray(work.evidence) ? work.evidence.map(item => item?.at) : []),
+      ]) ?? null,
       warnings: ownerId && bots[ownerId] === undefined ? [`missing owner ${ownerId}`] : !ownerId && !roomName ? ['missing owner or group'] : [],
     })
   }

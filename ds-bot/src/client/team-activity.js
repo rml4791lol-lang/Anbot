@@ -275,6 +275,11 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
   const role = rolesById.get(shown.ownerId)
   const parent = shown.parentId ? allTasks.find(item => item.id === shown.parentId) : undefined
   const children = allTasks.filter(item => item.parentId === shown.id)
+  const linkedHandoffs = Array.isArray(detail?.handoffs) ? detail.handoffs : []
+  const childRows = [
+    ...children,
+    ...linkedHandoffs.filter(item => !children.some(child => child.id === item.id)),
+  ]
   const parentText = parent?.title || (shown.source === 'goal' && shown.subtitle ? `${copy.goal}: ${shown.subtitle}` : shown.parentId)
   const warnings = [
     ...(Array.isArray(shown.warnings) ? shown.warnings : []),
@@ -352,8 +357,8 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
         ? h('ul', { className: 'bt-task-blockers' }, blockers.map(item => h('li', { key: item.id, 'data-kind': item.kind }, item.text)))
         : copy.noBlockers))] : []),
       ...(parentText ? [h('div', { key: 'parent' }, h('dt', null, copy.parent), h('dd', null, parentText))] : []),
-      ...(children.length > 0 ? [h('div', { key: 'children' }, h('dt', null, copy.children), h('dd', null,
-        h('ul', { className: 'bt-activity-children' }, children.map(child => h('li', { key: child.id }, child.title || child.sourceId))))) ] : []),
+      ...(childRows.length > 0 ? [h('div', { key: 'children' }, h('dt', null, copy.children), h('dd', null,
+        h('ul', { className: 'bt-activity-children' }, childRows.map(child => h('li', { key: child.id }, child.title || child.sourceId || child.id))))) ] : []),
       ...(shown.roomName ? [h('div', { key: 'room' }, h('dt', null, copy.room), h('dd', null, shown.roomName))] : []),
       ...(shown.acceptance ? [h('div', { key: 'acceptance' }, h('dt', null, copy.acceptance), h('dd', null, shown.acceptance))] : []),
       ...(shown.note ? [h('div', { key: 'note' }, h('dt', null, copy.note), h('dd', null, shown.note))] : []),
@@ -487,6 +492,42 @@ export async function requestTaskDetail(callImpl, taskId) {
   return value
 }
 
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+export function trapDialogFocus(root) {
+  if (!root?.ownerDocument) return () => {}
+  const document = root.ownerDocument
+  const trigger = document.activeElement
+  const focusable = () => [...root.querySelectorAll(FOCUSABLE)]
+    .filter(element => element.getAttribute('aria-hidden') !== 'true' && element.closest('[inert]') === null)
+  const onKeyDown = (event) => {
+    if (event.key !== 'Tab') return
+    const items = focusable()
+    if (items.length === 0) {
+      event.preventDefault()
+      if (typeof root.focus === 'function') root.focus()
+      return
+    }
+    const first = items[0]
+    const last = items.at(-1)
+    const active = document.activeElement
+    if (event.shiftKey && (active === first || !root.contains(active))) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && (active === last || !root.contains(active))) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+  document.addEventListener('keydown', onKeyDown)
+  const initial = focusable()[0] ?? root
+  if (typeof initial.focus === 'function') initial.focus()
+  return () => {
+    document.removeEventListener('keydown', onKeyDown)
+    if (trigger && trigger.isConnected !== false && typeof trigger.focus === 'function') trigger.focus()
+  }
+}
+
 export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = apiCall, leaving = false }) {
   const [data, setData] = useState(null)
   const [status, setStatus] = useState('loading')
@@ -497,7 +538,9 @@ export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = a
   const [detailStatus, setDetailStatus] = useState('idle')
   const [detailError, setDetailError] = useState('')
   const detailRef = useRef(null)
+  const layerRef = useRef(null)
   useEscape(onClose)
+  useEffect(() => trapDialogFocus(layerRef.current), [])
   useEffect(() => {
     let alive = true
     let loaded = false
@@ -553,7 +596,7 @@ export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = a
     })
     return () => { alive = false }
   }, [selectedTaskId, selectedTaskVersion, callImpl])
-  return h('div', { className: 'bt-activity-layer', 'data-leaving': leaving || undefined },
+  return h('div', { ref: layerRef, className: 'bt-activity-layer', 'data-leaving': leaving || undefined },
     h('div', { className: 'bt-scrim', onMouseDown: onClose }),
     h(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose }))
 }

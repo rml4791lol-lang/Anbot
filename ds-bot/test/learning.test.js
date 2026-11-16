@@ -1123,6 +1123,34 @@ test('approving a task improvement is idempotent, versioned, audited, and tracea
   assert.match(changedAnswer.error.message, /already approved/)
 })
 
+test('concurrent proposal decisions share approval and reject an opposite answer', async t => {
+  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+  let release
+  const blocked = new Promise(resolve => { release = resolve })
+  const save = runtime.rt.capabilitySave.bind(runtime.rt)
+  runtime.rt.capabilitySave = async (...args) => {
+    await blocked
+    return save(...args)
+  }
+
+  const first = runtime.call('learning-answer', { id: proposal.id, approve: true })
+  await settle()
+  const repeated = runtime.call('learning-answer', { id: proposal.id, approve: true })
+  const opposite = await runtime.call('learning-answer', { id: proposal.id, approve: false })
+  assert.equal(opposite.ok, false)
+  assert.match(opposite.error.message, /being approved/)
+  release()
+
+  const [approved, duplicate] = await Promise.all([first, repeated])
+  assert.equal(approved.ok, true)
+  assert.equal(duplicate.ok, true)
+  assert.deepEqual(duplicate.value, approved.value)
+  assert.equal(approved.value.proposal.outcome, 'approved')
+  assert.equal(runtime.learningState().settled[proposal.id].version, 1)
+})
+
 test('rejecting a task improvement is idempotent history and never changes the Bot', async t => {
   const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())

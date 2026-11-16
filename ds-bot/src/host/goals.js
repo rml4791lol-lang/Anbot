@@ -582,9 +582,14 @@ export function completeGoal(room, input, by, now = Date.now()) {
   const summary = String(input.summary ?? '').trim()
   if (summary === '') return { error: required('summary', 'complete') }
   if (summary.length > TEXT_MAX) return { error: tooLong('summary', TEXT_MAX) }
-  const results = goal.stages
-    .map(stage => stage.verification)
-    .filter(result => result !== undefined && result.manual !== true)
+  const results = goal.stages.map(stage => verifyStage(stage, now))
+  const unverified = goal.stages
+    .map((stage, index) => ({ stage, verification: results[index] }))
+    .filter(({ verification }) => verification.manual === true || verification.state !== 'verified')
+  if (unverified.length > 0) {
+    const names = unverified.map(({ stage }) => `Stage ${goal.stages.indexOf(stage) + 1} "${stage.title}"`).join(', ')
+    return { error: `Typed acceptance checks are required before completion: ${names} use reported/manual acceptance or have unverified checks. Verify every stage, or keep the goal in review.` }
+  }
   let overall
   if (Array.isArray(goal.checks) && goal.checks.length > 0) {
     const evidence = goal.stages.flatMap(stage => stage.tasks.flatMap(currentEvidence))
@@ -1408,7 +1413,10 @@ export function install(rt) {
     goalTaskReported: (roomId, botId) => mark(roomId, botId, 'working', 'reported'),
     goalTaskReset: (roomId, botId, note) => mark(roomId, botId, 'working', 'pending', note),
     goalTaskBinding: (roomId, botId) => {
-      const target = taskTarget(roomId, botId)
+      const targets = roomId === undefined
+        ? Object.keys(state.rooms ?? {}).map(id => taskTarget(id, botId)).filter(Boolean)
+        : [taskTarget(roomId, botId)].filter(Boolean)
+      const target = targets.length === 1 ? targets[0] : undefined
       return target?.task?.attempt === undefined ? undefined : {
         taskId: `goal:${target.goal.id}:${target.stage.id}:${target.task.id}`,
         attemptId: target.task.attempt.id,

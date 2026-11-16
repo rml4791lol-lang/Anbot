@@ -1,7 +1,8 @@
 # Reality Gate acceptance harness
 
-`npm run test:acceptance` runs one deterministic Chief–Forge–Prism scenario and writes
-`reality-gate-evidence.json` beside this file.
+`npm run test:acceptance` runs one deterministic component-level Chief–Forge–Prism
+scenario and writes `reality-gate-evidence.json` beside this file. Its outcome is
+`component-verified`, not full AgentLoop or production-model verification.
 
 What is real in the run:
 
@@ -13,8 +14,21 @@ What is real in the run:
 
 What is deliberately scripted:
 
+- the DSH AgentLoop is not executed;
 - the model choices and DSH Session event stream;
 - the in-memory DSH agent handles used by the headless test harness.
+
+What this evidence does not prove:
+
+- that `@deepseek-ai/dsh-agent-loop-testkit` runs DS Bot correctly with real DSH
+  Session events;
+- that a production model chooses the same tools or completes the same work;
+- that Desktop, Web, deployment, payment, or external-message paths work.
+
+Required follow-up gate: run this same scenario through
+`@deepseek-ai/dsh-agent-loop-testkit` with the real DS Bot tools and real DSH Session
+events before claiming end-to-end AgentLoop or production-model verification. The
+current result keeps that gate explicit as `followUpGate.status: "not-run"`.
 
 The harness does not use a model API key, a real `~/.dsh`, the Desktop/Web GUI, an
 external message service, a paid operation, or the user's other worktrees. It creates

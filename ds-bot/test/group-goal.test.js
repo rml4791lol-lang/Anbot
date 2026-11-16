@@ -176,11 +176,10 @@ test('a goal starts, passes its stages, and completes', async (t) => {
   assert.equal(goal(host).current, 2)
   assert.equal(await host.tool('group_goal', { action: 'complete', summary: 's' }, 'ga'), 'evidence is required for complete.')
   assert.equal(await host.tool('group_goal', { action: 'complete', evidence: 'e' }, 'ga'), 'summary is required for complete.')
-  assert.match(await host.tool('group_goal', { action: 'complete', evidence: 'all green', summary: 'shipped' }, 'ga'), /Complete\. Tell the user what was delivered\./)
-  assert.equal(goal(host).status, 'complete')
-  assert.equal(goal(host).verification.manual, true)
-  assert.equal(goal(host).verification.state, 'pending')
+  assert.match(await host.tool('group_goal', { action: 'complete', evidence: 'all green', summary: 'shipped' }, 'ga'), /typed acceptance checks/i)
+  assert.equal(goal(host).status, 'active')
   assert.equal(goal(host).stages[0].verification.manual, true)
+  assert.equal(goal(host).stages[0].status, 'passed')
 })
 
 test('typed acceptance checks require matching executed evidence before a stage passes', async (t) => {
@@ -200,6 +199,27 @@ test('typed acceptance checks require matching executed evidence before a stage 
   const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
   const taskId = `goal:${passed.id}:${passed.stages[0].id}:${passed.stages[0].tasks[0].id}`
   assert.equal(buildTaskDetail({ state, activity, taskId }).verification.status, 'verified')
+})
+
+test('a goal Bot handoff keeps its goal task binding in activity and task detail', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: [STAGES[0]] })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const before = goal(host)
+  const goalTaskId = `goal:${before.id}:${before.stages[0].id}:${before.stages[0].tasks[0].id}`
+  const attemptId = before.stages[0].tasks[0].attempt.id
+
+  await host.tool('message_bot', { to: 'Tester', message: 'Review the draft before I report it.' }, 'b')
+  const state = saved(host)
+  const [workId, work] = Object.entries(state.works).find(([, item]) => item.from === 'b' && item.to === 'c')
+  assert.deepEqual(work.goalTask, { taskId: goalTaskId, attemptId })
+
+  const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const handoff = activity.tasks.find(item => item.id === `handoff:${workId}`)
+  assert.equal(handoff.parentId, goalTaskId)
+  assert.equal(handoff.goalTaskId, goalTaskId)
+  const detail = buildTaskDetail({ state, activity, taskId: goalTaskId, now: Date.now() })
+  assert.deepEqual(detail.handoffs.map(item => [item.id, item.owner, item.status]), [[`handoff:${workId}`, 'Tester', 'active']])
 })
 
 test('typed acceptance checks refuse prose and report the missing check', async (t) => {
@@ -239,7 +259,7 @@ test('goal-level acceptance checks gate complete with executed evidence', async 
   const host = await start(t)
   await startGoal(host, {
     checks: [{ id: 'overall', kind: 'command', label: 'end-to-end tests', command: 'npm run e2e', expect: { exitCode: 0 } }],
-    stages: [STAGES[0]],
+    stages: [{ ...STAGES[0], checks: [{ id: 'stage-e2e', kind: 'command', command: 'npm run e2e', expect: { exitCode: 0 } }] }],
   })
   await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
   host.emit('gb', 'tool/call', { callId: 'e2e', name: 'pwsh', arguments: JSON.stringify({ command: 'npm run e2e' }) })
@@ -298,7 +318,7 @@ test('changing a goal-level verified artifact also reopens completed work', asyn
   const host = await start(t)
   await startGoal(host, {
     checks: [{ id: 'overall-package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }],
-    stages: [STAGES[0]],
+    stages: [{ ...STAGES[0], checks: [{ id: 'stage-package', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:first' } }] }],
   })
   await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
   host.emit('gb', 'deliverables/presented', { files: [{ path: 'dist/app.zip', digest: 'sha256:first' }] })
@@ -621,7 +641,7 @@ test('an explicit goal task identity binds evidence from the Bot own chat', asyn
     content: [{ type: 'text', text: 'Run the checks.' }],
     source: { kind: 'ds-bot', taskId, attemptId: task.attempt.id, exchangeId: 'explicit-task' },
   })
-  host.emit('b', 'tool/call', { callId: 'c1', name: 'shell', arguments: JSON.stringify({ command: 'npm test' }) })
+  host.emit('b', 'tool/call', { callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
   host.emit('b', 'tool/result', { callId: 'c1', exitCode: 0, message: { ok: true, exitCode: 0, content: [{ type: 'text', text: 'green' }] } })
   await settle(() => (goal(host).stages[0].tasks[0].evidence ?? []).length === 1)
   const current = goal(host).stages[0].tasks[0]

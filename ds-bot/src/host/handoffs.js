@@ -110,13 +110,16 @@ export function install(rt) {
   // `parent`: the work the sender was doing when it sent this one. `child`: the
   // session id of the subagent a run of this work belongs to — the run, not the
   // child, is the sub-work, so a child that is continued hands up a result per run.
-  function openWork(id, { from, to, parent, fromRoom, room, name, child }) {
+  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask }) {
     const above = parent === undefined ? undefined : works()[parent]
     const now = Date.now()
     const attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
+    const goalTaskId = typeof goalTask?.taskId === 'string' ? goalTask.taskId : ''
+    const goalTaskAttemptId = typeof goalTask?.attemptId === 'string' ? goalTask.attemptId : ''
     works()[id] = {
       ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}),
       ...(fromRoom ? { fromRoom } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}),
+      ...(goalTaskId ? { goalTask: { taskId: goalTaskId, ...(goalTaskAttemptId ? { attemptId: goalTaskAttemptId } : {}) } } : {}),
       open: [], results: [], at: now,
       attempt,
       checkpoint: { at: now, attemptId: attempt.id, kind: 'progress', summary: 'Work started.', nextAction: name ?? 'Complete the requested work.' },

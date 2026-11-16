@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
@@ -40,11 +42,38 @@ const bundled = async () => {
   return module.exports
 }
 const mod = await bundled()
+const harnessRequire = createRequire(join(process.env.DSH_HARNESS, 'package.json'))
+const { JSDOM } = harnessRequire('jsdom')
 
 test('team activity type sizes and elevation use the shared UI scale', () => {
   assert.doesNotMatch(mod.TEAM_ACTIVITY_CSS, /font-size:10px;line-height:(?:14|16)px/)
   assert.doesNotMatch(mod.TEAM_ACTIVITY_CSS, /rgba\(/)
   assert.match(mod.TEAM_ACTIVITY_CSS, /\.bt-trace-tab\[aria-pressed=true\]\{[^}]*box-shadow:var\(--bt-card-shadow\)/)
+})
+
+test('the team activity dialog traps Tab and restores its trigger on close', () => {
+  const dom = new JSDOM('<!doctype html><body><button id="trigger">Open</button><div id="layer"><button id="close">Close</button><button id="next">Next</button></div></body>')
+  const { document } = dom.window
+  const trigger = document.getElementById('trigger')
+  const layer = document.getElementById('layer')
+  trigger.focus()
+  const release = mod.trapDialogFocus(layer)
+  assert.equal(document.activeElement.id, 'close')
+
+  const tab = (shiftKey = false) => {
+    const event = new dom.window.KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true })
+    document.getElementById('next').dispatchEvent(event)
+    return event
+  }
+  document.getElementById('next').focus()
+  assert.equal(tab().defaultPrevented, true)
+  assert.equal(document.activeElement.id, 'close')
+  document.getElementById('close').focus()
+  assert.equal(tab(true).defaultPrevented, true)
+  assert.equal(document.activeElement.id, 'next')
+
+  release()
+  assert.equal(document.activeElement.id, 'trigger')
 })
 
 const text = node => {

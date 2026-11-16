@@ -9,9 +9,11 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   const output = fileURLToPath(new URL('./reality-gate-evidence.json', import.meta.url))
   writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`)
 
-  assert.equal(result.schema, 1)
+  assert.equal(result.schema, 2)
   assert.equal(result.scenario, 'chief-forge-prism-mcp-repair')
-  assert.equal(result.outcome, 'verified')
+  assert.equal(result.outcome, 'component-verified')
+  assert.deepEqual([result.agentLoop.executed, result.agentLoop.mode], [false, 'scripted-session-events'])
+  assert.deepEqual([result.followUpGate.required, result.followUpGate.status], [true, 'not-run'])
   assert.equal(result.chief.stages.length, 2)
   assert.deepEqual(result.chief.stages.map(stage => stage.owner), ['Forge', 'Prism'])
   assert.equal(result.forge.worktree.isolated, true)

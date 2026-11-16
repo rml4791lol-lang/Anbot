@@ -1,9 +1,19 @@
 {
-  "schema": 1,
+  "schema": 2,
   "scenario": "chief-forge-prism-mcp-repair",
-  "generatedAt": "2026-11-16T17:56:11.889Z",
-  "outcome": "verified",
+  "generatedAt": "2026-11-16T18:13:11.846Z",
+  "outcome": "component-verified",
   "mocking": "scripted-model-acceptance-only",
+  "agentLoop": {
+    "executed": false,
+    "mode": "scripted-session-events",
+    "seam": "The DSH Session event and model/tool stream is supplied by this harness instead of @deepseek-ai/dsh-agent-loop-testkit."
+  },
+  "followUpGate": {
+    "required": true,
+    "status": "not-run",
+    "requirement": "Before claiming end-to-end AgentLoop or production-model verification, run this scenario through @deepseek-ai/dsh-agent-loop-testkit with the real DS Bot tools and real DSH Session events."
+  },
   "chief": {
     "role": "Coordinator",
     "view": "Reality Gate",
@@ -33,11 +43,11 @@
   },
   "forge": {
     "role": "Engineer",
-    "taskId": "goal:goal-f56368a5:s1:t1",
+    "taskId": "goal:goal-591ef3cc:s1:t1",
     "attemptId": "t1:a1",
     "worktree": {
       "isolated": true,
-      "baselineCommit": "89a9698504248b055aa17bcfb3be9c6ed1a16260",
+      "baselineCommit": "0eb69d4e998a906a2cb7b1f6119cb1d0b3402054",
       "changedPaths": [
         "ds-bot/src/host/local-agents/mcp.js"
       ]
@@ -89,7 +99,7 @@
   "restart": {
     "boundary": "after-forge-durable-result-before-prism-pickup",
     "hostStarts": 2,
-    "sameTaskId": "goal:goal-f56368a5:s2:t2",
+    "sameTaskId": "goal:goal-591ef3cc:s2:t2",
     "sameAttemptId": "t2:a1",
     "queuedBeforeRestart": true,
     "prismPickupsBeforeRestart": 0,
@@ -97,9 +107,9 @@
     "recoveryKind": "resent"
   },
   "prism": {
-    "taskId": "goal:goal-f56368a5:s2:t2",
+    "taskId": "goal:goal-591ef3cc:s2:t2",
     "attemptId": "t2:a1",
-    "handoffTaskId": "handoff:6838b24d-5f99-4907-b46c-27fd44a7ebb2",
+    "handoffTaskId": "handoff:ca8f324c-e440-4300-ac6e-beebaa12977b",
     "checks": {
       "diff": {
         "verified": true,
@@ -110,7 +120,7 @@
         "verified": true,
         "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
         "exitCode": 0,
-        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.824458ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 164.940292"
+        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.696583ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 130.064541"
       },
       "inventory": {
         "verified": true,
@@ -140,7 +150,7 @@
         "name": "Prism",
         "role": "Reviewer"
       },
-      "taskId": "goal:goal-f56368a5:s2:t2",
+      "taskId": "goal:goal-591ef3cc:s2:t2",
       "attemptId": "t2:a1",
       "checks": {
         "diff": {
@@ -152,7 +162,7 @@
           "verified": true,
           "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
           "exitCode": 0,
-          "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.824458ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 164.940292"
+          "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.696583ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 130.064541"
         },
         "inventory": {
           "verified": true,
@@ -187,14 +197,14 @@
       "id": "t2:a1",
       "number": 1,
       "status": "working",
-      "startedAt": 1794851767676,
-      "updatedAt": 1794851770960,
+      "startedAt": 1794852787783,
+      "updatedAt": 1794852791043,
       "sessionId": "prism",
-      "exchangeId": "6838b24d-5f99-4907-b46c-27fd44a7ebb2",
+      "exchangeId": "ca8f324c-e440-4300-ac6e-beebaa12977b",
       "turn": 1
     },
     "handoff": {
-      "id": "6838b24d-5f99-4907-b46c-27fd44a7ebb2",
+      "id": "ca8f324c-e440-4300-ac6e-beebaa12977b",
       "parentId": null,
       "name": "Review the MCP repair",
       "status": "active",
@@ -211,15 +221,15 @@
     },
     "checkpoint": {
       "text": "Task attempt started.",
-      "at": 1794851767676,
+      "at": 1794852787783,
       "kind": "progress"
     },
     "recovery": {
       "state": "recovered",
       "records": [
         {
-          "id": "t2:a1:resent:6838b24d-5f99-4907-b46c-27fd44a7ebb2",
-          "at": 1794851770960,
+          "id": "t2:a1:resent:ca8f324c-e440-4300-ac6e-beebaa12977b",
+          "at": 1794852791043,
           "attemptId": "t2:a1",
           "kind": "resent",
           "summary": "The queued handoff was delivered again after the host restarted.",
@@ -244,7 +254,7 @@
       "id": "ev:tool-result:prism:prism-1-node-test-test-acceptance-fixtures-mcp-i",
       "trust": "verified",
       "title": "",
-      "text": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.824458ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 164.940292",
+      "text": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.696583ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 130.064541",
       "sourceId": "tool-result"
     },
     {
@@ -276,8 +286,9 @@
     "the isolated git worktree is created and removed only by this harness"
   ],
   "limitations": [
-    "The model choice and tool sequence are scripted; no production model claim is made.",
-    "The run proves the existing DS Bot runtime, team tools, persistence, recovery and official MCP loopback behavior under that scripted seam.",
+    "The DSH AgentLoop is not executed; its Session events and model/tool choice are scripted, and no production model claim is made.",
+    "This is component-level evidence for the existing DS Bot runtime, team tools, persistence, recovery, task projections and official MCP loopback under that scripted seam.",
+    "A real AgentLoop testkit run remains a required follow-up gate before calling this end-to-end or production verification.",
     "No commit, push, deployment, external message or paid operation is performed."
   ]
 }

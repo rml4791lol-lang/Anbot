@@ -945,7 +945,7 @@ export function install(rt) {
 
   // The user's answer to a card. Repeated answers with the same decision return the
   // settled result; a different decision is refused because the first one is history.
-  async function answer({ id, approve }) {
+  async function answerProposal({ id, approve }) {
     const store = data()
     const proposal = Object.hasOwn(store.proposals, id) ? store.proposals[id] : undefined
     if (proposal === undefined) {
@@ -980,6 +980,25 @@ export function install(rt) {
     const settled = settle('approved', audit ? { audit, version } : {})
     await persist()
     return { applied: true, duplicate: false, proposal: settled }
+  }
+
+  const decisions = new Map()
+  async function answer({ id, approve }) {
+    const active = decisions.get(id)
+    if (active !== undefined) {
+      if (active.approve !== approve) {
+        throw Object.assign(new Error(`This proposal is being ${active.approve ? 'approved' : 'declined'}`), { code: 'bot/conflict' })
+      }
+      return active.promise
+    }
+    const decision = { approve, promise: undefined }
+    decision.promise = answerProposal({ id, approve })
+    decisions.set(id, decision)
+    try {
+      return await decision.promise
+    } finally {
+      if (decisions.get(id) === decision) decisions.delete(id)
+    }
   }
 
   const agentsApplying = new Map()

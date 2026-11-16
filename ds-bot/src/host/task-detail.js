@@ -6,6 +6,10 @@ const timeOf = value => {
   const time = typeof value === 'number' ? value : Date.parse(text(value))
   return Number.isFinite(time) ? time : null
 }
+const latestTime = (values) => {
+  const times = values.map(timeOf).filter(value => value !== null)
+  return times.length === 0 ? null : Math.max(...times)
+}
 
 export const redactCredentialText = (value) => {
   let output = text(value)
@@ -177,6 +181,32 @@ function workRecord(state, sourceId) {
   const id = sourceId.startsWith('handoff:') ? sourceId.slice('handoff:'.length) : sourceId
   const work = state?.works?.[id]
   return work && typeof work === 'object' ? { id, work, room: state?.rooms?.[work.room] } : undefined
+}
+
+function handoffsFor(state, task) {
+  if (task?.source !== 'goal') return []
+  return Object.entries(state?.works ?? {}).flatMap(([id, work]) => {
+    if (work?.goalTask?.taskId !== task.sourceId) return []
+    const ownerId = text(work.to) || null
+    const open = Array.isArray(work.open) ? work.open.length : 0
+    return [{
+      id: `handoff:${id}`,
+      parentId: task.id,
+      goalTaskId: task.sourceId,
+      goalTaskAttemptId: text(work.goalTask.attemptId) || null,
+      title: redactText(work.name) || `Handoff to ${text(state?.bots?.[ownerId]?.name) || ownerId || 'a Bot'}`,
+      status: open > 0 ? 'waiting' : 'active',
+      owner: text(state?.bots?.[ownerId]?.name) || ownerId || '',
+      from: { id: text(work.from) || null, name: redactText(state?.bots?.[work.from]?.name ?? work.from) },
+      to: { id: ownerId, name: redactText(state?.bots?.[ownerId]?.name ?? ownerId) },
+      updatedAt: latestTime([
+        work.at,
+        work.attempt?.updatedAt,
+        work.checkpoint?.at,
+        ...(Array.isArray(work.evidence) ? work.evidence.map(item => item?.at) : []),
+      ]),
+    }]
+  }).sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0) || a.id.localeCompare(b.id))
 }
 
 function evidenceItem(item, taskId, index) {
@@ -491,7 +521,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
   if (activityTask === undefined) {
     return {
       schema: 1, mode: activity?.mode ?? 'live', generatedAt: at, taskId, task: null, empty: true,
-      evidence: [], artifacts: [], blockers: [], controls: [],
+      evidence: [], artifacts: [], handoffs: [], blockers: [], controls: [],
       verification: { status: 'unavailable', reason: 'The selected task is no longer present.' },
       trace: { status: 'empty', sourceTaskId: taskId, sourceId: taskId, sessionIds: [], relationships: [], timeline: [], records: [], truncated: false },
       partial: false, warnings: [],
@@ -546,6 +576,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
     blockers,
     evidence,
     artifacts,
+    handoffs: handoffsFor(state, activityTask),
     verification,
     trace,
     controls,
