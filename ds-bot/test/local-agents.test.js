@@ -12,7 +12,7 @@ import { JsonRpcPeer, wireProcess } from '../src/host/local-agents/jsonrpc.js'
 import { ClaudeEngine } from '../src/host/local-agents/claude.js'
 import { LoopbackMcp, flattenSchema } from '../src/host/local-agents/mcp.js'
 import { cleanEnv } from '../src/host/local-agents/discover.js'
-import { validateCustom, isLocalAgentRoute, cliMode, acpMode } from '../src/host/local-agents/engines.js'
+import { ENGINES, engineOf, validateCustom, isLocalAgentRoute, cliMode, acpMode } from '../src/host/local-agents/engines.js'
 import { install as partsInstall } from '../src/host/parts.js'
 import { install as modelsInstall } from '../src/host/models.js'
 import { install as localAgentsInstall } from '../src/host/local-agents/index.js'
@@ -107,6 +107,22 @@ test('a disposed local-agent install does not touch the dead llm service', async
 })
 
 const options = (sessionId, messages, extra = {}) => ({ provider: 'local-acp-fake', model: 'default', sessionId, messages, tools: [{ name: 'message_bot' }], signal: AbortSignal.timeout(60_000), ...extra })
+
+test('engines declare the status facts the host can actually provide', () => {
+  for (const [route, engine] of Object.entries(ENGINES)) {
+    assert.equal(engine.capabilities.structuredEvents, true, route)
+    assert.equal(engine.capabilities.approvals, true, route)
+    assert.equal(engine.capabilities.tokenUsage, true, route)
+    assert.equal(engine.capabilities.resume, true, route)
+    assert.equal(engine.capabilities.subagentSessions, false, route)
+    assert.equal(engine.capabilities.planQuota, false, route)
+    assert.equal(engine.capabilities.versionProbe, true, route)
+  }
+  const custom = engineOf('local-acp-custom-agent', [{ id: 'custom-agent', name: 'Custom', command: 'agent', args: [] }])
+  assert.equal(custom.capabilities.structuredEvents, true)
+  assert.equal(custom.capabilities.versionProbe, false)
+  assert.equal(custom.capabilities.planQuota, false)
+})
 
 test('session-title and compaction stay deterministic, no CLI is started', async () => {
   const adapter = makeAdapter()

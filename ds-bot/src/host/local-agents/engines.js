@@ -13,6 +13,16 @@ export const KINDS = ['acp', 'codex', 'claude']
 // load with a duplicate adapter.
 export const ROUTE_PREFIX = 'local-'
 
+// What the protocol driver can carry for every engine of that kind. These are
+// driver facts, not claims about a particular CLI version: token usage is parsed
+// when the CLI reports it, child Sessions are not exposed by any current driver,
+// and plan quota needs an engine-specific probe that does not exist yet.
+const CAPABILITIES = {
+  acp: Object.freeze({ structuredEvents: true, approvals: true, tokenUsage: true, resume: true, subagentSessions: false, planQuota: false }),
+  codex: Object.freeze({ structuredEvents: true, approvals: true, tokenUsage: true, resume: true, subagentSessions: false, planQuota: false }),
+  claude: Object.freeze({ structuredEvents: true, approvals: true, tokenUsage: true, resume: true, subagentSessions: false, planQuota: false }),
+}
+
 const CLIS = {
   'devin-cli': { name: 'Devin CLI', kind: 'acp', command: 'devin', args: ['acp'], version: ['--version'], signedIn: { args: ['auth', 'status'] } },
   'claude-code': { name: 'Claude Code', kind: 'claude', command: 'claude', args: [], version: ['--version'], signedIn: { file: ['.claude', '.credentials.json'] } },
@@ -27,7 +37,15 @@ const CLIS = {
 }
 
 // route -> engine, e.g. 'local-codex-cli'. `id` is the CLI's name without the prefix.
-export const ENGINES = Object.fromEntries(Object.entries(CLIS).map(([id, spec]) => [`${ROUTE_PREFIX}${id}`, { ...spec, id }]))
+export const ENGINES = Object.fromEntries(Object.entries(CLIS).map(([id, spec]) => [`${ROUTE_PREFIX}${id}`, {
+  ...spec,
+  id,
+  capabilities: Object.freeze({
+    ...CAPABILITIES[spec.kind],
+    versionProbe: spec.version !== undefined,
+    signInProbe: spec.signedIn !== undefined,
+  }),
+}]))
 
 export const CUSTOM_PREFIX = `${ROUTE_PREFIX}acp-`
 
@@ -50,7 +68,16 @@ export function engineOf(route, custom = []) {
   if (ENGINES[route] !== undefined) return ENGINES[route]
   if (route.startsWith(CUSTOM_PREFIX)) {
     const entry = custom.find(agent => agent.id === route.slice(CUSTOM_PREFIX.length))
-    if (entry !== undefined) return { name: entry.name, kind: 'acp', command: entry.command, args: entry.args ?? [], custom: true }
+    if (entry !== undefined) {
+      return {
+        name: entry.name,
+        kind: 'acp',
+        command: entry.command,
+        args: entry.args ?? [],
+        custom: true,
+        capabilities: Object.freeze({ ...CAPABILITIES.acp, versionProbe: false, signInProbe: false }),
+      }
+    }
   }
   return undefined
 }

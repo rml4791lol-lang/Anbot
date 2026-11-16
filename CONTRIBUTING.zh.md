@@ -10,7 +10,7 @@
 
 ## 最重要的规则
 
-1. **基于 DSH 构建，不改 DSH。** Bot 功能是 DSH 插件：只用 DSH 有文档的插件接口（Cordis 服务、插件客户端入口、profile patch）。桌面应用只通过 DSH 有文档的入口启动 DSH（`@deepseek-ai/dsh/profile-boot`、`dsh` 命令）。不修改 DeepSeek Harness，不依赖 DSH 安装目录里的文件。功能需要 DSH 没有提供的能力时，先在这里开 Issue；修复可能应该放在 DSH 里。
+1. **基于 DSH 构建：DSH 是唯一运行时和可变底座。** Bot 功能是 DSH 插件：只用 DSH 有文档的插件接口（Cordis 服务、插件客户端入口、profile patch）。桌面应用只通过 DSH 有文档的入口启动 DSH（`@deepseek-ai/dsh/profile-boot`、`dsh` 命令）。通用 Session、Turn、Tool、UI 契约需要修改时，可以在独立的 DSH 分支进行；DS Bot 仍然是产品层。任何 DSH 改动都需要固定版本、跨仓测试和回滚路径。绝不能原地修改已经安装的 DSH，也不能新增第二套运行时。
 2. **Bot 的工作跑在 DSH Session 里。** Bot 的身份不变，工作跑在 DSH Session 里：私聊一条、每个群各一条，上下文快满时换一条新的。每个回合都走 DSH 正常的 agent 循环、工具和模型路由。不要另加一套 agent 运行时。
 3. **任何地方都不放真实密钥。** 不要提交 API key、token、cookie、`DSH_HOME` 目录、日志，或带个人信息的截图。测试和测试台用脚本化的模拟模型，不需要密钥。
 4. **只用原创素材。** 不要从其他产品或网站复制代码、文字、图标、logo 或其他图形。唯一例外是与 Apache 2.0 兼容许可的代码：注明出处，并把它的声明加进 `NOTICE` 文件。

@@ -8,6 +8,7 @@ import { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
 import { createRuntime } from '../index.js'
+import { POSSIBLY_STALLED_MS } from '../src/host/turns.js'
 import { fakeContext } from './fake-ctx.js'
 
 // #976: a plugin update replaces the files under a running dsh and loads the plugin
@@ -150,28 +151,20 @@ test('a plugin loaded again adopts a running turn and its child, so the group vi
   assert.equal(second.rt.hasSubagents('gb'), false)
 })
 
-// A local-agent discovery scan is not awaited by install(). If the plugin is
-// replaced while it is still settling, it must not read the old context's llm
-// service: the real context rejects that access after disposal.
-test('a plugin disposed during local-agent discovery does not touch the old llm service', async (t) => {
+test('a running turn exposes freshness without turning a long call into a failed state', async (t) => {
   const home = freshHome()
   const dsh = dshSide()
-  const ctx = fakeContext({ services: dsh.services })
-  const { llm, ...props } = dsh.props
-  Object.assign(ctx, props)
-  let active = true
-  Object.defineProperty(ctx, 'llm', {
-    configurable: true,
-    get() {
-      if (!active) throw new Error('cannot get property "llm" without inject')
-      return llm
-    },
-  })
-  t.after(() => rmSync(home, { recursive: true, force: true, maxRetries: 5 }))
-  createRuntime(ctx, { home })
-  active = false
-  await ctx.dispose()
-  await new Promise(resolve => setTimeout(resolve, 50))
+  dsh.agentOf('gb')
+  const { ctx, rt } = await loadPlugin(dsh, home)
+  cleanup(t, home, ctx)
+  await settle(() => rt.live.get('gb')?.turn !== undefined)
+
+  const entry = rt.live.get('gb')
+  entry.lastEventAt = Date.now() - POSSIBLY_STALLED_MS - 1
+  const shown = (rt.roomWorkView().r1 ?? []).find(item => item.botId === 'b')
+  assert.equal(shown?.possiblyStalled, true)
+  assert.ok(shown?.lastEventAt < Date.now() - POSSIBLY_STALLED_MS)
+  assert.equal(rt.activityView().b, 'thinking')
 })
 
 test('a child still running after the reload shows in its group, and settling clears it', async (t) => {
