@@ -150,6 +150,30 @@ test('a plugin loaded again adopts a running turn and its child, so the group vi
   assert.equal(second.rt.hasSubagents('gb'), false)
 })
 
+// A local-agent discovery scan is not awaited by install(). If the plugin is
+// replaced while it is still settling, it must not read the old context's llm
+// service: the real context rejects that access after disposal.
+test('a plugin disposed during local-agent discovery does not touch the old llm service', async (t) => {
+  const home = freshHome()
+  const dsh = dshSide()
+  const ctx = fakeContext({ services: dsh.services })
+  const { llm, ...props } = dsh.props
+  Object.assign(ctx, props)
+  let active = true
+  Object.defineProperty(ctx, 'llm', {
+    configurable: true,
+    get() {
+      if (!active) throw new Error('cannot get property "llm" without inject')
+      return llm
+    },
+  })
+  t.after(() => rmSync(home, { recursive: true, force: true, maxRetries: 5 }))
+  createRuntime(ctx, { home })
+  active = false
+  await ctx.dispose()
+  await new Promise(resolve => setTimeout(resolve, 50))
+})
+
 test('a child still running after the reload shows in its group, and settling clears it', async (t) => {
   const home = freshHome()
   const dsh = dshSide()

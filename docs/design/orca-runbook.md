@@ -24,8 +24,8 @@
 | 9 | `orca environment list` | 0 | 0.19 s | `No saved environments.`（23 B） | 空 |
 | 10 | `orca worktree list` | 0 | 0.28 s | 2 个 worktree + 末行 `scope: local`（395 B） | 空 |
 | 11 | `orca worktree list --json` | 0 | 0.21 s | JSON（3,641 B）：`result.worktrees[] / hostScope / totalCount / truncated` | 空 |
-| 12 | `orca worktree current --json`（cwd=仓库根） | 0 | 0.34 s | JSON，`result.worktree.path=/Users/an/Desktop/Atlas/DS-Bot` | 空 |
-| 13 | `orca worktree current --json`（cwd=普通 git worktree） | 0 | 0.20 s | JSON，`result.worktree.path=/Users/an`（**不是**该 worktree） | 空 |
+| 12 | `orca worktree current --json`（cwd=仓库根） | 0 | 0.34 s | JSON，`result.worktree.path=<repo-root>` | 空 |
+| 13 | `orca worktree current --json`（cwd=普通 git worktree） | 0 | 0.20 s | JSON，`result.worktree.path=<home>`（**不是**该 worktree） | 空 |
 | 14 | `orca worktree current --json`（cwd=/tmp） | 1 | 0.20 s | stdout 上是 JSON：`{"ok":false,"error":{"code":"selector_not_found","message":"No Orca workspace contains the current directory: /private/tmp/orca-probe"}}` | 空 |
 | 15 | `orca definitely-not-a-command` | 1 | 0.17 s | 空 | `Unknown command: definitely-not-a-command` |
 | 16 | `orca skills get not-a-real-skill` | 1 | 0.41 s | 空 | `Unknown skill topic "not-a-real-skill". Available topics: …`（列出全部合法名字） |
