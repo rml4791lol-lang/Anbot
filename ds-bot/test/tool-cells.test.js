@@ -301,7 +301,7 @@ test('each sub-call shows its own state, not its program\'s', () => {
   assert.equal(shown(program([{ ...call('create_bot', 'program:ptc:1', { args: { name: 'Writer' }, running: true }) }])), '')
   const failed = call('message_bot', 'program:ptc:1', { args: { to: 'Writer' }, isError: true })
   assert.match(shown(program([failed])), /Couldn't message Writer/)
-  assert.match(shown(program([call('message_bot', 'program:ptc:1', { args: { to: 'Writer' } })], { isError: true })), /^Messaged/)
+  assert.match(shown(program([call('message_bot', 'program:ptc:1', { args: { to: 'Writer' } })], { isError: true })), /^Bot exchange.*Messaged Writer/)
   const refused = call('post_to_group', 'program:ptc:1', { content: 'No group is called "Nope".', isError: true })
   const posted = call('post_to_group', 'program:ptc:2', { content: 'Posted in "Ops".' })
   assert.match(shown(program([refused, posted])), /Couldn't post in the group.*Posted in.*Ops/)
@@ -851,7 +851,7 @@ test('a goal round draws nothing, while another unknown trigger keeps its event 
     actions: {},
   }))
   assert.ok(emptied(trigger({ kind: 'goal', goalId: 'goal-1', revision: 1, round: 1 })))
-  assert.match(text(trigger({ kind: 'webhook' })), /<goal_round>Keep going/)
+  assert.match(text(trigger({ kind: 'webhook' })), /^Update$/)
 })
 
 // #212: the chat hands a trigger its event (seq, content, source) but no turn, so every post
@@ -1087,6 +1087,42 @@ test('a view works its formulas out, draws a chart, and keeps html in a sandboxe
   assert.match(frame.props.srcDoc, /Content-Security-Policy" content="default-src 'none'/)
   assert.ok(frame.props.srcDoc.indexOf('Content-Security-Policy') < frame.props.srcDoc.indexOf('<b>hi</b>'), 'the policy comes before the markup')
   assert.equal(frame.props.title, 'A greeting')
+})
+
+// A scheduled task prompt is automation metadata, not a chat message. Its task
+// remains in Details → Scheduled tasks, while the transcript stays on what the
+// Bot actually did for the user.
+test('a scheduled task trigger stays out of the transcript', () => {
+  const out = expand(TriggerCell({
+    node: {
+      key: 'trigger', kind: 'turn-trigger', location: { turn: { turn: 1 } },
+      data: { seq: 9, time: 1, content: text$('reminder_prompt_json: "定时巡检：检查状态并报告变化"'), source: { kind: 'schedule' } },
+    },
+    sessionId: chief.id, actions: {},
+    useRoster: select => select(team()), useSessions: select => select({ byId: {} }),
+    useTurnClock: select => select({}), useUi: select => select({ visits: {}, reactions: {} }),
+  }))
+  assert.equal(find(out, node => node.props?.className === 'bt-event'), undefined)
+  assert.ok(emptied(out))
+})
+
+// A Bot-to-Bot relay is still available in the exchange view, but its transcript
+// line is a quiet disclosure rather than another message competing for attention.
+test('a Bot-to-Bot line is a compact expandable context row', () => {
+  const out = expand(TriggerCell({
+    node: {
+      key: 'trigger', kind: 'turn-trigger', location: { turn: { turn: 1 } },
+      data: { seq: 9, time: 1, content: text$('[Message from Writer]\nPlease check the draft.'), source: { kind: 'bot', role: 'request', senderSessionId: 'writer' } },
+    },
+    sessionId: chief.id, actions: {},
+    useRoster: select => select(team()), useSessions: select => select({ byId: {} }),
+    useTurnClock: select => select({}), useUi: select => select({ visits: {}, reactions: {} }),
+  }))
+  const details = find(out, node => node.type === 'details')
+  assert.equal(details.props.className, 'bt-event bt-event-quiet')
+  assert.match(text(details), /Bot exchange/)
+  assert.match(text(details), /Writer/)
+  assert.match(text(details), /Please check the draft\./)
 })
 
 // The repair card's Retry reaches the Bot as a plugin trigger; the chat shows that it went

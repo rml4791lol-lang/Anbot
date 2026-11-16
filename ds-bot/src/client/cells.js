@@ -2,7 +2,7 @@ import { createElement as h, Fragment, useEffect, useLayoutEffect, useMemo, useR
 import { createPortal } from 'react-dom'
 import { MarkdownText, writeClipboard } from './dsh-primitives.js'
 import { inkText } from './inks.js'
-import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripToolCallTags, isHiddenTurn, isRelayContext, relaysBefore, relayPart, commRunOf, toolName, toolArgs, reminderPrompts, elapsedLabel, clockLabel, messageClock } from './text.js'
+import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripInternalText, stripToolCallTags, isHiddenTurn, isRelayContext, relaysBefore, relayPart, commRunOf, toolName, toolArgs, elapsedLabel, clockLabel, messageClock } from './text.js'
 import { SmileIcon, ReplyIcon, DotsIcon, CheckIcon, DownloadIcon, CopyIcon, GoalIcon, MemoryIcon } from './icons.js'
 import { goalEventText } from './goal.js'
 import { colorOf, toolState, BotMark, RoomAvatar } from './mark.js'
@@ -267,7 +267,7 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
   const hidden = Boolean(roster.roomsById[sessionId]) || isHiddenTurn(roster, sessionId, data.turn)
   const texts = groupPart === 'reasoning' ? [] : data.blocks
     .filter(block => block.kind === 'text')
-    .map(block => stripToolCallTags(block.text))
+    .map(block => stripInternalText(stripToolCallTags(block.text)))
     .filter(text => text.trim() !== '')
   const running = data.status === 'running'
   const textInteractionSource = data.status === 'settled' && data.finalNode?.messageId !== undefined
@@ -303,6 +303,9 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
         bots: [sender],
         onOpen: () => { if (sender.id) actions.openExchange(selfId, sender.id) },
         whole: true,
+        quiet: true,
+        summary: t('Bot exchange'),
+        detail: stripHeader(contentText(relay.content)),
       })
     }),
     head ? h(SpeakerHead, { bot: speaker, time: data.time }) : null,
@@ -319,7 +322,18 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
 // `code` in an activity line is the command or path the agent works on.
 const activityParts = line => line.split('`').map((part, index) => (index % 2 === 1 ? h('code', { key: index }, part) : part))
 
-function EventLine({ prefix, bots, joiner = t('and'), onOpen, whole = false }) {
+function EventLine({ prefix, bots, joiner = t('and'), onOpen, whole = false, quiet = false, summary, detail }) {
+  const names = bots.map(bot => bot.name || t('a Bot')).join(` ${joiner} `)
+  if (quiet) {
+    return h('details', { className: 'bt-event bt-event-quiet' },
+      h('summary', { className: 'bt-event-summary', title: detail || undefined },
+        h('span', { className: 'bt-event-caret', 'aria-hidden': true }),
+        h('span', { className: 'bt-event-summary-label' }, summary ?? t('Bot exchange')),
+        h('span', { className: 'bt-event-summary-name' }, names)),
+      h('div', { className: 'bt-event-body' },
+        detail ? h('div', { className: 'bt-event-detail' }, detail) : h('div', { className: 'bt-event-detail' }, `${prefix} ${names}`),
+        onOpen && bots[0] ? h('button', { type: 'button', className: 'bt-soft bt-soft-sm', onClick: () => onOpen(bots[0]) }, t('Open bot exchange')) : null))
+  }
   if (whole && bots.length === 1) {
     return h('div', { className: 'bt-event' },
       h('button', { type: 'button', className: 'bt-event-whole', title: bots[0].name, onClick: () => onOpen?.(bots[0]) },
@@ -660,7 +674,10 @@ function chatRow(row, key, { sessionId, selfId, roster, actions, useUi, onBtwDel
       if (row.role === 'report') return h(GroupEvent, { key, prefix: t('Replies from'), room: roster.roomsById[row.roomId], name: t('a group chat'), roster, actions })
       const other = roster.byId[row.botId] ?? { id: row.botId, name: row.name ?? t('a Bot'), color: 'gray' }
       const prefix = { stopped: t('Stopped by'), reply: t('Reply from') }[row.role] ?? t('Message from')
-      return h(EventLine, { key, prefix, bots: [other], onOpen: () => { if (selfId && other.id) actions.openExchange(selfId, other.id) }, whole: true })
+      return h(EventLine, {
+        key, prefix, bots: [other], whole: true, quiet: true, summary: t('Bot exchange'),
+        onOpen: () => { if (selfId && other.id) actions.openExchange(selfId, other.id) },
+      })
     }
     default: return null
   }
@@ -760,14 +777,20 @@ export function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnCl
         bots,
         onOpen: bot => actions.openExchange(selfId, bot.id),
         whole: true,
+        quiet: true,
+        summary: t('Bot exchange'),
+        detail: stripHeader(contentText(data.content)),
       })
     }
-    if (source.kind === 'schedule') {
-      const prompts = reminderPrompts(contentText(data.content))
-      return h('div', { className: 'bt-event' }, prompts.length > 0 ? t('Scheduled task: {text}', { text: prompts.join(' · ').slice(0, 80) }) : t('Routine started'))
-    }
+    // A scheduled task is automation metadata, not something the user said in
+    // the chat. Its task remains in Details → Scheduled tasks.
+    if (source.kind === 'schedule') return null
     if (source.kind === 'user-question-reply' || source.kind === 'goal') return null
-    return h('div', { className: 'bt-event' }, contentText(data.content).slice(0, 80) || t('Update'))
+    // Unknown trigger kinds keep a small event line, but never leak a raw
+    // model-control prompt. Plain user-facing text can still name the event.
+    const eventText = contentText(data.content).trim()
+    const safeText = eventText.startsWith('<') ? '' : eventText.slice(0, 80)
+    return h('div', { className: 'bt-event' }, safeText || t('Update'))
   }
 }
 
@@ -1155,12 +1178,12 @@ function renderCall(call, { sessionId, roster, actions, useUi, useWork, findBot,
     case 'message_bot': {
       const target = findBot(arg('to')) ?? { name: arg('to') ?? '…', color: 'gray' }
       if (done && call.isError) return h('div', { className: 'bt-event' }, t("Couldn't message {name}", { name: target.name }))
-      return h(EventLine, { prefix: t('Messaged'), bots: [target], onOpen: bot => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true })
+      return h(EventLine, { prefix: t('Messaged'), bots: [target], onOpen: bot => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true, quiet: true, summary: t('Bot exchange') })
     }
     case 'stop_bot': {
       const target = findBot(arg('bot')) ?? { name: arg('bot') ?? '…', color: 'gray' }
       if (done && call.isError) return h('div', { className: 'bt-event' }, t("Couldn't stop {name}", { name: target.name }))
-      return h(EventLine, { prefix: t('Stopped'), bots: [target], onOpen: bot => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true })
+      return h(EventLine, { prefix: t('Stopped'), bots: [target], onOpen: bot => bot.id && actions.openExchange(self?.id ?? sessionId, bot.id), whole: true, quiet: true, summary: t('Bot exchange') })
     }
     case 'create_bot': {
       const created = findBot(arg('name'))
