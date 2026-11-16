@@ -88,6 +88,8 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on agent/status',
     'effect ds-bot: memory review',
     'effect ds-bot: memory tidy',
+    'on agent/status',
+    'effect ds-bot: project change capture',
     'effect ds-bot: Bot compaction',
     'on agent/created',
     'effect ds-bot: wake parts that wait for their run mode',
@@ -213,6 +215,20 @@ test('the client channel answers from the saved state', async (t) => {
   assert.deepEqual((await call('delete-bot', { id: 'nobody' })).error, { code: 'bot/refused', message: 'Unknown Bot', details: {} })
   // Off the Desktop profile there are no Bot browsers.
   assert.equal((await call('browser-wait', { clientId: 'w' })).error.code, 'bot/browser-off')
+})
+
+test('the site directory keeps published sites through the client channel', async (t) => {
+  const { call, stop } = start()
+  t.after(stop)
+  const empty = (await call('sites')).value
+  assert.equal(empty.counts.total, 0)
+  const saved = (await call('site-save', {
+    name: 'DS Bot', url: 'https://chat.an520.xin', environment: 'production',
+  })).value
+  assert.equal(saved.site.name, 'DS Bot')
+  assert.equal(saved.counts.production, 1)
+  const listed = (await call('sites')).value
+  assert.equal(listed.sites[0].url, 'https://chat.an520.xin/')
 })
 
 const TEAM = {

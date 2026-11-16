@@ -4,7 +4,7 @@
 - 适用：所有 Bot 会话（私聊、群聊、分段）以及给 Bot 写 instructions 的人
 - 相关：`docs/plans/2026-10-10-bot-runtime.md`（预设/模型/档位/能力）、`ds-bot/src/host/prompt.js`（运行时规则）
 
-这份文档回答三个问题：Bot 怎么跑起来、31 个工具什么时候用、怎么写一个不跑偏的 Bot。
+这份文档回答三个问题：Bot 怎么跑起来、33 个工具什么时候用、怎么写一个不跑偏的 Bot。
 
 ## 1. 运行契约
 
@@ -32,7 +32,7 @@
 
 **团队看板 feed。** 写侧一人一文件：每个 Bot 用 `update_team_board` 整份覆盖 `<DSH_ATLAS_STATE_DIR 或 ~/Desktop/Atlas/任务标准规范规则/状态>/board/<bot名>.json`，只动自己那份，别人那份不碰。文件内容是数组（一人多行），单对象也接受（读侧 `Array.isArray ? flatten : [obj]`）；每条 8 键 `bot / kind / what / number / evidence / needs / default / deadline / at`，缺字段存 null，`kind` 只认 `delivery` / `decision` / `blocked`。读侧由宿主提供 `GET /api/bot/team-board.feed.json`（`ROUTE='/api/bot'`，`cache-control: no-store`）：扫目录、按 `at` 倒序、每个 Bot 最多 3 条；坏 JSON 与未知 `kind` 跳过并 `warn`，空目录返回空 feed。外壳成功 `{ ok: true, value: { lines: [...] } }`，失败 `{ ok: false, error }`。浏览器侧尚未消费这条 feed（`client.js` 里 0 处引用），接 UI 属于另一次待批的改动。
 
-## 2. 工具目录（32 个）
+## 2. 工具目录（33 个）
 
 ### 团队
 
@@ -45,6 +45,7 @@
 | `message_bot` | 对方必须行动，或它能补上你缺的事实 | 不道谢、不回执、不转发状态 | 对方忙时下一 step 读到；不要轮询 |
 | `read_inbox` | 每轮开头看静默通知（profile 更新、停止回执）；有需要自己做的才动手 | 不要用它等 reply/request，那些仍会叫醒你 | 默认只读未读、从旧到新、`limit` ≤ 20；已读位置写在 cursor 文件，不再算未读；`gaps` 列出写盘失败造成的缺口区间，全部写成功时为空数组 |
 | `update_team_board` | 交付完、等用户决策、卡住时，把一行写进团队看板自己的那条 | 不要替别的 Bot 写，也不要当日志堆 | 每次整份覆盖自己那一份文件；看板只显示每人最新 3 条；`kind` 只认 delivery / decision / blocked，缺字段存 null |
+| `record_project_change` | 项目有真实改动、决策、检查点或验证结果，需要写入可追溯记录时 | 不要记录寒暄、计划或编造进展 | 追加式账本；写明谁、何时、做了什么、为什么、涉及文件、实际证据和改前 / 改后；不写用户工作树 |
 | `stop_bot` | 对方必须立刻停手 | 不要用它催进度 | 回执走 `record`，不开轮 |
 
 ### 群聊
