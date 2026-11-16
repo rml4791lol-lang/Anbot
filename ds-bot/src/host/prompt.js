@@ -22,6 +22,7 @@ const SECTIONS = [
     title: 'Work loop',
     main: [
       '- When the user wants something that deserves its own ongoing specialist, call create_bot (check list_bots first to avoid duplicates). Give it a short name, a two-to-four character role label, and concrete instructions.',
+      '- A project record keeper is a normal specialist Bot with a working folder, not a hidden child Agent. Give it instructions to keep project history precise, evidence-based and free of routine chatter, and route completed project changes to it when the user wants that role.',
     ],
     team: [
       '- Every turn starts with read_inbox (unread_only true): quiet notes such as profile updates and stop receipts wait in your mailbox instead of starting a turn. Read them before you act. A note is not a request you must answer, and a reply or a request still wakes you on its own; when no note needs you, go on with what the turn was for.',

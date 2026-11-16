@@ -31,8 +31,8 @@ const SECTION_TITLES = [
   '### 8. Failure handling',
 ]
 
-// 26 team rules and 9 Main Bot rules; a rendered prompt repeats no rule.
-const RULE_COUNTS = { main: 35, worker: 26 }
+// 26 team rules and 10 Main Bot rules; a rendered prompt repeats no rule.
+const RULE_COUNTS = { main: 36, worker: 26 }
 
 test('Bots get the eight rule sections in order, with every rule exactly once', (t) => {
   const { ctx, prompt } = start()

@@ -182,7 +182,7 @@ export function install(rt) {
   }
   // What a host that only reads the team may still answer.
   // Updates change the dsh profile, not the team, so a reading host may run them too.
-  const READS = new Set(['state', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'file-download'])
+  const READS = new Set(['state', 'team-overview-insights', 'sites', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'file-download'])
 
   async function setPrefs(body) {
     if (body.theme !== undefined) {
@@ -264,6 +264,25 @@ export function install(rt) {
           const out = { ...view(), liveKey: answer.key, ...answer.value }
           return ok(body.avatars === 'ref' ? rt.slimAvatars(out) : out)
         }
+        case 'team-overview-insights':
+          await rt.load()
+          if (body.fresh === true && typeof rt.captureProjectChanges === 'function') {
+            await rt.captureProjectChanges({ all: true }).catch(error => rt.warn?.('ds-bot: project change refresh failed: %s', error?.message ?? error))
+          }
+          return ok(await rt.overviewInsights(body.fresh === true))
+        case 'sites':
+          await rt.load()
+          return ok(await rt.siteDirectoryView())
+        case 'site-save':
+          return ok(await rt.siteSave(body))
+        case 'site-archive':
+          return ok(await rt.siteArchive(String(body.id ?? ''), body.archived !== false))
+        case 'site-group-save':
+          return ok(await rt.siteGroupSave(body))
+        case 'site-group-delete':
+          return ok(await rt.siteGroupDelete(String(body.id ?? '')))
+        case 'site-check':
+          return ok(await rt.siteCheck(String(body.id ?? '')))
         case 'models':
           await rt.catalog({ fresh: true })
           return ok({ modelsKey: modelsKey() })

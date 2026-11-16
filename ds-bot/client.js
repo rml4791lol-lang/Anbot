@@ -115,6 +115,108 @@ function convertHostErrors(pairs) {
 var JA = {
   "Opening…": "開いています…",
   "Still opening…": "まだ開いています…",
+  "Timeline": "タイムライン",
+  "Project record": "プロジェクト記録",
+  "No project changes recorded yet": "プロジェクトの変更はまだ記録されていません",
+  "Committed": "コミット済み",
+  "Uncommitted changes": "未コミットの変更",
+  "Files changed": "ファイル変更",
+  "Project files changed": "プロジェクトファイルが変更されました",
+  "{count} uncommitted files": "未コミットファイル {count} 件",
+  "Change recorded": "変更を記録",
+  "Progress recorded": "進捗を記録",
+  "Decision recorded": "決定を記録",
+  "Checkpoint recorded": "チェックポイントを記録",
+  "Reported by Bot": "Bot による記録",
+  "Observed automatically": "自動観測",
+  "Read from Git": "Git から取得",
+  "GitHub updated": "GitHub が更新されました",
+  "Read from GitHub": "GitHub から取得",
+  "Open work": "未完了の作業",
+  "Merged": "マージ済み",
+  "Closed": "クローズ済み",
+  "Draft": "下書き",
+  "Checks failed": "チェック失敗",
+  "Checks pending": "チェック中",
+  "Checks passed": "チェック成功",
+  "Checks unavailable": "チェック状態を取得できません",
+  "No checks": "チェックなし",
+  "Review approved": "レビュー承認済み",
+  "Changes requested": "変更を依頼",
+  "GitHub sign-in needed": "GitHub へのサインインが必要です",
+  "GitHub CLI or connector needed": "GitHub CLI またはコネクタが必要です",
+  "Repository not found": "リポジトリが見つかりません",
+  "GitHub could not be read": "GitHub を読み取れません",
+  "GitHub": "GitHub",
+  "Project work": "プロジェクト作業",
+  "Needs setup": "設定が必要",
+  "Connect a source to see issues and pull requests.": "タスクソースを接続すると Issue と PR を表示できます。",
+  "Open connectors": "コネクタを開く",
+  "Mine": "自分",
+  "Review": "レビュー待ち",
+  "Stale": "古い可能性",
+  "{count} repositories": "{count} 個のリポジトリ",
+  "Issues": "Issue",
+  "Pull requests": "PR",
+  "No work items": "作業項目はありません",
+  "View on GitHub": "GitHub で表示",
+  "Task source": "タスクソース",
+  "Production": "本番",
+  "Preview": "プレビュー",
+  "Local": "ローカル",
+  "Docs": "ドキュメント",
+  "Online": "オンライン",
+  "Sign-in required": "サインインが必要",
+  "HTTP error": "HTTP エラー",
+  "Offline": "オフライン",
+  "Not checked": "未確認",
+  "Published": "公開済み",
+  "Needs attention": "対応が必要",
+  "Groups": "グループ",
+  "Published sites": "公開サイト",
+  "Production, previews and local entry points": "本番、プレビュー、ローカル入口",
+  "Site type": "サイト種別",
+  "Site group": "サイトグループ",
+  "Site group name": "サイトグループ名",
+  "Edit site": "サイトを編集",
+  "New site": "新しいサイト",
+  "Published site": "公開サイト",
+  "Site name": "サイト名",
+  "Project folder": "プロジェクトフォルダー",
+  "Optional project folder": "任意のプロジェクトフォルダー",
+  "Repository": "リポジトリ",
+  "Optional repository URL": "任意のリポジトリ URL",
+  "Tags": "タグ",
+  "Comma-separated tags": "カンマ区切りのタグ",
+  "Notes": "メモ",
+  "What this entry is for": "この入口の用途",
+  "Pin to the top": "先頭に固定",
+  "Save site": "サイトを保存",
+  "Group color": "グループの色",
+  "Remove group": "グループを削除",
+  "Never checked": "未確認",
+  "Check now": "今すぐ確認",
+  "Restore": "復元",
+  "One entry point for everything we ship": "公開物をまとめる一つの入口",
+  "New group": "新しいグループ",
+  "Add site": "サイトを追加",
+  "The site directory could not be read": "公開サイト一覧を読み取れません",
+  "Search sites, tags or notes": "サイト、タグ、メモを検索",
+  "Search sites": "サイトを検索",
+  "Archived": "アーカイブ済み",
+  "Reading published sites…": "公開サイトを読み込み中…",
+  "No sites here yet": "公開サイトはまだありません",
+  "No matching sites": "一致する公開サイトはありません",
+  "Try another search or filter.": "別の検索語や絞り込みを試してください。",
+  "Clear filters": "絞り込みを解除",
+  "No active sites": "利用中の入口はありません",
+  "Archived sites are hidden.": "アーカイブ済みの入口は非表示です。",
+  "Show archived": "アーカイブ済みを表示",
+  "Add a published URL, preview or local entry point.": "本番 URL、プレビュー、ローカル入口を追加します。",
+  "Add the first site": "最初のサイトを追加",
+  "Edit group": "グループを編集",
+  "{count} online": "オンライン {count}",
+  "Checked only when you ask": "確認したときだけ更新",
   "Android beta": "Android ベータ版",
   "Cannot reach the Server. Trying again…": "サーバーに接続できません。再試行しています…",
   "No phones yet": "スマートフォンはまだありません",
@@ -163,6 +265,35 @@ var JA = {
   "Quiet": "控えめ",
   "Normal": "標準",
   "Lively": "活発",
+  "Team overview": "チーム概要",
+  "Open team overview": "チーム概要を開く",
+  "Close team overview": "チーム概要を閉じる",
+  "Read-only projection": "読み取り専用の表示",
+  "No team activity yet": "チームのアクティビティはまだありません",
+  "Bots, group chats and the work they hand to each other will appear here.": "Bot、グループチャット、およびそれらの間で引き継がれる作業がここに表示されます。",
+  "Loading team overview…": "チーム概要を読み込み中…",
+  "Team state is unavailable": "チーム状態を利用できません",
+  "The team could not be read. Close this view and try again after the host reconnects.": "チームを読み込めませんでした。この表示を閉じ、ホストが再接続してから再試行してください。",
+  "Need you": "あなたの対応が必要",
+  "Waiting for teammates": "メンバーの応答待ち",
+  "Unread": "未読",
+  "Needs you": "あなたの対応が必要",
+  "Decisions waiting": "判断待ち",
+  "Approval": "承認",
+  "Question": "質問",
+  "Live work": "実行中の作業",
+  "Happening now": "現在の状況",
+  "Team": "チーム",
+  "Bots and groups": "Bot とグループ",
+  "{count} members working": "{count} 人のメンバーが作業中",
+  "Recent records": "最近の記録",
+  "What changed": "変更内容",
+  "No message preview": "メッセージのプレビューなし",
+  "Learning": "学習",
+  "Proposals waiting": "承認待ちの提案",
+  "Bot improvement": "Bot の改善",
+  "Moving to a fresh Session": "新しいセッションへ移動中",
+  "Moving this chat to its new folder": "このチャットを新しいフォルダーへ移動中",
   "Settings": "設定",
   "Usage": "使用量",
   "Account": "アカウント",
@@ -1721,7 +1852,163 @@ var JA = {
   "You control the computer": "あなたがコンピュータを操作中",
   "Stop {name}": "{name} を停止",
   "{name} · foreground": "{name} · フォアグラウンド",
-  "{name} waits for the computer": "{name} があなたの操作完了を待っています"
+  "{name} waits for the computer": "{name} があなたの操作完了を待っています",
+  "Ungrouped": "未分類",
+  "Projects": "プロジェクト",
+  "Active": "進行中",
+  "Memory entries": "メモリ件数",
+  "With rules": "ルールあり",
+  "Project portfolio": "プロジェクト一覧",
+  "Live work, memory and captured standards": "実行中の作業、メモリ、蓄積した基準",
+  "Agents": "エージェント",
+  "Learning queued": "学習待ち",
+  "Agent health": "エージェントの健全性",
+  "Runtime, learning and standards evidence": "実行状態、自己改善、基準の根拠",
+  "Overview sections": "概要セクション",
+  "Refreshing…": "更新中…",
+  "Current stage: {name}": "現在の段階：{name}",
+  "Checks": "チェック",
+  "Missing": "不足",
+  "{count} waiting for you": "{count} 件があなたの対応待ち",
+  "{count} working now": "{count} 件が作業中",
+  "{count} waiting for teammates": "{count} 件がメンバー待ち",
+  "Ready for Bots and conversations": "Bot と会話を追加できます",
+  "No work running": "実行中の作業はありません",
+  "No goal set for this project": "このプロジェクトには目標がありません",
+  "Now: {name}": "現在：{name}",
+  "{passed} of {total} stages passed": "{total} 段階中 {passed} 段階完了",
+  "{count} entries saved": "{count} 件保存済み",
+  "Nothing saved for this project": "このプロジェクトにはメモリがありません",
+  "{file} · {count} rules": "{file} · {count} 件のルール",
+  "No rules file found": "ルールファイルが見つかりません",
+  "Items": "項目",
+  "Standards evidence": "基準の根拠",
+  "Open project": "プロジェクトを開く",
+  "Open memory": "メモリを開く",
+  "No working folder": "作業フォルダーなし",
+  "No goal": "目標なし",
+  "What the team is building": "チームが作っているもの",
+  "Add project": "プロジェクトを追加",
+  "Project name": "プロジェクト名",
+  "Scanned {time}": "{time}にスキャン",
+  "Waiting for a scan": "スキャン待ち",
+  "No projects yet": "プロジェクトはまだありません",
+  "Add a project to group its Bots, conversations, memory and standards.": "プロジェクトを追加して、Bot、会話、メモリ、基準をまとめます。",
+  "Memory library": "メモリライブラリ",
+  "What the team has learned": "チームが学んだこと",
+  "No topics yet": "トピックはまだありません",
+  "Blocked": "ブロック中",
+  "Open {name}": "{name}を開く",
+  "Health": "健全性",
+  "Live work is running": "作業が実行中です",
+  "Current runtime state": "現在の実行状態",
+  "Self-improvement": "自己改善",
+  "{approved} approved, {declined} declined, {pending} pending": "{approved} 承認済み、{declined} 拒否、{pending} 待ち",
+  "No review history": "レビュー履歴なし",
+  "{approved} approved · {pending} pending": "{approved} 承認済み · {pending} 待ち",
+  "{count} of 4 evidence points found": "4 件中 {count} 件の基準根拠",
+  "{count} memories · {topics} topics": "{count} 件のメモリ · {topics} トピック",
+  "No memories saved": "保存されたメモリはありません",
+  "Health and self-improvement": "健全性と自己改善",
+  "Live": "ライブ",
+  "Could not read project evidence": "プロジェクトの根拠を読み取れません",
+  "Reading memory and project files…": "メモリとプロジェクトファイルを読み込み中…",
+  "Project evidence is unavailable": "プロジェクトの根拠を利用できません",
+  "Evidence refreshed from the host": "ホストから根拠を更新しました",
+  "Recorded checks: {passed} of {expected} passed": "記録済みチェック：{expected} 件中 {passed} 件合格",
+  "No recorded check run": "記録されたチェック結果はありません",
+  "Checks verified": "チェック確認済み",
+  "Needs your decision": "判断が必要",
+  "Checks need attention": "チェックの対応が必要",
+  "In progress": "進行中",
+  "Planned": "計画済み",
+  "Plan not set": "計画未設定",
+  "Decisions": "決定",
+  "Learned skills": "学習済みスキル",
+  "Configured checks": "設定済みチェック",
+  "Verified results": "確認済み結果",
+  "Learned skill": "学習したスキル",
+  "Recorded check": "チェック記録",
+  "Work record": "作業記録",
+  "Plan": "計画",
+  "Not defined": "未定義",
+  "No acceptance plan yet": "合格条件がまだありません",
+  "Set a Goal in the project conversation to make progress measurable.": "プロジェクト会話で Goal を設定すると、進捗を測定できます。",
+  "Goal stages": "目標ステージ",
+  "No checks configured": "チェックが設定されていません",
+  "Passed": "合格",
+  "Unverified": "未確認",
+  "Not recorded": "未記録",
+  "Completion model": "完了モデル",
+  "Auto": "自動",
+  "Stages passed": "合格済みステージ",
+  "No Goal": "Goal 未設定",
+  "Recorded checks": "記録済みチェック",
+  "{count} failing": "{count} 件失敗",
+  "All recorded checks passed": "記録済みチェックはすべて合格",
+  "No result recorded": "結果がまだ記録されていません",
+  "Folder · rules · sources · checks": "フォルダー · ルール · 情報源 · チェック",
+  "Acceptance flow": "合格条件の流れ",
+  "Check matrix": "チェック一覧",
+  "Recorded {time}": "{time}に記録",
+  "Experience": "経験",
+  "Knowledge captured": "蓄積した知識",
+  "Experience record": "経験の記録",
+  "No experience recorded yet": "経験はまだありません",
+  "Recorded": "記録済み",
+  "Project document": "プロジェクト文書",
+  "Official source": "公式情報源",
+  "Mini program": "ミニプログラム",
+  "Video": "動画",
+  "Web": "Web",
+  "App": "アプリ",
+  "Backend": "バックエンド",
+  "Mixed": "複合",
+  "Generic": "汎用",
+  "Project rules": "プロジェクトルール",
+  "Standard pack": "標準パック",
+  "Check results": "チェック結果",
+  "Project marker": "プロジェクト標識",
+  "Required file": "必須ファイル",
+  "Reference": "参照",
+  "Standards": "標準",
+  "Declared pack": "宣言済みパック",
+  "Detected from files": "ファイルから判定",
+  "Adopted files": "採用ファイル",
+  "What the rules come from": "ルールの出典",
+  "No adopted files found": "採用ファイルなし",
+  "Official sources": "公式情報源",
+  "Declared references": "宣言済み参照",
+  "No official sources declared": "公式情報源が未宣言",
+  "Experience captured": "蓄積した経験",
+  "Rules and lessons": "ルールと教訓",
+  "No experience captured yet": "経験はまだありません",
+  "Standards library": "標準ライブラリ",
+  "Rules accumulated by project type": "プロジェクト種別ごとのルール",
+  "{count} projects": "{count} プロジェクト",
+  "Skills": "スキル",
+  "Standards incomplete": "標準が未完了",
+  "{count} required files missing": "必須ファイルが {count} 件不足",
+  "{count} required checks unrecorded": "必須チェック {count} 件が未記録",
+  "Not reviewed": "未確認",
+  "Needs review": "再確認が必要",
+  "{present} of {total} files": "{total} 件中 {present} 件を採用",
+  "Auto refresh 15s": "15 秒ごとに自動更新",
+  "Goal drafted": "目標を下書き",
+  "Goal started": "目標を開始",
+  "Stage passed": "段階に合格",
+  "Stage sent back": "段階を差し戻し",
+  "Task updated": "タスク更新",
+  "Goal revised": "目標を改訂",
+  "Memory saved": "メモリ保存",
+  "Learning approved": "学習を承認",
+  "Rules updated": "ルール更新",
+  "Document updated": "文書更新",
+  "Source reviewed": "情報源を確認",
+  "Checks recorded": "チェック記録",
+  "Work recorded": "作業記録",
+  "Reason": "理由",
+  "Source": "出典"
 };
 var HOST_ERRORS_JA = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "メールサーバー $1 に接続できませんでした。サーバーアドレスを確認してください。"],
@@ -2425,6 +2712,108 @@ var DSH_JA = {
 var KO = {
   "Opening…": "여는 중…",
   "Still opening…": "아직 여는 중…",
+  Timeline: "타임라인",
+  "Project record": "프로젝트 기록",
+  "No project changes recorded yet": "아직 기록된 프로젝트 변경이 없습니다",
+  Committed: "커밋됨",
+  "Uncommitted changes": "커밋되지 않은 변경",
+  "Files changed": "파일 변경",
+  "Project files changed": "프로젝트 파일이 변경되었습니다",
+  "{count} uncommitted files": "커밋되지 않은 파일 {count}개",
+  "Change recorded": "변경 기록됨",
+  "Progress recorded": "진행 상황 기록됨",
+  "Decision recorded": "결정 기록됨",
+  "Checkpoint recorded": "체크포인트 기록됨",
+  "Reported by Bot": "Bot이 기록",
+  "Observed automatically": "자동 관찰",
+  "Read from Git": "Git에서 읽음",
+  "GitHub updated": "GitHub 업데이트됨",
+  "Read from GitHub": "GitHub에서 읽음",
+  "Open work": "미완료 작업",
+  Merged: "병합됨",
+  Closed: "닫힘",
+  Draft: "초안",
+  "Checks failed": "검사 실패",
+  "Checks pending": "검사 중",
+  "Checks passed": "검사 통과",
+  "Checks unavailable": "검사 상태를 사용할 수 없음",
+  "No checks": "검사 없음",
+  "Review approved": "리뷰 승인됨",
+  "Changes requested": "변경 요청됨",
+  "GitHub sign-in needed": "GitHub 로그인이 필요합니다",
+  "GitHub CLI or connector needed": "GitHub CLI 또는 커넥터가 필요합니다",
+  "Repository not found": "저장소를 찾을 수 없습니다",
+  "GitHub could not be read": "GitHub를 읽을 수 없습니다",
+  GitHub: "GitHub",
+  "Project work": "프로젝트 작업",
+  "Needs setup": "설정 필요",
+  "Connect a source to see issues and pull requests.": "작업 소스를 연결하면 Issue와 PR을 볼 수 있습니다.",
+  "Open connectors": "커넥터 열기",
+  Mine: "내 항목",
+  Review: "리뷰 대기",
+  Stale: "오래된 정보일 수 있음",
+  "{count} repositories": "저장소 {count}개",
+  Issues: "Issue",
+  "Pull requests": "PR",
+  "No work items": "작업 항목 없음",
+  "View on GitHub": "GitHub에서 보기",
+  "Task source": "작업 소스",
+  "Production": "프로덕션",
+  "Preview": "미리보기",
+  "Local": "로컬",
+  "Docs": "문서",
+  "Online": "온라인",
+  "Sign-in required": "로그인 필요",
+  "HTTP error": "HTTP 오류",
+  "Offline": "오프라인",
+  "Not checked": "확인 안 됨",
+  "Published": "게시됨",
+  "Needs attention": "확인 필요",
+  "Groups": "그룹",
+  "Published sites": "게시된 사이트",
+  "Production, previews and local entry points": "프로덕션, 미리보기 및 로컬 진입점",
+  "Site type": "사이트 유형",
+  "Site group": "사이트 그룹",
+  "Site group name": "사이트 그룹 이름",
+  "Edit site": "사이트 편집",
+  "New site": "새 사이트",
+  "Published site": "게시된 사이트",
+  "Site name": "사이트 이름",
+  "Project folder": "프로젝트 폴더",
+  "Optional project folder": "선택적 프로젝트 폴더",
+  "Repository": "리포지토리",
+  "Optional repository URL": "선택적 리포지토리 URL",
+  "Tags": "태그",
+  "Comma-separated tags": "쉼표로 구분한 태그",
+  "Notes": "메모",
+  "What this entry is for": "이 진입점의 용도",
+  "Pin to the top": "맨 위에 고정",
+  "Save site": "사이트 저장",
+  "Group color": "그룹 색상",
+  "Remove group": "그룹 삭제",
+  "Never checked": "확인한 적 없음",
+  "Check now": "지금 확인",
+  "Restore": "복원",
+  "One entry point for everything we ship": "게시한 모든 항목을 한곳에서",
+  "New group": "새 그룹",
+  "Add site": "사이트 추가",
+  "The site directory could not be read": "게시된 사이트 목록을 읽을 수 없습니다",
+  "Search sites, tags or notes": "사이트, 태그 또는 메모 검색",
+  "Search sites": "사이트 검색",
+  "Archived": "보관됨",
+  "Reading published sites…": "게시된 사이트를 읽는 중…",
+  "No sites here yet": "아직 게시된 사이트가 없습니다",
+  "No matching sites": "일치하는 사이트가 없습니다",
+  "Try another search or filter.": "다른 검색어나 필터를 사용해 보세요.",
+  "Clear filters": "필터 지우기",
+  "No active sites": "사용 중인 진입점이 없습니다",
+  "Archived sites are hidden.": "보관된 진입점은 숨겨져 있습니다.",
+  "Show archived": "보관된 항목 표시",
+  "Add a published URL, preview or local entry point.": "프로덕션 URL, 미리보기 또는 로컬 진입점을 추가하세요.",
+  "Add the first site": "첫 사이트 추가",
+  "Edit group": "그룹 편집",
+  "{count} online": "{count}개 온라인",
+  "Checked only when you ask": "요청할 때만 확인",
   "Android beta": "Android 베타",
   "Cannot reach the Server. Trying again…": "서버에 연결할 수 없습니다. 다시 시도하는 중…",
   "No phones yet": "아직 휴대폰이 없습니다",
@@ -2474,6 +2863,35 @@ var KO = {
   "Quiet": "차분함",
   "Normal": "보통",
   "Lively": "활발함",
+  "Team overview": "팀 개요",
+  "Open team overview": "팀 개요 열기",
+  "Close team overview": "팀 개요 닫기",
+  "Read-only projection": "읽기 전용 보기",
+  "No team activity yet": "아직 팀 활동이 없습니다",
+  "Bots, group chats and the work they hand to each other will appear here.": "Bot, 그룹 채팅 및 서로 주고받는 작업이 여기에 표시됩니다.",
+  "Loading team overview…": "팀 개요 불러오는 중…",
+  "Team state is unavailable": "팀 상태를 사용할 수 없습니다",
+  "The team could not be read. Close this view and try again after the host reconnects.": "팀을 읽지 못했습니다. 이 보기를 닫고 호스트가 다시 연결된 후 재시도하세요.",
+  "Need you": "당신의 확인이 필요합니다",
+  "Waiting for teammates": "팀원 응답 대기",
+  "Unread": "읽지 않음",
+  "Needs you": "확인 필요",
+  "Decisions waiting": "결정 대기",
+  "Approval": "승인",
+  "Question": "질문",
+  "Live work": "실행 중인 작업",
+  "Happening now": "지금 진행 중",
+  "Team": "팀",
+  "Bots and groups": "Bot 및 그룹",
+  "{count} members working": "{count}명 작업 중",
+  "Recent records": "최근 기록",
+  "What changed": "변경 사항",
+  "No message preview": "메시지 미리보기 없음",
+  "Learning": "학습",
+  "Proposals waiting": "대기 중인 제안",
+  "Bot improvement": "Bot 개선",
+  "Moving to a fresh Session": "새 세션으로 이동 중",
+  "Moving this chat to its new folder": "이 채팅을 새 폴더로 이동 중",
   Settings: "설정",
   Usage: "사용량",
   Account: "계정",
@@ -4075,7 +4493,163 @@ var KO = {
   "You control the computer": "사용자가 컴퓨터를 제어 중입니다",
   "Stop {name}": "{name} 중지",
   "{name} · foreground": "{name} · 포그라운드",
-  "{name} waits for the computer": "{name}이(가) 사용자 조작을 기다리는 중"
+  "{name} waits for the computer": "{name}이(가) 사용자 조작을 기다리는 중",
+  "Ungrouped": "그룹 없음",
+  "Projects": "프로젝트",
+  "Active": "진행 중",
+  "Memory entries": "메모리 항목",
+  "With rules": "규칙 있음",
+  "Project portfolio": "프로젝트 포트폴리오",
+  "Live work, memory and captured standards": "실시간 작업, 메모리, 축적된 기준",
+  "Agents": "에이전트",
+  "Learning queued": "대기 중인 학습",
+  "Agent health": "에이전트 상태",
+  "Runtime, learning and standards evidence": "실행 상태, 자기 개선, 기준 증거",
+  "Overview sections": "개요 섹션",
+  "Refreshing…": "새로 고치는 중…",
+  "Current stage: {name}": "현재 단계: {name}",
+  "Checks": "검사",
+  "Missing": "누락",
+  "{count} waiting for you": "{count}개가 도움을 기다림",
+  "{count} working now": "{count}개 작업 중",
+  "{count} waiting for teammates": "{count}개가 팀원을 기다림",
+  "Ready for Bots and conversations": "Bot과 대화를 추가할 수 있음",
+  "No work running": "실행 중인 작업 없음",
+  "No goal set for this project": "이 프로젝트에는 목표가 없음",
+  "Now: {name}": "현재: {name}",
+  "{passed} of {total} stages passed": "{total}단계 중 {passed}단계 통과",
+  "{count} entries saved": "{count}개 저장됨",
+  "Nothing saved for this project": "이 프로젝트에는 저장된 메모리가 없음",
+  "{file} · {count} rules": "{file} · 규칙 {count}개",
+  "No rules file found": "규칙 파일을 찾을 수 없음",
+  "Items": "항목",
+  "Standards evidence": "기준 증거",
+  "Open project": "프로젝트 열기",
+  "Open memory": "메모리 열기",
+  "No working folder": "작업 폴더 없음",
+  "No goal": "목표 없음",
+  "What the team is building": "팀이 만들고 있는 것",
+  "Add project": "프로젝트 추가",
+  "Project name": "프로젝트 이름",
+  "Scanned {time}": "{time}에 스캔",
+  "Waiting for a scan": "스캔 대기 중",
+  "No projects yet": "아직 프로젝트가 없음",
+  "Add a project to group its Bots, conversations, memory and standards.": "프로젝트를 추가해 Bot, 대화, 메모리, 기준을 함께 묶습니다.",
+  "Memory library": "메모리 라이브러리",
+  "What the team has learned": "팀이 배운 것",
+  "No topics yet": "아직 주제가 없음",
+  "Blocked": "차단됨",
+  "Open {name}": "{name} 열기",
+  "Health": "상태",
+  "Live work is running": "실시간 작업 실행 중",
+  "Current runtime state": "현재 실행 상태",
+  "Self-improvement": "자기 개선",
+  "{approved} approved, {declined} declined, {pending} pending": "승인 {approved}, 거절 {declined}, 대기 {pending}",
+  "No review history": "검토 기록 없음",
+  "{approved} approved · {pending} pending": "승인 {approved} · 대기 {pending}",
+  "{count} of 4 evidence points found": "기준 증거 {count}/4",
+  "{count} memories · {topics} topics": "메모리 {count}개 · 주제 {topics}개",
+  "No memories saved": "저장된 메모리 없음",
+  "Health and self-improvement": "상태와 자기 개선",
+  "Live": "실시간",
+  "Could not read project evidence": "프로젝트 증거를 읽을 수 없음",
+  "Reading memory and project files…": "메모리와 프로젝트 파일을 읽는 중…",
+  "Project evidence is unavailable": "프로젝트 증거를 사용할 수 없음",
+  "Evidence refreshed from the host": "호스트에서 증거를 새로 고침",
+  "Recorded checks: {passed} of {expected} passed": "기록된 검사: {expected}개 중 {passed}개 통과",
+  "No recorded check run": "기록된 검사 결과 없음",
+  "Checks verified": "검사 확인됨",
+  "Needs your decision": "결정이 필요함",
+  "Checks need attention": "검사 조치 필요",
+  "In progress": "진행 중",
+  "Planned": "계획됨",
+  "Plan not set": "계획 없음",
+  "Decisions": "결정",
+  "Learned skills": "학습한 스킬",
+  "Configured checks": "설정된 검사",
+  "Verified results": "확인된 결과",
+  "Learned skill": "학습한 스킬",
+  "Recorded check": "검사 기록",
+  "Work record": "작업 기록",
+  "Plan": "계획",
+  "Not defined": "정의되지 않음",
+  "No acceptance plan yet": "승인 계획 없음",
+  "Set a Goal in the project conversation to make progress measurable.": "프로젝트 대화에서 Goal을 설정해야 진행률을 측정할 수 있습니다.",
+  "Goal stages": "목표 단계",
+  "No checks configured": "설정된 검사 없음",
+  "Passed": "통과",
+  "Unverified": "미확인",
+  "Not recorded": "기록 없음",
+  "Completion model": "완료 모델",
+  "Auto": "자동",
+  "Stages passed": "통과한 단계",
+  "No Goal": "Goal 없음",
+  "Recorded checks": "기록된 검사",
+  "{count} failing": "{count}개 실패",
+  "All recorded checks passed": "기록된 검사 모두 통과",
+  "No result recorded": "기록된 결과 없음",
+  "Folder · rules · sources · checks": "폴더 · 규칙 · 출처 · 검사",
+  "Acceptance flow": "승인 흐름",
+  "Check matrix": "검사 매트릭스",
+  "Recorded {time}": "{time}에 기록",
+  "Experience": "경험",
+  "Knowledge captured": "축적된 지식",
+  "Experience record": "경험 기록",
+  "No experience recorded yet": "아직 경험 기록 없음",
+  "Recorded": "기록됨",
+  "Project document": "프로젝트 문서",
+  "Official source": "공식 출처",
+  "Mini program": "미니 프로그램",
+  "Video": "비디오",
+  "Web": "웹",
+  "App": "앱",
+  "Backend": "백엔드",
+  "Mixed": "혼합",
+  "Generic": "일반",
+  "Project rules": "프로젝트 규칙",
+  "Standard pack": "표준 팩",
+  "Check results": "검사 결과",
+  "Project marker": "프로젝트 표식",
+  "Required file": "필수 파일",
+  "Reference": "참조",
+  "Standards": "표준",
+  "Declared pack": "선언된 팩",
+  "Detected from files": "파일에서 감지",
+  "Adopted files": "채택 파일",
+  "What the rules come from": "규칙 출처",
+  "No adopted files found": "채택 파일 없음",
+  "Official sources": "공식 출처",
+  "Declared references": "선언된 참조",
+  "No official sources declared": "공식 출처 미선언",
+  "Experience captured": "축적된 경험",
+  "Rules and lessons": "규칙과 교훈",
+  "No experience captured yet": "아직 경험 없음",
+  "Standards library": "표준 라이브러리",
+  "Rules accumulated by project type": "프로젝트 유형별 규칙",
+  "{count} projects": "프로젝트 {count}개",
+  "Skills": "스킬",
+  "Standards incomplete": "표준 미완료",
+  "{count} required files missing": "필수 파일 {count}개 누락",
+  "{count} required checks unrecorded": "필수 검사 {count}개 미기록",
+  "Not reviewed": "미확인",
+  "Needs review": "재검토 필요",
+  "{present} of {total} files": "{total}개 중 {present}개 채택",
+  "Auto refresh 15s": "15초마다 자동 업데이트",
+  "Goal drafted": "목표 초안 작성",
+  "Goal started": "목표 시작",
+  "Stage passed": "단계 통과",
+  "Stage sent back": "단계 반려",
+  "Task updated": "작업 업데이트",
+  "Goal revised": "목표 수정",
+  "Memory saved": "메모리 저장",
+  "Learning approved": "학습 승인",
+  "Rules updated": "규칙 업데이트",
+  "Document updated": "문서 업데이트",
+  "Source reviewed": "출처 검토",
+  "Checks recorded": "검사 기록",
+  "Work recorded": "작업 기록",
+  "Reason": "이유",
+  "Source": "출처"
 };
 var HOST_ERRORS_KO = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "메일 서버 $1에 연결할 수 없습니다. 서버 주소를 확인하세요."],
@@ -4780,6 +5354,108 @@ var DSH_KO = {
 var ES = {
   "Opening…": "Abriendo…",
   "Still opening…": "Sigue abriendo…",
+  Timeline: "Cronología",
+  "Project record": "Registro del proyecto",
+  "No project changes recorded yet": "Aún no hay cambios del proyecto registrados",
+  Committed: "Confirmado en Git",
+  "Uncommitted changes": "Cambios sin confirmar",
+  "Files changed": "Archivos modificados",
+  "Project files changed": "Los archivos del proyecto cambiaron",
+  "{count} uncommitted files": "{count} archivos sin confirmar",
+  "Change recorded": "Cambio registrado",
+  "Progress recorded": "Progreso registrado",
+  "Decision recorded": "Decisión registrada",
+  "Checkpoint recorded": "Punto de control registrado",
+  "Reported by Bot": "Registrado por el Bot",
+  "Observed automatically": "Observado automáticamente",
+  "Read from Git": "Leído de Git",
+  "GitHub updated": "GitHub actualizado",
+  "Read from GitHub": "Leído de GitHub",
+  "Open work": "Trabajo abierto",
+  Merged: "Fusionado",
+  Closed: "Cerrado",
+  Draft: "Borrador",
+  "Checks failed": "Comprobaciones fallidas",
+  "Checks pending": "Comprobaciones pendientes",
+  "Checks passed": "Comprobaciones superadas",
+  "Checks unavailable": "Comprobaciones no disponibles",
+  "No checks": "Sin comprobaciones",
+  "Review approved": "Revisión aprobada",
+  "Changes requested": "Cambios solicitados",
+  "GitHub sign-in needed": "Hay que iniciar sesión en GitHub",
+  "GitHub CLI or connector needed": "Se necesita GitHub CLI o un conector",
+  "Repository not found": "No se encontró el repositorio",
+  "GitHub could not be read": "No se pudo leer GitHub",
+  GitHub: "GitHub",
+  "Project work": "Trabajo del proyecto",
+  "Needs setup": "Requiere configuración",
+  "Connect a source to see issues and pull requests.": "Conecta una fuente para ver issues y pull requests.",
+  "Open connectors": "Abrir conectores",
+  Mine: "Míos",
+  Review: "Para revisar",
+  Stale: "Puede estar desactualizado",
+  "{count} repositories": "{count} repositorios",
+  Issues: "Issues",
+  "Pull requests": "Pull requests",
+  "No work items": "No hay elementos de trabajo",
+  "View on GitHub": "Ver en GitHub",
+  "Task source": "Fuente de tareas",
+  "Production": "Producción",
+  "Preview": "Vista previa",
+  "Local": "Local",
+  "Docs": "Documentación",
+  "Online": "En línea",
+  "Sign-in required": "Inicio de sesión requerido",
+  "HTTP error": "Error HTTP",
+  "Offline": "Sin conexión",
+  "Not checked": "Sin comprobar",
+  "Published": "Publicado",
+  "Needs attention": "Requiere atención",
+  "Groups": "Grupos",
+  "Published sites": "Sitios publicados",
+  "Production, previews and local entry points": "Producción, vistas previas y accesos locales",
+  "Site type": "Tipo de sitio",
+  "Site group": "Grupo del sitio",
+  "Site group name": "Nombre del grupo de sitios",
+  "Edit site": "Editar sitio",
+  "New site": "Nuevo sitio",
+  "Published site": "Sitio publicado",
+  "Site name": "Nombre del sitio",
+  "Project folder": "Carpeta del proyecto",
+  "Optional project folder": "Carpeta del proyecto opcional",
+  "Repository": "Repositorio",
+  "Optional repository URL": "URL del repositorio opcional",
+  "Tags": "Etiquetas",
+  "Comma-separated tags": "Etiquetas separadas por comas",
+  "Notes": "Notas",
+  "What this entry is for": "Para qué sirve esta entrada",
+  "Pin to the top": "Fijar arriba",
+  "Save site": "Guardar sitio",
+  "Group color": "Color del grupo",
+  "Remove group": "Eliminar grupo",
+  "Never checked": "Nunca comprobado",
+  "Check now": "Comprobar ahora",
+  "Restore": "Restaurar",
+  "One entry point for everything we ship": "Un único lugar para todo lo que publicamos",
+  "New group": "Nuevo grupo",
+  "Add site": "Añadir sitio",
+  "The site directory could not be read": "No se pudo leer el directorio de sitios",
+  "Search sites, tags or notes": "Buscar sitios, etiquetas o notas",
+  "Search sites": "Buscar sitios",
+  "Archived": "Archivado",
+  "Reading published sites…": "Leyendo sitios publicados…",
+  "No sites here yet": "Aún no hay sitios",
+  "No matching sites": "No hay sitios coincidentes",
+  "Try another search or filter.": "Prueba otra búsqueda o filtro.",
+  "Clear filters": "Borrar filtros",
+  "No active sites": "No hay sitios activos",
+  "Archived sites are hidden.": "Los sitios archivados están ocultos.",
+  "Show archived": "Mostrar archivados",
+  "Add a published URL, preview or local entry point.": "Añade una URL de producción, una vista previa o un acceso local.",
+  "Add the first site": "Añadir el primer sitio",
+  "Edit group": "Editar grupo",
+  "{count} online": "{count} en línea",
+  "Checked only when you ask": "Solo se comprueba cuando lo pides",
   "Android beta": "Android beta",
   "Cannot reach the Server. Trying again…": "No se puede conectar con el servidor. Reintentando…",
   "No phones yet": "Aún no hay teléfonos",
@@ -4829,6 +5505,35 @@ var ES = {
   "Quiet": "Discreta",
   "Normal": "Normal",
   "Lively": "Animada",
+  "Team overview": "Resumen del equipo",
+  "Open team overview": "Abrir resumen del equipo",
+  "Close team overview": "Cerrar resumen del equipo",
+  "Read-only projection": "Vista de solo lectura",
+  "No team activity yet": "Aún no hay actividad del equipo",
+  "Bots, group chats and the work they hand to each other will appear here.": "Los Bots, las conversaciones de grupo y el trabajo que se pasan entre ellos aparecerán aquí.",
+  "Loading team overview…": "Cargando resumen del equipo…",
+  "Team state is unavailable": "El estado del equipo no está disponible",
+  "The team could not be read. Close this view and try again after the host reconnects.": "No se pudo leer el equipo. Cierra esta vista y vuelve a intentarlo cuando el host se reconecte.",
+  "Need you": "Requiere tu atención",
+  "Waiting for teammates": "Esperando a compañeros",
+  "Unread": "Sin leer",
+  "Needs you": "Necesita tu atención",
+  "Decisions waiting": "Decisiones pendientes",
+  "Approval": "Aprobación",
+  "Question": "Pregunta",
+  "Live work": "Trabajo en vivo",
+  "Happening now": "Ahora mismo",
+  "Team": "Equipo",
+  "Bots and groups": "Bots y grupos",
+  "{count} members working": "{count} miembros trabajando",
+  "Recent records": "Registros recientes",
+  "What changed": "Qué cambió",
+  "No message preview": "Sin vista previa del mensaje",
+  "Learning": "Aprendizaje",
+  "Proposals waiting": "Propuestas pendientes",
+  "Bot improvement": "Mejora del Bot",
+  "Moving to a fresh Session": "Pasando a una sesión nueva",
+  "Moving this chat to its new folder": "Moviendo este chat a su nueva carpeta",
   Settings: "Ajustes",
   Usage: "Uso",
   Account: "Cuenta",
@@ -6430,7 +7135,163 @@ var ES = {
   "You control the computer": "Tú controlas el ordenador",
   "Stop {name}": "Detener a {name}",
   "{name} · foreground": "{name} · primer plano",
-  "{name} waits for the computer": "{name} espera el ordenador"
+  "{name} waits for the computer": "{name} espera el ordenador",
+  "Ungrouped": "Sin agrupar",
+  "Projects": "Proyectos",
+  "Active": "Activo",
+  "Memory entries": "Entradas de memoria",
+  "With rules": "Con reglas",
+  "Project portfolio": "Cartera de proyectos",
+  "Live work, memory and captured standards": "Trabajo en vivo, memoria y estándares capturados",
+  "Agents": "Agentes",
+  "Learning queued": "Aprendizaje pendiente",
+  "Agent health": "Salud del agente",
+  "Runtime, learning and standards evidence": "Estado, mejora y evidencia de estándares",
+  "Overview sections": "Secciones del resumen",
+  "Refreshing…": "Actualizando…",
+  "Current stage: {name}": "Etapa actual: {name}",
+  "Checks": "Comprobaciones",
+  "Missing": "Falta",
+  "{count} waiting for you": "{count} esperan tu respuesta",
+  "{count} working now": "{count} trabajando ahora",
+  "{count} waiting for teammates": "{count} esperan a sus compañeros",
+  "Ready for Bots and conversations": "Listo para Bots y conversaciones",
+  "No work running": "No hay trabajo en curso",
+  "No goal set for this project": "Este proyecto no tiene objetivo",
+  "Now: {name}": "Ahora: {name}",
+  "{passed} of {total} stages passed": "{passed} de {total} etapas superadas",
+  "{count} entries saved": "{count} entradas guardadas",
+  "Nothing saved for this project": "No hay memoria guardada en este proyecto",
+  "{file} · {count} rules": "{file} · {count} reglas",
+  "No rules file found": "No se encontró el archivo de reglas",
+  "Items": "Elementos",
+  "Standards evidence": "Evidencia de estándares",
+  "Open project": "Abrir proyecto",
+  "Open memory": "Abrir memoria",
+  "No working folder": "Sin carpeta de trabajo",
+  "No goal": "Sin objetivo",
+  "What the team is building": "Lo que construye el equipo",
+  "Add project": "Añadir proyecto",
+  "Project name": "Nombre del proyecto",
+  "Scanned {time}": "Escaneado {time}",
+  "Waiting for a scan": "Esperando un escaneo",
+  "No projects yet": "Aún no hay proyectos",
+  "Add a project to group its Bots, conversations, memory and standards.": "Añade un proyecto para agrupar sus Bots, conversaciones, memoria y estándares.",
+  "Memory library": "Biblioteca de memoria",
+  "What the team has learned": "Lo que ha aprendido el equipo",
+  "No topics yet": "Aún no hay temas",
+  "Blocked": "Bloqueado",
+  "Open {name}": "Abrir {name}",
+  "Health": "Salud",
+  "Live work is running": "Hay trabajo en vivo",
+  "Current runtime state": "Estado actual de ejecución",
+  "Self-improvement": "Mejora continua",
+  "{approved} approved, {declined} declined, {pending} pending": "{approved} aprobadas, {declined} rechazadas, {pending} pendientes",
+  "No review history": "Sin historial de revisión",
+  "{approved} approved · {pending} pending": "{approved} aprobadas · {pending} pendientes",
+  "{count} of 4 evidence points found": "{count} de 4 evidencias encontradas",
+  "{count} memories · {topics} topics": "{count} recuerdos · {topics} temas",
+  "No memories saved": "No hay recuerdos guardados",
+  "Health and self-improvement": "Salud y mejora continua",
+  "Live": "En vivo",
+  "Could not read project evidence": "No se pudo leer la evidencia del proyecto",
+  "Reading memory and project files…": "Leyendo memoria y archivos del proyecto…",
+  "Project evidence is unavailable": "La evidencia del proyecto no está disponible",
+  "Evidence refreshed from the host": "Evidencia actualizada desde el host",
+  "Recorded checks: {passed} of {expected} passed": "Comprobaciones registradas: {passed} de {expected} superadas",
+  "No recorded check run": "No hay resultados de comprobaciones registrados",
+  "Checks verified": "Comprobaciones verificadas",
+  "Needs your decision": "Necesita tu decisión",
+  "Checks need attention": "Las comprobaciones requieren atención",
+  "In progress": "En curso",
+  "Planned": "Planificado",
+  "Plan not set": "Plan sin definir",
+  "Decisions": "Decisiones",
+  "Learned skills": "Habilidades aprendidas",
+  "Configured checks": "Comprobaciones configuradas",
+  "Verified results": "Resultados verificados",
+  "Learned skill": "Habilidad aprendida",
+  "Recorded check": "Comprobación registrada",
+  "Work record": "Registro de trabajo",
+  "Plan": "Plan",
+  "Not defined": "Sin definir",
+  "No acceptance plan yet": "Aún no hay un plan de aceptación",
+  "Set a Goal in the project conversation to make progress measurable.": "Define un Goal en la conversación del proyecto para medir el progreso.",
+  "Goal stages": "Etapas del objetivo",
+  "No checks configured": "No hay comprobaciones configuradas",
+  "Passed": "Superada",
+  "Unverified": "Sin verificar",
+  "Not recorded": "Sin registrar",
+  "Completion model": "Modelo de finalización",
+  "Auto": "Automático",
+  "Stages passed": "Etapas superadas",
+  "No Goal": "Sin Goal",
+  "Recorded checks": "Comprobaciones registradas",
+  "{count} failing": "{count} fallidas",
+  "All recorded checks passed": "Todas las comprobaciones registradas pasaron",
+  "No result recorded": "Sin resultados registrados",
+  "Folder · rules · sources · checks": "Carpeta · reglas · fuentes · comprobaciones",
+  "Acceptance flow": "Flujo de aceptación",
+  "Check matrix": "Matriz de comprobaciones",
+  "Recorded {time}": "Registrado {time}",
+  "Experience": "Experiencia",
+  "Knowledge captured": "Conocimiento acumulado",
+  "Experience record": "Registro de experiencia",
+  "No experience recorded yet": "Aún no hay experiencia registrada",
+  "Recorded": "Registrado",
+  "Project document": "Documento del proyecto",
+  "Official source": "Fuente oficial",
+  "Mini program": "Mini programa",
+  "Video": "Vídeo",
+  "Web": "Web",
+  "App": "Aplicación",
+  "Backend": "Backend",
+  "Mixed": "Mixto",
+  "Generic": "Genérico",
+  "Project rules": "Reglas del proyecto",
+  "Standard pack": "Paquete de estándares",
+  "Check results": "Resultados de comprobación",
+  "Project marker": "Marcador del proyecto",
+  "Required file": "Archivo requerido",
+  "Reference": "Referencia",
+  "Standards": "Estándares",
+  "Declared pack": "Paquete declarado",
+  "Detected from files": "Detectado por archivos",
+  "Adopted files": "Archivos adoptados",
+  "What the rules come from": "De dónde vienen las reglas",
+  "No adopted files found": "No se encontraron archivos adoptados",
+  "Official sources": "Fuentes oficiales",
+  "Declared references": "Referencias declaradas",
+  "No official sources declared": "No hay fuentes oficiales declaradas",
+  "Experience captured": "Experiencia acumulada",
+  "Rules and lessons": "Reglas y lecciones",
+  "No experience captured yet": "Aún no hay experiencia acumulada",
+  "Standards library": "Biblioteca de estándares",
+  "Rules accumulated by project type": "Reglas acumuladas por tipo de proyecto",
+  "{count} projects": "{count} proyectos",
+  "Skills": "Habilidades",
+  "Standards incomplete": "Estándares incompletos",
+  "{count} required files missing": "Faltan {count} archivos requeridos",
+  "{count} required checks unrecorded": "{count} comprobaciones requeridas sin registrar",
+  "Not reviewed": "Sin revisar",
+  "Needs review": "Necesita revisión",
+  "{present} of {total} files": "{present} de {total} archivos adoptados",
+  "Auto refresh 15s": "Actualización automática cada 15 s",
+  "Goal drafted": "Objetivo borrador",
+  "Goal started": "Objetivo iniciado",
+  "Stage passed": "Etapa superada",
+  "Stage sent back": "Etapa devuelta",
+  "Task updated": "Tarea actualizada",
+  "Goal revised": "Objetivo revisado",
+  "Memory saved": "Memoria guardada",
+  "Learning approved": "Aprendizaje aprobado",
+  "Rules updated": "Reglas actualizadas",
+  "Document updated": "Documento actualizado",
+  "Source reviewed": "Fuente revisada",
+  "Checks recorded": "Comprobaciones registradas",
+  "Work recorded": "Trabajo registrado",
+  "Reason": "Motivo",
+  "Source": "Fuente"
 };
 var HOST_ERRORS_ES = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "No se pudo conectar con el servidor de correo en $1. Comprueba la dirección del servidor."],
@@ -7135,6 +7996,108 @@ var DSH_ES = {
 var FR = {
   "Opening…": "Ouverture…",
   "Still opening…": "Toujours en cours d’ouverture…",
+  "Timeline": "Chronologie",
+  "Project record": "Journal du projet",
+  "No project changes recorded yet": "Aucun changement du projet enregistré pour l’instant",
+  "Committed": "Validé dans Git",
+  "Uncommitted changes": "Modifications non validées",
+  "Files changed": "Fichiers modifiés",
+  "Project files changed": "Les fichiers du projet ont changé",
+  "{count} uncommitted files": "{count} fichiers non validés",
+  "Change recorded": "Changement enregistré",
+  "Progress recorded": "Progression enregistrée",
+  "Decision recorded": "Décision enregistrée",
+  "Checkpoint recorded": "Point de contrôle enregistré",
+  "Reported by Bot": "Enregistré par le Bot",
+  "Observed automatically": "Observé automatiquement",
+  "Read from Git": "Lu depuis Git",
+  "GitHub updated": "GitHub mis à jour",
+  "Read from GitHub": "Lu depuis GitHub",
+  "Open work": "Travail restant",
+  "Merged": "Fusionné",
+  "Closed": "Fermé",
+  "Draft": "Brouillon",
+  "Checks failed": "Vérifications échouées",
+  "Checks pending": "Vérifications en cours",
+  "Checks passed": "Vérifications réussies",
+  "Checks unavailable": "Vérifications indisponibles",
+  "No checks": "Aucune vérification",
+  "Review approved": "Revue approuvée",
+  "Changes requested": "Modifications demandées",
+  "GitHub sign-in needed": "Connexion à GitHub requise",
+  "GitHub CLI or connector needed": "GitHub CLI ou un connecteur est requis",
+  "Repository not found": "Dépôt introuvable",
+  "GitHub could not be read": "Impossible de lire GitHub",
+  "GitHub": "GitHub",
+  "Project work": "Travail du projet",
+  "Needs setup": "Configuration requise",
+  "Connect a source to see issues and pull requests.": "Connectez une source pour voir les issues et pull requests.",
+  "Open connectors": "Ouvrir les connecteurs",
+  "Mine": "Les miens",
+  "Review": "À relire",
+  "Stale": "Peut être obsolète",
+  "{count} repositories": "{count} dépôts",
+  "Issues": "Issues",
+  "Pull requests": "Pull requests",
+  "No work items": "Aucun élément de travail",
+  "View on GitHub": "Voir sur GitHub",
+  "Task source": "Source des tâches",
+  "Production": "Production",
+  "Preview": "Aperçu",
+  "Local": "Local",
+  "Docs": "Documentation",
+  "Online": "En ligne",
+  "Sign-in required": "Connexion requise",
+  "HTTP error": "Erreur HTTP",
+  "Offline": "Hors ligne",
+  "Not checked": "Non vérifié",
+  "Published": "Publié",
+  "Needs attention": "Nécessite votre attention",
+  "Groups": "Groupes",
+  "Published sites": "Sites publiés",
+  "Production, previews and local entry points": "Productions, aperçus et accès locaux",
+  "Site type": "Type de site",
+  "Site group": "Groupe de sites",
+  "Site group name": "Nom du groupe de sites",
+  "Edit site": "Modifier le site",
+  "New site": "Nouveau site",
+  "Published site": "Site publié",
+  "Site name": "Nom du site",
+  "Project folder": "Dossier du projet",
+  "Optional project folder": "Dossier du projet facultatif",
+  "Repository": "Dépôt",
+  "Optional repository URL": "URL du dépôt facultative",
+  "Tags": "Étiquettes",
+  "Comma-separated tags": "Étiquettes séparées par des virgules",
+  "Notes": "Notes",
+  "What this entry is for": "Objet de cette entrée",
+  "Pin to the top": "Épingler en haut",
+  "Save site": "Enregistrer le site",
+  "Group color": "Couleur du groupe",
+  "Remove group": "Supprimer le groupe",
+  "Never checked": "Jamais vérifié",
+  "Check now": "Vérifier maintenant",
+  "Restore": "Restaurer",
+  "One entry point for everything we ship": "Un point d’entrée pour tout ce que nous publions",
+  "New group": "Nouveau groupe",
+  "Add site": "Ajouter un site",
+  "The site directory could not be read": "Impossible de lire l’annuaire des sites",
+  "Search sites, tags or notes": "Rechercher des sites, étiquettes ou notes",
+  "Search sites": "Rechercher des sites",
+  "Archived": "Archivé",
+  "Reading published sites…": "Lecture des sites publiés…",
+  "No sites here yet": "Aucun site pour l’instant",
+  "No matching sites": "Aucun site correspondant",
+  "Try another search or filter.": "Essayez une autre recherche ou un autre filtre.",
+  "Clear filters": "Effacer les filtres",
+  "No active sites": "Aucun site actif",
+  "Archived sites are hidden.": "Les sites archivés sont masqués.",
+  "Show archived": "Afficher les archives",
+  "Add a published URL, preview or local entry point.": "Ajoutez une URL de production, un aperçu ou un accès local.",
+  "Add the first site": "Ajouter le premier site",
+  "Edit group": "Modifier le groupe",
+  "{count} online": "{count} en ligne",
+  "Checked only when you ask": "Vérifié uniquement sur demande",
   "Android beta": "Android bêta",
   "Cannot reach the Server. Trying again…": "Impossible de joindre le serveur. Nouvel essai…",
   "No phones yet": "Aucun téléphone pour l’instant",
@@ -7183,6 +8146,35 @@ var FR = {
   "Quiet": "Calme",
   "Normal": "Normal",
   "Lively": "Vif",
+  "Team overview": "Aperçu de l’équipe",
+  "Open team overview": "Ouvrir l’aperçu de l’équipe",
+  "Close team overview": "Fermer l’aperçu de l’équipe",
+  "Read-only projection": "Projection en lecture seule",
+  "No team activity yet": "Aucune activité d’équipe pour l’instant",
+  "Bots, group chats and the work they hand to each other will appear here.": "Les Bots, les discussions de groupe et le travail qu’ils se transmettent apparaîtront ici.",
+  "Loading team overview…": "Chargement de l’aperçu de l’équipe…",
+  "Team state is unavailable": "L’état de l’équipe est indisponible",
+  "The team could not be read. Close this view and try again after the host reconnects.": "Impossible de lire l’équipe. Fermez cette vue et réessayez après la reconnexion de l’hôte.",
+  "Need you": "Nécessite votre attention",
+  "Waiting for teammates": "En attente des coéquipiers",
+  "Unread": "Non lu",
+  "Needs you": "Nécessite votre attention",
+  "Decisions waiting": "Décisions en attente",
+  "Approval": "Approbation",
+  "Question": "Question",
+  "Live work": "Travail en direct",
+  "Happening now": "En ce moment",
+  "Team": "Équipe",
+  "Bots and groups": "Bots et groupes",
+  "{count} members working": "{count} membres au travail",
+  "Recent records": "Enregistrements récents",
+  "What changed": "Ce qui a changé",
+  "No message preview": "Aucun aperçu du message",
+  "Learning": "Apprentissage",
+  "Proposals waiting": "Propositions en attente",
+  "Bot improvement": "Amélioration du Bot",
+  "Moving to a fresh Session": "Passage à une nouvelle session",
+  "Moving this chat to its new folder": "Déplacement de cette discussion vers son nouveau dossier",
   "Settings": "Paramètres",
   "Usage": "Utilisation",
   "Account": "Compte",
@@ -8741,7 +9733,163 @@ var FR = {
   "You control the computer": "Vous contrôlez l’ordinateur",
   "Stop {name}": "Arrêter {name}",
   "{name} · foreground": "{name} · premier plan",
-  "{name} waits for the computer": "{name} attend que l’ordinateur soit libre"
+  "{name} waits for the computer": "{name} attend que l’ordinateur soit libre",
+  "Ungrouped": "Non groupé",
+  "Projects": "Projets",
+  "Active": "Actif",
+  "Memory entries": "Entrées de mémoire",
+  "With rules": "Avec règles",
+  "Project portfolio": "Portefeuille de projets",
+  "Live work, memory and captured standards": "Travail en direct, mémoire et normes capturées",
+  "Agents": "Agents",
+  "Learning queued": "Apprentissage en attente",
+  "Agent health": "Santé de l’agent",
+  "Runtime, learning and standards evidence": "État, amélioration et preuves de normes",
+  "Overview sections": "Sections de la vue",
+  "Refreshing…": "Actualisation…",
+  "Current stage: {name}": "Étape actuelle : {name}",
+  "Checks": "Vérifications",
+  "Missing": "Manquant",
+  "{count} waiting for you": "{count} attendent votre réponse",
+  "{count} working now": "{count} en cours",
+  "{count} waiting for teammates": "{count} attendent leurs coéquipiers",
+  "Ready for Bots and conversations": "Prêt pour des Bots et des conversations",
+  "No work running": "Aucun travail en cours",
+  "No goal set for this project": "Aucun objectif défini pour ce projet",
+  "Now: {name}": "Maintenant : {name}",
+  "{passed} of {total} stages passed": "{passed} étapes sur {total} validées",
+  "{count} entries saved": "{count} entrées enregistrées",
+  "Nothing saved for this project": "Aucune mémoire enregistrée pour ce projet",
+  "{file} · {count} rules": "{file} · {count} règles",
+  "No rules file found": "Aucun fichier de règles trouvé",
+  "Items": "Éléments",
+  "Standards evidence": "Preuves de normes",
+  "Open project": "Ouvrir le projet",
+  "Open memory": "Ouvrir la mémoire",
+  "No working folder": "Aucun dossier de travail",
+  "No goal": "Aucun objectif",
+  "What the team is building": "Ce que construit l’équipe",
+  "Add project": "Ajouter un projet",
+  "Project name": "Nom du projet",
+  "Scanned {time}": "Analysé {time}",
+  "Waiting for a scan": "En attente d’une analyse",
+  "No projects yet": "Aucun projet pour le moment",
+  "Add a project to group its Bots, conversations, memory and standards.": "Ajoutez un projet pour regrouper ses Bots, conversations, mémoires et normes.",
+  "Memory library": "Bibliothèque de mémoire",
+  "What the team has learned": "Ce que l’équipe a appris",
+  "No topics yet": "Aucun thème pour le moment",
+  "Blocked": "Bloqué",
+  "Open {name}": "Ouvrir {name}",
+  "Health": "Santé",
+  "Live work is running": "Du travail est en cours",
+  "Current runtime state": "État d’exécution actuel",
+  "Self-improvement": "Amélioration continue",
+  "{approved} approved, {declined} declined, {pending} pending": "{approved} approuvées, {declined} refusées, {pending} en attente",
+  "No review history": "Aucun historique de revue",
+  "{approved} approved · {pending} pending": "{approved} approuvées · {pending} en attente",
+  "{count} of 4 evidence points found": "{count} preuves sur 4 trouvées",
+  "{count} memories · {topics} topics": "{count} mémoires · {topics} thèmes",
+  "No memories saved": "Aucune mémoire enregistrée",
+  "Health and self-improvement": "Santé et amélioration continue",
+  "Live": "En direct",
+  "Could not read project evidence": "Impossible de lire les preuves du projet",
+  "Reading memory and project files…": "Lecture de la mémoire et des fichiers du projet…",
+  "Project evidence is unavailable": "Les preuves du projet sont indisponibles",
+  "Evidence refreshed from the host": "Preuves actualisées depuis l’hôte",
+  "Recorded checks: {passed} of {expected} passed": "Vérifications enregistrées : {passed} sur {expected} réussies",
+  "No recorded check run": "Aucun résultat de vérification enregistré",
+  "Checks verified": "Vérifications validées",
+  "Needs your decision": "Décision attendue",
+  "Checks need attention": "Vérifications à traiter",
+  "In progress": "En cours",
+  "Planned": "Planifié",
+  "Plan not set": "Plan non défini",
+  "Decisions": "Décisions",
+  "Learned skills": "Compétences apprises",
+  "Configured checks": "Vérifications configurées",
+  "Verified results": "Résultats vérifiés",
+  "Learned skill": "Compétence apprise",
+  "Recorded check": "Vérification enregistrée",
+  "Work record": "Journal de travail",
+  "Plan": "Plan",
+  "Not defined": "Non défini",
+  "No acceptance plan yet": "Aucun plan d’acceptation",
+  "Set a Goal in the project conversation to make progress measurable.": "Définissez un Goal dans la conversation du projet pour mesurer la progression.",
+  "Goal stages": "Étapes de l’objectif",
+  "No checks configured": "Aucune vérification configurée",
+  "Passed": "Réussie",
+  "Unverified": "Non vérifiée",
+  "Not recorded": "Non enregistrée",
+  "Completion model": "Modèle d’achèvement",
+  "Auto": "Auto",
+  "Stages passed": "Étapes réussies",
+  "No Goal": "Goal non défini",
+  "Recorded checks": "Vérifications enregistrées",
+  "{count} failing": "{count} en échec",
+  "All recorded checks passed": "Toutes les vérifications enregistrées ont réussi",
+  "No result recorded": "Aucun résultat enregistré",
+  "Folder · rules · sources · checks": "Dossier · règles · sources · vérifications",
+  "Acceptance flow": "Flux d’acceptation",
+  "Check matrix": "Matrice des vérifications",
+  "Recorded {time}": "Enregistré {time}",
+  "Experience": "Expérience",
+  "Knowledge captured": "Connaissances accumulées",
+  "Experience record": "Journal d’expérience",
+  "No experience recorded yet": "Aucune expérience enregistrée",
+  "Recorded": "Enregistré",
+  "Project document": "Document du projet",
+  "Official source": "Source officielle",
+  "Mini program": "Mini-programme",
+  "Video": "Vidéo",
+  "Web": "Web",
+  "App": "Application",
+  "Backend": "Backend",
+  "Mixed": "Mixte",
+  "Generic": "Générique",
+  "Project rules": "Règles du projet",
+  "Standard pack": "Pack de normes",
+  "Check results": "Résultats des vérifications",
+  "Project marker": "Marqueur du projet",
+  "Required file": "Fichier requis",
+  "Reference": "Référence",
+  "Standards": "Normes",
+  "Declared pack": "Pack déclaré",
+  "Detected from files": "Détecté depuis les fichiers",
+  "Adopted files": "Fichiers adoptés",
+  "What the rules come from": "Origine des règles",
+  "No adopted files found": "Aucun fichier adopté",
+  "Official sources": "Sources officielles",
+  "Declared references": "Références déclarées",
+  "No official sources declared": "Aucune source officielle déclarée",
+  "Experience captured": "Expérience accumulée",
+  "Rules and lessons": "Règles et leçons",
+  "No experience captured yet": "Aucune expérience accumulée",
+  "Standards library": "Bibliothèque de normes",
+  "Rules accumulated by project type": "Règles accumulées par type de projet",
+  "{count} projects": "{count} projets",
+  "Skills": "Compétences",
+  "Standards incomplete": "Normes incomplètes",
+  "{count} required files missing": "{count} fichiers requis manquants",
+  "{count} required checks unrecorded": "{count} vérifications requises non enregistrées",
+  "Not reviewed": "Non vérifié",
+  "Needs review": "À revérifier",
+  "{present} of {total} files": "{present} fichiers sur {total} adoptés",
+  "Auto refresh 15s": "Actualisation automatique toutes les 15 s",
+  "Goal drafted": "Objectif rédigé",
+  "Goal started": "Objectif démarré",
+  "Stage passed": "Étape réussie",
+  "Stage sent back": "Étape renvoyée",
+  "Task updated": "Tâche mise à jour",
+  "Goal revised": "Objectif révisé",
+  "Memory saved": "Mémoire enregistrée",
+  "Learning approved": "Apprentissage approuvé",
+  "Rules updated": "Règles mises à jour",
+  "Document updated": "Document mis à jour",
+  "Source reviewed": "Source vérifiée",
+  "Checks recorded": "Vérifications enregistrées",
+  "Work recorded": "Travail enregistré",
+  "Reason": "Motif",
+  "Source": "Source"
 };
 var HOST_ERRORS_FR = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "Impossible de joindre le serveur de messagerie à l’adresse $1. Vérifiez l’adresse du serveur."],
@@ -9445,6 +10593,108 @@ var DSH_FR = {
 var DE = {
   "Opening…": "Wird geöffnet…",
   "Still opening…": "Wird noch geöffnet…",
+  Timeline: "Zeitlinie",
+  "Project record": "Projektverlauf",
+  "No project changes recorded yet": "Noch keine Projektänderungen erfasst",
+  Committed: "In Git festgeschrieben",
+  "Uncommitted changes": "Nicht festgeschriebene Änderungen",
+  "Files changed": "Dateien geändert",
+  "Project files changed": "Projektdateien wurden geändert",
+  "{count} uncommitted files": "{count} nicht festgeschriebene Dateien",
+  "Change recorded": "Änderung erfasst",
+  "Progress recorded": "Fortschritt erfasst",
+  "Decision recorded": "Entscheidung erfasst",
+  "Checkpoint recorded": "Prüfpunkt erfasst",
+  "Reported by Bot": "Vom Bot erfasst",
+  "Observed automatically": "Automatisch beobachtet",
+  "Read from Git": "Aus Git gelesen",
+  "GitHub updated": "GitHub aktualisiert",
+  "Read from GitHub": "Aus GitHub gelesen",
+  "Open work": "Offene Arbeit",
+  Merged: "Gemerged",
+  Closed: "Geschlossen",
+  Draft: "Entwurf",
+  "Checks failed": "Prüfungen fehlgeschlagen",
+  "Checks pending": "Prüfungen laufen",
+  "Checks passed": "Prüfungen bestanden",
+  "Checks unavailable": "Prüfungen nicht verfügbar",
+  "No checks": "Keine Prüfungen",
+  "Review approved": "Review genehmigt",
+  "Changes requested": "Änderungen angefordert",
+  "GitHub sign-in needed": "GitHub-Anmeldung erforderlich",
+  "GitHub CLI or connector needed": "GitHub CLI oder ein Konnektor ist erforderlich",
+  "Repository not found": "Repository nicht gefunden",
+  "GitHub could not be read": "GitHub konnte nicht gelesen werden",
+  GitHub: "GitHub",
+  "Project work": "Projektarbeit",
+  "Needs setup": "Einrichtung erforderlich",
+  "Connect a source to see issues and pull requests.": "Verbinde eine Quelle, um Issues und Pull Requests zu sehen.",
+  "Open connectors": "Konnektoren öffnen",
+  Mine: "Meine",
+  Review: "Zu prüfen",
+  Stale: "Möglicherweise veraltet",
+  "{count} repositories": "{count} Repositorys",
+  Issues: "Issues",
+  "Pull requests": "Pull Requests",
+  "No work items": "Keine Arbeitseinträge",
+  "View on GitHub": "Auf GitHub ansehen",
+  "Task source": "Aufgabenquelle",
+  "Production": "Produktion",
+  "Preview": "Vorschau",
+  "Local": "Lokal",
+  "Docs": "Dokumentation",
+  "Online": "Online",
+  "Sign-in required": "Anmeldung erforderlich",
+  "HTTP error": "HTTP-Fehler",
+  "Offline": "Offline",
+  "Not checked": "Nicht geprüft",
+  "Published": "Veröffentlicht",
+  "Needs attention": "Handlungsbedarf",
+  "Groups": "Gruppen",
+  "Published sites": "Veröffentlichte Sites",
+  "Production, previews and local entry points": "Produktion, Vorschauen und lokale Einstiege",
+  "Site type": "Site-Typ",
+  "Site group": "Site-Gruppe",
+  "Site group name": "Name der Site-Gruppe",
+  "Edit site": "Site bearbeiten",
+  "New site": "Neue Site",
+  "Published site": "Veröffentlichte Site",
+  "Site name": "Site-Name",
+  "Project folder": "Projektordner",
+  "Optional project folder": "Optionaler Projektordner",
+  "Repository": "Repository",
+  "Optional repository URL": "Optionale Repository-URL",
+  "Tags": "Tags",
+  "Comma-separated tags": "Durch Kommas getrennte Tags",
+  "Notes": "Notizen",
+  "What this entry is for": "Zweck dieses Eintrags",
+  "Pin to the top": "Oben anheften",
+  "Save site": "Site speichern",
+  "Group color": "Gruppenfarbe",
+  "Remove group": "Gruppe löschen",
+  "Never checked": "Nie geprüft",
+  "Check now": "Jetzt prüfen",
+  "Restore": "Wiederherstellen",
+  "One entry point for everything we ship": "Ein Einstieg für alles, was wir veröffentlichen",
+  "New group": "Neue Gruppe",
+  "Add site": "Site hinzufügen",
+  "The site directory could not be read": "Das Site-Verzeichnis konnte nicht gelesen werden",
+  "Search sites, tags or notes": "Sites, Tags oder Notizen durchsuchen",
+  "Search sites": "Sites durchsuchen",
+  "Archived": "Archiviert",
+  "Reading published sites…": "Veröffentlichte Sites werden gelesen…",
+  "No sites here yet": "Noch keine Sites",
+  "No matching sites": "Keine passenden Sites",
+  "Try another search or filter.": "Versuche eine andere Suche oder einen anderen Filter.",
+  "Clear filters": "Filter zurücksetzen",
+  "No active sites": "Keine aktiven Sites",
+  "Archived sites are hidden.": "Archivierte Sites sind ausgeblendet.",
+  "Show archived": "Archivierte anzeigen",
+  "Add a published URL, preview or local entry point.": "Füge eine Produktions-URL, eine Vorschau oder einen lokalen Einstieg hinzu.",
+  "Add the first site": "Erste Site hinzufügen",
+  "Edit group": "Gruppe bearbeiten",
+  "{count} online": "{count} online",
+  "Checked only when you ask": "Wird nur auf Anfrage geprüft",
   "Android beta": "Android-Beta",
   "Cannot reach the Server. Trying again…": "Server nicht erreichbar. Neuer Versuch…",
   "No phones yet": "Noch keine Telefone",
@@ -9494,6 +10744,35 @@ var DE = {
   "Quiet": "Ruhig",
   "Normal": "Normal",
   "Lively": "Lebhaft",
+  "Team overview": "Teamübersicht",
+  "Open team overview": "Teamübersicht öffnen",
+  "Close team overview": "Teamübersicht schließen",
+  "Read-only projection": "Schreibgeschützte Ansicht",
+  "No team activity yet": "Noch keine Teamaktivität",
+  "Bots, group chats and the work they hand to each other will appear here.": "Bots, Gruppenchats und die Arbeit, die sie einander übergeben, erscheinen hier.",
+  "Loading team overview…": "Teamübersicht wird geladen…",
+  "Team state is unavailable": "Teamstatus ist nicht verfügbar",
+  "The team could not be read. Close this view and try again after the host reconnects.": "Das Team konnte nicht gelesen werden. Schließe diese Ansicht und versuche es erneut, sobald der Host wieder verbunden ist.",
+  "Need you": "Benötigt dich",
+  "Waiting for teammates": "Wartet auf Teammitglieder",
+  "Unread": "Ungelesen",
+  "Needs you": "Benötigt dich",
+  "Decisions waiting": "Ausstehende Entscheidungen",
+  "Approval": "Freigabe",
+  "Question": "Frage",
+  "Live work": "Laufende Arbeit",
+  "Happening now": "Jetzt aktiv",
+  "Team": "Team",
+  "Bots and groups": "Bots und Gruppen",
+  "{count} members working": "{count} Mitglieder arbeiten",
+  "Recent records": "Letzte Einträge",
+  "What changed": "Was sich geändert hat",
+  "No message preview": "Keine Nachrichtenvorschau",
+  "Learning": "Lernen",
+  "Proposals waiting": "Ausstehende Vorschläge",
+  "Bot improvement": "Bot-Verbesserung",
+  "Moving to a fresh Session": "Wechsel zu einer neuen Sitzung",
+  "Moving this chat to its new folder": "Dieser Chat wird in seinen neuen Ordner verschoben",
   Settings: "Einstellungen",
   Usage: "Nutzung",
   Account: "Konto",
@@ -11095,7 +12374,163 @@ var DE = {
   "You control the computer": "Du steuerst den Computer",
   "Stop {name}": "{name} stoppen",
   "{name} · foreground": "{name} · Vordergrund",
-  "{name} waits for the computer": "{name} wartet, bis du fertig bist"
+  "{name} waits for the computer": "{name} wartet, bis du fertig bist",
+  "Ungrouped": "Nicht gruppiert",
+  "Projects": "Projekte",
+  "Active": "Aktiv",
+  "Memory entries": "Memory-Einträge",
+  "With rules": "Mit Regeln",
+  "Project portfolio": "Projektportfolio",
+  "Live work, memory and captured standards": "Live-Arbeit, Memory und erfasste Standards",
+  "Agents": "Agenten",
+  "Learning queued": "Lernen ausstehend",
+  "Agent health": "Agent-Zustand",
+  "Runtime, learning and standards evidence": "Laufzeit, Selbstverbesserung und Standardbelege",
+  "Overview sections": "Übersichtsbereiche",
+  "Refreshing…": "Aktualisieren…",
+  "Current stage: {name}": "Aktuelle Phase: {name}",
+  "Checks": "Prüfungen",
+  "Missing": "Fehlt",
+  "{count} waiting for you": "{count} warten auf dich",
+  "{count} working now": "{count} arbeiten gerade",
+  "{count} waiting for teammates": "{count} warten auf Teammitglieder",
+  "Ready for Bots and conversations": "Bereit für Bots und Unterhaltungen",
+  "No work running": "Keine laufende Arbeit",
+  "No goal set for this project": "Für dieses Projekt ist kein Ziel gesetzt",
+  "Now: {name}": "Jetzt: {name}",
+  "{passed} of {total} stages passed": "{passed} von {total} Phasen bestanden",
+  "{count} entries saved": "{count} Einträge gespeichert",
+  "Nothing saved for this project": "Für dieses Projekt ist kein Memory gespeichert",
+  "{file} · {count} rules": "{file} · {count} Regeln",
+  "No rules file found": "Keine Regeldatei gefunden",
+  "Items": "Einträge",
+  "Standards evidence": "Standardbelege",
+  "Open project": "Projekt öffnen",
+  "Open memory": "Memory öffnen",
+  "No working folder": "Kein Arbeitsordner",
+  "No goal": "Kein Ziel",
+  "What the team is building": "Was das Team baut",
+  "Add project": "Projekt hinzufügen",
+  "Project name": "Projektname",
+  "Scanned {time}": "Gescannt {time}",
+  "Waiting for a scan": "Warten auf Scan",
+  "No projects yet": "Noch keine Projekte",
+  "Add a project to group its Bots, conversations, memory and standards.": "Füge ein Projekt hinzu, um Bots, Unterhaltungen, Memory und Standards zu bündeln.",
+  "Memory library": "Memory-Bibliothek",
+  "What the team has learned": "Was das Team gelernt hat",
+  "No topics yet": "Noch keine Themen",
+  "Blocked": "Blockiert",
+  "Open {name}": "{name} öffnen",
+  "Health": "Zustand",
+  "Live work is running": "Live-Arbeit läuft",
+  "Current runtime state": "Aktueller Laufzeitzustand",
+  "Self-improvement": "Selbstverbesserung",
+  "{approved} approved, {declined} declined, {pending} pending": "{approved} genehmigt, {declined} abgelehnt, {pending} ausstehend",
+  "No review history": "Keine Review-Historie",
+  "{approved} approved · {pending} pending": "{approved} genehmigt · {pending} ausstehend",
+  "{count} of 4 evidence points found": "{count} von 4 Belegen gefunden",
+  "{count} memories · {topics} topics": "{count} Erinnerungen · {topics} Themen",
+  "No memories saved": "Keine Erinnerungen gespeichert",
+  "Health and self-improvement": "Zustand und Selbstverbesserung",
+  "Live": "Live",
+  "Could not read project evidence": "Projektbelege konnten nicht gelesen werden",
+  "Reading memory and project files…": "Memory und Projektdateien werden gelesen…",
+  "Project evidence is unavailable": "Projektbelege sind nicht verfügbar",
+  "Evidence refreshed from the host": "Belege vom Host aktualisiert",
+  "Recorded checks: {passed} of {expected} passed": "Erfasste Prüfungen: {passed} von {expected} bestanden",
+  "No recorded check run": "Keine erfassten Prüfungsergebnisse",
+  "Checks verified": "Prüfungen bestätigt",
+  "Needs your decision": "Deine Entscheidung nötig",
+  "Checks need attention": "Prüfungen brauchen Aufmerksamkeit",
+  "In progress": "In Arbeit",
+  "Planned": "Geplant",
+  "Plan not set": "Plan nicht gesetzt",
+  "Decisions": "Entscheidungen",
+  "Learned skills": "Gelernte Fähigkeiten",
+  "Configured checks": "Konfigurierte Prüfungen",
+  "Verified results": "Bestätigte Ergebnisse",
+  "Learned skill": "Gelernte Fähigkeit",
+  "Recorded check": "Erfasste Prüfung",
+  "Work record": "Arbeitsprotokoll",
+  "Plan": "Plan",
+  "Not defined": "Nicht definiert",
+  "No acceptance plan yet": "Noch kein Abnahmeplan",
+  "Set a Goal in the project conversation to make progress measurable.": "Setze im Projektgespräch ein Goal, damit Fortschritt messbar wird.",
+  "Goal stages": "Zielphasen",
+  "No checks configured": "Keine Prüfungen konfiguriert",
+  "Passed": "Bestanden",
+  "Unverified": "Unbestätigt",
+  "Not recorded": "Nicht erfasst",
+  "Completion model": "Abschlussmodell",
+  "Auto": "Auto",
+  "Stages passed": "Bestandene Phasen",
+  "No Goal": "Kein Goal",
+  "Recorded checks": "Erfasste Prüfungen",
+  "{count} failing": "{count} fehlgeschlagen",
+  "All recorded checks passed": "Alle erfassten Prüfungen bestanden",
+  "No result recorded": "Kein Ergebnis erfasst",
+  "Folder · rules · sources · checks": "Ordner · Regeln · Quellen · Prüfungen",
+  "Acceptance flow": "Abnahmefluss",
+  "Check matrix": "Prüfungsmatrix",
+  "Recorded {time}": "Erfasst {time}",
+  "Experience": "Erfahrung",
+  "Knowledge captured": "Erfasstes Wissen",
+  "Experience record": "Erfahrungsprotokoll",
+  "No experience recorded yet": "Noch keine Erfahrung erfasst",
+  "Recorded": "Erfasst",
+  "Project document": "Projektdokument",
+  "Official source": "Offizielle Quelle",
+  "Mini program": "Mini-Programm",
+  "Video": "Video",
+  "Web": "Web",
+  "App": "App",
+  "Backend": "Backend",
+  "Mixed": "Gemischt",
+  "Generic": "Allgemein",
+  "Project rules": "Projektregeln",
+  "Standard pack": "Standardpaket",
+  "Check results": "Prüfungsergebnisse",
+  "Project marker": "Projektmarker",
+  "Required file": "Erforderliche Datei",
+  "Reference": "Referenz",
+  "Standards": "Standards",
+  "Declared pack": "Deklariertes Paket",
+  "Detected from files": "Aus Dateien erkannt",
+  "Adopted files": "Übernommene Dateien",
+  "What the rules come from": "Woher die Regeln kommen",
+  "No adopted files found": "Keine übernommenen Dateien",
+  "Official sources": "Offizielle Quellen",
+  "Declared references": "Deklarierte Referenzen",
+  "No official sources declared": "Keine offiziellen Quellen deklariert",
+  "Experience captured": "Erfasste Erfahrung",
+  "Rules and lessons": "Regeln und Lehren",
+  "No experience captured yet": "Noch keine Erfahrung erfasst",
+  "Standards library": "Standardbibliothek",
+  "Rules accumulated by project type": "Regeln nach Projekttyp",
+  "{count} projects": "{count} Projekte",
+  "Skills": "Fähigkeiten",
+  "Standards incomplete": "Standards unvollständig",
+  "{count} required files missing": "{count} erforderliche Dateien fehlen",
+  "{count} required checks unrecorded": "{count} erforderliche Prüfungen nicht erfasst",
+  "Not reviewed": "Nicht geprüft",
+  "Needs review": "Prüfung nötig",
+  "{present} of {total} files": "{present} von {total} Dateien übernommen",
+  "Auto refresh 15s": "Automatische Aktualisierung alle 15 s",
+  "Goal drafted": "Goal entworfen",
+  "Goal started": "Goal gestartet",
+  "Stage passed": "Phase bestanden",
+  "Stage sent back": "Phase zurückgesendet",
+  "Task updated": "Aufgabe aktualisiert",
+  "Goal revised": "Goal überarbeitet",
+  "Memory saved": "Memory gespeichert",
+  "Learning approved": "Lernen genehmigt",
+  "Rules updated": "Regeln aktualisiert",
+  "Document updated": "Dokument aktualisiert",
+  "Source reviewed": "Quelle geprüft",
+  "Checks recorded": "Prüfungen erfasst",
+  "Work recorded": "Arbeit erfasst",
+  "Reason": "Grund",
+  "Source": "Quelle"
 };
 var HOST_ERRORS_DE = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "Mailserver unter $1 nicht erreichbar. Bitte prüfe die Serveradresse."],
@@ -11830,6 +13265,137 @@ var ZH = {
   "Normal": "正常",
   "Lively": "活泼",
   Settings: "设置",
+  "Team overview": "团队总览",
+  "Open team overview": "打开团队总览",
+  "Close team overview": "关闭团队总览",
+  "Read-only projection": "只读投影",
+  "No team activity yet": "还没有团队活动",
+  "Bots, group chats and the work they hand to each other will appear here.": "Bot、群聊以及它们互相交接的工作会显示在这里。",
+  "Loading team overview…": "正在加载团队总览…",
+  "Team state is unavailable": "团队状态暂时不可用",
+  "The team could not be read. Close this view and try again after the host reconnects.": "无法读取团队状态。请关闭此视图，等宿主重新连接后再试。",
+  "Waiting for teammates": "等待队友",
+  "Need you": "需要你",
+  Unread: "未读",
+  "Needs you": "需要你",
+  "Decisions waiting": "等待你决定",
+  "Live work": "实时工作",
+  "Happening now": "正在发生",
+  "Bots and groups": "Bot 和群聊",
+  "Recent records": "最近记录",
+  "What changed": "有什么变化",
+  Timeline: "时间线",
+  "Project record": "项目记录",
+  "No project changes recorded yet": "还没有记录项目变更",
+  Committed: "已提交",
+  "Uncommitted changes": "未提交变更",
+  "Files changed": "文件有变更",
+  "Project files changed": "项目文件有变更",
+  "{count} uncommitted files": "{count} 个未提交文件",
+  "Change recorded": "已记录变更",
+  "Progress recorded": "已记录进展",
+  "Decision recorded": "已记录决策",
+  "Checkpoint recorded": "已记录检查点",
+  "Reported by Bot": "Bot 记录",
+  "Observed automatically": "自动观察",
+  "Read from Git": "来自 Git",
+  "GitHub updated": "GitHub 有更新",
+  "Read from GitHub": "来自 GitHub",
+  "Open work": "未完成工作",
+  Merged: "已合并",
+  Closed: "已关闭",
+  Draft: "未就绪",
+  "Checks failed": "检查失败",
+  "Checks pending": "检查中",
+  "Checks passed": "检查通过",
+  "Checks unavailable": "检查状态不可用",
+  "No checks": "无检查",
+  "Review approved": "评审通过",
+  "Changes requested": "要求修改",
+  "GitHub sign-in needed": "需要登录 GitHub",
+  "GitHub CLI or connector needed": "需要 GitHub CLI 或连接器",
+  "Repository not found": "找不到仓库",
+  "GitHub could not be read": "无法读取 GitHub",
+  GitHub: "GitHub",
+  "Project work": "项目工作",
+  "Needs setup": "需要配置",
+  "Connect a source to see issues and pull requests.": "连接任务源后即可查看 Issue 和 PR。",
+  "Open connectors": "打开连接器",
+  Mine: "我的",
+  Review: "待我评审",
+  Stale: "可能已过期",
+  "{count} repositories": "{count} 个仓库",
+  Issues: "Issue",
+  "Pull requests": "PR",
+  "No work items": "暂无工作项",
+  "View on GitHub": "在 GitHub 查看",
+  "Task source": "任务源",
+  Production: "正式",
+  Preview: "预览",
+  Local: "本地",
+  Docs: "文档",
+  Online: "在线",
+  "Sign-in required": "需要登录",
+  "HTTP error": "HTTP 错误",
+  Offline: "离线",
+  "Not checked": "未检查",
+  Published: "已发布",
+  "Needs attention": "需要处理",
+  Groups: "分组",
+  "Published sites": "发布",
+  "Production, previews and local entry points": "正式站、预览和本机入口",
+  "Site type": "站点类型",
+  "Site group": "站点分组",
+  "Site group name": "站点分组名称",
+  "Edit site": "编辑站点",
+  "New site": "新建站点",
+  "Published site": "发布站点",
+  "Site name": "站点名称",
+  "Project folder": "项目目录",
+  "Optional project folder": "可选的项目目录",
+  Repository: "代码仓库",
+  "Optional repository URL": "可选的仓库地址",
+  Tags: "标签",
+  "Comma-separated tags": "用逗号分隔标签",
+  Notes: "备注",
+  "What this entry is for": "这个入口用来做什么",
+  "Pin to the top": "置顶",
+  "Save site": "保存站点",
+  "Group color": "分组颜色",
+  "Remove group": "删除分组",
+  "Never checked": "从未检查",
+  "Check now": "立即检查",
+  Restore: "恢复",
+  "One entry point for everything we ship": "统一管理我们发布的入口",
+  "New group": "新建分组",
+  "Add site": "添加站点",
+  "The site directory could not be read": "无法读取发布目录",
+  "Search sites, tags or notes": "搜索站点、标签或备注",
+  "Search sites": "搜索站点",
+  Archived: "已归档",
+  "Reading published sites…": "正在读取发布入口…",
+  "No sites here yet": "还没有发布入口",
+  "No matching sites": "没有匹配的发布入口",
+  "Try another search or filter.": "换个搜索词或筛选条件试试。",
+  "Clear filters": "清除筛选",
+  "No active sites": "没有使用中的入口",
+  "Archived sites are hidden.": "已归档的入口当前被隐藏。",
+  "Show archived": "显示已归档",
+  "Add a published URL, preview or local entry point.": "添加正式站、预览或本机入口。",
+  "Add the first site": "添加第一个站点",
+  "Edit group": "编辑分组",
+  "{count} online": "{count} 个在线",
+  "Checked only when you ask": "仅在你检查时更新",
+  Learning: "学习",
+  "Proposals waiting": "待处理的提案",
+  "Bot improvement": "Bot 改进",
+  Approval: "审批",
+  Question: "问题",
+  "No message preview": "没有消息预览",
+  "{count} members working": "{count} 位成员正在工作",
+  "Moving to a fresh Session": "正在换到新会话",
+  "Moving this chat to its new folder": "正在把这段对话换到新文件夹",
+  Team: "团队",
   Usage: "用量",
   Account: "账户",
   Cancel: "取消",
@@ -13520,7 +15086,163 @@ var HOST_ZH = {
   "You control the computer": "你在操控电脑",
   "Stop {name}": "停止 {name}",
   "{name} · foreground": "{name} · 前台",
-  "{name} waits for the computer": "{name} 等你停手"
+  "{name} waits for the computer": "{name} 等你停手",
+  "Ungrouped": "未分组",
+  "Projects": "项目",
+  "Active": "进行中",
+  "Memory entries": "条记忆",
+  "With rules": "有规范",
+  "Project portfolio": "项目组合",
+  "Live work, memory and captured standards": "实时工作、记忆与已沉淀规范",
+  "Agents": "Agent",
+  "Learning queued": "待处理学习",
+  "Agent health": "Agent 健康度",
+  "Runtime, learning and standards evidence": "运行状态、自我完善与规范证据",
+  "Overview sections": "总览分区",
+  "Refreshing…": "正在刷新…",
+  "Current stage: {name}": "当前阶段：{name}",
+  "Checks": "检查",
+  "Missing": "缺失",
+  "{count} waiting for you": "{count} 项需要你",
+  "{count} working now": "{count} 项正在工作",
+  "{count} waiting for teammates": "{count} 项在等队友",
+  "Ready for Bots and conversations": "可以加入 Bot 和对话",
+  "No work running": "当前没有运行中的工作",
+  "No goal set for this project": "这个项目还没有目标",
+  "Now: {name}": "现在：{name}",
+  "{passed} of {total} stages passed": "已通过 {passed}/{total} 个阶段",
+  "{count} entries saved": "已保存 {count} 条",
+  "Nothing saved for this project": "这个项目还没有保存记忆",
+  "{file} · {count} rules": "{file} · {count} 条规范",
+  "No rules file found": "没有找到规范文件",
+  "Items": "条目",
+  "Standards evidence": "规范证据",
+  "Open project": "打开项目",
+  "Open memory": "打开记忆",
+  "No working folder": "未设置工作文件夹",
+  "No goal": "未设目标",
+  "What the team is building": "团队正在建设什么",
+  "Add project": "添加项目",
+  "Project name": "项目名称",
+  "Scanned {time}": "扫描于 {time}",
+  "Waiting for a scan": "等待扫描",
+  "No projects yet": "还没有项目",
+  "Add a project to group its Bots, conversations, memory and standards.": "添加项目，用同一条线组织 Bot、对话、记忆和规范。",
+  "Memory library": "记忆库",
+  "What the team has learned": "团队沉淀了什么",
+  "No topics yet": "暂无主题",
+  "Blocked": "受阻",
+  "Open {name}": "打开 {name}",
+  "Health": "健康",
+  "Live work is running": "有实时工作正在运行",
+  "Current runtime state": "当前运行状态",
+  "Self-improvement": "自我完善",
+  "{approved} approved, {declined} declined, {pending} pending": "{approved} 已批准，{declined} 已拒绝，{pending} 待处理",
+  "No review history": "没有复盘记录",
+  "{approved} approved · {pending} pending": "{approved} 已批准 · {pending} 待处理",
+  "{count} of 4 evidence points found": "找到 {count}/4 项规范证据",
+  "{count} memories · {topics} topics": "{count} 条记忆 · {topics} 个主题",
+  "No memories saved": "还没有保存记忆",
+  "Health and self-improvement": "健康与自我完善",
+  "Live": "实时",
+  "Could not read project evidence": "无法读取项目证据",
+  "Reading memory and project files…": "正在读取记忆与项目文件…",
+  "Project evidence is unavailable": "项目证据暂不可用",
+  "Evidence refreshed from the host": "已从宿主刷新证据",
+  "Recorded checks: {passed} of {expected} passed": "已记录检查：通过 {passed}/{expected}",
+  "No recorded check run": "还没有记录检查结果",
+  "Checks verified": "检查已验证",
+  "Needs your decision": "等你决定",
+  "Checks need attention": "检查需要处理",
+  "In progress": "进行中",
+  "Planned": "已规划",
+  "Plan not set": "未设计划",
+  "Decisions": "决策",
+  "Learned skills": "已学技能",
+  "Configured checks": "已配置检查",
+  "Verified results": "已验证结果",
+  "Learned skill": "学到的技能",
+  "Recorded check": "检查记录",
+  "Work record": "工作记录",
+  "Plan": "计划",
+  "Not defined": "未定义",
+  "No acceptance plan yet": "还没有验收计划",
+  "Set a Goal in the project conversation to make progress measurable.": "在项目对话中设定 Goal，才能形成可衡量的进度。",
+  "Goal stages": "目标阶段",
+  "No checks configured": "还没有配置检查",
+  "Passed": "通过",
+  "Unverified": "未验证",
+  "Not recorded": "未记录",
+  "Completion model": "完成模型",
+  "Auto": "自动",
+  "Stages passed": "已通过阶段",
+  "No Goal": "未设 Goal",
+  "Recorded checks": "已记录检查",
+  "{count} failing": "{count} 项失败",
+  "All recorded checks passed": "已记录的检查全部通过",
+  "No result recorded": "还没有结果记录",
+  "Folder · rules · sources · checks": "文件夹 · 规范 · 来源 · 检查",
+  "Acceptance flow": "验收流程",
+  "Check matrix": "检查矩阵",
+  "Recorded {time}": "记录于 {time}",
+  "Experience": "经验",
+  "Knowledge captured": "已沉淀知识",
+  "Experience record": "经验记录",
+  "No experience recorded yet": "还没有经验记录",
+  "Recorded": "已记录",
+  "Project document": "项目说明",
+  "Official source": "官方来源",
+  "Mini program": "小程序",
+  "Video": "视频",
+  "Web": "网页",
+  "App": "应用",
+  "Backend": "后端",
+  "Mixed": "混合",
+  "Generic": "通用",
+  "Project rules": "项目规则",
+  "Standard pack": "标准包",
+  "Check results": "检查结果",
+  "Project marker": "项目标记",
+  "Required file": "必需文件",
+  "Reference": "参考",
+  "Standards": "规范",
+  "Declared pack": "已声明标准包",
+  "Detected from files": "从文件识别",
+  "Adopted files": "采用的文件",
+  "What the rules come from": "规则来自哪里",
+  "No adopted files found": "未找到采用文件",
+  "Official sources": "官方来源",
+  "Declared references": "已声明参考",
+  "No official sources declared": "未声明官方来源",
+  "Experience captured": "已沉淀经验",
+  "Rules and lessons": "规则与经验",
+  "No experience captured yet": "还没有沉淀经验",
+  "Standards library": "标准库",
+  "Rules accumulated by project type": "按项目类型沉淀的规则",
+  "{count} projects": "{count} 个项目",
+  "Skills": "技能",
+  "Standards incomplete": "规范未完整",
+  "{count} required files missing": "缺少 {count} 个必需文件",
+  "{count} required checks unrecorded": "{count} 项必需检查未记录",
+  "Not reviewed": "未核对",
+  "Needs review": "需要复核",
+  "{present} of {total} files": "已采用 {present}/{total} 个文件",
+  "Auto refresh 15s": "每 15 秒自动更新",
+  "Goal drafted": "目标已起草",
+  "Goal started": "目标已启动",
+  "Stage passed": "阶段已通过",
+  "Stage sent back": "阶段被退回",
+  "Task updated": "任务已更新",
+  "Goal revised": "目标已修订",
+  "Memory saved": "记忆已保存",
+  "Learning approved": "学习已批准",
+  "Rules updated": "规范已更新",
+  "Document updated": "说明已更新",
+  "Source reviewed": "来源已复核",
+  "Checks recorded": "检查已记录",
+  "Work recorded": "工作已记录",
+  "Reason": "原因",
+  "Source": "来源"
 };
 Object.assign(ZH, HOST_ZH);
 var ZH_TW = convertDict(ZH);
@@ -13906,8 +15628,8 @@ function bodyOf(def, paint, flat = false) {
     return "";
   }
 }
-var eyeMarkup = ([cx, cy, w, h68, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h68 / 2}" width="${w}" height="${h68}" rx="${w / 2}"/></g>`;
-var happyEyeMarkup = ([cx, cy, w, h68, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h68 * 0.14}Q0 ${-h68 * 0.42} ${w * 0.62} ${h68 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
+var eyeMarkup = ([cx, cy, w, h70, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><rect class="bt-eye" x="${-w / 2}" y="${-h70 / 2}" width="${w}" height="${h70}" rx="${w / 2}"/></g>`;
+var happyEyeMarkup = ([cx, cy, w, h70, tilt]) => `<g transform="translate(${cx} ${cy}) rotate(${tilt})"><path class="bt-eye-happy" opacity="0" d="M${-w * 0.62} ${h70 * 0.14}Q0 ${-h70 * 0.42} ${w * 0.62} ${h70 * 0.14}" fill="none" stroke="#000" stroke-width="${w * 0.5}" stroke-linecap="round"/></g>`;
 var maskBox = (size) => `maskUnits="userSpaceOnUse" x="${-size}" y="${-size}" width="${size * 3}" height="${size * 3}"`;
 var holes = (def, eyes) => `<rect x="${-def.size}" y="${-def.size}" width="${def.size * 3}" height="${def.size * 3}" fill="#fff"/>${eyes}`;
 var MASK_ID = "%MASK%";
@@ -13999,7 +15721,7 @@ function countCards(state, sessionId, callIds, delta) {
 
 // src/client/team-actions.js
 function teamActions({ call: call2, after, partFor, roster, ui, live, cards, heldCards, turnClock, panelFolded }) {
-  const memoryOf = (id) => roster.getSnapshot().roomsById[id] ? { roomId: id } : { botId: id };
+  const memoryOf2 = (id) => roster.getSnapshot().roomsById[id] ? { roomId: id } : { botId: id };
   let pastes = 0;
   const pasteState = (state, sessionId, blocks) => ({ ...state, paste: { ...state.paste, [sessionId]: blocks } });
   const yieldTo = (state, view) => state.panelYield === true || panelFolded?.(view) === true;
@@ -14007,7 +15729,7 @@ function teamActions({ call: call2, after, partFor, roster, ui, live, cards, hel
     ui.set((state) => ({ ...state, details: sessionId, view: "side", side: chatId ?? null, renaming: false, tab: null, panelYield: yieldTo(state, "side") }));
   };
   const openSettings = (page = "general", id = null) => {
-    ui.set((state) => ({ ...state, settings: { page, id }, menu: null, palette: null, newChat: null }));
+    ui.set((state) => ({ ...state, settings: { page, id }, teamOverview: false, menu: null, palette: null, newChat: null }));
   };
   return {
     // The pane starts at the rail's edge, so a floating drawer would stick out from under it.
@@ -14063,6 +15785,22 @@ function teamActions({ call: call2, after, partFor, roster, ui, live, cards, hel
       ui.set((state) => ({ ...state, details: id, view: "details", renaming: true, tab: null, panelYield: yieldTo(state, "details") }));
     },
     openSettings,
+    openTeamOverview: () => {
+      ui.set((state) => ({ ...state, teamOverview: true, details: null, view: "details", renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, settings: null, memory: null }));
+    },
+    closeTeamOverview: () => {
+      ui.set((state) => state.teamOverview ? { ...state, teamOverview: false } : state);
+    },
+    teamOverviewInsights: (fresh) => call2("team-overview-insights", { fresh: fresh === true }),
+    sites: () => call2("sites"),
+    siteSave: (body) => call2("site-save", body),
+    siteArchive: (id, archived = true) => call2("site-archive", { id, archived }),
+    siteGroupSave: (body) => call2("site-group-save", body),
+    siteGroupDelete: (id) => call2("site-group-delete", { id }),
+    siteCheck: (id) => call2("site-check", { id }),
+    openMemoryFromOverview: (id) => {
+      ui.set((state) => ({ ...state, teamOverview: false, memory: id, menu: null, palette: null }));
+    },
     // DS Bot's own Models page: the providers DSH serves, their keys and models.
     openModels: () => openSettings("models"),
     closeSettings: () => {
@@ -14264,15 +16002,15 @@ function teamActions({ call: call2, after, partFor, roster, ui, live, cards, hel
     // The details panel's status line: turns, speed, cache hits and context for one Bot.
     runStats: (botId) => call2("run-stats", { botId }),
     // `summarize` starts a summary when the entries changed; `regenerate` always does.
-    memoryView: (id, flags = {}) => call2("memory-view", { ...memoryOf(id), ...flags }),
-    memoryAsk: (id, text) => call2("memory-ask", { ...memoryOf(id), text }),
-    memoryLayer: (id, entry, always) => call2("memory-layer", { ...memoryOf(id), topic: entry.topic, text: entry.text, always }),
-    memoryMove: (id, entry, to) => call2("memory-move", { ...memoryOf(id), scope: entry.scope, topic: entry.topic, text: entry.text, to }),
-    memoryTidyUndo: (id, scope, batch) => call2("memory-tidy-undo", { ...memoryOf(id), scope, batch }),
-    memoryPin: (id, entry, pin) => call2("memory-pin", { ...memoryOf(id), scope: entry.scope, topic: entry.topic, text: entry.text, pin }),
-    memoryForget: (id, entry) => call2("memory-forget", { ...memoryOf(id), scope: entry.scope, topic: entry.topic, text: entry.text }),
-    memoryHistory: (id, before) => call2("memory-history", { ...memoryOf(id), ...before === void 0 ? {} : { before } }),
-    memoryRestore: (id, rowId) => call2("memory-restore", { ...memoryOf(id), id: rowId }),
+    memoryView: (id, flags = {}) => call2("memory-view", { ...memoryOf2(id), ...flags }),
+    memoryAsk: (id, text) => call2("memory-ask", { ...memoryOf2(id), text }),
+    memoryLayer: (id, entry, always) => call2("memory-layer", { ...memoryOf2(id), topic: entry.topic, text: entry.text, always }),
+    memoryMove: (id, entry, to) => call2("memory-move", { ...memoryOf2(id), scope: entry.scope, topic: entry.topic, text: entry.text, to }),
+    memoryTidyUndo: (id, scope, batch) => call2("memory-tidy-undo", { ...memoryOf2(id), scope, batch }),
+    memoryPin: (id, entry, pin) => call2("memory-pin", { ...memoryOf2(id), scope: entry.scope, topic: entry.topic, text: entry.text, pin }),
+    memoryForget: (id, entry) => call2("memory-forget", { ...memoryOf2(id), scope: entry.scope, topic: entry.topic, text: entry.text }),
+    memoryHistory: (id, before) => call2("memory-history", { ...memoryOf2(id), ...before === void 0 ? {} : { before } }),
+    memoryRestore: (id, rowId) => call2("memory-restore", { ...memoryOf2(id), id: rowId }),
     diagnostics: (payload) => call2("diagnostics", payload),
     diagnosticsLog: () => call2("diagnostics-log"),
     diagnosticsClear: () => call2("diagnostics-clear"),
@@ -14816,12 +16554,12 @@ function liveSprings(apply2) {
     const dt = Math.min(0.5, Math.max(1e-3, (now - last) / 1e3));
     last = now;
     const steps = Math.ceil(dt * 240);
-    const h68 = dt / steps;
+    const h70 = dt / steps;
     let moving = false;
     for (const [key, value] of values) {
       for (let index = 0; index < steps; index += 1) {
-        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h68;
-        value.x += value.v * h68;
+        value.v += (-value.k * (value.x - value.to) - value.c * value.v) * h70;
+        value.x += value.v * h70;
       }
       if (Math.abs(value.x - value.to) < 0.05 && Math.abs(value.v) < 1) {
         value.x = value.to;
@@ -16935,6 +18673,14 @@ var ChevronLeftIcon = () => (0, import_react3.createElement)("svg", { width: 16,
 var ChevronRightIcon = () => (0, import_react3.createElement)("svg", { width: 14, height: 14, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, (0, import_react3.createElement)("path", { d: "M7.5 4.5L13 10l-5.5 5.5" }));
 var ChevronDownIcon = () => (0, import_react3.createElement)("svg", { width: 14, height: 14, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, (0, import_react3.createElement)("path", { d: "M5 7.5L10 12.5L15 7.5" }));
 var ChevronUpIcon = () => (0, import_react3.createElement)("svg", { width: 14, height: 14, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, (0, import_react3.createElement)("path", { d: "M5 12.5L10 7.5l5 5" }));
+function RefreshIcon() {
+  return (0, import_react3.createElement)(
+    "svg",
+    { width: 15, height: 15, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true },
+    (0, import_react3.createElement)("path", { d: "M15.8 8.2A6.2 6.2 0 1 1 13.7 4.3" }),
+    (0, import_react3.createElement)("path", { d: "M15.8 4.7v3.5h-3.5" })
+  );
+}
 var lineIcon = (paths) => function LineIcon() {
   return (0, import_react3.createElement)(
     "svg",
@@ -18432,11 +20178,11 @@ function ComputerIndicator({ useComputer, useRoster, actions }) {
   const waiting = Object.entries(live.bots ?? {}).filter(([, entry]) => entry.waitingFor === "user-idle");
   if (leases.length === 0 && waiting.length === 0) return null;
   const botOf = (id) => roster.byId[id];
-  const nameOf3 = (id) => botOf(id)?.name ?? t("a Bot");
+  const nameOf4 = (id) => botOf(id)?.name ?? t("a Bot");
   const avatarOf = (id) => {
     const look = lookOf(botOf(id));
     if (typeof look.image === "string" && look.image.startsWith("data:image/")) return (0, import_react11.createElement)("img", { className: "bt-cbar-ava", src: look.image, alt: "" });
-    return (0, import_react11.createElement)("span", { className: "bt-cbar-ava bt-cbar-ava-dot", style: { background: look.color } }, String(nameOf3(id)).slice(0, 1));
+    return (0, import_react11.createElement)("span", { className: "bt-cbar-ava bt-cbar-ava-dot", style: { background: look.color } }, String(nameOf4(id)).slice(0, 1));
   };
   const entries2 = [
     ...leases.map((entry) => ({ key: `l:${entry.botId}`, botId: entry.botId, waiting: false, app: entry.kind === "foreground" ? t("In the foreground") : entry.appName })),
@@ -18455,7 +20201,7 @@ function ComputerIndicator({ useComputer, useRoster, actions }) {
         (0, import_react11.createElement)(
           "span",
           { className: "bt-cbar-text" },
-          (0, import_react11.createElement)("b", { className: "bt-cbar-name" }, nameOf3(entry.botId)),
+          (0, import_react11.createElement)("b", { className: "bt-cbar-name" }, nameOf4(entry.botId)),
           (0, import_react11.createElement)("i", { className: "bt-cbar-app" }, entry.app)
         ),
         entry.waiting ? (0, import_react11.createElement)("button", { type: "button", className: "bt-cbar-go", onClick: () => void actions.computerAllowForeground(entry.botId) }, t("Let it continue")) : (0, import_react11.createElement)(
@@ -19552,8 +21298,8 @@ function valueAxis(values, zero) {
   return niceTicks(low - pad3, high + pad3);
 }
 function columns({ categories, series, unit, kind }, width, active, shown) {
-  const visible = series.filter((_, index) => shown[index]);
-  const ticks = valueAxis(visible.flatMap((item) => item.values), kind !== "line");
+  const visible2 = series.filter((_, index) => shown[index]);
+  const ticks = valueAxis(visible2.flatMap((item) => item.values), kind !== "line");
   const lo = ticks[0];
   const hi = ticks.at(-1);
   const left = Math.ceil(Math.max(...ticks.map((tick) => textWidth(withUnit(tick, unit), TICK)))) + 10;
@@ -19572,15 +21318,15 @@ function columns({ categories, series, unit, kind }, width, active, shown) {
   categories.forEach((label, at) => {
     const cx = plot.x + band * at + band / 2;
     parts.push((0, import_react13.createElement)("text", { key: `c${at}`, className: "dv-chart-label", x: cx, y: height - 7, textAnchor: "middle" }, fit(label, band - 4, LABEL)));
-    points.push({ x: cx, y: y(Math.max(...visible.map((item) => item.values[at]), lo)) });
+    points.push({ x: cx, y: y(Math.max(...visible2.map((item) => item.values[at]), lo)) });
   });
   if (kind === "bar") {
     const group = band * 0.72;
-    const gap = visible.length > 1 ? 2 : 0;
-    const barW = Math.max(2, (group - gap * (visible.length - 1)) / visible.length);
+    const gap = visible2.length > 1 ? 2 : 0;
+    const barW = Math.max(2, (group - gap * (visible2.length - 1)) / visible2.length);
     const zero = y(Math.max(lo, Math.min(0, hi)));
     categories.forEach((_, at) => {
-      visible.forEach((item, row) => {
+      visible2.forEach((item, row) => {
         const value = item.values[at];
         const x = plot.x + band * at + (band - group) / 2 + row * (barW + gap);
         const top2 = Math.min(y(value), zero);
@@ -19593,7 +21339,7 @@ function columns({ categories, series, unit, kind }, width, active, shown) {
     });
   } else {
     const xs = categories.map((_, at) => plot.x + band * at + band / 2);
-    visible.forEach((item, row) => {
+    visible2.forEach((item, row) => {
       const line = item.values.map((value, at) => `${at === 0 ? "M" : "L"}${xs[at]},${y(value)}`).join("");
       if (kind === "area") {
         const base = y(Math.max(lo, Math.min(0, hi)));
@@ -19610,14 +21356,14 @@ function columns({ categories, series, unit, kind }, width, active, shown) {
   return { parts, height, points, hits };
 }
 function rows({ categories, series, unit }, width, active, shown) {
-  const visible = series.filter((_, index) => shown[index]);
-  const ticks = valueAxis(visible.flatMap((item) => item.values), true);
+  const visible2 = series.filter((_, index) => shown[index]);
+  const ticks = valueAxis(visible2.flatMap((item) => item.values), true);
   const lo = ticks[0];
   const hi = ticks.at(-1);
   const labelW = Math.min(width * 0.38, Math.ceil(Math.max(...categories.map((label) => textWidth(label, LABEL)))) + 10);
-  const valueW = Math.ceil(Math.max(...visible.flatMap((item) => item.values).map((value) => textWidth(withUnit(value, unit), LABEL)))) + 10;
+  const valueW = Math.ceil(Math.max(...visible2.flatMap((item) => item.values).map((value) => textWidth(withUnit(value, unit), LABEL)))) + 10;
   const barH = 14;
-  const rowH = 10 + visible.length * barH + (visible.length - 1) * 2;
+  const rowH = 10 + visible2.length * barH + (visible2.length - 1) * 2;
   const top = 4;
   const height = top + rowH * categories.length + 22;
   const plot = { x: labelW, y: top, w: Math.max(40, width - labelW - valueW), h: rowH * categories.length };
@@ -19632,7 +21378,7 @@ function rows({ categories, series, unit }, width, active, shown) {
   categories.forEach((label, at) => {
     const rowY = plot.y + rowH * at + 5;
     parts.push((0, import_react13.createElement)("text", { key: `c${at}`, className: "dv-chart-label", x: labelW - 10, y: rowY + (rowH - 10) / 2 + 4, textAnchor: "end" }, fit(label, labelW - 12, LABEL)));
-    visible.forEach((item, row) => {
+    visible2.forEach((item, row) => {
       const value = item.values[at];
       const by = rowY + row * (barH + 2);
       const left = Math.min(x(value), zero);
@@ -19640,7 +21386,7 @@ function rows({ categories, series, unit }, width, active, shown) {
       parts.push((0, import_react13.createElement)("rect", { key: `b${at}-${row}`, className: "dv-chart-mark", "data-dim": active !== null && active !== at ? "" : void 0, x: left, y: by, width: long, height: barH, rx: Math.min(4, long / 2), style: { fill: item.color } }));
       parts.push((0, import_react13.createElement)("text", { key: `v${at}-${row}`, className: "dv-chart-value", x: left + long + 6, y: by + barH - 3 }, withUnit(value, unit)));
     });
-    points.push({ x: Math.max(...visible.map((item) => x(item.values[at])), zero), y: rowY });
+    points.push({ x: Math.max(...visible2.map((item) => x(item.values[at])), zero), y: rowY });
   });
   const hits = categories.map((_, at) => ({ x: 0, y: plot.y + rowH * at, w: width, h: rowH }));
   return { parts, height, points, hits };
@@ -27679,12 +29425,12 @@ function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useLive, us
   const streaming = entries2.some((entry) => entry.text);
   const tools = entries2.filter((entry) => !entry.text).sort((a, b) => a.at - b.at);
   const relaying = tools.some((entry) => entry.relay);
-  const visible = moveAt !== 0 || rowVisible({ running, streaming, tools, relaying, bot, room: room2 });
+  const visible2 = moveAt !== 0 || rowVisible({ running, streaming, tools, relaying, bot, room: room2 });
   const tool = tools.at(-1);
   const inputRef = (0, import_react33.useRef)(0);
   const inputAt = Math.max(inputRef.current, pendingInput);
   inputRef.current = inputAt;
-  const want = !visible ? null : moveAt !== 0 ? { key: "move", label: t("Switching working folder"), state: "thinking" } : inputAt > (tool?.at ?? 0) ? { key: `input:${inputAt}`, pool: PHRASES2.thinking, state: "thinking" } : tool ? { key: tool.label ? `tool:${tool.label}` : "working", label: tool.label, pool: PHRASES2.working, state: tool.state ?? "working" } : { key: "thinking", pool: PHRASES2.thinking, state: "thinking" };
+  const want = !visible2 ? null : moveAt !== 0 ? { key: "move", label: t("Switching working folder"), state: "thinking" } : inputAt > (tool?.at ?? 0) ? { key: `input:${inputAt}`, pool: PHRASES2.thinking, state: "thinking" } : tool ? { key: tool.label ? `tool:${tool.label}` : "working", label: tool.label, pool: PHRASES2.working, state: tool.state ?? "working" } : { key: "thinking", pool: PHRASES2.thinking, state: "thinking" };
   const [shown, setShown] = (0, import_react33.useState)(null);
   const wantKey = want?.key ?? null;
   const markState = (0, import_react33.useRef)("thinking");
@@ -27704,9 +29450,9 @@ function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useLive, us
   const endedAt = (0, import_react33.useRef)(0);
   const shift = (0, import_react33.useRef)(null);
   const leaving = (0, import_react33.useRef)(false);
-  leaving.current = phase !== null && !visible;
+  leaving.current = phase !== null && !visible2;
   (0, import_react33.useEffect)(() => {
-    if (visible) {
+    if (visible2) {
       setPhase("in");
       return void 0;
     }
@@ -27716,7 +29462,7 @@ function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useLive, us
       setPhase((current) => current === "out" ? null : current);
     }, 140);
     return () => clearTimeout(timer);
-  }, [visible]);
+  }, [visible2]);
   (0, import_react33.useLayoutEffect)(() => {
     if (phase !== null) return;
     endedAt.current = Date.now();
@@ -37712,7 +39458,7 @@ function NewChat({ mode, sectionId = null, paneLeft, roster, actions }) {
   const close = () => actions.closeOverlay();
   useEscape(close);
   const wanted = query.trim().toLowerCase();
-  const matches2 = roster.bots.filter((bot) => !picked.includes(bot.id) && bot.id !== admin && (wanted === "" || bot.name.toLowerCase().includes(wanted) || (bot.role ?? "").toLowerCase().includes(wanted)));
+  const matches3 = roster.bots.filter((bot) => !picked.includes(bot.id) && bot.id !== admin && (wanted === "" || bot.name.toLowerCase().includes(wanted) || (bot.role ?? "").toLowerCase().includes(wanted)));
   const choosingAdmin = group && admin === null;
   const exact = roster.bots.some((bot) => bot.name.toLowerCase() === wanted);
   const pickedBots = picked.map((id) => roster.byId[id]).filter(Boolean);
@@ -37809,7 +39555,7 @@ function NewChat({ mode, sectionId = null, paneLeft, roster, actions }) {
       }) });
     }
   }
-  for (const bot of matches2) {
+  for (const bot of matches3) {
     options.push({ key: bot.id, bot, label: bot.name, hint: choosingAdmin ? t("Make admin") : group || picked.length > 0 ? t("Add to group chat") : void 0, run: () => openBot(bot) });
   }
   if (wanted !== "" && !exact && mode !== "search") options.push({ key: "create", icon: (0, import_react58.createElement)(PlusIcon), label: t("Create new Bot “{name}”", { name: query.trim() }), run: createBot });
@@ -40645,20 +42391,2557 @@ var OPENING_CSS = `
 @keyframes bt-opening-in{from{opacity:0}to{opacity:1}}
 `;
 
-// src/client/overlays.js
+// src/client/team-overview-model.js
+var EMPTY_WORK = { bots: {}, rooms: {}, approvals: [], waiting: {} };
+var toolState2 = (name) => /^(message_bot|stop_bot|create_bot|update_bot|create_group|update_group|delete_group|post_to_group)$/.test(name ?? "") ? "sending" : /search|fetch|browse|read|grep|glob|list|recall/i.test(name ?? "") ? "searching" : "working";
+var sessionState = (map, id) => map?.get?.(id) ?? map?.[id] ?? {};
+var nameOf2 = (roster, id) => roster.byId?.[id]?.name ?? roster.roomsById?.[id]?.name ?? id;
+var questionOwner = (roster, sessionId) => roster.byId?.[sessionId] ?? roster.roomsById?.[sessionId];
+function overviewModel(roster, work = EMPTY_WORK, sessionStatus = /* @__PURE__ */ new Map()) {
+  const source = { ...EMPTY_WORK, ...work, approvals: work?.approvals ?? [], waiting: work?.waiting ?? {}, bots: work?.bots ?? {}, rooms: work?.rooms ?? {} };
+  const approvalsByBot = /* @__PURE__ */ new Map();
+  const approvalsByRoom = /* @__PURE__ */ new Map();
+  for (const approval of source.approvals) {
+    const map = approval.roomId === void 0 ? approvalsByBot : approvalsByRoom;
+    const id = approval.roomId ?? approval.botId;
+    map.set(id, [...map.get(id) ?? [], approval]);
+  }
+  const questions = Object.entries(roster.questions ?? {}).flatMap(([sessionId, question]) => {
+    const owner = questionOwner(roster, sessionId);
+    if (owner === void 0 || question === void 0) return [];
+    return [{ sessionId, owner, question, at: question.askedAt ?? 0 }];
+  });
+  const questionsByOwner = /* @__PURE__ */ new Map();
+  for (const entry of questions) questionsByOwner.set(entry.owner.id, [...questionsByOwner.get(entry.owner.id) ?? [], entry]);
+  const bots = (roster.bots ?? []).map((bot) => {
+    const doing = source.bots[bot.id];
+    const waits = source.waiting[bot.id];
+    const approvals2 = approvalsByBot.get(bot.id) ?? [];
+    const ownersQuestions = questionsByOwner.get(bot.id) ?? [];
+    const waitsOn = [...waits?.bots ?? [], ...waits?.rooms ?? []];
+    const running = doing !== void 0;
+    const alert = approvals2.length > 0 || ownersQuestions.length > 0;
+    const activity = doing?.switching ? "thinking" : doing ? toolState2(doing.tool ?? "") : waitsOn.length > 0 ? "waiting" : void 0;
+    const status = sessionState(sessionStatus, bot.sessionId ?? bot.id);
+    return {
+      bot,
+      doing,
+      approvals: approvals2,
+      questions: ownersQuestions,
+      alert,
+      running,
+      waits: waits ?? null,
+      waitsOn: waitsOn.map((id) => nameOf2(roster, id)),
+      unread: status.completionUnread === true || status.pendingInteraction !== void 0,
+      pendingInteraction: status.pendingInteraction,
+      state: alert ? "alert" : running ? activity : waitsOn.length > 0 ? "waiting" : "idle"
+    };
+  });
+  const botRows = new Map(bots.map((row) => [row.bot.id, row]));
+  const activities = [
+    ...Object.entries(source.bots).flatMap(([botId, doing]) => {
+      const row = botRows.get(botId);
+      return row ? [{ key: `bot:${botId}`, kind: "bot", row, bot: row.bot, doing, since: doing.since, room: roster.roomsById?.[doing.roomId] }] : [];
+    }),
+    ...Object.entries(source.rooms).flatMap(([roomId, members]) => {
+      const room2 = roster.roomsById?.[roomId];
+      if (room2 === void 0) return [];
+      return members.flatMap((member) => {
+        const row = botRows.get(member.botId);
+        return row ? [{ key: `room:${roomId}:${member.botId}`, kind: "room", row, bot: row.bot, room: room2, doing: member, since: member.since }] : [];
+      });
+    })
+  ].sort((a, b) => (a.since ?? 0) - (b.since ?? 0));
+  const rooms = (roster.rooms ?? []).map((room2) => {
+    const members = source.rooms[room2.id] ?? [];
+    const approvals2 = approvalsByRoom.get(room2.id) ?? [];
+    const status = sessionState(sessionStatus, room2.sessionId ?? room2.id);
+    return {
+      room: room2,
+      members,
+      approvals: approvals2,
+      running: members.length > 0,
+      unread: status.completionUnread === true || status.pendingInteraction !== void 0,
+      lastAt: room2.lastAt ?? 0,
+      preview: room2.preview ?? ""
+    };
+  });
+  const roomRows = new Map(rooms.map((row) => [row.room.id, row]));
+  const entries2 = [
+    ...bots.map((row) => ({ kind: "bot", id: row.bot.id, sectionId: row.bot.sectionId, row })),
+    ...rooms.map((row) => ({ kind: "room", id: row.room.id, sectionId: row.room.sectionId, row }))
+  ];
+  const sectionIds = new Set((roster.sections ?? []).map((section) => section.id));
+  const ungrouped = entries2.filter((entry) => entry.sectionId === void 0 || !sectionIds.has(entry.sectionId));
+  const sections = [
+    ...ungrouped.length > 0 ? [{ id: "__ungrouped__", name: null, entries: ungrouped }] : [],
+    ...(roster.sections ?? []).map((section) => ({ ...section, entries: entries2.filter((entry) => entry.sectionId === section.id) })).filter((section) => section.entries.length > 0)
+  ];
+  const recent = [
+    ...bots.filter((row) => row.bot.lastAt).map((row) => ({ key: `bot:${row.bot.id}`, kind: "bot", id: row.bot.id, at: row.bot.lastAt, preview: row.bot.preview ?? "", name: row.bot.name, row })),
+    ...rooms.filter((row) => row.lastAt).map((row) => ({ key: `room:${row.room.id}`, kind: "room", id: row.room.id, at: row.lastAt, preview: row.preview, name: row.room.name, row }))
+  ].sort((a, b) => b.at - a.at);
+  const approvals = [...source.approvals].sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  const primaryState = (row) => row.alert || row.approvals?.length > 0 ? "needs" : row.running ? "working" : row.waitsOn?.length > 0 ? "waiting" : row.unread ? "unread" : "idle";
+  const pulse = { working: 0, needs: 0, waiting: 0, unread: 0, idle: 0 };
+  for (const row of bots) pulse[primaryState(row)] += 1;
+  for (const row of rooms) pulse[primaryState(row)] += 1;
+  return {
+    roster,
+    sessionStatus,
+    learning: roster.learning ?? {},
+    bots,
+    botRows,
+    rooms,
+    roomRows,
+    sections,
+    activities,
+    recent,
+    approvals,
+    questions: questions.sort((a, b) => b.at - a.at),
+    counts: {
+      bots: bots.length,
+      running: new Set(activities.map((entry) => entry.bot.id)).size,
+      waiting: bots.filter((row) => row.waitsOn.length > 0 && !row.running && !row.alert).length,
+      approvals: approvals.length,
+      questions: questions.length,
+      unread: bots.filter((row) => row.unread).length + rooms.filter((row) => row.unread).length,
+      groups: rooms.length,
+      pulse: { ...pulse, total: bots.length + rooms.length }
+    }
+  };
+}
+function workDetail(doing) {
+  if (!doing) return "";
+  if (doing.switching) return doing.folder ? "Moving this chat to its new folder" : "Moving to a fresh Session";
+  return doing.said ?? doing.note ?? doing.target ?? doing.tool ?? "";
+}
+var RUNNING_GOAL = /* @__PURE__ */ new Set(["active", "paused"]);
+var uniqueValues = (values) => [...new Set(values.filter(Boolean))];
+var memoryOf = (insights, id) => insights?.memory?.owners?.[id];
+var folderOf = (insights, path2) => typeof path2 === "string" ? insights?.folders?.[path2] : void 0;
+var memoryPairs = (insights, ids) => ids.map((id) => [id, memoryOf(insights, id)]).filter(([, memory]) => memory !== void 0);
+function projectGoal(rooms) {
+  const goals = rooms.flatMap(({ room: room2 }) => room2.goal === void 0 ? [] : [{ room: room2, goal: room2.goal }]);
+  const primary = goals.find(({ goal }) => RUNNING_GOAL.has(goal.status)) ?? goals.find(({ goal }) => goal.status === "complete") ?? goals[0];
+  const total = goals.reduce((sum, { goal }) => sum + (goal.stages?.length ?? 0), 0);
+  const passed = goals.reduce((sum, { goal }) => sum + (goal.stages ?? []).filter((stage2) => stage2.status === "passed").length, 0);
+  const stage = primary?.goal.stages?.[primary.goal.current];
+  return {
+    count: goals.length,
+    title: primary?.goal.title ?? "",
+    status: primary?.goal.status ?? null,
+    current: RUNNING_GOAL.has(primary?.goal.status) ? stage?.title ?? "" : "",
+    passed,
+    total,
+    room: primary?.room ?? null,
+    stages: (primary?.goal.stages ?? []).map((entry, index) => ({
+      title: entry.title,
+      status: entry.status,
+      current: index === primary?.goal.current && RUNNING_GOAL.has(primary?.goal.status)
+    }))
+  };
+}
+function projectStandards(insights, folders) {
+  const facts = uniqueValues(folders).map((path2) => folderOf(insights, path2)).filter(Boolean);
+  const requiredFiles = facts.flatMap((fact) => (fact.profile?.required ?? []).map((file) => ({ ...file, folder: fact.folder })));
+  const configuredChecks = facts.flatMap((fact) => fact.checks.map((check) => ({ ...check, folder: fact.folder, required: false })));
+  const requiredChecks = uniqueValues(facts.flatMap((fact) => fact.profile?.requiredChecks ?? []));
+  const checks = [
+    ...configuredChecks,
+    ...requiredChecks.filter((name) => !configuredChecks.some((check) => check.name === name)).map((name) => ({ name, command: "", folder: facts[0]?.folder, required: true }))
+  ];
+  const sourceUrls = uniqueValues(facts.flatMap((fact) => fact.standards.sources ?? []));
+  const sourceDetails = [
+    ...facts.flatMap((fact) => (fact.profile?.sources ?? []).map((source) => ({ ...source, folder: fact.folder }))),
+    ...sourceUrls.map((url) => ({ name: url, url, scope: [".ds-bot/rules"], version: null, checkedAt: null, folder: facts[0]?.folder }))
+  ].filter((source, index, all) => (source.url || source.name) && all.findIndex((entry) => (entry.url || entry.name) === (source.url || source.name)) === index);
+  const rules = facts.reduce((sum, fact) => sum + (fact.standards.rules ?? 0), 0);
+  const quality = facts.map((fact) => fact.quality).find(Boolean) ?? null;
+  const profiles = uniqueValues(facts.map((fact) => fact.profile?.id));
+  const profileFacts = profiles.map((id) => facts.find((fact) => fact.profile?.id === id)?.profile).filter(Boolean);
+  const profile = profiles.length === 0 ? { id: "generic", name: "Generic", declared: false, sources: [] } : profiles.length === 1 ? profileFacts[0] : { id: "mixed", name: "Mixed", declared: profileFacts.some((entry) => entry.declared), sources: [] };
+  const adoptedFiles = [];
+  const seenFiles = /* @__PURE__ */ new Set();
+  for (const fact of facts) {
+    for (const file of fact.adoptedFiles ?? []) {
+      const key = `${fact.folder}:${file.path}:${file.role}`;
+      if (seenFiles.has(key)) continue;
+      seenFiles.add(key);
+      adoptedFiles.push({ ...file, folder: fact.folder });
+    }
+  }
+  const documents = facts.flatMap((fact) => (fact.documents ?? []).map((doc) => ({ ...doc, folder: fact.folder })));
+  const evidence = [
+    facts.length > 0,
+    rules > 0,
+    sourceDetails.length > 0,
+    checks.length > 0
+  ];
+  return {
+    folders: facts,
+    profile,
+    adoptedFiles,
+    documents,
+    requiredFiles,
+    missingFiles: adoptedFiles.filter((file) => !file.exists),
+    rules,
+    sources: sourceUrls,
+    sourceDetails,
+    checks,
+    quality,
+    evidence,
+    covered: evidence.filter(Boolean).length,
+    updatedAt: Math.max(0, ...facts.flatMap((fact) => [
+      fact.standards.updatedAt ?? 0,
+      fact.packageUpdatedAt ?? 0,
+      ...(fact.documents ?? []).map((doc) => doc.updatedAt ?? 0)
+    ]))
+  };
+}
+function projectChanges(insights, folders) {
+  const facts = uniqueValues(folders).map((path2) => folderOf(insights, path2)).filter(Boolean);
+  const entries2 = facts.flatMap((fact) => fact.changes?.entries ?? []).filter((entry, index, all) => all.findIndex((other) => other.id === entry.id) === index).sort((a, b) => b.at - a.at);
+  return {
+    entries: entries2,
+    count: entries2.length,
+    updatedAt: entries2[0]?.at ?? 0,
+    git: facts.some((fact) => fact.changes?.git?.available === true),
+    working: facts.reduce((sum, fact) => sum + (fact.changes?.git?.working ?? 0), 0),
+    recorded: entries2.filter((entry) => entry.sourceKind === "bot").length,
+    automatic: entries2.filter((entry) => entry.sourceKind === "automatic" || entry.sourceKind === "filesystem").length
+  };
+}
+function projectWorkItems(insights, folders) {
+  const facts = uniqueValues(folders).map((path2) => folderOf(insights, path2)?.workItems).filter(Boolean);
+  const items = facts.flatMap((fact) => (fact.items ?? []).map((item) => ({ ...item, repo: fact.repo }))).filter((item, index, all) => all.findIndex((other) => other.type === item.type && other.number === item.number && other.repo?.slug === item.repo?.slug) === index).sort((a, b) => b.updatedAt - a.updatedAt);
+  const usable = facts.filter((fact) => fact.status === "ok" || (fact.items?.length ?? 0) > 0);
+  const status = usable.length > 0 ? usable.every((fact) => fact.stale === true) ? "stale" : "ok" : ["needs-auth", "gh-missing", "not-found", "unavailable", "disabled", "not-linked"].find((candidate) => facts.some((fact) => fact.status === candidate)) ?? "not-linked";
+  const repos = [];
+  const seenRepos = /* @__PURE__ */ new Set();
+  for (const fact of usable) {
+    if (!fact.repo?.slug || seenRepos.has(fact.repo.slug)) continue;
+    seenRepos.add(fact.repo.slug);
+    repos.push(fact.repo);
+  }
+  return {
+    status,
+    stale: usable.some((fact) => fact.stale === true),
+    error: facts.find((fact) => fact.error)?.error ?? null,
+    source: usable.find((fact) => fact.source)?.source ?? null,
+    fetchedAt: Math.max(0, ...usable.map((fact) => fact.fetchedAt ?? 0)),
+    refreshSeconds: Math.min(600, 60, ...facts.map((fact) => fact.refreshSeconds).filter(Number.isFinite)),
+    viewer: usable.find((fact) => fact.viewer)?.viewer ?? null,
+    repos,
+    repo: repos.length === 1 ? repos[0] : null,
+    items,
+    counts: {
+      issues: items.filter((item) => item.type === "issue").length,
+      pullRequests: items.filter((item) => item.type === "pr").length,
+      mine: items.filter((item) => item.mine).length,
+      review: items.filter((item) => item.needsReview).length,
+      attention: items.filter((item) => item.checks?.status === "failed" || item.reviewDecision === "changes_requested").length,
+      open: items.filter((item) => item.state === "open").length
+    }
+  };
+}
+function standardsLibrary(projects) {
+  const byProfile = /* @__PURE__ */ new Map();
+  for (const project of projects) {
+    const profile = project.standards.profile;
+    const id = profile?.id ?? "generic";
+    const entry = byProfile.get(id) ?? {
+      id,
+      name: profile?.name && profile.name !== id ? profile.name : id,
+      projects: 0,
+      files: 0,
+      sources: 0,
+      rules: 0,
+      skills: 0,
+      updatedAt: 0
+    };
+    entry.projects += 1;
+    entry.files += project.standards.adoptedFiles.filter((file) => file.exists).length;
+    entry.sources += project.standards.sourceDetails.length;
+    entry.rules += project.standards.rules;
+    entry.skills += project.learning.approved;
+    entry.updatedAt = Math.max(entry.updatedAt, project.standards.updatedAt);
+    byProfile.set(id, entry);
+  }
+  return [...byProfile.values()].filter((entry) => entry.files > 0 || entry.sources > 0 || entry.rules > 0 || entry.skills > 0).sort((a, b) => b.projects - a.projects || b.updatedAt - a.updatedAt);
+}
+function projectState(bots, rooms) {
+  const needs = bots.filter((row) => row.alert).length + rooms.reduce((sum, room2) => sum + room2.approvals.length, 0);
+  const running = bots.filter((row) => row.running).length + rooms.filter((room2) => room2.running).length;
+  const waiting = bots.filter((row) => row.state === "waiting").length;
+  const unread = bots.filter((row) => row.unread).length + rooms.filter((room2) => room2.unread).length;
+  const state = needs > 0 ? "needs" : running > 0 ? "working" : waiting > 0 ? "waiting" : unread > 0 ? "unread" : "idle";
+  return { needs, running, waiting, unread, state };
+}
+var timestampOf = (value) => Number.isFinite(value) ? value : Date.parse(String(value ?? "")) || 0;
+function projectLearning(roster, bots) {
+  const settled = bots.flatMap(({ bot }) => (roster.learningSettled?.[bot.id] ?? []).map((entry) => ({ ...entry, botId: bot.id, bot })));
+  const pending = bots.flatMap(({ bot }) => (roster.learning?.[bot.id] ?? []).map((entry) => ({ ...entry, botId: bot.id, bot })));
+  return {
+    pending: pending.length,
+    approved: settled.filter((entry) => entry.outcome === "approved").length,
+    declined: settled.filter((entry) => entry.outcome === "declined").length,
+    settled
+  };
+}
+function projectCompletion(goal, standards, state, learning) {
+  const quality = standards.quality;
+  const required = standards.requiredFiles ?? [];
+  const present = required.filter((file) => file.exists).length;
+  const missing = required.length - present;
+  const recorded = new Map((quality?.checks ?? []).map((check) => [check.name, check.status]));
+  const checkRows = standards.checks.map((check) => ({ name: check.name, status: recorded.get(check.name) ?? "unverified", required: check.required === true }));
+  const extra = (quality?.checks ?? []).filter((check) => !standards.checks.some((configured) => configured.name === check.name));
+  checkRows.push(...extra.map((check) => ({ name: check.name, status: check.status, required: false })));
+  const requiredRows = checkRows.filter((check) => check.required);
+  const missingCheckRecords = requiredRows.filter((check) => check.status === "unverified" || check.status === "unknown").length;
+  const expected2 = quality?.expected ?? quality?.total ?? 0;
+  const passed = quality?.passed ?? 0;
+  const failed = Math.max(0, expected2 - passed);
+  const status = missing > 0 || missingCheckRecords > 0 ? "standards" : goal.status === "complete" ? "complete" : expected2 > 0 && passed >= expected2 ? "verified" : state.needs > 0 ? "attention" : expected2 > 0 && failed > 0 ? "failing" : state.working > 0 ? "working" : goal.status === "paused" ? "paused" : goal.total > 0 ? "planned" : "unplanned";
+  return {
+    status,
+    goal: { passed: goal.passed, total: goal.total, current: goal.current, title: goal.title },
+    checks: { expected: expected2, passed, failed, rows: checkRows },
+    evidence: { covered: standards.covered, total: 4 },
+    learning: { approved: learning.approved, pending: learning.pending },
+    requirements: { present, total: required.length, missing, checksExpected: requiredRows.length, checksRecorded: requiredRows.length - missingCheckRecords, checksMissing: missingCheckRecords }
+  };
+}
+function projectExperience(projectBots, projectRooms, memory, standards, learning, changes) {
+  const goalEvents = projectRooms.flatMap(({ room: room2 }) => [room2.goal, ...room2.pastGoals ?? []].filter(Boolean).flatMap((goal) => {
+    const stages = new Map((goal.stages ?? []).map((stage) => [stage.id, stage.title]));
+    return (goal.events ?? []).map((event) => ({
+      kind: "goal",
+      action: event.kind,
+      at: event.at,
+      ownerId: room2.id,
+      title: stages.get(event.stage) || goal.title || room2.name,
+      reason: ["rework", "revise", "stop"].includes(event.kind) ? event.text || "" : "",
+      evidence: event.kind === "pass" ? event.text || "" : "",
+      source: "Goal",
+      text: event.text || ""
+    }));
+  }));
+  const events = [
+    ...changes.entries.map((entry) => ({
+      kind: entry.kind,
+      action: entry.action,
+      at: entry.at,
+      ownerId: entry.actorId,
+      title: entry.summary,
+      reason: entry.reason,
+      evidence: (entry.evidence ?? []).join(" · "),
+      source: entry.source,
+      sourceKind: entry.sourceKind,
+      verification: entry.verification,
+      files: entry.files ?? [],
+      before: entry.progress?.before ?? "",
+      after: entry.progress?.after ?? "",
+      contributors: entry.contributors ?? [],
+      text: ""
+    })),
+    ...goalEvents,
+    ...memory.recent.map((entry) => ({
+      kind: "memory",
+      action: "memory",
+      at: timestampOf(entry.added),
+      ownerId: entry.ownerId,
+      title: entry.topic || "",
+      text: entry.text,
+      reason: entry.text,
+      source: entry.topic ? `${"Memory"} · ${entry.topic}` : "Memory",
+      evidence: ""
+    })),
+    ...learning.settled.filter((entry) => entry.outcome === "approved").map((entry) => ({
+      kind: entry.kind === "agents" ? "rules" : "skill",
+      action: "approved",
+      at: timestampOf(entry.settledAt || entry.createdAt),
+      ownerId: entry.botId,
+      title: entry.name || entry.folder || "",
+      reason: entry.why || entry.description || "",
+      source: "Learning",
+      evidence: "",
+      text: entry.description || entry.why || ""
+    })),
+    ...standards.folders.flatMap((fact) => fact.standards.file && fact.standards.updatedAt ? [{
+      kind: "rules",
+      action: "updated",
+      at: fact.standards.updatedAt,
+      title: fact.standards.file,
+      reason: fact.standards.ruleLines?.slice(0, 3).join(" · ") || "",
+      source: fact.standards.file,
+      evidence: fact.standards.sources?.join(" · ") || "",
+      text: fact.standards.ruleLines?.slice(0, 2).join(" · ") || ""
+    }] : []),
+    ...standards.documents.flatMap((doc) => doc.updatedAt ? [{
+      kind: "document",
+      action: "updated",
+      at: doc.updatedAt,
+      title: doc.path,
+      reason: doc.excerpt || "",
+      source: doc.path,
+      evidence: "",
+      text: doc.excerpt || doc.headings?.slice(0, 2).join(" · ") || ""
+    }] : []),
+    ...standards.sourceDetails.filter((source) => source.checkedAt).map((source) => ({
+      kind: "source",
+      action: "reviewed",
+      at: timestampOf(source.checkedAt),
+      title: source.name,
+      reason: "",
+      source: source.name,
+      evidence: source.url || "",
+      text: source.version ? `v${source.version}` : ""
+    })),
+    ...standards.quality?.checkedAt ? [{
+      kind: "check",
+      action: "recorded",
+      at: timestampOf(standards.quality.checkedAt),
+      title: "",
+      reason: "",
+      source: ".ds-bot/quality.json",
+      evidence: `${standards.quality.passed}/${standards.quality.expected}`,
+      text: `${standards.quality.passed}/${standards.quality.expected}`
+    }] : [],
+    ...projectBots.filter((row) => row.bot.lastAt).map((row) => ({
+      kind: "work",
+      action: "recorded",
+      at: row.bot.lastAt,
+      ownerId: row.bot.id,
+      title: row.bot.name,
+      reason: "",
+      source: row.bot.name,
+      evidence: "",
+      text: row.bot.preview || ""
+    })),
+    ...projectRooms.filter((row) => row.room.lastAt).map((row) => ({
+      kind: "work",
+      action: "recorded",
+      at: row.room.lastAt,
+      ownerId: row.room.id,
+      title: row.room.name,
+      reason: "",
+      source: row.room.name,
+      evidence: "",
+      text: row.preview || ""
+    }))
+  ].filter((event) => event.at > 0).sort((a, b) => b.at - a.at).slice(0, 16);
+  return {
+    count: memory.count + standards.rules + standards.sources.length + learning.approved,
+    changes: changes.count,
+    updatedAt: events[0]?.at ?? 0,
+    events,
+    knowledge: [
+      { kind: "memory", count: memory.count },
+      { kind: "rules", count: standards.rules },
+      { kind: "sources", count: standards.sources.length },
+      { kind: "skills", count: learning.approved },
+      { kind: "checks", count: standards.checks.length },
+      { kind: "verified", count: standards.quality?.passed ?? 0 }
+    ]
+  };
+}
+function projectModel(base, insights) {
+  const bots = base.bots;
+  const rooms = base.rooms;
+  const sections = [...base.roster.sections ?? []];
+  const buildProject = (id, section, projectBots, projectRooms) => {
+    const folders = uniqueValues([...projectBots.map((row) => row.bot.workDir), ...projectRooms.map((row) => row.room.workDir)]);
+    const ids = [...projectBots.map((row) => row.bot.id), ...projectRooms.map((row) => row.room.id)];
+    const memories = memoryPairs(insights, ids);
+    const standards = projectStandards(insights, folders);
+    const changes = projectChanges(insights, folders);
+    const workItems = projectWorkItems(insights, folders);
+    const goal = projectGoal(projectRooms);
+    const state = projectState(projectBots, projectRooms);
+    const learning = projectLearning(base.roster, projectBots);
+    const target = goal.room ?? projectRooms.find((room2) => room2.approvals.length > 0)?.room ?? projectBots.find((row) => row.alert)?.bot ?? projectRooms.find((room2) => room2.running)?.room ?? projectBots.find((row) => row.running)?.bot ?? projectRooms[0]?.room ?? projectBots[0]?.bot ?? null;
+    const memory = {
+      count: memories.reduce((sum, [, entry]) => sum + entry.count, 0),
+      topics: uniqueValues(memories.flatMap(([, entry]) => entry.topics ?? [])).slice(0, 10),
+      recent: memories.flatMap(([ownerId, entry]) => (entry.recent ?? []).map((item) => ({ ...item, ownerId }))).sort((a, b) => String(b.added ?? "").localeCompare(String(a.added ?? ""))).slice(0, 6),
+      owners: memories.length
+    };
+    const completion = projectCompletion(goal, standards, state, learning);
+    const experience = projectExperience(projectBots, projectRooms, memory, standards, learning, changes);
+    return {
+      id,
+      name: section?.name ?? null,
+      color: section?.color ?? null,
+      bots: projectBots,
+      rooms: projectRooms,
+      entries: projectBots.length + projectRooms.length,
+      folders,
+      goal,
+      state,
+      memory,
+      standards,
+      changes,
+      workItems,
+      learning,
+      completion,
+      experience,
+      target,
+      lastAt: Math.max(experience.updatedAt, changes.updatedAt)
+    };
+  };
+  const rows2 = sections.map((section) => buildProject(
+    section.id,
+    section,
+    bots.filter((row) => row.bot.sectionId === section.id),
+    rooms.filter((row) => row.room.sectionId === section.id)
+  ));
+  const rawUngroupedBots = bots.filter((row) => row.bot.sectionId === void 0 || !sections.some((section) => section.id === row.bot.sectionId));
+  const rawUngroupedRooms = rooms.filter((row) => row.room.sectionId === void 0 || !sections.some((section) => section.id === row.room.sectionId));
+  const ungrouped = rawUngroupedBots.length + rawUngroupedRooms.length === 0 ? null : buildProject("__ungrouped__", null, rawUngroupedBots, rawUngroupedRooms);
+  const projects = [...ungrouped ? [ungrouped] : [], ...rows2];
+  return {
+    projects,
+    standardsLibrary: standardsLibrary(projects),
+    counts: {
+      total: projects.length,
+      active: projects.filter((project) => project.state?.working || project.state?.needs).length,
+      needs: projects.reduce((sum, project) => sum + project.state.needs, 0),
+      agents: bots.length,
+      memory: insights?.memory?.total ?? 0,
+      standards: projects.filter((project) => project.standards.rules > 0).length,
+      experience: projects.reduce((sum, project) => sum + project.experience.count, 0),
+      changes: projects.reduce((sum, project) => sum + project.changes.count, 0),
+      work: projects.reduce((sum, project) => sum + project.workItems.counts.open, 0),
+      verified: projects.filter((project) => project.completion.status === "verified" || project.completion.status === "complete").length
+    }
+  };
+}
+function settledCounts(rows2) {
+  return {
+    approved: rows2.filter((row) => row.outcome === "approved").length,
+    declined: rows2.filter((row) => row.outcome === "declined").length
+  };
+}
+function agentBoardModel(base, insights) {
+  const rows2 = base.bots.map(({ bot, ...row }) => {
+    const facts = folderOf(insights, bot.workDir);
+    const memory = memoryOf(insights, bot.id) ?? { count: 0, size: 0, limit: 0, topics: [], recent: [] };
+    const proposals = base.roster.learning?.[bot.id] ?? [];
+    const settled = base.roster.learningSettled?.[bot.id] ?? [];
+    const outcomes = settledCounts(settled);
+    const standards = facts === void 0 ? projectStandards(insights, []) : projectStandards(insights, [facts.folder]);
+    const evidence = [
+      Boolean(bot.workDir),
+      (facts?.standards.rules ?? 0) > 0,
+      (facts?.standards.sources?.length ?? 0) > 0,
+      (facts?.checks?.length ?? 0) > 0
+    ];
+    return {
+      kind: "bot",
+      id: bot.id,
+      bot,
+      name: bot.name,
+      role: bot.role ?? "",
+      model: bot.model ?? bot.appliedModel ?? "",
+      engine: bot.engine,
+      row,
+      folder: bot.workDir,
+      standards,
+      evidence,
+      evidenceCount: evidence.filter(Boolean).length,
+      memory,
+      learning: { pending: proposals.length, ...outcomes, total: proposals.length + settled.length },
+      health: bot.blocked !== void 0 ? "blocked" : row.state
+    };
+  });
+  for (const agent of base.roster.agents ?? []) {
+    const sessionIds = agent.sessions ?? [];
+    const statuses = sessionIds.map((id) => sessionState(base.sessionStatus, id));
+    const status = statuses.find((entry) => entry?.pendingInteraction !== void 0 || entry?.completionUnread === true) ?? statuses.find((entry) => entry?.running === true) ?? {};
+    rows2.push({
+      kind: "dsh",
+      id: agent.id,
+      agent,
+      name: agent.name,
+      role: "DSH Agent",
+      model: "",
+      row: { state: status.running ? "working" : status.completionUnread || status.pendingInteraction ? "unread" : "idle", running: status.running === true, unread: status.completionUnread === true || status.pendingInteraction !== void 0, alert: false, waitsOn: [] },
+      sessionId: sessionIds.at(-1) ?? null,
+      health: status.pendingInteraction ? "needs" : status.running ? "working" : status.completionUnread ? "unread" : "idle",
+      standards: projectStandards(insights, []),
+      evidence: [false, false, false, false],
+      evidenceCount: 0,
+      memory: { count: 0, size: 0, limit: 0, topics: [], recent: [] },
+      learning: { pending: 0, approved: 0, declined: 0, total: 0 }
+    });
+  }
+  return {
+    rows: rows2,
+    counts: {
+      total: rows2.length,
+      needs: rows2.filter((row) => row.health === "needs" || row.health === "blocked").length,
+      working: rows2.filter((row) => row.health === "working").length,
+      improving: rows2.reduce((sum, row) => sum + row.learning.pending, 0),
+      evidence: rows2.reduce((sum, row) => sum + row.evidenceCount, 0)
+    }
+  };
+}
+
+// src/client/site-directory-model.js
+var attention = (site) => site.health?.status === "offline" || site.health?.status === "error";
+var visible = (site) => site?.archived !== true;
+function matches2(site, query) {
+  if (query === "") return true;
+  return [site.name, site.url, site.notes, ...site.tags ?? []].some((value) => String(value ?? "").toLowerCase().includes(query));
+}
+function orderSites(sites) {
+  return [...sites].sort((left, right) => Number(right.favorite) - Number(left.favorite) || Number(attention(right)) - Number(attention(left)) || left.order - right.order || left.name.localeCompare(right.name));
+}
+function siteCatalogModel(directory, { environment = "all", query = "", includeArchived = false } = {}) {
+  const needle = String(query ?? "").trim().toLowerCase();
+  const groupsInOrder = [...directory?.groups ?? []].sort((left, right) => left.order - right.order || left.name.localeCompare(right.name));
+  const rows2 = (directory?.sites ?? []).filter((site) => includeArchived || visible(site)).filter((site) => environment === "all" || site.environment === environment).filter((site) => matches2(site, needle));
+  const byGroup = new Map(groupsInOrder.map((group) => [group.id, []]));
+  const ungrouped = [];
+  for (const site of rows2) {
+    if (site.groupId !== null && byGroup.has(site.groupId)) byGroup.get(site.groupId).push(site);
+    else ungrouped.push(site);
+  }
+  const groups = [
+    ...groupsInOrder.flatMap((group) => {
+      const sites = orderSites(byGroup.get(group.id) ?? []);
+      return sites.length === 0 ? [] : [{ ...group, sites }];
+    }),
+    ...ungrouped.length === 0 ? [] : [{ id: "__ungrouped__", name: "Ungrouped", color: null, order: Number.MAX_SAFE_INTEGER, sites: orderSites(ungrouped) }]
+  ];
+  return {
+    groups,
+    sites: orderSites(rows2),
+    total: rows2.length,
+    counts: directory?.counts ?? {}
+  };
+}
+
+// src/client/sites-page.js
 var import_react66 = require("react");
+var environmentWord = (value) => value === "production" ? t("Production") : value === "preview" ? t("Preview") : value === "local" ? t("Local") : t("Docs");
+var healthWord = (status) => status === "online" ? t("Online") : status === "auth" ? t("Sign-in required") : status === "error" ? t("HTTP error") : status === "offline" ? t("Offline") : t("Not checked");
+var shortPath = (value) => {
+  const parts = String(value ?? "").split(/[\\/]/).filter(Boolean);
+  return parts.at(-1) ?? "";
+};
+var hostOf3 = (value) => {
+  try {
+    return new URL(value).host;
+  } catch {
+    return String(value ?? "");
+  }
+};
+var tagsOf = (value) => String(value ?? "").split(/[,，]/).map((tag) => tag.trim()).filter(Boolean);
+function SiteSummary({ counts: counts2 = {} }) {
+  const rows2 = [
+    [counts2.total ?? 0, t("Published"), "projects", GlobeIcon],
+    [counts2.online ?? 0, t("Online"), "working", CheckIcon],
+    [counts2.local ?? 0, t("Local"), "memory", ClockIcon],
+    [counts2.attention ?? 0, t("Needs attention"), "needs", RefreshIcon],
+    [counts2.groups ?? 0, t("Groups"), "rules", StarLineIcon]
+  ];
+  return (0, import_react66.createElement)(
+    "div",
+    { className: "bt-teamov-portfolio bt-sites-summary" },
+    (0, import_react66.createElement)("div", { className: "bt-teamov-portfolio-mark" }, (0, import_react66.createElement)(GlobeIcon)),
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-teamov-portfolio-copy" },
+      (0, import_react66.createElement)("b", null, t("Published sites")),
+      (0, import_react66.createElement)("span", null, t("Production, previews and local entry points"))
+    ),
+    (0, import_react66.createElement)("div", { className: "bt-teamov-portfolio-stats" }, rows2.map(([value, label, kind, Icon]) => (0, import_react66.createElement)("span", { key: label, "data-kind": kind }, (0, import_react66.createElement)("b", null, value), (0, import_react66.createElement)("small", null, (0, import_react66.createElement)(Icon), label))))
+  );
+}
+function SiteForm({ site, groups, paths, busy, onSubmit, onCancel }) {
+  const [form, setForm] = (0, import_react66.useState)(() => ({
+    id: site?.id,
+    name: site?.name ?? "",
+    url: site?.url ?? "",
+    environment: site?.environment ?? "production",
+    groupId: site?.groupId ?? "",
+    projectPath: site?.projectPath ?? "",
+    repoUrl: site?.repoUrl ?? "",
+    tags: (site?.tags ?? []).join(", "),
+    notes: site?.notes ?? "",
+    favorite: site?.favorite === true,
+    archived: site?.archived === true
+  }));
+  const field = (key) => (event) => setForm((value) => ({ ...value, [key]: event.target.value }));
+  const submit = (event) => {
+    event.preventDefault();
+    onSubmit({ ...form, groupId: form.groupId || null, tags: tagsOf(form.tags) });
+  };
+  return (0, import_react66.createElement)(
+    "form",
+    { className: "bt-site-form", onSubmit: submit },
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-site-form-head" },
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("span", { className: "bt-teamov-kicker" }, site ? t("Edit site") : t("New site")), (0, import_react66.createElement)("h4", null, form.name || t("Published site"))),
+      (0, import_react66.createElement)("button", { type: "button", className: "bt-round bt-round-sm", "aria-label": t("Close"), title: t("Close"), onClick: onCancel }, (0, import_react66.createElement)(CloseIcon))
+    ),
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-site-form-grid" },
+      (0, import_react66.createElement)("label", null, (0, import_react66.createElement)("span", null, t("Name")), (0, import_react66.createElement)("input", { required: true, maxLength: 100, value: form.name, placeholder: t("Site name"), onChange: field("name") })),
+      (0, import_react66.createElement)("label", null, (0, import_react66.createElement)("span", null, t("URL")), (0, import_react66.createElement)("input", { required: true, type: "url", value: form.url, placeholder: "https://example.com", onChange: field("url") })),
+      (0, import_react66.createElement)("label", null, (0, import_react66.createElement)("span", null, t("Site type")), (0, import_react66.createElement)(
+        "select",
+        { value: form.environment, onChange: field("environment") },
+        ["production", "preview", "local", "docs"].map((value) => (0, import_react66.createElement)("option", { key: value, value }, environmentWord(value)))
+      )),
+      (0, import_react66.createElement)("label", null, (0, import_react66.createElement)("span", null, t("Site group")), (0, import_react66.createElement)(
+        "select",
+        { value: form.groupId, onChange: field("groupId") },
+        (0, import_react66.createElement)("option", { value: "" }, t("Ungrouped")),
+        groups.map((group) => (0, import_react66.createElement)("option", { key: group.id, value: group.id }, group.name))
+      )),
+      (0, import_react66.createElement)(
+        "label",
+        { className: "wide" },
+        (0, import_react66.createElement)("span", null, t("Project folder")),
+        (0, import_react66.createElement)("input", { value: form.projectPath, list: "bt-site-project-paths", placeholder: t("Optional project folder"), onChange: field("projectPath") }),
+        (0, import_react66.createElement)("datalist", { id: "bt-site-project-paths" }, paths.map((path2) => (0, import_react66.createElement)("option", { key: path2, value: path2 })))
+      ),
+      (0, import_react66.createElement)("label", { className: "wide" }, (0, import_react66.createElement)("span", null, t("Repository")), (0, import_react66.createElement)("input", { value: form.repoUrl, placeholder: t("Optional repository URL"), onChange: field("repoUrl") })),
+      (0, import_react66.createElement)("label", { className: "wide" }, (0, import_react66.createElement)("span", null, t("Tags")), (0, import_react66.createElement)("input", { value: form.tags, placeholder: t("Comma-separated tags"), onChange: field("tags") })),
+      (0, import_react66.createElement)("label", { className: "wide" }, (0, import_react66.createElement)("span", null, t("Notes")), (0, import_react66.createElement)("textarea", { rows: 3, maxLength: 2e3, value: form.notes, placeholder: t("What this entry is for"), onChange: field("notes") }))
+    ),
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-site-form-foot" },
+      (0, import_react66.createElement)("label", { className: "bt-site-check" }, (0, import_react66.createElement)("input", { type: "checkbox", checked: form.favorite, onChange: (event) => setForm((value) => ({ ...value, favorite: event.target.checked })) }), t("Pin to the top")),
+      (0, import_react66.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", disabled: busy, onClick: onCancel }, t("Cancel")),
+      (0, import_react66.createElement)("button", { type: "submit", className: "bt-soft bt-soft-sm bt-with-icon", disabled: busy || form.name.trim() === "" || form.url.trim() === "" }, (0, import_react66.createElement)(CheckIcon), busy ? t("Saving…") : t("Save site"))
+    )
+  );
+}
+function GroupForm({ group, busy, onSubmit, onCancel, onDelete }) {
+  const [name, setName] = (0, import_react66.useState)(group?.name ?? "");
+  const [color, setColor] = (0, import_react66.useState)(group?.color ?? "blue");
+  return (0, import_react66.createElement)(
+    "form",
+    { className: "bt-site-group-form", onSubmit: (event) => {
+      event.preventDefault();
+      if (name.trim()) onSubmit({ id: group?.id, name: name.trim(), color });
+    } },
+    (0, import_react66.createElement)("input", { autoFocus: true, maxLength: 100, value: name, placeholder: t("Site group name"), "aria-label": t("Site group name"), onChange: (event) => setName(event.target.value) }),
+    (0, import_react66.createElement)(
+      "select",
+      { value: color, "aria-label": t("Group color"), onChange: (event) => setColor(event.target.value) },
+      ["blue", "orange", "green", "violet", "rose"].map((value) => (0, import_react66.createElement)("option", { key: value, value }, t(value[0].toUpperCase() + value.slice(1))))
+    ),
+    (0, import_react66.createElement)("button", { type: "submit", className: "bt-soft bt-soft-sm", disabled: busy || name.trim() === "" }, t("Save")),
+    group ? (0, import_react66.createElement)("button", { type: "button", className: "bt-teamov-link danger", disabled: busy, onClick: onDelete }, t("Remove group")) : null,
+    (0, import_react66.createElement)("button", { type: "button", className: "bt-teamov-link", onClick: onCancel }, t("Cancel"))
+  );
+}
+function SiteRow({ site, checking, busy, onEdit, onCheck, onArchive }) {
+  const health = site.health?.status ?? "unknown";
+  return (0, import_react66.createElement)(
+    "article",
+    { className: "bt-site-row", "data-health": health, "data-archived": site.archived || void 0 },
+    (0, import_react66.createElement)("span", { className: "bt-site-mark", title: healthWord(health), "aria-label": healthWord(health) }, (0, import_react66.createElement)(GlobeIcon), (0, import_react66.createElement)("i")),
+    (0, import_react66.createElement)(
+      "a",
+      { className: "bt-site-main", href: site.url, target: "_blank", rel: "noopener noreferrer" },
+      (0, import_react66.createElement)("span", { className: "bt-site-name" }, (0, import_react66.createElement)("b", null, site.favorite ? (0, import_react66.createElement)(StarLineIcon) : null, site.name), (0, import_react66.createElement)("small", null, hostOf3(site.url))),
+      (0, import_react66.createElement)(
+        "span",
+        { className: "bt-site-tags" },
+        (0, import_react66.createElement)("i", { "data-env": site.environment }, environmentWord(site.environment)),
+        site.projectPath ? (0, import_react66.createElement)("em", null, shortPath(site.projectPath)) : null,
+        (site.tags ?? []).slice(0, 3).map((tag) => (0, import_react66.createElement)("em", { key: tag }, tag))
+      )
+    ),
+    (0, import_react66.createElement)(
+      "span",
+      { className: "bt-site-meta" },
+      (0, import_react66.createElement)("b", null, healthWord(health)),
+      (0, import_react66.createElement)("small", null, site.health?.checkedAt ? `${t("Checked {time}", { time: relativeShort(site.health.checkedAt) })}${site.health.latencyMs == null ? "" : ` · ${site.health.latencyMs} ms`}` : t("Never checked"))
+    ),
+    (0, import_react66.createElement)(
+      "span",
+      { className: "bt-site-actions" },
+      (0, import_react66.createElement)("button", { type: "button", className: "bt-round bt-round-sm", title: t("Check now"), "aria-label": t("Check now"), disabled: checking || busy, onClick: onCheck }, (0, import_react66.createElement)(RefreshIcon)),
+      (0, import_react66.createElement)("button", { type: "button", className: "bt-round bt-round-sm", title: t("Edit site"), "aria-label": t("Edit site"), disabled: busy, onClick: onEdit }, (0, import_react66.createElement)(PencilIcon)),
+      site.archived ? (0, import_react66.createElement)("button", { type: "button", className: "bt-teamov-link", disabled: busy, onClick: () => onArchive(false) }, t("Restore")) : (0, import_react66.createElement)("button", { type: "button", className: "bt-teamov-link", disabled: busy, onClick: () => onArchive(true) }, t("Archive"))
+    ),
+    (0, import_react66.createElement)("a", { className: "bt-site-open", href: site.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t("Open {name}", { name: site.name }), title: t("Open") }, (0, import_react66.createElement)(ChevronRightIcon))
+  );
+}
+function SitesView({ data, loading, failed, busy, actions, paths = [], onData }) {
+  const [environment, setEnvironment] = (0, import_react66.useState)("all");
+  const [query, setQuery] = (0, import_react66.useState)("");
+  const [includeArchived, setIncludeArchived] = (0, import_react66.useState)(false);
+  const [editing, setEditing] = (0, import_react66.useState)(void 0);
+  const [editingGroup, setEditingGroup] = (0, import_react66.useState)(void 0);
+  const [checking, setChecking] = (0, import_react66.useState)(null);
+  const [working, setWorking] = (0, import_react66.useState)(false);
+  const [error, setError] = (0, import_react66.useState)("");
+  const model = (0, import_react66.useMemo)(() => siteCatalogModel(data, { environment, query, includeArchived }), [data, environment, query, includeArchived]);
+  const filtered = query.trim() !== "" || environment !== "all";
+  const blocked = busy || working;
+  const run2 = async (work) => {
+    setError("");
+    setWorking(true);
+    try {
+      return await work();
+    } catch (cause) {
+      setError(cause?.message ?? String(cause));
+      return null;
+    } finally {
+      setWorking(false);
+    }
+  };
+  const saveSite = async (payload) => {
+    const next = await run2(() => actions.siteSave(payload));
+    if (next === null) return;
+    onData(next);
+    setEditing(void 0);
+    if (!payload.id) {
+      const checked = await run2(() => actions.siteCheck(next.site.id));
+      if (checked !== null) onData(checked);
+    }
+  };
+  const checkSite = async (id) => {
+    setChecking(id);
+    const next = await run2(() => actions.siteCheck(id));
+    if (next !== null) onData(next);
+    setChecking(null);
+  };
+  const archiveSite = async (id, archived) => {
+    const next = await run2(() => actions.siteArchive(id, archived));
+    if (next !== null) onData(next);
+  };
+  const saveGroup = async (payload) => {
+    const next = await run2(() => actions.siteGroupSave(payload));
+    if (next === null) return;
+    onData(next);
+    setEditingGroup(void 0);
+  };
+  const deleteGroup = async (id) => {
+    const next = await run2(() => actions.siteGroupDelete(id));
+    if (next !== null) onData(next);
+    setEditingGroup(void 0);
+  };
+  return (0, import_react66.createElement)(
+    "div",
+    { className: "bt-teamov-body bt-sites-body", id: "bt-teamov-sites", role: "tabpanel" },
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-teamov-view-head bt-sites-head" },
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("span", { className: "bt-teamov-kicker" }, t("Published sites")), (0, import_react66.createElement)("h3", null, t("One entry point for everything we ship"))),
+      (0, import_react66.createElement)(
+        "div",
+        { className: "bt-teamov-view-actions" },
+        (0, import_react66.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", disabled: blocked, onClick: () => setEditingGroup(null) }, (0, import_react66.createElement)(PlusIcon), t("New group")),
+        (0, import_react66.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-with-icon", disabled: blocked, onClick: () => setEditing({}) }, (0, import_react66.createElement)(PlusIcon), t("Add site"))
+      )
+    ),
+    failed ? (0, import_react66.createElement)("div", { className: "bt-teamov-insight-state", role: "alert" }, t("The site directory could not be read")) : null,
+    error ? (0, import_react66.createElement)("div", { className: "bt-site-error", role: "alert" }, error, (0, import_react66.createElement)("button", { type: "button", className: "bt-round bt-round-sm", "aria-label": t("Close"), onClick: () => setError("") }, (0, import_react66.createElement)(CloseIcon))) : null,
+    editing !== void 0 ? (0, import_react66.createElement)(SiteForm, {
+      key: editing.id ?? "new",
+      site: editing.id ? editing : void 0,
+      groups: data.groups,
+      paths,
+      busy: blocked,
+      onSubmit: saveSite,
+      onCancel: () => setEditing(void 0)
+    }) : null,
+    editingGroup !== void 0 ? (0, import_react66.createElement)(GroupForm, {
+      key: editingGroup?.id ?? "new-group",
+      group: editingGroup?.id ? editingGroup : void 0,
+      busy: blocked,
+      onSubmit: saveGroup,
+      onCancel: () => setEditingGroup(void 0),
+      onDelete: () => {
+        void deleteGroup(editingGroup.id);
+      }
+    }) : null,
+    (0, import_react66.createElement)(
+      "div",
+      { className: "bt-sites-toolbar" },
+      (0, import_react66.createElement)("div", { className: "bt-sites-search" }, (0, import_react66.createElement)(GlobeIcon), (0, import_react66.createElement)("input", { value: query, placeholder: t("Search sites, tags or notes"), "aria-label": t("Search sites"), onChange: (event) => setQuery(event.target.value) })),
+      (0, import_react66.createElement)(
+        "div",
+        { className: "bt-sites-filters" },
+        [["all", t("All")], ["production", t("Production")], ["preview", t("Preview")], ["local", t("Local")], ["docs", t("Docs")]].map(([id, label]) => (0, import_react66.createElement)("button", { key: id, type: "button", "data-active": environment === id || void 0, onClick: () => setEnvironment(id) }, label))
+      ),
+      (0, import_react66.createElement)("button", { type: "button", className: "bt-sites-archive-toggle", "data-active": includeArchived || void 0, onClick: () => setIncludeArchived((value) => !value) }, t("Archived"), (0, import_react66.createElement)("i", null, data.counts.archived ?? 0))
+    ),
+    loading && data.sites.length === 0 ? (0, import_react66.createElement)("div", { className: "bt-teamov-insight-state", role: "status" }, t("Reading published sites…")) : null,
+    model.groups.length === 0 ? (0, import_react66.createElement)(
+      "div",
+      { className: "bt-sites-empty" },
+      (0, import_react66.createElement)(GlobeIcon),
+      (0, import_react66.createElement)("b", null, filtered ? t("No matching sites") : data.sites.length > 0 && !includeArchived ? t("No active sites") : t("No sites here yet")),
+      (0, import_react66.createElement)("span", null, filtered ? t("Try another search or filter.") : data.sites.length > 0 && !includeArchived ? t("Archived sites are hidden.") : t("Add a published URL, preview or local entry point.")),
+      (0, import_react66.createElement)("button", {
+        type: "button",
+        className: "bt-soft bt-soft-sm",
+        onClick: () => filtered ? (setEnvironment("all"), setQuery("")) : data.sites.length > 0 && !includeArchived ? setIncludeArchived(true) : setEditing({})
+      }, filtered ? t("Clear filters") : data.sites.length > 0 && !includeArchived ? t("Show archived") : t("Add the first site"))
+    ) : null,
+    (0, import_react66.createElement)("div", { className: "bt-sites-groups" }, model.groups.map((group) => (0, import_react66.createElement)(
+      "section",
+      { key: group.id, className: "bt-sites-group" },
+      (0, import_react66.createElement)(
+        "div",
+        { className: "bt-sites-group-head" },
+        (0, import_react66.createElement)("span", { className: "bt-sites-group-name" }, (0, import_react66.createElement)("i", { "data-color": group.color ?? "gray" }), (0, import_react66.createElement)("b", null, group.id === "__ungrouped__" ? t("Ungrouped") : group.name), (0, import_react66.createElement)("small", null, group.sites.length)),
+        group.id === "__ungrouped__" ? null : (0, import_react66.createElement)("button", { type: "button", className: "bt-teamov-link", onClick: () => setEditingGroup(group) }, t("Edit group"))
+      ),
+      (0, import_react66.createElement)("div", { className: "bt-site-list" }, group.sites.map((site) => (0, import_react66.createElement)(SiteRow, {
+        key: site.id,
+        site,
+        checking: checking === site.id,
+        busy: blocked,
+        onEdit: () => setEditing(site),
+        onCheck: () => {
+          void checkSite(site.id);
+        },
+        onArchive: (archived) => {
+          void archiveSite(site.id, archived);
+        }
+      })))
+    ))),
+    (0, import_react66.createElement)("div", { className: "bt-teamov-refreshed" }, (0, import_react66.createElement)(ClockIcon), data?.counts?.online ? t("{count} online", { count: data.counts.online }) : t("Checked only when you ask"))
+  );
+}
+var SITES_CSS = `
+.bt-sites-summary .bt-teamov-portfolio-stats small{display:flex;align-items:center;gap:4px}
+.bt-sites-summary .bt-teamov-portfolio-stats small svg{width:9px;height:9px}
+.bt-sites-body{position:relative}
+.bt-sites-head{padding-top:4px}
+.bt-sites-toolbar{display:flex;align-items:center;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
+.bt-sites-search{min-width:220px;flex:1;height:32px;padding:0 9px;display:flex;align-items:center;gap:6px;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-sites-search svg{width:12px;height:12px;color:var(--bt-ink-3)}
+.bt-sites-search input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--bt-ink);font:inherit;font-size:10px}
+.bt-sites-filters{display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--bt-hover)}
+.bt-sites-filters button,.bt-sites-archive-toggle{height:26px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:var(--bt-ink-3);font:inherit;font-size:9px;cursor:pointer}
+.bt-sites-filters button:hover{color:var(--bt-ink)}
+.bt-sites-filters button[data-active]{background:var(--bt-card);color:var(--bt-ink);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-sites-archive-toggle{display:inline-flex;align-items:center;gap:4px}
+.bt-sites-archive-toggle i{min-width:14px;height:14px;padding:0 4px;display:grid;place-items:center;border-radius:999px;background:var(--bt-hover);font-style:normal;font-size:8px}
+.bt-sites-archive-toggle[data-active]{color:var(--bt-ink);background:var(--bt-hover)}
+.bt-sites-groups{display:flex;flex-direction:column;gap:10px}
+.bt-sites-group{min-width:0;padding:0 10px 4px;border-radius:12px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-sites-group-head{min-height:36px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--bt-line)}
+.bt-sites-group-name{display:flex;align-items:center;gap:6px;min-width:0}
+.bt-sites-group-name>i{width:7px;height:7px;border-radius:50%;background:var(--bt-line-2)}
+.bt-sites-group-name>i[data-color=blue]{background:var(--bt-accent)}
+.bt-sites-group-name>i[data-color=green]{background:var(--bt-green)}
+.bt-sites-group-name>i[data-color=orange]{background:var(--bt-star)}
+.bt-sites-group-name>i[data-color=violet]{background:color-mix(in srgb,var(--bt-accent) 55%,var(--bt-star))}
+.bt-sites-group-name>i[data-color=rose]{background:var(--bt-danger)}
+.bt-sites-group-name>b{font-size:11px;line-height:15px;font-weight:600}
+.bt-sites-group-name>small{font-size:8px;color:var(--bt-ink-3)}
+.bt-site-list{display:flex;flex-direction:column}
+.bt-site-row{min-height:58px;display:grid;grid-template-columns:30px minmax(0,1fr) 124px auto 14px;align-items:center;gap:10px;border-top:1px solid var(--bt-line)}
+.bt-site-row:first-child{border-top:0}
+.bt-site-row:hover{background:var(--bt-hover);border-radius:8px}
+.bt-site-row[data-archived]{opacity:.58}
+.bt-site-mark{position:relative;width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:var(--bt-hover);color:var(--bt-ink-3)}
+.bt-site-mark svg{width:14px;height:14px}
+.bt-site-mark i{position:absolute;right:4px;bottom:4px;width:6px;height:6px;border-radius:50%;background:var(--bt-line-2);box-shadow:0 0 0 2px var(--bt-card)}
+.bt-site-row[data-health=online] .bt-site-mark{color:var(--bt-green);background:color-mix(in srgb,var(--bt-green) 9%,var(--bt-hover))}
+.bt-site-row[data-health=online] .bt-site-mark i{background:var(--bt-green)}
+.bt-site-row[data-health=auth] .bt-site-mark i{background:var(--bt-star)}
+.bt-site-row[data-health=error] .bt-site-mark i,.bt-site-row[data-health=offline] .bt-site-mark i{background:var(--bt-danger)}
+.bt-site-main{min-width:0;display:flex;flex-direction:column;gap:2px;color:var(--bt-ink);text-decoration:none}
+.bt-site-name{min-width:0;display:flex;align-items:center;gap:5px}
+.bt-site-name>b{min-width:0;display:flex;align-items:center;gap:5px;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-site-name>b svg{width:11px;height:11px;flex:none;color:var(--bt-star)}
+.bt-site-name>small{color:var(--bt-ink-3);font-size:9px;line-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-site-tags{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden}
+.bt-site-tags i,.bt-site-tags em{padding:1px 5px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:7px;line-height:11px;font-style:normal;white-space:nowrap}
+.bt-site-tags i[data-env=production]{background:color-mix(in srgb,var(--bt-green) 11%,var(--bt-hover));color:color-mix(in srgb,var(--bt-green) 78%,var(--bt-ink))}
+.bt-site-tags i[data-env=preview]{background:color-mix(in srgb,var(--bt-star) 11%,var(--bt-hover))}
+.bt-site-tags i[data-env=local]{background:color-mix(in srgb,var(--bt-accent) 9%,var(--bt-hover))}
+.bt-site-meta{min-width:0;display:flex;flex-direction:column;gap:1px;text-align:right}
+.bt-site-meta b{color:var(--bt-ink-2);font-size:8px;line-height:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-site-meta small{color:var(--bt-ink-3);font-size:7px;line-height:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-site-actions{display:flex;align-items:center;gap:3px}
+.bt-site-actions .bt-round{width:26px;height:26px}
+.bt-site-actions .bt-round svg{width:12px;height:12px}
+.bt-site-actions .bt-teamov-link{padding:3px 5px;font-size:8px}
+.bt-site-open{display:grid;place-items:center;color:var(--bt-ink-3)}
+.bt-site-open svg{width:12px;height:12px}
+.bt-sites-empty{min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--bt-ink-3);text-align:center}
+.bt-sites-empty>svg{width:28px;height:28px}
+.bt-sites-empty>b{color:var(--bt-ink);font-size:13px}
+.bt-sites-empty>span{font-size:10px;line-height:15px}
+.bt-site-form,.bt-site-group-form{margin:0 0 12px;padding:11px;border-radius:12px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-site-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}
+.bt-site-form-head h4{margin:2px 0 0;font-size:13px;line-height:18px}
+.bt-site-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bt-site-form-grid label{min-width:0;display:flex;flex-direction:column;gap:4px}
+.bt-site-form-grid label.wide{grid-column:1/-1}
+.bt-site-form-grid label>span{color:var(--bt-ink-3);font-size:8px}
+.bt-site-form-grid input,.bt-site-form-grid select,.bt-site-form-grid textarea,.bt-site-group-form input,.bt-site-group-form select{border:0;border-radius:8px;background:var(--bt-hover);color:var(--bt-ink);font:inherit;font-size:10px;outline:none;box-shadow:inset 0 0 0 1px transparent}
+.bt-site-form-grid input,.bt-site-form-grid select,.bt-site-group-form input,.bt-site-group-form select{height:30px;padding:0 8px}
+.bt-site-form-grid textarea{min-height:62px;padding:7px 8px;resize:vertical}
+.bt-site-form-grid input:focus,.bt-site-form-grid select:focus,.bt-site-form-grid textarea:focus,.bt-site-group-form input:focus,.bt-site-group-form select:focus{box-shadow:inset 0 0 0 1px var(--bt-accent)}
+.bt-site-form-foot{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:7px;margin-top:9px}
+.bt-site-check{display:inline-flex;align-items:center;gap:5px;color:var(--bt-ink-3);font-size:9px}
+.bt-site-check input{accent-color:var(--bt-accent)}
+.bt-site-group-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bt-site-group-form input{flex:1;min-width:160px}
+.bt-site-group-form select{width:90px}
+.bt-site-error{position:sticky;top:0;z-index:2;margin:8px 0;padding:7px 8px;display:flex;align-items:center;gap:8px;border-radius:8px;background:color-mix(in srgb,var(--bt-danger) 10%,var(--bt-card));color:var(--bt-danger);font-size:9px}
+.bt-site-error>button{margin-left:auto}
+.bt-site-error .bt-round{width:24px;height:24px}
+.bt-teamov-link.danger{color:var(--bt-danger)}
+@media (max-width:760px){.bt-site-row{grid-template-columns:30px minmax(0,1fr) 14px;grid-template-rows:auto auto auto;min-height:0;padding:8px 0;gap:5px 9px}.bt-site-mark{grid-column:1;grid-row:1/3}.bt-site-main{grid-column:2;grid-row:1}.bt-site-meta{display:flex;grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:flex-start;gap:6px;text-align:left}.bt-site-meta b,.bt-site-meta small{font-size:8px;line-height:11px}.bt-site-actions{grid-column:2/4;grid-row:3;justify-content:flex-end}.bt-site-open{grid-column:3;grid-row:1}.bt-sites-head{flex-direction:column;align-items:stretch;gap:6px}.bt-sites-head .bt-teamov-view-actions{justify-content:flex-end}.bt-site-form-grid{grid-template-columns:1fr}.bt-site-form-grid label.wide{grid-column:auto}.bt-sites-toolbar{align-items:stretch}.bt-sites-search{flex-basis:100%}.bt-sites-filters{overflow:auto}.bt-sites-group{padding:0 8px 4px}}
+`;
+
+// src/client/team-overview.js
+var import_react67 = require("react");
+var stateText2 = (row) => row.alert ? t("Waiting for you") : row.doing?.switching ? t("Moving to a fresh Session") : row.running ? t("Working") : row.waitsOn.length > 0 ? t("Waiting for {names}", { names: row.waitsOn.join(t(" and ")) }) : row.unread ? t("Unread activity") : t("Idle");
+var rowDetail = (row) => row.running ? `${stateText2(row)} · ${workDetail(row.doing) || t("Working")}` : stateText2(row);
+var entryState = (entry) => entry.kind === "bot" ? entry.row.state : entry.row.approvals.length > 0 ? "alert" : entry.row.running ? "working" : entry.row.unread ? "unread" : "idle";
+function StateDot({ state }) {
+  return (0, import_react67.createElement)("span", { className: "bt-teamov-state-dot", "data-state": state, "aria-hidden": true });
+}
+function EmptyState() {
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-empty" },
+    (0, import_react67.createElement)(PeopleIcon),
+    (0, import_react67.createElement)("b", null, t("No team activity yet")),
+    (0, import_react67.createElement)("span", null, t("Bots, group chats and the work they hand to each other will appear here."))
+  );
+}
+function Skeleton3() {
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-skeleton", "aria-busy": true, role: "status" },
+    (0, import_react67.createElement)("span", { className: "bt-sr" }, t("Loading team overview…")),
+    (0, import_react67.createElement)("i", { className: "bt-teamov-skel-title" }),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-skel-stats" }, (0, import_react67.createElement)("i"), (0, import_react67.createElement)("i"), (0, import_react67.createElement)("i")),
+    (0, import_react67.createElement)("i", { className: "bt-teamov-skel-line" }),
+    (0, import_react67.createElement)("i", { className: "bt-teamov-skel-line short" })
+  );
+}
+function BootError() {
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-empty", role: "alert" },
+    (0, import_react67.createElement)(GaugeIcon),
+    (0, import_react67.createElement)("b", null, t("Team state is unavailable")),
+    (0, import_react67.createElement)("span", null, t("The team could not be read. Close this view and try again after the host reconnects."))
+  );
+}
+function Summary2({ counts: counts2 }) {
+  const items = [
+    [counts2.running, t("Working"), "working"],
+    [counts2.approvals + counts2.questions, t("Need you"), "needs"],
+    [counts2.waiting, t("Waiting for teammates"), "teammates"],
+    [counts2.unread, t("Unread"), "unread"]
+  ];
+  const pulse = counts2.pulse;
+  const segments = [
+    ["working", pulse.working, "var(--bt-green)"],
+    ["needs", pulse.needs, "var(--bt-accent)"],
+    ["waiting", pulse.waiting, "var(--bt-star)"],
+    ["unread", pulse.unread, "color-mix(in srgb,var(--bt-accent) 58%,var(--bt-line-2))"],
+    ["idle", pulse.idle, "var(--bt-line-2)"]
+  ].filter(([, value]) => value > 0);
+  const total = Math.max(1, pulse.total);
+  let at = 0;
+  const stops = segments.map(([, value, color]) => {
+    const from = at / total * 100;
+    at += value;
+    return `${color} ${from}% ${at / total * 100}%`;
+  });
+  const label = [
+    [t("Working"), pulse.working],
+    [t("Need you"), pulse.needs],
+    [t("Waiting for teammates"), pulse.waiting],
+    [t("Unread"), pulse.unread],
+    [t("Idle"), pulse.idle]
+  ].map(([name, value]) => `${name}: ${value}`).join(", ");
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-summary" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-ring", role: "img", "aria-label": label, style: { "--bt-teamov-ring": stops.length > 0 ? `conic-gradient(${stops.join(",")})` : "conic-gradient(var(--bt-line-2) 0 100%)" } },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, pulse.total), (0, import_react67.createElement)("small", null, t("Team")))
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-stats" }, items.map(([value, label2, kind]) => (0, import_react67.createElement)(
+      "span",
+      { key: label2, className: "bt-teamov-stat", "data-kind": kind },
+      (0, import_react67.createElement)("b", null, value),
+      (0, import_react67.createElement)("small", null, label2)
+    )))
+  );
+}
+function Attention({ model, openEntry }) {
+  const rows2 = [
+    ...model.approvals.map((approval) => ({
+      key: `approval:${approval.id}`,
+      kind: "approval",
+      approval,
+      bot: model.botRows.get(approval.botId)?.bot,
+      target: approval.roomId === void 0 ? model.botRows.get(approval.botId)?.bot : model.roomRows.get(approval.roomId)?.room,
+      at: approval.at
+    })),
+    ...model.questions.map((entry) => ({ key: `question:${entry.question.id}`, kind: "question", entry, bot: entry.owner, target: entry.owner, at: entry.at }))
+  ].sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  if (rows2.length === 0) return null;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-section" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Needs you")), (0, import_react67.createElement)("h3", null, t("Decisions waiting"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, rows2.length)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-list" }, rows2.map((row) => (0, import_react67.createElement)(
+      "button",
+      { key: row.key, type: "button", className: "bt-teamov-attention", onClick: () => openEntry(row.target ?? row.bot) },
+      row.bot ? (0, import_react67.createElement)(BotAvatar, { bot: row.bot, size: 30, state: "alert" }) : (0, import_react67.createElement)("span", { className: "bt-teamov-attention-icon" }, (0, import_react67.createElement)(ClockIcon)),
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-row-text" },
+        (0, import_react67.createElement)("b", null, row.kind === "approval" ? row.approval.tool || t("Approval") : row.entry.question.question || t("Question")),
+        (0, import_react67.createElement)("small", null, row.kind === "approval" ? row.approval.reason || t("Waiting for your approval") : row.entry.question.detail || t("Waiting for your answer"))
+      ),
+      Number.isFinite(row.at) ? (0, import_react67.createElement)(Elapsed, { at: row.at, className: "bt-teamov-age" }) : null,
+      (0, import_react67.createElement)(ChevronRightIcon)
+    )))
+  );
+}
+function Activity({ model, openEntry }) {
+  if (model.activities.length === 0) return null;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-section" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Live work")), (0, import_react67.createElement)("h3", null, t("Happening now"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, model.activities.length)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-list" }, model.activities.map((entry) => (0, import_react67.createElement)(
+      "button",
+      { key: entry.key, type: "button", className: "bt-teamov-row bt-teamov-live-row", onClick: () => openEntry(entry.kind === "room" ? entry.room : entry.bot) },
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-activity-avatar", "data-state": entry.row.state },
+        (0, import_react67.createElement)(BotAvatar, { bot: entry.bot, size: 34, state: entry.row.state })
+      ),
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-row-text" },
+        (0, import_react67.createElement)("b", null, entry.bot.name, entry.room ? (0, import_react67.createElement)("span", { className: "bt-teamov-context" }, ` · ${entry.room.name}`) : null),
+        (0, import_react67.createElement)("small", null, entry.doing?.switching ? t(entry.doing.folder ? "Moving this chat to its new folder" : "Moving to a fresh Session") : workDetail(entry.doing) || t("Working"))
+      ),
+      Number.isFinite(entry.since) ? (0, import_react67.createElement)(Elapsed, { at: entry.since, className: "bt-teamov-age" }) : null,
+      (0, import_react67.createElement)(ChevronRightIcon)
+    )))
+  );
+}
+function TeamSections({ model, openEntry }) {
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-section" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Team")), (0, import_react67.createElement)("h3", null, t("Bots and groups"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, model.counts.bots + model.counts.groups)
+    ),
+    model.sections.map((section) => (0, import_react67.createElement)(
+      "div",
+      { key: section.id, className: "bt-teamov-group" },
+      section.name ? (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-group-head" },
+        (0, import_react67.createElement)("b", null, section.name),
+        (0, import_react67.createElement)(
+          "span",
+          { className: "bt-teamov-group-tail" },
+          (0, import_react67.createElement)("span", { className: "bt-teamov-mini-pulse", "aria-hidden": true }, section.entries.slice(0, 10).map((entry) => (0, import_react67.createElement)("i", { key: `${entry.kind}:${entry.id}`, "data-state": entryState(entry) }))),
+          (0, import_react67.createElement)("span", { className: "bt-teamov-group-count" }, section.entries.length)
+        )
+      ) : null,
+      section.entries.map((entry) => entry.kind === "bot" ? (0, import_react67.createElement)(
+        "button",
+        { key: `bot:${entry.id}`, type: "button", className: "bt-teamov-row", onClick: () => openEntry(entry.row.bot) },
+        (0, import_react67.createElement)(BotAvatar, { bot: entry.row.bot, size: 34, state: entry.row.state }),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-row-text" }, (0, import_react67.createElement)("b", null, entry.row.bot.name, (0, import_react67.createElement)(StateDot, { state: entry.row.state })), (0, import_react67.createElement)("small", null, rowDetail(entry.row))),
+        (0, import_react67.createElement)(ChevronRightIcon)
+      ) : (0, import_react67.createElement)(
+        "button",
+        { key: `room:${entry.id}`, type: "button", className: "bt-teamov-row", onClick: () => openEntry(entry.row.room) },
+        (0, import_react67.createElement)(RoomAvatar, { room: entry.row.room, roster: model.roster, size: 34 }),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-row-text" }, (0, import_react67.createElement)("b", null, entry.row.room.name), (0, import_react67.createElement)("small", null, entry.row.running ? t("{count} members working", { count: entry.row.members.length }) : t("{count} members", { count: entry.row.room.members.length }))),
+        (0, import_react67.createElement)(ChevronRightIcon)
+      ))
+    ))
+  );
+}
+function Recent({ model, openEntry }) {
+  if (model.recent.length === 0) return null;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-section" },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-head" }, (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Recent records")), (0, import_react67.createElement)("h3", null, t("What changed")))),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-list" }, model.recent.slice(0, 8).map((entry) => (0, import_react67.createElement)(
+      "button",
+      { key: entry.key, type: "button", className: "bt-teamov-record", onClick: () => openEntry(entry.kind === "bot" ? entry.row.bot : entry.row.room) },
+      (0, import_react67.createElement)("i", { className: "bt-teamov-record-dot", "data-state": entry.kind === "bot" ? entry.row.state : roomState(entry.row), "aria-hidden": true }),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-record-time" }, relativeShort(entry.at)),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-row-text" }, (0, import_react67.createElement)("b", null, entry.name), (0, import_react67.createElement)("small", null, entry.preview || t("No message preview"))),
+      (0, import_react67.createElement)(ChevronRightIcon)
+    )))
+  );
+}
+function Learning({ model, openEntry }) {
+  const rows2 = Object.entries(model.learning ?? {}).flatMap(([botId, proposals]) => (proposals ?? []).map((proposal) => ({ botId, proposal }))).slice(0, 3);
+  if (rows2.length === 0) return null;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-section" },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-head" }, (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Learning")), (0, import_react67.createElement)("h3", null, t("Proposals waiting")))),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-list" }, rows2.map(({ botId, proposal }) => {
+      const bot = model.botRows.get(botId)?.bot;
+      return (0, import_react67.createElement)(
+        "button",
+        { key: proposal.id, type: "button", className: "bt-teamov-row", onClick: () => openEntry(bot) },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-attention-icon" }, (0, import_react67.createElement)(MemoryIcon)),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-row-text" }, (0, import_react67.createElement)("b", null, proposal.name || t("Bot improvement")), (0, import_react67.createElement)("small", null, proposal.description || proposal.kind || t("Awaiting approval"))),
+        (0, import_react67.createElement)(ChevronRightIcon)
+      );
+    }))
+  );
+}
+var roomState = (row) => row.approvals.length > 0 ? "alert" : row.running ? "working" : row.unread ? "unread" : "idle";
+var projectName = (project) => project.name || t("Ungrouped");
+var shortPath2 = (path2) => String(path2 ?? "").split(/[\\/]/).filter(Boolean).at(-1) ?? path2;
+var EMPTY_SITE_DIRECTORY = { version: 1, groups: [], sites: [], counts: { total: 0, online: 0, local: 0, attention: 0, groups: 0, archived: 0 } };
+var timestampOf2 = (value) => Number.isFinite(value) ? value : Date.parse(String(value ?? "")) || 0;
+var ownerOf = (model, id) => model.botRows.get(id)?.bot ?? model.roomRows.get(id)?.room;
+var stateWord = (state) => state === "alert" || state === "needs" ? t("Need you") : state === "working" || state === "thinking" || state === "searching" || state === "sending" ? t("Working") : state === "waiting" ? t("Waiting for teammates") : state === "unread" ? t("Unread") : t("Idle");
+function ProjectSummary({ counts: counts2 }) {
+  const items = [
+    [counts2.total, t("Projects"), "projects"],
+    [counts2.active, t("Active"), "working"],
+    [counts2.needs, t("Need you"), "needs"],
+    [counts2.work, t("Open work"), "work"],
+    [counts2.standards, t("With rules"), "rules"]
+  ];
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-portfolio" },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-portfolio-mark" }, (0, import_react67.createElement)(FolderIcon)),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-portfolio-copy" },
+      (0, import_react67.createElement)("b", null, t("Project portfolio")),
+      (0, import_react67.createElement)("span", null, t("Live work, memory and captured standards"))
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-portfolio-stats" }, items.map(([value, label, kind]) => (0, import_react67.createElement)("span", { key: label, "data-kind": kind }, (0, import_react67.createElement)("b", null, value), (0, import_react67.createElement)("small", null, label))))
+  );
+}
+function AgentSummary({ counts: counts2 }) {
+  const items = [
+    [counts2.total, t("Agents"), "agents"],
+    [counts2.working, t("Working"), "working"],
+    [counts2.needs, t("Need you"), "needs"],
+    [counts2.improving, t("Learning queued"), "learning"]
+  ];
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-portfolio" },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-portfolio-mark" }, (0, import_react67.createElement)(GaugeIcon)),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-portfolio-copy" },
+      (0, import_react67.createElement)("b", null, t("Agent health")),
+      (0, import_react67.createElement)("span", null, t("Runtime, learning and standards evidence"))
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-portfolio-stats" }, items.map(([value, label, kind]) => (0, import_react67.createElement)("span", { key: label, "data-kind": kind }, (0, import_react67.createElement)("b", null, value), (0, import_react67.createElement)("small", null, label))))
+  );
+}
+function DataTabs({ tab, setTab, model, projectCount, agentCount, siteCount, busy, refresh }) {
+  const tabs = [
+    ["team", t("Team"), PeopleIcon, model.counts.bots + model.counts.groups],
+    ["projects", t("Projects"), FolderIcon, projectCount],
+    ["agents", t("Agents"), GaugeIcon, agentCount],
+    ["sites", t("Published"), GlobeIcon, siteCount]
+  ];
+  const onKey = (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const tablist = event.currentTarget;
+    const at = tabs.findIndex(([id]) => id === tab);
+    const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (at + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    setTab(tabs[next][0]);
+    requestAnimationFrame(() => tablist.children?.[next]?.focus());
+  };
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-databar" },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-tabs", role: "tablist", "aria-label": t("Overview sections"), onKeyDown: onKey }, tabs.map(([id, label, Icon, count]) => (0, import_react67.createElement)("button", {
+      key: id,
+      type: "button",
+      role: "tab",
+      className: "bt-teamov-tabitem",
+      tabIndex: tab === id ? 0 : -1,
+      "aria-selected": tab === id,
+      "aria-controls": `bt-teamov-${id}`,
+      onClick: () => setTab(id)
+    }, (0, import_react67.createElement)(Icon), (0, import_react67.createElement)("span", null, label), count === null ? null : (0, import_react67.createElement)("i", null, count)))),
+    tab === "team" ? null : (0, import_react67.createElement)(
+      "button",
+      { type: "button", className: "bt-teamov-refresh", disabled: busy, "aria-label": busy ? t("Refreshing…") : t("Refresh"), title: busy ? t("Refreshing…") : t("Refresh"), onClick: refresh },
+      (0, import_react67.createElement)(RefreshIcon),
+      (0, import_react67.createElement)("span", null, busy ? t("Refreshing…") : t("Refresh"))
+    )
+  );
+}
+var completionWord = (status) => status === "complete" ? t("Goal reached") : status === "verified" ? t("Checks verified") : status === "standards" ? t("Standards incomplete") : status === "attention" ? t("Needs your decision") : status === "failing" ? t("Checks need attention") : status === "working" ? t("In progress") : status === "paused" ? t("Paused") : status === "planned" ? t("Planned") : t("Plan not set");
+var knowledgeWord = (kind) => kind === "memory" ? t("Decisions") : kind === "rules" ? t("Rules") : kind === "sources" ? t("Sources") : kind === "skills" ? t("Learned skills") : kind === "checks" ? t("Configured checks") : t("Verified results");
+var goalActionWord = (action) => action === "draft" ? t("Goal drafted") : action === "start" ? t("Goal started") : action === "pass" ? t("Stage passed") : action === "rework" ? t("Stage sent back") : action === "task" ? t("Task updated") : action === "revise" ? t("Goal revised") : action === "pause" ? t("Goal paused") : action === "resume" ? t("Goal resumed") : action === "complete" ? t("Goal reached") : action === "stop" ? t("Goal stopped") : t("Goal updated");
+var eventActionWord = (event) => event.kind === "goal" ? goalActionWord(event.action) : event.kind === "change" && event.sourceKind === "github" ? t("GitHub updated") : event.kind === "change" && event.action === "committed" ? t("Committed") : event.kind === "change" && event.action === "working" ? t("Uncommitted changes") : event.kind === "change" && event.action === "detected" ? t("Files changed") : event.kind === "progress" ? t("Progress recorded") : event.kind === "decision" ? t("Decision recorded") : event.kind === "checkpoint" ? t("Checkpoint recorded") : event.kind === "change" ? t("Change recorded") : event.kind === "memory" ? t("Memory saved") : event.kind === "skill" ? t("Learning approved") : event.kind === "rules" ? t("Rules updated") : event.kind === "document" ? t("Document updated") : event.kind === "source" ? t("Source reviewed") : event.kind === "check" ? t("Checks recorded") : t("Work recorded");
+var eventOriginWord = (event) => event.sourceKind === "bot" ? t("Reported by Bot") : event.sourceKind === "automatic" || event.sourceKind === "filesystem" ? t("Observed automatically") : event.sourceKind === "git" ? t("Read from Git") : event.sourceKind === "github" ? t("Read from GitHub") : t("Recorded");
+var eventTitle = (event) => event.kind === "change" && event.action === "working" ? t("{count} uncommitted files", { count: event.files?.length ?? 0 }) : event.kind === "change" && event.action === "detected" && event.sourceKind !== "github" ? t("Project files changed") : event.title || "";
+function eventProgressText(event) {
+  if (event.before && event.after) return `${event.before} → ${event.after}`;
+  if (event.after) return event.after;
+  if (event.before) return event.before;
+  return "";
+}
+var profileWord = (id) => id === "miniprogram" ? t("Mini program") : id === "video" ? t("Video") : id === "web" ? t("Web") : id === "app" ? t("App") : id === "backend" ? t("Backend") : id === "mixed" ? t("Mixed") : t("Generic");
+var fileRoleWord = (role) => role === "rules" ? t("Project rules") : role === "description" ? t("Project document") : role === "commands" ? t("Commands") : role === "standards" ? t("Standard pack") : role === "results" ? t("Check results") : role === "integration" ? t("Task source") : role === "project" ? t("Project marker") : t("Required file");
+function KnowledgeGlyph({ kind }) {
+  return kind === "memory" ? (0, import_react67.createElement)(MemoryIcon) : kind === "rules" || kind === "document" ? (0, import_react67.createElement)(PencilIcon) : kind === "sources" || kind === "source" ? (0, import_react67.createElement)(InfoIcon) : kind === "skills" ? (0, import_react67.createElement)(GoalIcon) : (0, import_react67.createElement)(TerminalIcon);
+}
+function ProjectRail({ project }) {
+  const goal = project.goal;
+  const work = [...project.bots.map((row) => row.state), ...project.rooms.map(roomState)];
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-project-rail" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-rail-row", "data-kind": "plan" },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)(GoalIcon), t("Plan")),
+      goal.stages.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-teamov-flow-dots" }, goal.stages.map((stage, index) => (0, import_react67.createElement)("i", {
+        key: index,
+        "data-state": stage.status === "passed" ? "done" : stage.current ? "current" : "todo",
+        title: stage.title
+      }))) : (0, import_react67.createElement)("small", null, t("Not defined")),
+      (0, import_react67.createElement)("b", null, goal.total > 0 ? `${goal.passed}/${goal.total}` : "—")
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-rail-row", "data-kind": "work" },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)(PeopleIcon), t("Work")),
+      work.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-teamov-flow-dots" }, work.map((state, index) => (0, import_react67.createElement)("i", { key: index, "data-state": state }))) : (0, import_react67.createElement)("small", null, t("Quiet")),
+      (0, import_react67.createElement)("b", null, project.state.running > 0 ? project.state.running : "—")
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-rail-row", "data-kind": "evidence" },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)(CheckIcon), t("Evidence")),
+      (0, import_react67.createElement)("div", { className: "bt-teamov-evidence-dots" }, project.standards.evidence.map((on, index) => (0, import_react67.createElement)("i", { key: index, "data-on": on || void 0 }))),
+      (0, import_react67.createElement)("b", null, `${project.standards.covered}/4`)
+    )
+  );
+}
+function MetricSignal({ label, value, detail, tone }) {
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-signal", "data-tone": tone },
+    (0, import_react67.createElement)("span", null, label),
+    (0, import_react67.createElement)("b", null, value),
+    (0, import_react67.createElement)("small", null, detail)
+  );
+}
+function GoalFlow({ project }) {
+  if (project.goal.stages.length === 0) {
+    return (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-no-plan" },
+      (0, import_react67.createElement)(GoalIcon),
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, t("No acceptance plan yet")), (0, import_react67.createElement)("small", null, t("Set a Goal in the project conversation to make progress measurable.")))
+    );
+  }
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-goal-flow", role: "list", "aria-label": t("Goal stages") },
+    project.goal.stages.map((stage, index) => (0, import_react67.createElement)("div", {
+      key: index,
+      role: "listitem",
+      className: "bt-teamov-goal-node",
+      "data-state": stage.status === "passed" ? "done" : stage.current ? "current" : "todo"
+    }, (0, import_react67.createElement)("i", null, stage.status === "passed" ? (0, import_react67.createElement)(CheckIcon) : index + 1), (0, import_react67.createElement)("span", null, stage.title)))
+  );
+}
+function CheckMatrix({ project }) {
+  const rows2 = project.completion.checks.rows;
+  if (rows2.length === 0) return (0, import_react67.createElement)("div", { className: "bt-teamov-quiet-block" }, (0, import_react67.createElement)(TerminalIcon), (0, import_react67.createElement)("span", null, t("No checks configured")));
+  return (0, import_react67.createElement)("div", { className: "bt-teamov-check-matrix" }, rows2.map((row) => (0, import_react67.createElement)(
+    "div",
+    { key: row.name, "data-state": row.status },
+    (0, import_react67.createElement)("i", { "aria-hidden": true }, row.status === "passed" ? (0, import_react67.createElement)(CheckIcon) : row.status === "failed" ? (0, import_react67.createElement)(CloseIcon) : (0, import_react67.createElement)(ClockIcon)),
+    (0, import_react67.createElement)("span", null, row.name),
+    (0, import_react67.createElement)("small", null, row.status === "passed" ? t("Passed") : row.status === "failed" ? t("Failed") : row.status === "unknown" ? t("Unverified") : t("Not recorded"))
+  )));
+}
+var workStateWord = (state) => state === "merged" ? t("Merged") : state === "closed" ? t("Closed") : state === "draft" ? t("Draft") : t("Open");
+var checksWord = (checks) => checks?.status === "failed" ? t("Checks failed") : checks?.status === "pending" ? t("Checks pending") : checks?.status === "passed" ? t("Checks passed") : checks?.status === "unknown" ? t("Checks unavailable") : t("No checks");
+var reviewWord = (decision) => decision === "approved" ? t("Review approved") : decision === "changes_requested" ? t("Changes requested") : "";
+function WorkItemsBoard({ project, actions }) {
+  const data = project.workItems;
+  const [kind, setKind] = (0, import_react67.useState)("issues");
+  const [scope, setScope] = (0, import_react67.useState)("all");
+  if (data === void 0 || data.status === "not-linked" || data.status === "disabled") return null;
+  if (data.status !== "ok" && data.status !== "stale") {
+    const message = data.status === "needs-auth" ? t("GitHub sign-in needed") : data.status === "gh-missing" ? t("GitHub CLI or connector needed") : data.status === "not-found" ? t("Repository not found") : t("GitHub could not be read");
+    return (0, import_react67.createElement)(
+      "section",
+      { className: "bt-teamov-workitems", "data-state": data.status },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-board-head" },
+        (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker bt-teamov-work-kicker" }, (0, import_react67.createElement)(QueueIcon), t("GitHub")), (0, import_react67.createElement)("h4", null, t("Project work"))),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-board-badge", "data-warning": true }, t("Needs setup"))
+      ),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-work-empty" },
+        (0, import_react67.createElement)(GitHubMark),
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, message), (0, import_react67.createElement)("small", null, data.error || t("Connect a source to see issues and pull requests."))),
+        (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: () => actions.openConnectors() }, t("Open connectors"))
+      )
+    );
+  }
+  const kindItems = data.items.filter((item) => kind === "issues" ? item.type === "issue" : item.type === "pr");
+  const items = kindItems.filter((item) => scope === "all" ? true : scope === "mine" ? item.mine : item.needsReview);
+  const shown = items.slice(0, 8);
+  const repo = data.repo;
+  const base = repo?.url ?? null;
+  const viewAll = base ? `${base}/${kind === "issues" ? "issues" : "pulls"}` : null;
+  const scopeItems = [["all", t("All")], ["mine", t("Mine")], ...kind === "prs" ? [["review", t("Review")]] : []];
+  const detail = data.stale ? t("Stale") : data.repos.length > 1 ? t("{count} repositories", { count: data.repos.length }) : repo?.slug ?? "";
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-workitems", "data-state": data.stale ? "stale" : data.status },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-board-head" },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-work-title" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-kicker bt-teamov-work-kicker" }, (0, import_react67.createElement)(QueueIcon), t("GitHub")),
+        (0, import_react67.createElement)("h4", null, t("Project work"), detail ? (0, import_react67.createElement)("span", { className: "bt-teamov-profile-note" }, detail) : null)
+      ),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-board-badge", "data-warning": data.stale || void 0 }, (0, import_react67.createElement)("i", null), `${t("Auto")} · ${data.refreshSeconds || 60}s`)
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-work-toolbar" },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-work-tabs", role: "tablist", "aria-label": t("Project work") },
+        (0, import_react67.createElement)("button", { type: "button", role: "tab", "aria-selected": kind === "issues", "data-active": kind === "issues" || void 0, onClick: () => {
+          setKind("issues");
+          setScope("all");
+        } }, t("Issues"), (0, import_react67.createElement)("i", null, data.counts.issues)),
+        (0, import_react67.createElement)("button", { type: "button", role: "tab", "aria-selected": kind === "prs", "data-active": kind === "prs" || void 0, onClick: () => {
+          setKind("prs");
+          setScope("all");
+        } }, t("Pull requests"), (0, import_react67.createElement)("i", null, data.counts.pullRequests))
+      ),
+      (0, import_react67.createElement)("div", { className: "bt-teamov-work-filters" }, scopeItems.map(([id, label]) => (0, import_react67.createElement)("button", { key: id, type: "button", "data-active": scope === id || void 0, onClick: () => setScope(id) }, label)))
+    ),
+    shown.length === 0 ? (0, import_react67.createElement)("div", { className: "bt-teamov-work-empty compact" }, (0, import_react67.createElement)(GitHubMark), (0, import_react67.createElement)("span", null, t("No work items"))) : (0, import_react67.createElement)("div", { className: "bt-teamov-work-list" }, shown.map((item) => {
+      const row = (0, import_react67.createElement)(
+        import_react67.Fragment,
+        null,
+        (0, import_react67.createElement)("span", { className: "bt-teamov-work-number" }, (0, import_react67.createElement)("b", null, `#${item.number}`), (0, import_react67.createElement)("small", null, item.type === "pr" ? "PR" : "Issue")),
+        (0, import_react67.createElement)(
+          "span",
+          { className: "bt-teamov-work-copy" },
+          (0, import_react67.createElement)("b", null, item.title),
+          (0, import_react67.createElement)(
+            "small",
+            null,
+            item.author ? t("by {name}", { name: item.author }) : "",
+            data.repos.length > 1 && item.repo?.slug ? ` · ${item.repo.slug}` : "",
+            item.reviewDecision ? ` · ${reviewWord(item.reviewDecision)}` : ""
+          )
+        ),
+        (0, import_react67.createElement)(
+          "span",
+          { className: "bt-teamov-work-signals" },
+          (0, import_react67.createElement)("i", { "data-state": item.draft ? "draft" : item.state }, workStateWord(item.draft ? "draft" : item.state)),
+          item.type === "pr" ? (0, import_react67.createElement)("i", { "data-check": item.checks?.status }, checksWord(item.checks)) : null
+        ),
+        (0, import_react67.createElement)("time", null, relativeShort(item.updatedAt)),
+        (0, import_react67.createElement)(ChevronRightIcon)
+      );
+      return item.url ? (0, import_react67.createElement)("a", { key: `${item.repo?.slug}:${item.type}:${item.number}`, className: "bt-teamov-work-row", href: item.url, target: "_blank", rel: "noopener noreferrer" }, row) : (0, import_react67.createElement)("div", { key: `${item.repo?.slug}:${item.type}:${item.number}`, className: "bt-teamov-work-row" }, row);
+    })),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-work-foot" },
+      (0, import_react67.createElement)("span", null, data.fetchedAt ? t("Updated {time}", { time: relativeShort(data.fetchedAt) }) : ""),
+      viewAll ? (0, import_react67.createElement)("a", { href: viewAll, target: "_blank", rel: "noopener noreferrer" }, t("View on GitHub"), (0, import_react67.createElement)(ChevronRightIcon)) : null
+    )
+  );
+}
+function CompletionBoard({ project }) {
+  const checks = project.completion.checks;
+  const recorded = project.standards.quality;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-completion", "data-status": project.completion.status },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-board-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Completion model")), (0, import_react67.createElement)("h4", null, completionWord(project.completion.status))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-board-badge" }, (0, import_react67.createElement)("i", null), t("Auto"))
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-signal-grid" },
+      (0, import_react67.createElement)(MetricSignal, { label: t("Plan"), value: project.goal.total > 0 ? `${project.goal.passed}/${project.goal.total}` : "—", detail: project.goal.current || (project.goal.total > 0 ? t("Stages passed") : t("No Goal")), tone: project.goal.total > 0 ? "neutral" : "quiet" }),
+      (0, import_react67.createElement)(MetricSignal, { label: t("Recorded checks"), value: recorded ? `${checks.passed}/${checks.expected}` : "—", detail: recorded ? checks.failed > 0 ? t("{count} failing", { count: checks.failed }) : t("All recorded checks passed") : t("No result recorded"), tone: recorded ? checks.failed > 0 ? "danger" : "good" : "quiet" }),
+      (0, import_react67.createElement)(MetricSignal, { label: t("Evidence"), value: `${project.standards.covered}/4`, detail: project.completion.requirements.missing > 0 ? t("{count} required files missing", { count: project.completion.requirements.missing }) : project.completion.requirements.checksMissing > 0 ? t("{count} required checks unrecorded", { count: project.completion.requirements.checksMissing }) : t("Folder · rules · sources · checks"), tone: project.completion.requirements.missing > 0 || project.completion.requirements.checksMissing > 0 ? "danger" : project.standards.covered === 4 ? "good" : "neutral" })
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-completion-grid" },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-board-block" },
+        (0, import_react67.createElement)("div", { className: "bt-teamov-block-title" }, (0, import_react67.createElement)(GoalIcon), (0, import_react67.createElement)("b", null, t("Acceptance flow")), (0, import_react67.createElement)("span", null, project.goal.title || t("No Goal"))),
+        (0, import_react67.createElement)(GoalFlow, { project })
+      ),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-board-block" },
+        (0, import_react67.createElement)("div", { className: "bt-teamov-block-title" }, (0, import_react67.createElement)(TerminalIcon), (0, import_react67.createElement)("b", null, t("Check matrix")), (0, import_react67.createElement)("span", null, recorded ? t("Recorded {time}", { time: relativeShort(timestampOf2(recorded.checkedAt)) }) : t("Unverified"))),
+        (0, import_react67.createElement)(CheckMatrix, { project })
+      )
+    )
+  );
+}
+function EvidenceStrip({ evidence, compact: compact2 = false }) {
+  const labels2 = [t("Folder"), t("Rules"), t("Sources"), t("Checks")];
+  return (0, import_react67.createElement)(
+    "div",
+    { className: compact2 ? "bt-teamov-evidence compact" : "bt-teamov-evidence", role: "img", "aria-label": labels2.map((label, index) => `${label}: ${evidence[index] ? t("Found") : t("Missing")}`).join(", ") },
+    labels2.map((label, index) => (0, import_react67.createElement)(
+      "span",
+      { key: label, "data-on": evidence[index] || void 0 },
+      (0, import_react67.createElement)("i"),
+      compact2 ? null : (0, import_react67.createElement)("small", null, label)
+    ))
+  );
+}
+function StandardsDossier({ project }) {
+  const standards = project.standards;
+  const files = standards.adoptedFiles.slice(0, 10);
+  const presentFiles = standards.adoptedFiles.filter((file) => file.exists).length;
+  const sources = standards.sourceDetails.slice(0, 5);
+  const experiences = [
+    ...standards.folders.flatMap((fact) => (fact.standards.ruleLines ?? fact.standards.headings ?? []).map((text) => ({ text, source: fact.standards.file }))),
+    ...standards.documents.map((doc) => ({ text: doc.excerpt || (doc.headings ?? []).join(" · "), source: doc.path })),
+    ...project.memory.topics.map((text) => ({ text, source: t("Memory") })),
+    ...project.learning.settled.filter((entry) => entry.outcome === "approved").map((entry) => ({ text: entry.name || entry.folder || t("Learned skill"), source: t("Learning") }))
+  ].filter((entry, index, all) => entry.text && all.findIndex((other) => other.text === entry.text && other.source === entry.source) === index).slice(0, 12);
+  const fileRows = files.map((file) => (0, import_react67.createElement)(
+    "div",
+    { key: `${file.folder}:${file.path}:${file.role}`, "data-missing": !file.exists || void 0 },
+    (0, import_react67.createElement)("i", null, file.exists ? (0, import_react67.createElement)(CheckIcon) : (0, import_react67.createElement)(CloseIcon)),
+    (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, file.path), (0, import_react67.createElement)("small", null, fileRoleWord(file.role))),
+    file.findings?.rules !== void 0 ? (0, import_react67.createElement)("em", null, `${file.findings.rules}`) : null
+  ));
+  const sourceRows = sources.map((source) => {
+    const checkedAt = timestampOf2(source.checkedAt);
+    const stale = checkedAt === 0 || Date.now() - checkedAt > 30 * 24 * 60 * 60 * 1e3;
+    const detail = [
+      (source.scope ?? []).join(" · "),
+      source.version ? `v${source.version}` : null,
+      checkedAt ? relativeShort(checkedAt) : t("Not reviewed"),
+      stale ? t("Needs review") : null
+    ].filter(Boolean).join(" · ") || t("Reference");
+    return (0, import_react67.createElement)(
+      "div",
+      { key: source.url || source.name, "data-stale": stale || void 0 },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, source.name), (0, import_react67.createElement)("small", null, detail)),
+      source.url ? (0, import_react67.createElement)("a", { href: source.url, target: "_blank", rel: "noreferrer" }, t("Open")) : null
+    );
+  });
+  const experienceChips = experiences.map((entry, index) => (0, import_react67.createElement)(
+    "span",
+    { key: `${entry.text}:${index}`, title: entry.source },
+    (0, import_react67.createElement)("b", null, entry.text),
+    (0, import_react67.createElement)("small", null, entry.source)
+  ));
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-standards-dossier" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-board-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Standards")), (0, import_react67.createElement)("h4", null, profileWord(standards.profile?.id), (0, import_react67.createElement)("span", { className: "bt-teamov-profile-note" }, standards.profile?.declared ? t("Declared pack") : t("Detected from files")))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-board-badge", "data-warning": presentFiles < standards.adoptedFiles.length || void 0 }, t("{present} of {total} files", { present: presentFiles, total: standards.adoptedFiles.length }))
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-standards-grid" },
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-standard-block" },
+        (0, import_react67.createElement)("div", { className: "bt-teamov-block-title" }, (0, import_react67.createElement)(PencilIcon), (0, import_react67.createElement)("b", null, t("Adopted files")), (0, import_react67.createElement)("span", null, t("What the rules come from"))),
+        (0, import_react67.createElement)("div", { className: "bt-teamov-file-list" }, files.length === 0 ? (0, import_react67.createElement)("small", null, t("No adopted files found")) : fileRows)
+      ),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-standard-block" },
+        (0, import_react67.createElement)("div", { className: "bt-teamov-block-title" }, (0, import_react67.createElement)(InfoIcon), (0, import_react67.createElement)("b", null, t("Official sources")), (0, import_react67.createElement)("span", null, t("Declared references"))),
+        (0, import_react67.createElement)("div", { className: "bt-teamov-source-list" }, sources.length === 0 ? (0, import_react67.createElement)("small", null, t("No official sources declared")) : sourceRows)
+      ),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-standard-block" },
+        (0, import_react67.createElement)("div", { className: "bt-teamov-block-title" }, (0, import_react67.createElement)(MemoryIcon), (0, import_react67.createElement)("b", null, t("Experience captured")), (0, import_react67.createElement)("span", null, t("Rules and lessons"))),
+        (0, import_react67.createElement)("div", { className: "bt-teamov-experience-chips" }, experiences.length === 0 ? (0, import_react67.createElement)("small", null, t("No experience captured yet")) : experienceChips)
+      )
+    )
+  );
+}
+function KnowledgeBoard({ project }) {
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-knowledge" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-board-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Experience")), (0, import_react67.createElement)("h4", null, t("Knowledge captured"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, project.experience.count)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-knowledge-grid" }, project.experience.knowledge.map((item) => (0, import_react67.createElement)(
+      "div",
+      { key: item.kind, className: "bt-teamov-knowledge-tile", "data-kind": item.kind },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)(KnowledgeGlyph, { kind: item.kind })),
+      (0, import_react67.createElement)("b", null, item.count),
+      (0, import_react67.createElement)("small", null, knowledgeWord(item.kind))
+    ))),
+    project.standards.sources.length > 0 ? (0, import_react67.createElement)("div", { className: "bt-teamov-source-row" }, project.standards.sources.slice(0, 3).map((source) => (0, import_react67.createElement)("a", { key: source, href: source, target: "_blank", rel: "noreferrer", title: source }, source.replace(/^https?:\/\//, "").split("/")[0]))) : null
+  );
+}
+function ExperienceTimeline({ project }) {
+  if (project.experience.events.length === 0) {
+    return (0, import_react67.createElement)(
+      "section",
+      { className: "bt-teamov-experience" },
+      (0, import_react67.createElement)("div", { className: "bt-teamov-board-head" }, (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Timeline")), (0, import_react67.createElement)("h4", null, t("Project record")))),
+      (0, import_react67.createElement)("div", { className: "bt-teamov-quiet-block" }, (0, import_react67.createElement)(ClockIcon), (0, import_react67.createElement)("span", null, t("No project changes recorded yet")))
+    );
+  }
+  const events = project.experience.events.map((event, index) => {
+    const reason = event.reason && event.reason !== event.text ? event.reason : "";
+    const evidence = event.evidence && event.evidence !== event.text ? event.evidence : "";
+    const progress = eventProgressText(event);
+    const files = event.files?.length > 0 ? `${event.files.slice(0, 6).join(" · ")}${event.files.length > 6 ? ` · ${t("and {count} more", { count: event.files.length - 6 })}` : ""}` : "";
+    const detail = (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-timeline-detail" },
+      reason ? (0, import_react67.createElement)("p", null, (0, import_react67.createElement)("b", null, t("Reason")), reason) : null,
+      progress ? (0, import_react67.createElement)("p", null, (0, import_react67.createElement)("b", null, t("Progress")), progress) : null,
+      files ? (0, import_react67.createElement)("p", { className: "bt-teamov-timeline-files" }, (0, import_react67.createElement)("b", null, t("Files")), files) : null,
+      evidence ? (0, import_react67.createElement)("p", null, (0, import_react67.createElement)("b", null, t("Evidence")), evidence) : null,
+      event.text && event.text !== reason && event.text !== evidence ? (0, import_react67.createElement)("p", null, (0, import_react67.createElement)("b", null, t("Recorded")), event.text) : null,
+      (0, import_react67.createElement)("p", { className: "bt-teamov-timeline-source" }, (0, import_react67.createElement)("b", null, t("Source")), `${event.source || eventActionWord(event)} · ${eventOriginWord(event)}`)
+    );
+    return (0, import_react67.createElement)(
+      "details",
+      { key: `${event.kind}:${event.at}:${index}`, className: "bt-teamov-timeline-event", "data-kind": event.kind, "data-action": event.action || void 0, "data-source": event.sourceKind || void 0 },
+      (0, import_react67.createElement)(
+        "summary",
+        null,
+        (0, import_react67.createElement)("i", { "aria-hidden": true }),
+        (0, import_react67.createElement)("time", null, relativeShort(event.at)),
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, eventActionWord(event)), eventTitle(event) ? (0, import_react67.createElement)("small", null, eventTitle(event)) : null)
+      ),
+      detail
+    );
+  });
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-experience" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-board-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Timeline")), (0, import_react67.createElement)("h4", null, t("Project record"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, project.changes.count)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-timeline" }, events)
+  );
+}
+function StandardsLibrary({ data }) {
+  if (data.standardsLibrary.length === 0) return null;
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-standards-library" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-view-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Standards library")), (0, import_react67.createElement)("h3", null, t("Rules accumulated by project type"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, data.standardsLibrary.length)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-standards-library-grid" }, data.standardsLibrary.map((profile) => (0, import_react67.createElement)(
+      "div",
+      { key: profile.id, className: "bt-teamov-profile-card", "data-profile": profile.id },
+      (0, import_react67.createElement)("span", { className: "bt-teamov-profile-icon" }, (0, import_react67.createElement)(InfoIcon)),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-profile-copy" }, (0, import_react67.createElement)("b", null, profileWord(profile.id)), (0, import_react67.createElement)("small", null, t("{count} projects", { count: profile.projects }))),
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-profile-stats" },
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, profile.files), (0, import_react67.createElement)("small", null, t("Adopted files"))),
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, profile.sources), (0, import_react67.createElement)("small", null, t("Sources"))),
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, profile.rules), (0, import_react67.createElement)("small", null, t("Rules"))),
+        (0, import_react67.createElement)("span", null, (0, import_react67.createElement)("b", null, profile.skills), (0, import_react67.createElement)("small", null, t("Skills")))
+      )
+    )))
+  );
+}
+function ProjectCard({ project, expanded, toggle, openEntry, actions }) {
+  const status = project.state;
+  const details = expanded ? (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-project-body" },
+    (0, import_react67.createElement)(CompletionBoard, { project }),
+    (0, import_react67.createElement)(WorkItemsBoard, { project, actions }),
+    (0, import_react67.createElement)(StandardsDossier, { project }),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-project-insights" },
+      (0, import_react67.createElement)(KnowledgeBoard, { project }),
+      (0, import_react67.createElement)(ExperienceTimeline, { project })
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-project-actions" },
+      project.target ? (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: () => openEntry(project.target) }, t("Open project"), (0, import_react67.createElement)(ChevronRightIcon)) : null,
+      project.target ? (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: () => actions.openMemoryFromOverview(project.target.id) }, (0, import_react67.createElement)(MemoryIcon), t("Open memory")) : null
+    )
+  ) : null;
+  return (0, import_react67.createElement)(
+    "article",
+    { className: "bt-teamov-project", "data-state": status.state, "data-expanded": expanded || void 0 },
+    (0, import_react67.createElement)(
+      "button",
+      { type: "button", className: "bt-teamov-project-head", "aria-expanded": expanded, onClick: toggle },
+      (0, import_react67.createElement)("span", { className: "bt-teamov-project-icon" }, (0, import_react67.createElement)(FolderIcon)),
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-project-title" },
+        (0, import_react67.createElement)("b", null, projectName(project), project.color ? (0, import_react67.createElement)("i", { className: "bt-teamov-project-color", style: { background: project.color } }) : null),
+        (0, import_react67.createElement)("small", null, `${profileWord(project.standards.profile?.id)} · ${project.folders.length > 0 ? project.folders.map(shortPath2).join(t(", ")) : t("No working folder")}`)
+      ),
+      (0, import_react67.createElement)(
+        "span",
+        { className: "bt-teamov-project-side" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-project-state" }, (0, import_react67.createElement)(StateDot, { state: status.state }), completionWord(project.completion.status)),
+        (0, import_react67.createElement)(ChevronDownIcon)
+      )
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-project-progress" }, (0, import_react67.createElement)(ProjectRail, { project })),
+    details
+  );
+}
+function ProjectView({ model, data, insights, busy, failed, openEntry, actions, adding, setAdding, expanded, setExpanded }) {
+  const [draft, setDraft] = (0, import_react67.useState)("");
+  const submit = async (event) => {
+    event.preventDefault();
+    const name = draft.trim();
+    if (name === "") return;
+    await actions.saveSection({ name });
+    setDraft("");
+    setAdding(false);
+  };
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-body", id: "bt-teamov-projects", role: "tabpanel" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-view-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Projects")), (0, import_react67.createElement)("h3", null, t("What the team is building"))),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-view-actions" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-auto-note" }, (0, import_react67.createElement)("i"), t("Auto refresh 15s")),
+        adding ? null : (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm bt-with-icon", onClick: () => setAdding(true) }, (0, import_react67.createElement)(PlusIcon), t("Add project"))
+      )
+    ),
+    adding ? (0, import_react67.createElement)(
+      "form",
+      { className: "bt-teamov-add-project", onSubmit: submit },
+      (0, import_react67.createElement)("input", { autoFocus: true, maxLength: 32, value: draft, placeholder: t("Project name"), "aria-label": t("Project name"), onChange: (event) => setDraft(event.target.value), onKeyDown: (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setAdding(false);
+        }
+      } }),
+      (0, import_react67.createElement)("button", { type: "submit", className: "bt-soft bt-soft-sm", disabled: draft.trim() === "" }, t("Create")),
+      (0, import_react67.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: () => setAdding(false) }, t("Cancel"))
+    ) : null,
+    insightErrorView(insights, busy, failed),
+    data.projects.length === 0 ? (0, import_react67.createElement)(ProjectEmpty) : (0, import_react67.createElement)("div", { className: "bt-teamov-projects" }, data.projects.map((project) => (0, import_react67.createElement)(ProjectCard, { key: project.id, project, expanded: expanded === project.id, toggle: () => setExpanded(expanded === project.id ? null : project.id), openEntry, actions }))),
+    (0, import_react67.createElement)(StandardsLibrary, { data }),
+    (0, import_react67.createElement)(MemoryLibrary, { insights, model, openMemory: actions.openMemoryFromOverview }),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-refreshed" }, (0, import_react67.createElement)(ClockIcon), insights?.at ? t("Updated {time}", { time: relativeShort(insights.at) }) : t("Waiting for a scan"))
+  );
+}
+function ProjectEmpty() {
+  return (0, import_react67.createElement)("div", { className: "bt-teamov-empty inline" }, (0, import_react67.createElement)(FolderIcon), (0, import_react67.createElement)("b", null, t("No projects yet")), (0, import_react67.createElement)("span", null, t("Add a project to group its Bots, conversations, memory and standards.")));
+}
+function MemoryLibrary({ insights, model, openMemory }) {
+  const memory = insights?.memory;
+  if (memory === void 0) return null;
+  const mainBot = model.bots[0]?.bot;
+  const recent = [
+    ...Object.entries(memory.owners ?? {}).flatMap(([id, owner]) => (owner.recent ?? []).map((entry) => ({ ...entry, id, owner }))),
+    ...(memory.team?.recent ?? []).map((entry) => ({ ...entry, id: mainBot?.id, owner: memory.team, team: true }))
+  ].filter((entry) => entry.id).sort((a, b) => String(b.added ?? "").localeCompare(String(a.added ?? ""))).slice(0, 6);
+  const topics = [.../* @__PURE__ */ new Set([...memory.team?.topics ?? [], ...Object.values(memory.owners ?? {}).flatMap((owner) => owner.topics ?? [])])].slice(0, 12);
+  return (0, import_react67.createElement)(
+    "section",
+    { className: "bt-teamov-memory-library" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-view-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Memory library")), (0, import_react67.createElement)("h3", null, t("What the team has learned"))),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-count" }, memory.total)
+    ),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-memory-topics" }, topics.length === 0 ? (0, import_react67.createElement)("span", { className: "bt-teamov-quiet" }, t("No topics yet")) : topics.map((topic) => (0, import_react67.createElement)("span", { key: topic }, topic))),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-list" }, recent.map((entry, index) => {
+      const owner = ownerOf(model, entry.id);
+      return (0, import_react67.createElement)(
+        "button",
+        { key: `${entry.id}:${index}`, type: "button", className: "bt-teamov-memory-row", onClick: () => owner ? openMemory(entry.id) : null },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-memory-row-icon" }, (0, import_react67.createElement)(MemoryIcon)),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-row-text" }, (0, import_react67.createElement)("b", null, entry.team ? t("Team memory") : owner?.name ?? t("Memory")), (0, import_react67.createElement)("small", null, entry.text)),
+        entry.topic ? (0, import_react67.createElement)("span", { className: "bt-teamov-memory-topic" }, entry.topic) : null
+      );
+    }))
+  );
+}
+function AgentCard({ row, openEntry, openMemory }) {
+  const bot = row.bot;
+  const health = row.health === "blocked" ? t("Blocked") : stateWord(row.health);
+  const open = () => {
+    if (row.kind === "dsh") {
+      if (row.sessionId) openEntry({ id: row.sessionId });
+    } else openEntry(bot);
+  };
+  const reviewed = row.learning.total;
+  const approved = row.learning.approved;
+  const pending = row.learning.pending;
+  return (0, import_react67.createElement)(
+    "article",
+    { className: "bt-teamov-agent", "data-health": row.health },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-agent-head" },
+      row.kind === "dsh" ? (0, import_react67.createElement)("span", { className: "bt-teamov-agent-glyph" }, (0, import_react67.createElement)(GaugeIcon)) : (0, import_react67.createElement)(BotAvatar, { bot, size: 38, state: row.health === "blocked" ? "alert" : row.row.state }),
+      (0, import_react67.createElement)("span", { className: "bt-teamov-agent-title" }, (0, import_react67.createElement)("b", null, row.name, (0, import_react67.createElement)(StateDot, { state: row.health === "blocked" ? "alert" : row.health })), (0, import_react67.createElement)("small", null, [row.role, row.engine ?? row.model].filter(Boolean).join(" · ") || t("Agent"))),
+      (0, import_react67.createElement)("button", { type: "button", className: "bt-round bt-round-sm", disabled: row.kind === "dsh" ? !row.sessionId : false, "aria-label": t("Open {name}", { name: row.name }), onClick: open }, (0, import_react67.createElement)(ChevronRightIcon))
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-agent-grid" },
+      (0, import_react67.createElement)("div", { className: "bt-teamov-agent-metric" }, (0, import_react67.createElement)("span", { className: "bt-teamov-mini-kicker" }, (0, import_react67.createElement)(GaugeIcon), t("Health")), (0, import_react67.createElement)("b", null, health), (0, import_react67.createElement)("small", null, row.row.running ? t("Live work is running") : t("Current runtime state"))),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-agent-metric" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-mini-kicker" }, (0, import_react67.createElement)(MemoryIcon), t("Self-improvement")),
+        (0, import_react67.createElement)(
+          "div",
+          { className: "bt-teamov-learning-bar", role: "img", "aria-label": t("{approved} approved, {declined} declined, {pending} pending", { approved, declined: row.learning.declined, pending }) },
+          (0, import_react67.createElement)("i", { className: "approved", style: { flex: approved } }),
+          (0, import_react67.createElement)("i", { className: "declined", style: { flex: row.learning.declined } }),
+          (0, import_react67.createElement)("i", { className: "pending", style: { flex: pending } }),
+          reviewed + pending === 0 ? (0, import_react67.createElement)("i", { className: "empty" }) : null
+        ),
+        (0, import_react67.createElement)("small", null, reviewed + pending === 0 ? t("No review history") : t("{approved} approved · {pending} pending", { approved, pending }))
+      ),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-agent-metric wide" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-mini-kicker" }, (0, import_react67.createElement)(TerminalIcon), t("Standards evidence")),
+        (0, import_react67.createElement)(EvidenceStrip, { evidence: row.evidence, compact: true }),
+        (0, import_react67.createElement)("small", null, t("{count} of 4 evidence points found", { count: row.evidenceCount })),
+        (0, import_react67.createElement)("small", { "data-quality": row.standards.quality ? "recorded" : "none" }, row.standards.quality ? t("Recorded checks: {passed} of {expected} passed", { passed: row.standards.quality.passed, expected: row.standards.quality.expected }) : t("No recorded check run")),
+        (0, import_react67.createElement)("div", { className: "bt-teamov-check-row" }, row.standards.checks.slice(0, 4).map((check) => (0, import_react67.createElement)("span", { key: check.name }, check.name)))
+      )
+    ),
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-agent-foot" },
+      (0, import_react67.createElement)("span", null, (0, import_react67.createElement)(MemoryIcon), row.memory.count > 0 ? t("{count} memories · {topics} topics", { count: row.memory.count, topics: row.memory.topics.length }) : t("No memories saved")),
+      row.kind === "bot" ? (0, import_react67.createElement)("button", { type: "button", className: "bt-teamov-link", onClick: () => openMemory(row.id) }, t("Memory")) : null,
+      row.folder ? (0, import_react67.createElement)("span", { className: "bt-teamov-folder" }, `${profileWord(row.standards.profile?.id)} · ${shortPath2(row.folder)}`) : null
+    )
+  );
+}
+function AgentView({ data, openEntry, openMemory, insights, busy, failed }) {
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-body", id: "bt-teamov-agents", role: "tabpanel" },
+    (0, import_react67.createElement)(
+      "div",
+      { className: "bt-teamov-view-head" },
+      (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-kicker" }, t("Agents")), (0, import_react67.createElement)("h3", null, t("Health and self-improvement"))),
+      (0, import_react67.createElement)(
+        "div",
+        { className: "bt-teamov-view-actions" },
+        (0, import_react67.createElement)("span", { className: "bt-teamov-auto-note" }, (0, import_react67.createElement)("i", { "data-live": data.counts.working > 0 || void 0 }), t("Auto refresh 15s")),
+        (0, import_react67.createElement)("span", { className: "bt-teamov-live-note" }, data.counts.working > 0 ? t("Live") : t("Quiet"))
+      )
+    ),
+    insightErrorView(insights, busy, failed),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-agents" }, data.rows.map((row) => (0, import_react67.createElement)(AgentCard, { key: `${row.kind}:${row.id}`, row, openEntry, openMemory }))),
+    (0, import_react67.createElement)("div", { className: "bt-teamov-refreshed" }, (0, import_react67.createElement)(ClockIcon), insights?.at ? t("Updated {time}", { time: relativeShort(insights.at) }) : t("Waiting for a scan"))
+  );
+}
+function insightErrorView(insights, busy, failed = false) {
+  if (!failed && insights !== null) return null;
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-insight-state", role: failed ? "alert" : "status" },
+    (0, import_react67.createElement)("span", null, failed ? t("Could not read project evidence") : busy ? t("Reading memory and project files…") : t("Project evidence is unavailable"))
+  );
+}
+function TeamOverviewPanel({ useRoster, useWork, useSessionStatus, useUi, actions, leaving = false }) {
+  const roster = useRoster((value) => value);
+  const work = useWork((value) => value);
+  const sessionStatus = useSessionStatus((value) => value);
+  const bootFailed = useUi((value) => value.bootFailed === true);
+  const model = (0, import_react67.useMemo)(() => overviewModel(roster, work, sessionStatus), [roster, work, sessionStatus]);
+  const [tab, setTab] = (0, import_react67.useState)("team");
+  const [insights, setInsights] = (0, import_react67.useState)(null);
+  const [insightBusy, setInsightBusy] = (0, import_react67.useState)(false);
+  const [insightFailed, setInsightFailed] = (0, import_react67.useState)(false);
+  const [sites, setSites] = (0, import_react67.useState)(null);
+  const [siteBusy, setSiteBusy] = (0, import_react67.useState)(false);
+  const [siteFailed, setSiteFailed] = (0, import_react67.useState)(false);
+  const [addingProject, setAddingProject] = (0, import_react67.useState)(false);
+  const [expandedProject, setExpandedProject] = (0, import_react67.useState)(null);
+  const panel = (0, import_react67.useRef)(null);
+  const restoreFocus = (0, import_react67.useRef)(true);
+  const request = (0, import_react67.useRef)(0);
+  const siteRequest = (0, import_react67.useRef)(0);
+  const projects = (0, import_react67.useMemo)(() => projectModel(model, insights), [model, insights]);
+  const agents = (0, import_react67.useMemo)(() => agentBoardModel(model, insights), [model, insights]);
+  const loadInsights = (0, import_react67.useCallback)(async (fresh = false) => {
+    if (actions.teamOverviewInsights === void 0) return;
+    const current = ++request.current;
+    setInsightBusy(true);
+    try {
+      const value = await actions.teamOverviewInsights(fresh);
+      if (request.current !== current) return;
+      setInsights(value);
+      setInsightFailed(false);
+    } catch {
+      if (request.current === current) setInsightFailed(true);
+    } finally {
+      if (request.current === current) setInsightBusy(false);
+    }
+  }, [actions]);
+  const loadSites = (0, import_react67.useCallback)(async () => {
+    if (actions.sites === void 0) return;
+    const current = ++siteRequest.current;
+    setSiteBusy(true);
+    try {
+      const value = await actions.sites();
+      if (siteRequest.current !== current) return;
+      setSites(value);
+      setSiteFailed(false);
+    } catch {
+      if (siteRequest.current === current) setSiteFailed(true);
+    } finally {
+      if (siteRequest.current === current) setSiteBusy(false);
+    }
+  }, [actions]);
+  (0, import_react67.useEffect)(() => {
+    if (!roster.ready) return void 0;
+    void loadInsights(false);
+    return void 0;
+  }, [roster.ready, roster.revision, loadInsights]);
+  (0, import_react67.useEffect)(() => {
+    if (!roster.ready || tab !== "projects" && tab !== "agents") return void 0;
+    const timer = setInterval(() => {
+      void loadInsights(false);
+    }, 15e3);
+    return () => clearInterval(timer);
+  }, [roster.ready, tab, loadInsights]);
+  (0, import_react67.useEffect)(() => {
+    if (!roster.ready || tab !== "sites") return void 0;
+    void loadSites();
+    const timer = setInterval(() => {
+      void loadSites();
+    }, 15e3);
+    return () => clearInterval(timer);
+  }, [roster.ready, tab, loadSites]);
+  (0, import_react67.useEffect)(() => {
+    const previous = document.activeElement;
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        actions.closeTeamOverview();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...panel.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (!restoreFocus.current) return;
+      setTimeout(() => {
+        if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+        else document.querySelector(".bt-teamov-tab")?.focus();
+      }, 0);
+    };
+  }, [actions]);
+  const openEntry = (entry) => {
+    if (entry === void 0 || entry === null) return;
+    restoreFocus.current = false;
+    actions.closeTeamOverview();
+    actions.openSession(entry.id);
+  };
+  const openMemory = (id) => {
+    restoreFocus.current = false;
+    actions.openMemoryFromOverview(id);
+  };
+  const teamBody = model.counts.bots === 0 && model.counts.groups === 0 ? (0, import_react67.createElement)(EmptyState) : (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-body", id: "bt-teamov-team", role: "tabpanel" },
+    (0, import_react67.createElement)(Attention, { model, openEntry }),
+    (0, import_react67.createElement)(Activity, { model, openEntry }),
+    (0, import_react67.createElement)(TeamSections, { model, openEntry }),
+    (0, import_react67.createElement)(Recent, { model, openEntry }),
+    (0, import_react67.createElement)(Learning, { model, openEntry })
+  );
+  return (0, import_react67.createElement)(
+    "div",
+    { className: "bt-teamov-layer", "data-leaving": leaving || void 0 },
+    (0, import_react67.createElement)("div", { className: "bt-teamov-scrim", onMouseDown: actions.closeTeamOverview }),
+    (0, import_react67.createElement)(
+      "section",
+      { ref: panel, className: "bt-teamov", role: "dialog", "aria-modal": true, "aria-labelledby": "bt-teamov-title", "data-leaving": leaving || void 0, onMouseDown: (event) => event.stopPropagation() },
+      (0, import_react67.createElement)(
+        "header",
+        { className: "bt-teamov-top" },
+        (0, import_react67.createElement)("div", null, (0, import_react67.createElement)("span", { className: "bt-teamov-eyebrow" }, t("Team workspace")), (0, import_react67.createElement)("h2", { id: "bt-teamov-title" }, t("Team overview"))),
+        (0, import_react67.createElement)("button", { type: "button", className: "bt-round", autoFocus: true, "aria-label": t("Close team overview"), title: t("Close"), onClick: actions.closeTeamOverview }, (0, import_react67.createElement)(CloseIcon))
+      ),
+      !roster.ready ? bootFailed ? (0, import_react67.createElement)(BootError) : (0, import_react67.createElement)(Skeleton3) : (0, import_react67.createElement)(
+        import_react67.Fragment,
+        null,
+        tab === "team" ? (0, import_react67.createElement)(Summary2, { counts: model.counts }) : tab === "projects" ? (0, import_react67.createElement)(ProjectSummary, { counts: projects.counts }) : tab === "agents" ? (0, import_react67.createElement)(AgentSummary, { counts: agents.counts }) : (0, import_react67.createElement)(SiteSummary, { counts: (sites ?? EMPTY_SITE_DIRECTORY).counts }),
+        (0, import_react67.createElement)(DataTabs, {
+          tab,
+          setTab,
+          model,
+          projectCount: projects.counts.total,
+          agentCount: agents.counts.total,
+          siteCount: (sites ?? EMPTY_SITE_DIRECTORY).counts.total,
+          busy: tab === "sites" ? siteBusy : insightBusy,
+          refresh: () => void (tab === "sites" ? loadSites() : loadInsights(true))
+        }),
+        tab === "team" ? teamBody : tab === "projects" ? (0, import_react67.createElement)(ProjectView, {
+          model,
+          data: projects,
+          insights,
+          busy: insightBusy,
+          failed: insightFailed,
+          openEntry,
+          actions,
+          adding: addingProject,
+          setAdding: setAddingProject,
+          expanded: expandedProject,
+          setExpanded: setExpandedProject
+        }) : tab === "agents" ? (0, import_react67.createElement)(AgentView, { data: agents, openEntry, openMemory, insights, busy: insightBusy, failed: insightFailed }) : (0, import_react67.createElement)(SitesView, {
+          data: sites ?? EMPTY_SITE_DIRECTORY,
+          loading: siteBusy,
+          failed: siteFailed,
+          busy: siteBusy,
+          actions,
+          paths: [...new Set(projects.projects.flatMap((project) => project.folders))],
+          onData: setSites
+        })
+      )
+    )
+  );
+}
+function TeamOverviewTab({ useUi, useSurface, actions }) {
+  const open = useUi((value) => value.teamOverview === true);
+  const mode = useSurface((value) => value.mode);
+  const occupied = useUi((value) => value.details !== null || value.settings !== null || value.newChat !== null || value.exchange !== null || value.memory !== null);
+  if (open || occupied || mode !== "bot") return null;
+  return (0, import_react67.createElement)(
+    "button",
+    { type: "button", className: "bt-teamov-tab", title: t("Open team overview"), "aria-label": t("Open team overview"), onClick: actions.openTeamOverview },
+    (0, import_react67.createElement)(PeopleIcon),
+    (0, import_react67.createElement)("span", null, t("Team overview"))
+  );
+}
+var TEAM_OVERVIEW_CSS = `
+.bt-teamov-tab{position:fixed;z-index:29;right:0;top:44%;display:flex;flex-direction:column;align-items:center;gap:6px;width:30px;min-height:104px;padding:9px 0;border:.5px solid var(--bt-line-2);border-right:0;border-radius:10px 0 0 10px;background:var(--bt-glass-bg);color:var(--bt-ink-3);box-shadow:var(--bt-glass-shadow);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);font-family:var(--bt-font);cursor:pointer;transition:width .16s ease,color .12s ease,background-color .12s ease}
+.bt-teamov-tab:hover{width:34px;color:var(--bt-ink);background:var(--bt-card)}
+body:has(.tbh) .bt-teamov-tab{right:calc(min(380px,100vw - 204px) + 8px)}
+body:has(.tbh-toggle) .bt-teamov-tab{right:42px}
+.bt-teamov-tab svg{flex:none;width:14px;height:14px}
+.bt-teamov-tab span{writing-mode:vertical-rl;font-size:9px;line-height:14px;letter-spacing:.08em}
+.bt-teamov-tab:focus-visible{outline:2px solid var(--bt-accent);outline-offset:-2px}
+.bt-teamov-layer{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;font-family:var(--bt-font);color:var(--bt-ink)}
+.bt-teamov-scrim{position:absolute;inset:0;background:rgba(0,0,0,.3);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);animation:bt-veil-in .18s ease-out}
+.bt-teamov{position:relative;z-index:1;width:min(1220px,calc(100vw - 48px));height:min(900px,calc(100vh - 48px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:var(--bt-main);border:.5px solid var(--bt-line-2);border-radius:20px;box-shadow:0 28px 90px -30px rgba(0,0,0,.48);overflow:hidden;animation:bt-teamov-in ${SPRING_SHAPE.duration}ms ${SPRING_SHAPE.easing}}
+@keyframes bt-teamov-in{from{transform:translateY(10px) scale(.985);opacity:0}}
+.bt-teamov-layer[data-leaving]{pointer-events:none}
+.bt-teamov-layer[data-leaving] .bt-teamov-scrim{animation:bt-teamov-veil-out .16s ease-in forwards}
+.bt-teamov[data-leaving]{animation:bt-teamov-out .16s cubic-bezier(.4,0,1,1) forwards}
+@keyframes bt-teamov-out{to{transform:translateY(8px) scale(.99);opacity:0}}
+@keyframes bt-teamov-veil-out{to{opacity:0}}
+.bt-teamov-top{height:76px;flex:none;padding:16px 18px 12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--bt-line)}
+.bt-teamov-eyebrow{display:block;color:var(--bt-ink-3);font-size:10px;line-height:15px;letter-spacing:.1em;text-transform:uppercase}
+.bt-teamov-top h2{margin:2px 0 0;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-.015em}
+.bt-teamov-summary{flex:none;min-height:82px;padding:11px 20px;display:grid;grid-template-columns:58px minmax(0,1fr);gap:15px;align-items:center;border-bottom:1px solid var(--bt-line)}
+.bt-teamov-ring{position:relative;width:58px;height:58px;padding:1px;display:grid;place-items:center;border-radius:50%;corner-shape:round;background:var(--bt-teamov-ring);animation:bt-teamov-ring-in .4s cubic-bezier(.22,1,.36,1) both}
+.bt-teamov-ring::before{content:"";position:absolute;inset:7px;border-radius:50%;corner-shape:round;background:var(--bt-main);box-shadow:inset 0 0 0 .5px var(--bt-line)}
+.bt-teamov-ring>span{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:0}
+.bt-teamov-ring b{font-size:15px;line-height:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-ring small{color:var(--bt-ink-3);font-size:8px;line-height:11px}
+.bt-teamov-stats{min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.bt-teamov-stat{min-width:0;padding:0 12px;display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--bt-line)}
+.bt-teamov-stat:first-child{padding-left:0;border-left:0}
+.bt-teamov-stat b{font-size:20px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-stat small{display:flex;align-items:center;gap:4px;color:var(--bt-ink-3);font-size:10px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-stat small::before{content:"";width:4px;height:4px;flex:none;border-radius:50%;background:var(--bt-line-2)}
+.bt-teamov-stat[data-kind=working] b{color:var(--bt-green)}
+.bt-teamov-stat[data-kind=working] small::before{background:var(--bt-green)}
+.bt-teamov-stat[data-kind=needs] b{color:var(--bt-accent)}
+.bt-teamov-stat[data-kind=needs] small::before{background:var(--bt-accent)}
+.bt-teamov-stat[data-kind=teammates] b{color:var(--bt-star)}
+.bt-teamov-stat[data-kind=teammates] small::before{background:var(--bt-star)}
+.bt-teamov-stat[data-kind=unread] b{color:var(--bt-accent)}
+.bt-teamov-stat[data-kind=unread] small::before{background:var(--bt-accent)}
+@keyframes bt-teamov-ring-in{from{opacity:0;transform:rotate(-18deg) scale(.82)}}
+.bt-teamov-body{flex:1;min-height:0;overflow:auto;padding:4px 20px 28px;scrollbar-width:thin}
+.bt-teamov-section{padding:17px 0 3px;border-bottom:1px solid var(--bt-line)}
+.bt-teamov-section:last-child{border-bottom:0}
+.bt-teamov-head{min-height:31px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.bt-teamov-head h3{margin:2px 0 0;font-size:14px;line-height:19px;font-weight:600}
+.bt-teamov-kicker{display:block;color:var(--bt-ink-3);font-size:9px;line-height:13px;letter-spacing:.09em;text-transform:uppercase}
+.bt-teamov-count{min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-2);font-size:11px;font-variant-numeric:tabular-nums}
+.bt-teamov-list{display:flex;flex-direction:column;gap:2px;margin:0 -8px}
+.bt-teamov-row,.bt-teamov-attention,.bt-teamov-record{width:100%;min-height:48px;padding:6px 8px;display:flex;align-items:center;gap:10px;border:0;border-radius:10px;background:transparent;color:var(--bt-ink);text-align:left;cursor:pointer;transition:background-color .12s ease}
+.bt-teamov-live-row{position:relative}
+.bt-teamov-live-row::before{content:"";position:absolute;left:1px;top:19px;width:3px;height:3px;border-radius:50%;background:var(--bt-green);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-green) 12%,transparent);animation:bt-teamov-live 1.8s ease-in-out infinite}
+.bt-teamov-activity-avatar{display:inline-flex;flex:none;border-radius:50%;box-shadow:0 0 0 1px color-mix(in srgb,var(--bt-green) 20%,transparent)}
+@keyframes bt-teamov-live{0%,100%{opacity:.5;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.bt-teamov-row:hover,.bt-teamov-attention:hover,.bt-teamov-record:hover{background:var(--bt-hover)}
+.bt-teamov-row:focus-visible,.bt-teamov-attention:focus-visible,.bt-teamov-record:focus-visible{outline:2px solid var(--bt-accent);outline-offset:-2px}
+.bt-teamov-row-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.bt-teamov-row-text>b{min-width:0;color:var(--bt-ink);font-size:13px;line-height:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-row-text>small{min-width:0;color:var(--bt-ink-3);font-size:11px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-row>svg,.bt-teamov-attention>svg,.bt-teamov-record>svg{flex:none;color:var(--bt-ink-3)}
+.bt-teamov-context{color:var(--bt-ink-3);font-weight:400}
+.bt-teamov-age{flex:none;color:var(--bt-ink-3);font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bt-teamov-state-dot{width:6px;height:6px;margin-left:6px;display:inline-block;border-radius:50%;corner-shape:round;background:var(--bt-ink-3);vertical-align:1px}
+.bt-teamov-state-dot[data-state=working],.bt-teamov-state-dot[data-state=thinking],.bt-teamov-state-dot[data-state=searching],.bt-teamov-state-dot[data-state=sending]{background:var(--bt-green);box-shadow:0 0 0 2px color-mix(in srgb,var(--bt-green) 20%,transparent)}
+.bt-teamov-state-dot[data-state=alert]{background:var(--bt-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--bt-accent) 20%,transparent)}
+.bt-teamov-state-dot[data-state=waiting]{background:transparent;border:1px solid var(--bt-ink-3)}
+.bt-teamov-state-dot[data-state=unread]{background:var(--bt-accent)}
+.bt-teamov-attention{background:color-mix(in srgb,var(--bt-star) 4%,transparent)}
+.bt-teamov-attention:hover{background:color-mix(in srgb,var(--bt-star) 8%,var(--bt-hover))}
+.bt-teamov-attention-icon{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:10px;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-attention-icon svg{width:15px;height:15px}
+.bt-teamov-group{padding:7px 0 3px}
+.bt-teamov-group+.bt-teamov-group{border-top:1px solid var(--bt-line)}
+.bt-teamov-group-head{min-height:25px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;color:var(--bt-ink-2)}
+.bt-teamov-group-head b{font-size:11px;line-height:16px;font-weight:600}
+.bt-teamov-group-tail{display:inline-flex;align-items:center;gap:7px}
+.bt-teamov-group-count{color:var(--bt-ink-3);font-size:10px}
+.bt-teamov-mini-pulse{display:inline-flex;align-items:center;gap:2px}
+.bt-teamov-mini-pulse i{width:4px;height:4px;border-radius:50%;background:var(--bt-line-2)}
+.bt-teamov-mini-pulse i[data-state=working],.bt-teamov-mini-pulse i[data-state=thinking],.bt-teamov-mini-pulse i[data-state=searching],.bt-teamov-mini-pulse i[data-state=sending]{background:var(--bt-green)}
+.bt-teamov-mini-pulse i[data-state=alert]{background:var(--bt-accent)}
+.bt-teamov-mini-pulse i[data-state=waiting]{background:var(--bt-star)}
+.bt-teamov-mini-pulse i[data-state=unread]{background:color-mix(in srgb,var(--bt-accent) 58%,var(--bt-line-2))}
+.bt-teamov-record{min-height:44px;display:grid;grid-template-columns:7px 44px minmax(0,1fr) 14px;gap:7px}
+.bt-teamov-record-dot{width:6px;height:6px;align-self:center;border-radius:50%;background:var(--bt-line-2)}
+.bt-teamov-record-dot[data-state=working],.bt-teamov-record-dot[data-state=thinking],.bt-teamov-record-dot[data-state=searching],.bt-teamov-record-dot[data-state=sending]{background:var(--bt-green)}
+.bt-teamov-record-dot[data-state=alert],.bt-teamov-record-dot[data-state=needs],.bt-teamov-record-dot[data-state=unread]{background:var(--bt-accent)}
+.bt-teamov-record-dot[data-state=waiting]{background:var(--bt-star)}
+.bt-teamov-record-time{color:var(--bt-ink-3);font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bt-teamov-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:70px 24px;text-align:center;color:var(--bt-ink-3)}
+.bt-teamov-empty>svg{width:30px;height:30px;opacity:.5}
+.bt-teamov-empty b{font-size:14px;line-height:20px;color:var(--bt-ink)}
+.bt-teamov-empty span{max-width:360px;font-size:11px;line-height:17px}
+.bt-teamov-skeleton{flex:1;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
+.bt-teamov-skeleton i{display:block;border-radius:10px;background:linear-gradient(90deg,var(--bt-hover),var(--bt-active),var(--bt-hover));background-size:200% 100%;animation:bt-us-shine 1.4s ease-in-out infinite}
+.bt-teamov-skel-title{width:260px;height:26px}
+.bt-teamov-skel-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.bt-teamov-skel-stats i{height:48px}
+.bt-teamov-skel-line{height:52px}
+.bt-teamov-skel-line.short{width:75%}
+.bt-teamov-databar{flex:none;min-height:46px;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--bt-line);background:color-mix(in srgb,var(--bt-main) 94%,var(--bt-hover))}
+.bt-teamov-tabs{min-width:0;display:flex;align-items:center;gap:2px}
+.bt-teamov-tabitem{height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;background:transparent;color:var(--bt-ink-3);font:inherit;font-size:12px;cursor:pointer;transition:background-color .12s ease,color .12s ease}
+.bt-teamov-tabitem:hover{background:var(--bt-hover);color:var(--bt-ink)}
+.bt-teamov-tabitem[aria-selected=true]{background:var(--bt-active);color:var(--bt-ink)}
+.bt-teamov-tabitem svg{width:14px;height:14px}
+.bt-teamov-tabitem i{min-width:17px;height:17px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:color-mix(in srgb,var(--bt-ink) 7%,transparent);color:var(--bt-ink-3);font-size:9px;font-style:normal;font-variant-numeric:tabular-nums}
+.bt-teamov-tabitem[aria-selected=true] i{background:var(--bt-main);color:var(--bt-ink-2)}
+.bt-teamov-tabitem:focus-visible,.bt-teamov-refresh:focus-visible,.bt-teamov-project-head:focus-visible,.bt-teamov-link:focus-visible{outline:2px solid var(--bt-accent);outline-offset:-2px}
+.bt-teamov-refresh{flex:none;height:30px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;background:transparent;color:var(--bt-ink-3);font:inherit;font-size:11px;cursor:pointer}
+.bt-teamov-refresh:hover:not(:disabled){background:var(--bt-hover);color:var(--bt-ink)}
+.bt-teamov-refresh:disabled{opacity:.55;cursor:default}
+.bt-teamov-refresh svg{width:14px;height:14px}
+.bt-teamov-refresh:disabled svg{animation:bt-teamov-spin 1s linear infinite}
+@keyframes bt-teamov-spin{to{transform:rotate(360deg)}}
+.bt-teamov-portfolio{flex:none;min-height:76px;padding:12px 20px;display:grid;grid-template-columns:42px minmax(150px,.8fr) minmax(0,1.5fr);gap:12px;align-items:center;border-bottom:1px solid var(--bt-line)}
+.bt-teamov-portfolio-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-portfolio-mark svg{width:20px;height:20px}
+.bt-teamov-portfolio-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
+.bt-teamov-portfolio-copy b{font-size:14px;line-height:19px;font-weight:600}
+.bt-teamov-portfolio-copy span{color:var(--bt-ink-3);font-size:10px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-portfolio-stats{min-width:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.bt-teamov-portfolio-stats>span{min-width:0;padding:0 9px;display:flex;flex-direction:column;gap:1px;border-left:1px solid var(--bt-line)}
+.bt-teamov-portfolio-stats>span:first-child{padding-left:0;border-left:0}
+.bt-teamov-portfolio-stats b{font-size:17px;line-height:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-portfolio-stats small{color:var(--bt-ink-3);font-size:9px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-portfolio-stats [data-kind=working] b{color:var(--bt-green)}
+.bt-teamov-portfolio-stats [data-kind=needs] b{color:var(--bt-accent)}
+.bt-teamov-portfolio-stats [data-kind=learning] b{color:var(--bt-star)}
+.bt-teamov-view-head{min-height:52px;padding:10px 0 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.bt-teamov-view-head h3{margin:2px 0 0;font-size:16px;line-height:21px;font-weight:600;letter-spacing:-.01em}
+.bt-teamov-view-head .bt-soft{flex:none;margin-top:3px}
+.bt-teamov-view-actions{display:flex;align-items:center;gap:8px}
+.bt-teamov-auto-note{display:inline-flex;align-items:center;gap:5px;color:var(--bt-ink-3);font-size:9px;white-space:nowrap}
+.bt-teamov-auto-note i{width:5px;height:5px;border-radius:50%;background:var(--bt-ink-3)}
+.bt-teamov-auto-note i[data-live]{background:var(--bt-green)}
+.bt-teamov-add-project{margin:2px 0 10px;padding:9px;display:flex;align-items:center;gap:7px;border-radius:12px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-add-project input{min-width:0;flex:1;height:32px;padding:0 10px;border:0;border-radius:8px;background:var(--bt-hover);color:var(--bt-ink);font:inherit;font-size:12px;outline:none}
+.bt-teamov-add-project input:focus{box-shadow:0 0 0 2px var(--bt-accent)}
+.bt-teamov-insight-state{min-height:0;padding:0 0 8px;color:var(--bt-ink-3);font-size:10px;line-height:15px}
+.bt-teamov-insight-state:empty{display:none}
+.bt-teamov-projects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.bt-teamov-project[data-expanded]{grid-column:1/-1}
+.bt-teamov-project{border-radius:16px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line),0 6px 20px -18px rgba(0,0,0,.35);overflow:hidden;transition:background-color .14s ease,box-shadow .14s ease}
+.bt-teamov-project:hover{box-shadow:inset 0 0 0 1px var(--bt-line-2),0 9px 26px -18px rgba(0,0,0,.38)}
+.bt-teamov-project-head{width:100%;min-height:62px;padding:10px 12px;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--bt-ink);text-align:left;font:inherit;cursor:pointer}
+.bt-teamov-project-head:hover{background:color-mix(in srgb,var(--bt-hover) 62%,transparent)}
+.bt-teamov-project-icon{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-project-icon svg{width:17px;height:17px}
+.bt-teamov-project-title{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.bt-teamov-project-title>b{min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;line-height:19px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-project-title>small{min-width:0;color:var(--bt-ink-3);font-size:10px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-project-color{width:6px;height:6px;flex:none;border-radius:50%;corner-shape:round}
+.bt-teamov-project-side{flex:none;display:flex;align-items:center;gap:8px;color:var(--bt-ink-3)}
+.bt-teamov-project-side>svg{width:14px;height:14px;transition:transform .18s ease}
+.bt-teamov-project-head[aria-expanded=true] .bt-teamov-project-side>svg{transform:rotate(180deg)}
+.bt-teamov-project-state{display:inline-flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap}
+.bt-teamov-project-progress{padding:0 12px 10px 58px}
+.bt-teamov-project-rail{display:flex;flex-direction:column;gap:4px}
+.bt-teamov-rail-row{min-height:20px;display:grid;grid-template-columns:58px minmax(0,1fr) 38px;align-items:center;gap:7px}
+.bt-teamov-rail-row>span{display:inline-flex;align-items:center;gap:5px;color:var(--bt-ink-3);font-size:9px;line-height:13px}
+.bt-teamov-rail-row>span svg{width:11px;height:11px}
+.bt-teamov-rail-row>small{min-width:0;color:var(--bt-ink-3);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-rail-row>b{color:var(--bt-ink-3);font-size:9px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.bt-teamov-flow-dots{min-width:0;display:flex;align-items:center;gap:3px;overflow:hidden}
+.bt-teamov-flow-dots i{width:7px;height:7px;flex:none;border-radius:50%;background:var(--bt-line-2)}
+.bt-teamov-flow-dots i[data-state=done],.bt-teamov-flow-dots i[data-state=working],.bt-teamov-flow-dots i[data-state=thinking],.bt-teamov-flow-dots i[data-state=searching],.bt-teamov-flow-dots i[data-state=sending]{background:var(--bt-green)}
+.bt-teamov-flow-dots i[data-state=current]{background:var(--bt-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--bt-accent) 12%,transparent)}
+.bt-teamov-flow-dots i[data-state=alert],.bt-teamov-flow-dots i[data-state=needs]{background:var(--bt-accent)}
+.bt-teamov-flow-dots i[data-state=waiting]{background:var(--bt-star)}
+.bt-teamov-flow-dots i[data-state=unread]{background:color-mix(in srgb,var(--bt-accent) 58%,var(--bt-line-2))}
+.bt-teamov-evidence-dots{display:flex;align-items:center;gap:4px}
+.bt-teamov-evidence-dots i{width:13px;height:4px;border-radius:999px;background:var(--bt-line-2)}
+.bt-teamov-evidence-dots i[data-on]{background:var(--bt-green)}
+.bt-teamov-project-body{padding:0 14px 14px;border-top:1px solid var(--bt-line)}
+.bt-teamov-project-insights{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:10px;padding-top:10px}
+.bt-teamov-board-head{min-height:28px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.bt-teamov-board-head h4{margin:2px 0 0;font-size:13px;line-height:18px;font-weight:600}
+.bt-teamov-board-badge{height:20px;padding:0 7px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:8px}
+.bt-teamov-board-badge i{width:5px;height:5px;border-radius:50%;background:var(--bt-green);box-shadow:0 0 0 2px color-mix(in srgb,var(--bt-green) 12%,transparent)}
+.bt-teamov-board-badge[data-warning]{color:var(--bt-star);background:color-mix(in srgb,var(--bt-star) 10%,var(--bt-hover))}
+.bt-teamov-completion,.bt-teamov-knowledge,.bt-teamov-experience{border-radius:12px;background:color-mix(in srgb,var(--bt-ink) 2.6%,transparent);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-completion{padding:10px}
+.bt-teamov-completion[data-status=failing]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bt-danger) 30%,var(--bt-line))}
+.bt-teamov-completion[data-status=attention],.bt-teamov-completion[data-status=standards]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bt-accent) 28%,var(--bt-line))}
+.bt-teamov-completion[data-status=verified],.bt-teamov-completion[data-status=complete]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bt-green) 28%,var(--bt-line))}
+.bt-teamov-workitems{margin-top:10px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--bt-ink) 2.6%,transparent);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-workitems[data-state=stale]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bt-star) 28%,var(--bt-line))}
+.bt-teamov-work-title{display:flex;flex-direction:column;gap:1px}
+.bt-teamov-work-kicker{display:inline-flex;align-items:center;gap:4px}
+.bt-teamov-work-kicker svg{width:10px;height:10px}
+.bt-teamov-work-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
+.bt-teamov-work-tabs,.bt-teamov-work-filters{display:flex;align-items:center;gap:3px}
+.bt-teamov-work-tabs button,.bt-teamov-work-filters button{height:22px;padding:0 7px;border:0;border-radius:6px;background:transparent;color:var(--bt-ink-3);font:inherit;font-size:8px;cursor:pointer}
+.bt-teamov-work-tabs button{display:inline-flex;align-items:center;gap:4px}
+.bt-teamov-work-tabs button i{min-width:13px;height:13px;padding:0 3px;display:inline-grid;place-items:center;border-radius:999px;background:var(--bt-hover);font-style:normal;font-size:7px;font-variant-numeric:tabular-nums}
+.bt-teamov-work-tabs button:hover,.bt-teamov-work-filters button:hover{background:var(--bt-hover);color:var(--bt-ink)}
+.bt-teamov-work-tabs button[data-active],.bt-teamov-work-filters button[data-active]{background:var(--bt-card);color:var(--bt-ink);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-work-list{margin-top:5px;border-top:1px solid var(--bt-line)}
+.bt-teamov-work-row{min-height:40px;display:grid;grid-template-columns:44px minmax(0,1fr) auto 42px 13px;align-items:center;gap:7px;color:var(--bt-ink);text-decoration:none;border-top:1px solid var(--bt-line);transition:background-color .12s ease}
+.bt-teamov-work-row:first-child{border-top:0}
+.bt-teamov-work-row:hover{background:var(--bt-hover);border-radius:8px}
+.bt-teamov-work-number{min-width:0;display:flex;flex-direction:column}
+.bt-teamov-work-number b{font-size:9px;line-height:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-work-number small{color:var(--bt-ink-3);font-size:7px;line-height:9px;text-transform:uppercase}
+.bt-teamov-work-copy{min-width:0;display:flex;flex-direction:column;gap:1px}
+.bt-teamov-work-copy>b{min-width:0;font-size:10px;line-height:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-work-copy>small{min-width:0;color:var(--bt-ink-3);font-size:8px;line-height:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-work-signals{display:flex;align-items:center;gap:4px}
+.bt-teamov-work-signals i{padding:2px 5px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:7px;line-height:10px;font-style:normal;white-space:nowrap}
+.bt-teamov-work-signals i[data-state=open]{background:color-mix(in srgb,var(--bt-green) 12%,var(--bt-hover));color:color-mix(in srgb,var(--bt-green) 82%,var(--bt-ink))}
+.bt-teamov-work-signals i[data-state=merged]{background:color-mix(in srgb,var(--bt-star) 13%,var(--bt-hover));color:color-mix(in srgb,var(--bt-star) 82%,var(--bt-ink))}
+.bt-teamov-work-signals i[data-state=draft]{background:color-mix(in srgb,var(--bt-star) 10%,var(--bt-hover));color:color-mix(in srgb,var(--bt-star) 74%,var(--bt-ink))}
+.bt-teamov-work-signals i[data-check=failed]{background:color-mix(in srgb,var(--bt-danger) 12%,var(--bt-hover));color:var(--bt-danger)}
+.bt-teamov-work-signals i[data-check=pending]{background:color-mix(in srgb,var(--bt-star) 12%,var(--bt-hover));color:color-mix(in srgb,var(--bt-star) 82%,var(--bt-ink))}
+.bt-teamov-work-signals i[data-check=passed]{background:color-mix(in srgb,var(--bt-green) 12%,var(--bt-hover));color:color-mix(in srgb,var(--bt-green) 82%,var(--bt-ink))}
+.bt-teamov-work-row>time{color:var(--bt-ink-3);font-size:7px;line-height:10px;text-align:right;white-space:nowrap}
+.bt-teamov-work-row>svg{width:11px;height:11px;color:var(--bt-ink-3)}
+.bt-teamov-work-foot{min-height:26px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;border-top:1px solid var(--bt-line)}
+.bt-teamov-work-foot>span{color:var(--bt-ink-3);font-size:7px}
+.bt-teamov-work-foot>a{display:inline-flex;align-items:center;gap:2px;color:var(--bt-accent);font-size:8px;text-decoration:none}
+.bt-teamov-work-foot>a svg{width:10px;height:10px}
+.bt-teamov-work-empty{min-height:54px;margin-top:6px;display:flex;align-items:center;gap:8px;color:var(--bt-ink-2)}
+.bt-teamov-work-empty.compact{justify-content:center;color:var(--bt-ink-3);font-size:9px}
+.bt-teamov-work-empty>svg{width:20px;height:20px;flex:none;color:var(--bt-ink-3)}
+.bt-teamov-work-empty>span{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.bt-teamov-work-empty b{font-size:10px;line-height:13px;font-weight:600}
+.bt-teamov-work-empty small{color:var(--bt-ink-3);font-size:8px;line-height:11px}
+.bt-teamov-work-empty .bt-soft{flex:none}
+.bt-teamov-signal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin:7px 0 9px;border-radius:10px;background:var(--bt-line);overflow:hidden}
+.bt-teamov-signal{min-width:0;padding:8px;background:var(--bt-card)}
+.bt-teamov-signal>span{color:var(--bt-ink-3);font-size:8px;line-height:12px}
+.bt-teamov-signal>b{display:block;margin-top:1px;font-size:16px;line-height:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-signal>small{display:block;min-height:24px;margin-top:2px;color:var(--bt-ink-3);font-size:8px;line-height:12px}
+.bt-teamov-signal[data-tone=good] b{color:var(--bt-green)}
+.bt-teamov-signal[data-tone=danger] b{color:var(--bt-danger)}
+.bt-teamov-signal[data-tone=quiet] b{color:var(--bt-ink-3)}
+.bt-teamov-completion-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:8px}
+.bt-teamov-board-block{min-width:0;padding:8px;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-block-title{display:flex;align-items:center;gap:5px;min-width:0;color:var(--bt-ink-3);font-size:8px;line-height:12px}
+.bt-teamov-block-title svg{width:11px;height:11px;flex:none}
+.bt-teamov-block-title b{flex:none;color:var(--bt-ink-2);font-weight:600}
+.bt-teamov-block-title span{min-width:0;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-no-plan{min-height:68px;display:flex;align-items:center;gap:8px;color:var(--bt-ink-3)}
+.bt-teamov-no-plan>svg{width:18px;height:18px;flex:none;opacity:.65}
+.bt-teamov-no-plan>span{display:flex;flex-direction:column;gap:2px}
+.bt-teamov-no-plan b{font-size:10px;line-height:14px;color:var(--bt-ink)}
+.bt-teamov-no-plan small{font-size:8px;line-height:12px}
+.bt-teamov-goal-flow{display:flex;align-items:flex-start;gap:3px;margin-top:9px;overflow:hidden}
+.bt-teamov-goal-node{position:relative;min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.bt-teamov-goal-node:not(:last-child)::after{content:"";position:absolute;top:8px;left:calc(50% + 9px);right:calc(-50% + 9px);height:1px;background:var(--bt-line-2)}
+.bt-teamov-goal-node>i{position:relative;z-index:1;width:17px;height:17px;display:grid;place-items:center;border-radius:50%;background:var(--bt-hover);color:var(--bt-ink-3);font-size:8px;font-style:normal}
+.bt-teamov-goal-node>i svg{width:11px;height:11px}
+.bt-teamov-goal-node>span{max-width:100%;color:var(--bt-ink-3);font-size:8px;line-height:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-goal-node[data-state=done]>i{background:var(--bt-green);color:var(--bt-accent-ink)}
+.bt-teamov-goal-node[data-state=current]>i{background:var(--bt-accent);color:var(--bt-accent-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-accent) 12%,transparent)}
+.bt-teamov-goal-node[data-state=done]>span,.bt-teamov-goal-node[data-state=current]>span{color:var(--bt-ink)}
+.bt-teamov-check-matrix{display:flex;flex-direction:column;gap:3px;margin-top:7px}
+.bt-teamov-check-matrix>div{min-height:22px;display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:5px;padding:0 5px;border-radius:6px;background:color-mix(in srgb,var(--bt-ink) 2.5%,transparent)}
+.bt-teamov-check-matrix i{display:grid;place-items:center;color:var(--bt-ink-3)}
+.bt-teamov-check-matrix i svg{width:10px;height:10px}
+.bt-teamov-check-matrix span{min-width:0;color:var(--bt-ink-2);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-check-matrix small{color:var(--bt-ink-3);font-size:7px}
+.bt-teamov-check-matrix>div[data-state=passed] i{color:var(--bt-green)}
+.bt-teamov-check-matrix>div[data-state=failed] i{color:var(--bt-danger)}
+.bt-teamov-check-matrix>div[data-state=failed] small{color:var(--bt-danger)}
+.bt-teamov-standards-dossier{margin-top:10px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--bt-ink) 2.6%,transparent);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-profile-note{display:inline-flex;margin-left:7px;padding:2px 6px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:8px;font-weight:400;vertical-align:1px}
+.bt-teamov-standards-grid{display:grid;grid-template-columns:1.1fr 1fr 1.15fr;gap:8px;margin-top:7px}
+.bt-teamov-standard-block{min-width:0;padding:8px;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-standard-block>small{display:block;padding:10px 0;color:var(--bt-ink-3);font-size:8px}
+.bt-teamov-file-list,.bt-teamov-source-list{display:flex;flex-direction:column;gap:4px;margin-top:7px}
+.bt-teamov-file-list>div{min-height:27px;display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:5px}
+.bt-teamov-file-list i{display:grid;place-items:center;color:var(--bt-green)}
+.bt-teamov-file-list i svg{width:10px;height:10px}
+.bt-teamov-file-list>div[data-missing] i{color:var(--bt-danger)}
+.bt-teamov-file-list span{min-width:0;display:flex;flex-direction:column}
+.bt-teamov-file-list b{min-width:0;color:var(--bt-ink-2);font-size:9px;line-height:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-file-list small{color:var(--bt-ink-3);font-size:8px;line-height:11px}
+.bt-teamov-file-list em{padding:1px 5px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:8px;font-style:normal}
+.bt-teamov-source-list>div{min-height:31px;display:flex;align-items:center;gap:7px}
+.bt-teamov-source-list>div>span{min-width:0;flex:1;display:flex;flex-direction:column}
+.bt-teamov-source-list b{min-width:0;color:var(--bt-ink-2);font-size:9px;line-height:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-source-list small{min-width:0;color:var(--bt-ink-3);font-size:8px;line-height:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-source-list a{flex:none;color:var(--bt-accent);font-size:9px;text-decoration:none}
+.bt-teamov-source-list>div[data-stale] small{color:color-mix(in srgb,var(--bt-star) 78%,var(--bt-ink))}
+.bt-teamov-experience-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.bt-teamov-experience-chips>span{max-width:100%;padding:4px 7px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:var(--bt-hover)}
+.bt-teamov-experience-chips b{max-width:180px;color:var(--bt-ink-2);font-size:9px;line-height:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-experience-chips small{max-width:110px;color:var(--bt-ink-3);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-standards-library{margin-top:16px;padding-top:4px;border-top:1px solid var(--bt-line)}
+.bt-teamov-standards-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bt-teamov-profile-card{min-width:0;padding:9px;display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;border-radius:12px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-profile-icon{width:30px;height:30px;display:grid;place-items:center;grid-row:1/3;border-radius:10px;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-profile-icon svg{width:14px;height:14px}
+.bt-teamov-profile-copy{min-width:0;display:flex;align-items:baseline;gap:6px}
+.bt-teamov-profile-copy b{font-size:11px;line-height:15px;font-weight:600}
+.bt-teamov-profile-copy small{color:var(--bt-ink-3);font-size:8px}
+.bt-teamov-profile-stats{grid-column:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.bt-teamov-profile-stats>span{min-width:0;padding-left:7px;display:flex;flex-direction:column;border-left:1px solid var(--bt-line)}
+.bt-teamov-profile-stats>span:first-child{padding-left:0;border-left:0}
+.bt-teamov-profile-stats b{font-size:12px;line-height:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-profile-stats small{color:var(--bt-ink-3);font-size:7px;line-height:10px}
+.bt-teamov-quiet-block{min-height:58px;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--bt-ink-3);font-size:9px}
+.bt-teamov-quiet-block svg{width:13px;height:13px}
+.bt-teamov-knowledge,.bt-teamov-experience{padding:10px}
+.bt-teamov-knowledge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:7px}
+.bt-teamov-knowledge-tile{min-width:0;min-height:58px;padding:7px;display:flex;flex-direction:column;border-radius:10px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-knowledge-tile>span{width:20px;height:20px;display:grid;place-items:center;border-radius:6px;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-knowledge-tile svg{width:11px;height:11px}
+.bt-teamov-knowledge-tile>b{margin-top:5px;font-size:14px;line-height:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.bt-teamov-knowledge-tile>small{min-width:0;margin-top:1px;color:var(--bt-ink-3);font-size:8px;line-height:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-knowledge-tile[data-kind=verified] b{color:var(--bt-green)}
+.bt-teamov-knowledge-tile[data-kind=skills] b{color:var(--bt-star)}
+.bt-teamov-source-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.bt-teamov-source-row a{max-width:150px;padding:2px 6px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:8px;line-height:12px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-source-row a:hover{color:var(--bt-ink)}
+.bt-teamov-timeline{position:relative;margin-top:5px}
+.bt-teamov-timeline-event{position:relative;border-top:1px solid var(--bt-line)}
+.bt-teamov-timeline-event:first-child{border-top:0}
+.bt-teamov-timeline-event summary{min-height:34px;display:grid;grid-template-columns:9px 48px minmax(0,1fr);align-items:center;gap:7px;list-style:none;cursor:pointer;color:var(--bt-ink)}
+.bt-teamov-timeline-event summary::-webkit-details-marker{display:none}
+.bt-teamov-timeline-event summary:hover{background:var(--bt-hover);border-radius:8px}
+.bt-teamov-timeline-event summary>i{position:relative;z-index:1;width:6px;height:6px;border-radius:50%;background:var(--bt-line-2);box-shadow:0 0 0 2px var(--bt-card)}
+.bt-teamov-timeline-event[data-kind=goal] summary>i,.bt-teamov-timeline-event[data-kind=skill] summary>i{background:var(--bt-star)}
+.bt-teamov-timeline-event[data-kind=rules] summary>i,.bt-teamov-timeline-event[data-kind=document] summary>i{background:var(--bt-accent)}
+.bt-teamov-timeline-event[data-kind=check] summary>i,.bt-teamov-timeline-event[data-kind=source] summary>i{background:var(--bt-green)}
+.bt-teamov-timeline-event[data-kind=change][data-action=committed] summary>i,.bt-teamov-timeline-event[data-kind=progress] summary>i{background:var(--bt-green)}
+.bt-teamov-timeline-event[data-kind=change][data-action=working] summary>i,.bt-teamov-timeline-event[data-kind=checkpoint] summary>i{background:var(--bt-star)}
+.bt-teamov-timeline-event[data-kind=change][data-action=recorded] summary>i,.bt-teamov-timeline-event[data-kind=decision] summary>i{background:var(--bt-accent)}
+.bt-teamov-timeline-event[data-source=github] summary>i{background:var(--bt-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--bt-accent) 13%,transparent)}
+.bt-teamov-timeline-event summary>time{color:var(--bt-ink-3);font-size:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bt-teamov-timeline-event summary>span{min-width:0;display:flex;align-items:baseline;gap:5px;overflow:hidden}
+.bt-teamov-timeline-event summary b{flex:none;color:var(--bt-ink-2);font-size:9px;line-height:13px;font-weight:500;white-space:nowrap}
+.bt-teamov-timeline-event summary small{min-width:0;color:var(--bt-ink-3);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-timeline-event summary::after{content:"";position:absolute;left:4px;top:25px;bottom:-10px;width:1px;background:var(--bt-line)}
+.bt-teamov-timeline-event:last-child summary::after{display:none}
+.bt-teamov-timeline-detail{margin:0 0 7px 64px;padding:7px 8px;border-radius:8px;background:color-mix(in srgb,var(--bt-ink) 3%,transparent);color:var(--bt-ink-2);font-size:9px;line-height:14px}
+.bt-teamov-timeline-detail p{margin:0 0 5px;display:grid;grid-template-columns:48px minmax(0,1fr);gap:7px;overflow-wrap:anywhere}
+.bt-teamov-timeline-detail p:last-child{margin-bottom:0}
+.bt-teamov-timeline-detail b{color:var(--bt-ink-3);font-size:8px;font-weight:500}
+.bt-teamov-timeline-source{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px!important}
+.bt-teamov-timeline-files{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px!important}
+.bt-teamov-mini-kicker{display:flex;align-items:center;gap:5px;color:var(--bt-ink-3);font-size:9px;line-height:13px;font-weight:500}
+.bt-teamov-mini-kicker svg{width:12px;height:12px}
+.bt-teamov-evidence{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px}
+.bt-teamov-evidence>span{min-width:0;display:flex;flex-direction:column;gap:3px;color:var(--bt-ink-3);font-size:8px}
+.bt-teamov-evidence i{display:block;height:4px;border-radius:999px;background:var(--bt-line-2)}
+.bt-teamov-evidence>span[data-on] i{background:var(--bt-green)}
+.bt-teamov-evidence.compact{display:flex;gap:4px;margin-top:7px}
+.bt-teamov-evidence.compact>span{flex:1;height:5px;border-radius:999px;background:var(--bt-line-2);overflow:hidden}
+.bt-teamov-evidence.compact>span[data-on]{background:var(--bt-green)}
+.bt-teamov-evidence.compact i{display:none}
+.bt-teamov-project-actions{display:flex;align-items:center;gap:6px;padding-top:2px}
+.bt-teamov-project-actions .bt-soft{display:inline-flex;align-items:center;gap:5px}
+.bt-teamov-project-actions svg{width:13px;height:13px}
+.bt-teamov-empty.inline{padding:38px 20px;min-height:180px;border-radius:16px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-teamov-refreshed{min-height:32px;padding:10px 0 4px;display:flex;align-items:center;justify-content:flex-end;gap:5px;color:var(--bt-ink-3);font-size:9px}
+.bt-teamov-refreshed svg{width:11px;height:11px}
+.bt-teamov-memory-library{margin-top:16px;padding-top:4px;border-top:1px solid var(--bt-line)}
+.bt-teamov-memory-topics{display:flex;flex-wrap:wrap;gap:5px;margin:-2px 0 9px}
+.bt-teamov-memory-topics>span{max-width:180px;padding:3px 8px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-2);font-size:10px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-memory-topics>.bt-teamov-quiet{background:transparent;color:var(--bt-ink-3);padding-left:0}
+.bt-teamov-memory-row{min-height:50px;display:flex;align-items:center;gap:9px;border:0;border-radius:10px;background:transparent;color:var(--bt-ink);text-align:left;font:inherit;cursor:pointer}
+.bt-teamov-memory-row:hover{background:var(--bt-hover)}
+.bt-teamov-memory-row-icon{width:29px;height:29px;flex:none;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--bt-star) 9%,var(--bt-hover));color:var(--bt-ink-2)}
+.bt-teamov-memory-row-icon svg{width:14px;height:14px}
+.bt-teamov-memory-topic{flex:none;max-width:90px;padding:2px 6px;border-radius:999px;background:var(--bt-hover);color:var(--bt-ink-3);font-size:9px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-agents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bt-teamov-agent{min-width:0;border-radius:16px;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line);overflow:hidden}
+.bt-teamov-agent[data-health=needs],.bt-teamov-agent[data-health=alert],.bt-teamov-agent[data-health=blocked]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bt-accent) 28%,var(--bt-line))}
+.bt-teamov-agent-head{min-height:58px;padding:10px;display:flex;align-items:center;gap:9px}
+.bt-teamov-agent-glyph{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--bt-hover);color:var(--bt-ink-2)}
+.bt-teamov-agent-glyph svg{width:18px;height:18px}
+.bt-teamov-agent-title{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.bt-teamov-agent-title>b{min-width:0;display:flex;align-items:center;font-size:13px;line-height:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-agent-title>small{min-width:0;color:var(--bt-ink-3);font-size:9px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-agent .bt-round{width:28px;height:28px;flex:none}
+.bt-teamov-agent .bt-round svg{width:14px;height:14px}
+.bt-teamov-agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bt-line);border-top:1px solid var(--bt-line);border-bottom:1px solid var(--bt-line)}
+.bt-teamov-agent-metric{min-width:0;padding:9px 10px;background:var(--bt-card)}
+.bt-teamov-agent-metric.wide{grid-column:1/-1;border-top:1px solid var(--bt-line)}
+.bt-teamov-agent-metric>b{display:block;margin-top:5px;font-size:12px;line-height:17px;font-weight:600}
+.bt-teamov-agent-metric>small{display:block;margin-top:3px;color:var(--bt-ink-3);font-size:9px;line-height:13px}
+.bt-teamov-learning-bar{height:5px;margin-top:8px;display:flex;gap:2px;overflow:hidden;border-radius:999px;background:var(--bt-line)}
+.bt-teamov-learning-bar i{min-width:0;height:100%;border-radius:999px}
+.bt-teamov-learning-bar .approved{background:var(--bt-green)}
+.bt-teamov-learning-bar .declined{background:color-mix(in srgb,var(--bt-danger) 65%,var(--bt-line-2))}
+.bt-teamov-learning-bar .pending{background:var(--bt-star)}
+.bt-teamov-learning-bar .empty{flex:1;background:var(--bt-line-2)}
+.bt-teamov-check-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.bt-teamov-check-row>span{padding:2px 6px;border-radius:6px;background:var(--bt-hover);color:var(--bt-ink-2);font-size:8px;line-height:12px}
+.bt-teamov-agent-foot{min-height:36px;padding:7px 10px;display:flex;align-items:center;gap:6px;color:var(--bt-ink-3);font-size:9px}
+.bt-teamov-agent-foot>span:first-child{min-width:0;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-agent-foot svg{width:12px;height:12px}
+.bt-teamov-link{margin-left:auto;padding:3px 6px;border:0;border-radius:6px;background:transparent;color:var(--bt-ink-2);font:inherit;font-size:9px;cursor:pointer}
+.bt-teamov-link:hover{background:var(--bt-hover);color:var(--bt-ink)}
+.bt-teamov-folder{max-width:100px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt-teamov-live-note{display:inline-flex;align-items:center;gap:5px;color:var(--bt-ink-3);font-size:10px}
+.bt-teamov-live-note i{width:6px;height:6px;border-radius:50%;background:var(--bt-line-2)}
+.bt-teamov-live-note i[data-live]{background:var(--bt-green);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-green) 13%,transparent);animation:bt-teamov-live 1.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.bt-teamov,.bt-teamov-scrim,.bt-teamov-skeleton i,.bt-teamov-ring,.bt-teamov-live-row::before,.bt-teamov-live-note i[data-live],.bt-teamov-refresh svg{animation:none!important}}
+@media (max-width:1100px){.bt-teamov-standards-grid{grid-template-columns:1fr 1fr}.bt-teamov-standard-block:last-child{grid-column:1/-1}}
+@media (max-width:980px){.bt-teamov-projects{grid-template-columns:1fr}.bt-teamov-agents{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-teamov-project-insights{grid-template-columns:1fr}}
+@media (max-width:640px){.bt-teamov-tab{top:78px;width:26px;min-height:88px}.bt-teamov-tab:hover{width:30px}.bt-teamov-tab span{font-size:8px}.bt-teamov-layer{padding:0}.bt-teamov{width:100%;height:100%;max-height:none;border:0;border-radius:0}.bt-teamov-top{height:68px;padding-inline:14px}.bt-teamov-summary{grid-template-columns:50px minmax(0,1fr);gap:12px;padding-inline:14px}.bt-teamov-ring{width:50px;height:50px}.bt-teamov-ring::before{inset:6px}.bt-teamov-stats{grid-template-columns:1fr 1fr;gap:7px 0}.bt-teamov-stat{padding-inline:9px}.bt-teamov-stat:nth-child(3){padding-left:0;border-left:0}.bt-teamov-body{padding-inline:14px}.bt-teamov-portfolio{padding-inline:14px;grid-template-columns:42px minmax(0,1fr);gap:9px}.bt-teamov-portfolio-stats{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr))}.bt-teamov-portfolio-stats>span{padding-inline:7px}.bt-teamov-portfolio-stats b{font-size:15px}.bt-teamov-portfolio-stats small{font-size:8px}.bt-teamov-databar{padding-inline:10px}.bt-teamov-tabitem{padding-inline:8px}.bt-teamov-tabitem svg{display:none}.bt-teamov-refresh span{display:none}.bt-teamov-project-side{max-width:46%}.bt-teamov-project-state{justify-content:flex-end;text-align:right;white-space:normal}.bt-teamov-project-progress{padding-left:12px}.bt-teamov-standards-grid{grid-template-columns:1fr}.bt-teamov-standard-block:last-child{grid-column:auto}.bt-teamov-standards-library-grid{grid-template-columns:1fr}.bt-teamov-completion-grid{grid-template-columns:1fr}.bt-teamov-project-insights{grid-template-columns:1fr}.bt-teamov-knowledge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bt-teamov-signal>small{min-height:0}.bt-teamov-agents{grid-template-columns:1fr}.bt-teamov-projects{grid-template-columns:1fr}.bt-teamov-memory-topic{display:none}.bt-teamov-add-project{flex-wrap:wrap}.bt-teamov-add-project input{flex-basis:100%}}
+@media (max-width:640px){.bt-teamov-work-toolbar{align-items:flex-start;flex-direction:column}.bt-teamov-work-row{grid-template-columns:39px minmax(0,1fr) 12px}.bt-teamov-work-row>time{display:none}.bt-teamov-work-signals{grid-column:2;justify-content:flex-start}.bt-teamov-work-row>svg{grid-column:3;grid-row:1/3}.bt-teamov-work-foot{align-items:center}.bt-teamov-work-empty{flex-wrap:wrap}.bt-teamov-work-empty .bt-soft{margin-left:28px}}
+@media (max-width:520px){body:has(.tbh) .bt-teamov-tab{top:calc(46vh + 12px);right:0}body:has(.tbh-toggle) .bt-teamov-tab{right:0}}
+${SITES_CSS}
+`;
+
+// src/client/overlays.js
+var import_react68 = require("react");
 var import_react_dom11 = require("react-dom");
 var DIALOG_EXIT_MS2 = 160;
 var MENU_EXIT_MS3 = 120;
-function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity, useWork, useRegistry, useBrowserPages, useBrowserTabs, useBrowserHolds, useUpdate, useFrame, useSidebarPref, useSettingsShellHeld, actions }) {
+function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity, useWork, useRegistry, useBrowserPages, useBrowserTabs, useBrowserHolds, useUpdate, useFrame, useSidebarPref, useSettingsShellHeld, useSurface, actions }) {
   const roster = useRoster((value) => value);
   const ui = useUi((value) => value);
   useRegistry((value) => value);
   const frameSnap = useFrame ? useFrame((value) => value) : { viewport: window.innerWidth, sidebarWidth: FALLBACK_SIDEBAR_WIDTH, collapsedWidth: 0 };
   const pref = useSidebarPref ? useSidebarPref((value) => value) : "open";
   const current = useSessions((list) => Object.values(list.byId).find((session) => (session?.retainedBy?.mainView ?? 0) > 0)?.id ?? null);
-  const previous = (0, import_react66.useRef)(current);
-  (0, import_react66.useEffect)(() => {
+  const previous = (0, import_react68.useRef)(current);
+  (0, import_react68.useEffect)(() => {
     if (previous.current === current) return;
     previous.current = current;
     if (current) actions.followPanel?.(current);
@@ -40672,8 +44955,8 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
     panel: open ? { view: open.view, yielded: ui.panelYield === true } : null
   });
   const shown = open !== null && layout.panel !== "folded" ? open : null;
-  const [kept, setKept] = (0, import_react66.useState)(shown);
-  (0, import_react66.useEffect)(() => {
+  const [kept, setKept] = (0, import_react68.useState)(shown);
+  (0, import_react68.useEffect)(() => {
     if (shown) {
       setKept(shown);
       return void 0;
@@ -40693,20 +44976,23 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
   const [memory, memoryLeaving] = useLinger(ui.memory && memoryOwner(ui.memory) ? ui.memory : null, DIALOG_EXIT_MS2);
   const owner = memory ? memoryOwner(memory) : null;
   const [menu, menuLeaving] = useLinger(ui.menu, MENU_EXIT_MS3);
+  const [teamOverview, teamOverviewLeaving] = useLinger(ui.teamOverview, DIALOG_EXIT_MS2);
   const opening = openingModel({ pending: ui.pendingOpen ?? null, current, roster });
-  return (0, import_react66.createElement)(
-    import_react66.Fragment,
+  return (0, import_react68.createElement)(
+    import_react68.Fragment,
     null,
-    opening ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
-    pane ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === "overlay", roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,
-    ui.newChat ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(NewChat, { key: `${ui.newChat}:${ui.newChatSection ?? ""}`, mode: ui.newChat, sectionId: ui.newChatSection ?? null, paneLeft: layout.column, roster, actions }), document.body) : null,
-    ui.palette ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(CommandPalette, { key: ui.palette.token, start: ui.palette.query, token: ui.palette.token, roster, actions, useSessions }), document.body) : null,
-    ui.groupSearch && roster.roomsById[ui.groupSearch.roomId] ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(GroupSearch, { key: ui.groupSearch.token, room: roster.roomsById[ui.groupSearch.roomId], roster, token: ui.groupSearch.token, actions }), document.body) : null,
-    ui.exchange ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(ExchangeDialog, { pair: ui.exchange, paneLeft: layout.column, roster, actions }), document.body) : null,
-    ui.voice ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(VoiceMode, { key: ui.voice, sessionId: ui.voice, paneLeft: layout.column, roster, actions, useSessions, useSessionStatus }), document.body) : null,
-    menu ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(ContextMenu, { key: `${menu.kind ?? ""}:${menu.id}:${menu.x}:${menu.y}`, menu, roster, actions, useWork, leaving: menuLeaving }), document.body) : null,
-    settings ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(SettingsDialog, { page: settings.page, id: settings.id, roster, actions, useUpdate, leaving: settingsLeaving }), document.body) : null,
-    owner ? (0, import_react_dom11.createPortal)((0, import_react66.createElement)(MemoryDialog, { key: owner.id, owner, actions, leaving: memoryLeaving }), document.body) : null
+    (0, import_react68.createElement)(TeamOverviewTab, { useUi, useSurface, actions }),
+    opening ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
+    teamOverview ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(TeamOverviewPanel, { useRoster, useWork, useSessionStatus, useUi, actions, leaving: teamOverviewLeaving }), document.body) : null,
+    pane ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === "overlay", roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,
+    ui.newChat ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(NewChat, { key: `${ui.newChat}:${ui.newChatSection ?? ""}`, mode: ui.newChat, sectionId: ui.newChatSection ?? null, paneLeft: layout.column, roster, actions }), document.body) : null,
+    ui.palette ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(CommandPalette, { key: ui.palette.token, start: ui.palette.query, token: ui.palette.token, roster, actions, useSessions }), document.body) : null,
+    ui.groupSearch && roster.roomsById[ui.groupSearch.roomId] ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(GroupSearch, { key: ui.groupSearch.token, room: roster.roomsById[ui.groupSearch.roomId], roster, token: ui.groupSearch.token, actions }), document.body) : null,
+    ui.exchange ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(ExchangeDialog, { pair: ui.exchange, paneLeft: layout.column, roster, actions }), document.body) : null,
+    ui.voice ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(VoiceMode, { key: ui.voice, sessionId: ui.voice, paneLeft: layout.column, roster, actions, useSessions, useSessionStatus }), document.body) : null,
+    menu ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(ContextMenu, { key: `${menu.kind ?? ""}:${menu.id}:${menu.x}:${menu.y}`, menu, roster, actions, useWork, leaving: menuLeaving }), document.body) : null,
+    settings ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(SettingsDialog, { page: settings.page, id: settings.id, roster, actions, useUpdate, leaving: settingsLeaving }), document.body) : null,
+    owner ? (0, import_react_dom11.createPortal)((0, import_react68.createElement)(MemoryDialog, { key: owner.id, owner, actions, leaving: memoryLeaving }), document.body) : null
   );
 }
 
@@ -40789,7 +45075,7 @@ function readPage(limits) {
     items.push(item);
     return { item, number: items.length, secret };
   };
-  const nameOf3 = (el, text2, secret) => collapse(
+  const nameOf4 = (el, text2, secret) => collapse(
     el.getAttribute("aria-label") || text2 || (el.localName === "input" && !secret && NO_VALUE_TYPES.has(el.type) ? el.value : "") || el.getAttribute("placeholder") || el.title || el.getAttribute("alt") || el.querySelector?.("img[alt]")?.alt || el.getAttribute("name") || ""
   ).slice(0, 80);
   const fenced = (code, lang) => {
@@ -40965,7 +45251,7 @@ ${body2 || "(no text)"}
     const found = itemFor(el, style);
     const mark2 = found ? `[#${found.number}]` : "";
     if (tag === "input" || tag === "textarea" || tag === "select") {
-      if (found) found.item.name = nameOf3(el, tag === "select" ? "" : el.labels?.[0] ? collapse(el.labels[0].textContent) : "", found.secret);
+      if (found) found.item.name = nameOf4(el, tag === "select" ? "" : el.labels?.[0] ? collapse(el.labels[0].textContent) : "", found.secret);
       return mark2 ? ` ${mark2} ` : "";
     }
     let body2;
@@ -40983,7 +45269,7 @@ ${body2 || "(no text)"}
     } else {
       body2 = children(el, { ...next, pre: keepsSpace });
     }
-    if (found) found.item.name = nameOf3(el, oneLine(body2), found.secret);
+    if (found) found.item.name = nameOf4(el, oneLine(body2), found.secret);
     const level = /^h([1-6])$/.exec(tag)?.[1] || (el.getAttribute("role") === "heading" ? el.getAttribute("aria-level") || "2" : "");
     if (level) {
       const title = oneLine(body2);
@@ -41205,7 +45491,7 @@ function createBotBrowsers({ bridge, createSource: createSource2, storage = glob
   let layer;
   let shown = null;
   let rect = null;
-  let visible = false;
+  let visible2 = false;
   let resizeLater = 0;
   let disposed = false;
   let serial2 = 0;
@@ -41296,7 +45582,7 @@ function createBotBrowsers({ bridge, createSource: createSource2, storage = glob
   const place = (entry) => {
     const box = rect ?? { left: 0, top: 0, width: 800, height: 600 };
     if (entry.appView) {
-      void bridge.views.place(entry.tabId, box, shown === entry.tabId && visible && Boolean(rect));
+      void bridge.views.place(entry.tabId, box, shown === entry.tabId && visible2 && Boolean(rect));
       return;
     }
     Object.assign(entry.element.style, {
@@ -41304,7 +45590,7 @@ function createBotBrowsers({ bridge, createSource: createSource2, storage = glob
       top: `${box.top}px`,
       width: `${box.width}px`,
       height: `${box.height}px`,
-      visibility: shown === entry.tabId && visible && rect ? "visible" : "hidden"
+      visibility: shown === entry.tabId && visible2 && rect ? "visible" : "hidden"
     });
   };
   async function preview(tabId) {
@@ -41504,7 +45790,7 @@ function createBotBrowsers({ bridge, createSource: createSource2, storage = glob
   }
   const activeTab = (botId) => tabs.getSnapshot()[botId]?.active ?? null;
   async function show2(tabId, box = null) {
-    if (tabId !== null && tabId === shown && visible && box !== null) {
+    if (tabId !== null && tabId === shown && visible2 && box !== null) {
       rect = box;
       const entry2 = views.get(tabId);
       if (entry2) place(entry2);
@@ -41516,7 +45802,7 @@ function createBotBrowsers({ bridge, createSource: createSource2, storage = glob
     }
     shown = tabId;
     if (box) rect = box;
-    visible = tabId !== null && box !== null;
+    visible2 = tabId !== null && box !== null;
     for (const entry2 of views.values()) place(entry2);
     if (tabId === null) return;
     const entry = await open(tabId);
@@ -41700,7 +45986,7 @@ function serveBrowserReads({ browsers, post, clientId = globalThis.crypto.random
 }
 
 // src/client/team-board.js
-var import_react67 = require("react");
+var import_react69 = require("react");
 var DEFAULT_CONFIG = Object.freeze({ defaultOpen: true, sort: "section", density: "two", showHistory: true });
 var CONFIG_URL = "./team-board.config.json";
 var SORTS = /* @__PURE__ */ new Set(["section", "role"]);
@@ -41762,7 +46048,7 @@ var durationOf = (ms) => {
   return `${hours}h ${pad2(minutes % 60)}m`;
 };
 var roleOf = (bot) => typeof bot?.role === "string" ? bot.role : "";
-var nameOf2 = (bot) => typeof bot?.name === "string" && bot.name !== "" ? bot.name : bot?.id ?? "";
+var nameOf3 = (bot) => typeof bot?.name === "string" && bot.name !== "" ? bot.name : bot?.id ?? "";
 function entryOf(bot, work) {
   const entries2 = work?.bots ?? {};
   const doing = entries2[bot.id];
@@ -41786,7 +46072,7 @@ function groupBots(bots, roster, sort) {
   if (sort === "role") {
     const flat = [...bots].sort((a, b) => {
       const byRole = roleOf(a).localeCompare(roleOf(b));
-      return byRole !== 0 ? byRole : nameOf2(a).localeCompare(nameOf2(b));
+      return byRole !== 0 ? byRole : nameOf3(a).localeCompare(nameOf3(b));
     });
     return flat.length === 0 ? [] : [{ id: "role", name: "", bots: flat }];
   }
@@ -41807,33 +46093,33 @@ function Row4({ bot, doing, waiting, since, now, main }) {
   const running = doing !== void 0;
   const state = botState(running, running ? "working" : void 0, waiting);
   const line = running ? `${COPY.worked} ${durationOf(now - since)}` : waiting ? `${COPY.waited} ${durationOf(now - since)}` : COPY.idleFor;
-  return (0, import_react67.createElement)(
+  return (0, import_react69.createElement)(
     "article",
     { className: "tb-row", "data-running": running || void 0, "data-waiting": !running && waiting || void 0, "data-main": main || void 0 },
-    (0, import_react67.createElement)("div", { className: "tb-avatar" }, (0, import_react67.createElement)(BotAvatar, { bot, size: main ? 44 : 34, state, live: running, main })),
-    (0, import_react67.createElement)(
+    (0, import_react69.createElement)("div", { className: "tb-avatar" }, (0, import_react69.createElement)(BotAvatar, { bot, size: main ? 44 : 34, state, live: running, main })),
+    (0, import_react69.createElement)(
       "div",
       { className: "tb-body" },
-      (0, import_react67.createElement)(
+      (0, import_react69.createElement)(
         "div",
         { className: "tb-line" },
-        (0, import_react67.createElement)("span", { className: "tb-name" }, nameOf2(bot)),
-        roleOf(bot) === "" ? null : (0, import_react67.createElement)("span", { className: "tb-role" }, roleOf(bot)),
-        running ? (0, import_react67.createElement)("span", { className: "tb-pulse", "aria-hidden": true }) : null
+        (0, import_react69.createElement)("span", { className: "tb-name" }, nameOf3(bot)),
+        roleOf(bot) === "" ? null : (0, import_react69.createElement)("span", { className: "tb-role" }, roleOf(bot)),
+        running ? (0, import_react69.createElement)("span", { className: "tb-pulse", "aria-hidden": true }) : null
       ),
-      (0, import_react67.createElement)("div", { className: "tb-task" }, (0, import_react67.createElement)("span", { className: "tb-label" }, `${COPY.task}：`), (0, import_react67.createElement)("span", { className: "tb-phrase" }, running ? workPhrase(doing) : COPY.standby)),
-      (0, import_react67.createElement)("div", { className: "tb-who" }, `${COPY.who}：${nameOf2(bot)} · ${line}`)
+      (0, import_react69.createElement)("div", { className: "tb-task" }, (0, import_react69.createElement)("span", { className: "tb-label" }, `${COPY.task}：`), (0, import_react69.createElement)("span", { className: "tb-phrase" }, running ? workPhrase(doing) : COPY.standby)),
+      (0, import_react69.createElement)("div", { className: "tb-who" }, `${COPY.who}：${nameOf3(bot)} · ${line}`)
     )
   );
 }
 function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.now }) {
-  const [config, setConfig] = (0, import_react67.useState)(DEFAULT_CONFIG);
-  const [stamp, setStamp] = (0, import_react67.useState)(() => now());
-  const [tick, setTick] = (0, import_react67.useState)(0);
-  const [history, setHistory] = (0, import_react67.useState)({ status: "loading", rows: [] });
-  const [historyOpen, setHistoryOpen] = (0, import_react67.useState)(false);
-  const sinceRef = (0, import_react67.useRef)(/* @__PURE__ */ new Map());
-  (0, import_react67.useEffect)(() => {
+  const [config, setConfig] = (0, import_react69.useState)(DEFAULT_CONFIG);
+  const [stamp, setStamp] = (0, import_react69.useState)(() => now());
+  const [tick, setTick] = (0, import_react69.useState)(0);
+  const [history, setHistory] = (0, import_react69.useState)({ status: "loading", rows: [] });
+  const [historyOpen, setHistoryOpen] = (0, import_react69.useState)(false);
+  const sinceRef = (0, import_react69.useRef)(/* @__PURE__ */ new Map());
+  (0, import_react69.useEffect)(() => {
     let alive = true;
     const load = () => {
       readBoardConfig(configUrl).then((next) => {
@@ -41848,8 +46134,8 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
       window.removeEventListener("focus", onFocus);
     };
   }, [configUrl]);
-  const bots = (0, import_react67.useMemo)(() => visibleBots(roster), [roster]);
-  const doingById = (0, import_react67.useMemo)(() => {
+  const bots = (0, import_react69.useMemo)(() => visibleBots(roster), [roster]);
+  const doingById = (0, import_react69.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     for (const bot of bots) {
       const doing = entryOf(bot, work);
@@ -41857,7 +46143,7 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
     }
     return map;
   }, [bots, work]);
-  const waitingById = (0, import_react67.useMemo)(() => {
+  const waitingById = (0, import_react69.useMemo)(() => {
     const map = /* @__PURE__ */ new Set();
     for (const bot of bots) if (!doingById.has(bot.id) && isWaiting(roster, work, bot)) map.add(bot.id);
     return map;
@@ -41866,7 +46152,7 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
   const waitingCount = waitingById.size;
   const idleCount = Math.max(0, bots.length - runningCount - waitingCount);
   const runningKey = [...doingById.keys()].sort().join(",");
-  (0, import_react67.useEffect)(() => {
+  (0, import_react69.useEffect)(() => {
     const at2 = now();
     const since = sinceRef.current;
     for (const id of since.keys()) {
@@ -41875,14 +46161,14 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
     for (const id of doingById.keys()) if (!since.has(id)) since.set(id, at2);
     for (const id of waitingById.keys()) if (!since.has(id)) since.set(id, at2);
   }, [runningKey, waitingCount]);
-  (0, import_react67.useEffect)(() => setStamp(now()), [roster, work]);
-  (0, import_react67.useEffect)(() => {
+  (0, import_react69.useEffect)(() => setStamp(now()), [roster, work]);
+  (0, import_react69.useEffect)(() => {
     if (reducedMotion()) return void 0;
     if (runningCount === 0) return void 0;
     const timer = setTimeout(() => setTick((value) => value + 1), 1e3);
     return () => clearTimeout(timer);
   }, [tick, runningCount]);
-  (0, import_react67.useEffect)(() => {
+  (0, import_react69.useEffect)(() => {
     const api = globalThis.window?.dsbot?.panelHistory;
     if (typeof api !== "function") {
       setHistory({ status: "absent", rows: [] });
@@ -41903,35 +46189,35 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
   const at = now();
   const groups = groupBots(bots, roster, config.sort);
   const showHistory = config.showHistory !== false && history.status !== "absent";
-  return (0, import_react67.createElement)(
+  return (0, import_react69.createElement)(
     "section",
     { className: "tb-board", "data-density": config.density, "aria-label": "团队看板" },
-    (0, import_react67.createElement)(
+    (0, import_react69.createElement)(
       "header",
       { className: "tb-head" },
-      (0, import_react67.createElement)(
+      (0, import_react69.createElement)(
         "div",
         { className: "tb-counts" },
-        (0, import_react67.createElement)("span", { className: "tb-count", "data-kind": "running" }, (0, import_react67.createElement)("b", null, String(runningCount)), COPY.running),
-        (0, import_react67.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
-        (0, import_react67.createElement)("span", { className: "tb-count", "data-kind": "waiting" }, (0, import_react67.createElement)("b", null, String(waitingCount)), COPY.waiting),
-        (0, import_react67.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
-        (0, import_react67.createElement)("span", { className: "tb-count", "data-kind": "idle" }, (0, import_react67.createElement)("b", null, String(idleCount)), COPY.idle)
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "running" }, (0, import_react69.createElement)("b", null, String(runningCount)), COPY.running),
+        (0, import_react69.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "waiting" }, (0, import_react69.createElement)("b", null, String(waitingCount)), COPY.waiting),
+        (0, import_react69.createElement)("span", { className: "tb-sep", "aria-hidden": true }, "/"),
+        (0, import_react69.createElement)("span", { className: "tb-count", "data-kind": "idle" }, (0, import_react69.createElement)("b", null, String(idleCount)), COPY.idle)
       ),
-      (0, import_react67.createElement)("div", { className: "tb-stamp" }, `${COPY.updated} `, (0, import_react67.createElement)("time", { dateTime: new Date(stamp).toISOString() }, clockOf(stamp))),
-      typeof onClose === "function" ? (0, import_react67.createElement)("button", { type: "button", className: "tb-close", "aria-label": COPY.close, title: COPY.close, onClick: onClose }, "×") : null
+      (0, import_react69.createElement)("div", { className: "tb-stamp" }, `${COPY.updated} `, (0, import_react69.createElement)("time", { dateTime: new Date(stamp).toISOString() }, clockOf(stamp))),
+      typeof onClose === "function" ? (0, import_react69.createElement)("button", { type: "button", className: "tb-close", "aria-label": COPY.close, title: COPY.close, onClick: onClose }, "×") : null
     ),
-    bots.length === 0 ? (0, import_react67.createElement)("div", { className: "tb-empty", role: "status" }, COPY.empty) : (0, import_react67.createElement)(
+    bots.length === 0 ? (0, import_react69.createElement)("div", { className: "tb-empty", role: "status" }, COPY.empty) : (0, import_react69.createElement)(
       "div",
       { className: "tb-groups" },
-      groups.map((group) => (0, import_react67.createElement)(
+      groups.map((group) => (0, import_react69.createElement)(
         "div",
         { className: "tb-group", key: group.id },
-        group.name === "" ? null : (0, import_react67.createElement)("div", { className: "tb-group-name" }, (0, import_react67.createElement)("span", null, group.name), (0, import_react67.createElement)("span", { className: "tb-group-count" }, String(group.bots.length))),
-        (0, import_react67.createElement)(
+        group.name === "" ? null : (0, import_react69.createElement)("div", { className: "tb-group-name" }, (0, import_react69.createElement)("span", null, group.name), (0, import_react69.createElement)("span", { className: "tb-group-count" }, String(group.bots.length))),
+        (0, import_react69.createElement)(
           "div",
           { className: "tb-rows" },
-          group.bots.map((bot) => (0, import_react67.createElement)(Row4, {
+          group.bots.map((bot) => (0, import_react69.createElement)(Row4, {
             key: bot.id,
             bot,
             doing: doingById.get(bot.id),
@@ -41943,22 +46229,22 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
         )
       ))
     ),
-    showHistory ? (0, import_react67.createElement)(
+    showHistory ? (0, import_react69.createElement)(
       "footer",
       { className: "tb-history" },
-      (0, import_react67.createElement)("button", {
+      (0, import_react69.createElement)("button", {
         type: "button",
         className: "tb-history-toggle",
         "aria-expanded": historyOpen,
         onClick: () => setHistoryOpen((value) => !value)
-      }, (0, import_react67.createElement)("span", null, COPY.history), (0, import_react67.createElement)("span", { className: "tb-history-caret", "aria-hidden": true }, historyOpen ? "▾" : "▸")),
-      historyOpen ? history.status === "rows" ? (0, import_react67.createElement)("ul", { className: "tb-history-rows" }, history.rows.slice(0, 50).map((row, index) => (0, import_react67.createElement)(
+      }, (0, import_react69.createElement)("span", null, COPY.history), (0, import_react69.createElement)("span", { className: "tb-history-caret", "aria-hidden": true }, historyOpen ? "▾" : "▸")),
+      historyOpen ? history.status === "rows" ? (0, import_react69.createElement)("ul", { className: "tb-history-rows" }, history.rows.slice(0, 50).map((row, index) => (0, import_react69.createElement)(
         "li",
         { key: `${row?.ts ?? index}:${row?.bot ?? ""}` },
-        (0, import_react67.createElement)("span", { className: "tb-history-bot" }, String(row?.bot ?? "")),
-        (0, import_react67.createElement)("span", { className: "tb-history-state" }, historyState(row?.state)),
-        row?.doing ? (0, import_react67.createElement)("span", { className: "tb-history-doing" }, String(row.doing)) : null
-      ))) : (0, import_react67.createElement)("p", { className: "tb-history-note" }, COPY.historyPending) : null
+        (0, import_react69.createElement)("span", { className: "tb-history-bot" }, String(row?.bot ?? "")),
+        (0, import_react69.createElement)("span", { className: "tb-history-state" }, historyState(row?.state)),
+        row?.doing ? (0, import_react69.createElement)("span", { className: "tb-history-doing" }, String(row.doing)) : null
+      ))) : (0, import_react69.createElement)("p", { className: "tb-history-note" }, COPY.historyPending) : null
     ) : null
   );
 }
@@ -42012,7 +46298,7 @@ var TEAM_BOARD_CSS = `
 `;
 
 // src/client/team-board-host.js
-var import_react68 = require("react");
+var import_react70 = require("react");
 var TEAM_BOARD_CONFIG_URL = "/api/bot/team-board.config.json";
 var TEAM_BOARD_HOST_CSS = `
 /* At 521px and up the panel keeps a 204px column of the page beside it (100vw - 204px);
@@ -42029,8 +46315,8 @@ var TEAM_BOARD_HOST_CSS = `
 function TeamBoardHost({ useRoster, useWork }) {
   const roster = useRoster((value) => value);
   const work = useWork((value) => value);
-  const [open, setOpen] = (0, import_react68.useState)(true);
-  (0, import_react68.useEffect)(() => {
+  const [open, setOpen] = (0, import_react70.useState)(true);
+  (0, import_react70.useEffect)(() => {
     let live = true;
     readBoardConfig(TEAM_BOARD_CONFIG_URL).then((config) => {
       if (live) setOpen(config.defaultOpen);
@@ -42040,12 +46326,12 @@ function TeamBoardHost({ useRoster, useWork }) {
     };
   }, []);
   if (!open) {
-    return (0, import_react68.createElement)("button", { className: "tbh-toggle", type: "button", title: "Team board", onClick: () => setOpen(true) }, "团队看板");
+    return (0, import_react70.createElement)("button", { className: "tbh-toggle", type: "button", title: "Team board", onClick: () => setOpen(true) }, "团队看板");
   }
-  return (0, import_react68.createElement)(
+  return (0, import_react70.createElement)(
     "aside",
     { className: "tbh", "aria-label": "Team board" },
-    (0, import_react68.createElement)(TeamBoard, { roster, work, onClose: () => setOpen(false), configUrl: TEAM_BOARD_CONFIG_URL })
+    (0, import_react70.createElement)(TeamBoard, { roster, work, onClose: () => setOpen(false), configUrl: TEAM_BOARD_CONFIG_URL })
   );
 }
 
@@ -42126,23 +46412,23 @@ function answerFailure(record, proposal, failure) {
   return { ...record, [proposal.id]: { proposal, error: failure?.message ?? String(failure) } };
 }
 function proposalCards({ proposals = [], settled = [], failures = {} }) {
-  const visible = [...settled.filter((entry) => !proposals.some((proposal) => proposal.id === entry.id)), ...proposals];
+  const visible2 = [...settled.filter((entry) => !proposals.some((proposal) => proposal.id === entry.id)), ...proposals];
   for (const entry of Object.values(failures)) {
-    if (!proposals.some((proposal) => proposal.id === entry.proposal.id) && !visible.some((proposal) => proposal.id === entry.proposal.id)) visible.push(entry.proposal);
+    if (!proposals.some((proposal) => proposal.id === entry.proposal.id) && !visible2.some((proposal) => proposal.id === entry.proposal.id)) visible2.push(entry.proposal);
   }
-  return visible.sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
+  return visible2.sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
 }
 
 // src/client/learning-card.js
-var import_react69 = require("react");
+var import_react71 = require("react");
 var failedAnswers = /* @__PURE__ */ new Map();
 function ProposalCard({ proposal, initialError = "", onFailure, onResolved, actions }) {
   const outcome = proposal.outcome;
-  const [busy, setBusy] = (0, import_react69.useState)(false);
-  const [error, setError] = (0, import_react69.useState)(initialError);
-  const [open, setOpen] = (0, import_react69.useState)(false);
-  const busyRef = (0, import_react69.useRef)(false);
-  const titleId = (0, import_react69.useId)();
+  const [busy, setBusy] = (0, import_react71.useState)(false);
+  const [error, setError] = (0, import_react71.useState)(initialError);
+  const [open, setOpen] = (0, import_react71.useState)(false);
+  const busyRef = (0, import_react71.useRef)(false);
+  const titleId = (0, import_react71.useId)();
   const answer = (approve) => {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -42158,68 +46444,68 @@ function ProposalCard({ proposal, initialError = "", onFailure, onResolved, acti
   };
   const update = proposal.action === "update";
   const agents = proposal.kind === "agents";
-  const rows2 = (0, import_react69.useMemo)(() => lineDiff(update ? proposal.previous?.content : "", proposal.content), [update, proposal.previous?.content, proposal.content]);
+  const rows2 = (0, import_react71.useMemo)(() => lineDiff(update ? proposal.previous?.content : "", proposal.content), [update, proposal.previous?.content, proposal.content]);
   const change = agents ? [
-    (0, import_react69.createElement)(FileBox, { key: "file", name: "AGENTS.md", path: proposal.folder, state: proposal.exists === false ? "Added" : "Modified", blocks: proposal.edits.map((edit) => [
+    (0, import_react71.createElement)(FileBox, { key: "file", name: "AGENTS.md", path: proposal.folder, state: proposal.exists === false ? "Added" : "Modified", blocks: proposal.edits.map((edit) => [
       ...(edit.op === "add" ? [] : editLines(edit.old)).map((line) => ({ kind: "removed", line })),
       ...(edit.op === "remove" ? [] : editLines(edit.text)).map((line) => ({ kind: "added", line }))
     ]) }),
-    ...proposal.edits.map((edit, index) => edit.why ? (0, import_react69.createElement)("p", { className: "bt-learning-why", key: `why-${index}` }, edit.why) : null)
+    ...proposal.edits.map((edit, index) => edit.why ? (0, import_react71.createElement)("p", { className: "bt-learning-why", key: `why-${index}` }, edit.why) : null)
   ] : [
-    (0, import_react69.createElement)(FileBox, { key: "file", name: "SKILL.md", path: `skills/${proposal.name}`, state: update ? "Updated" : "Added", blocks: [rows2] }),
-    proposal.why ? (0, import_react69.createElement)("p", { className: "bt-learning-why", key: "why" }, proposal.why) : null
+    (0, import_react71.createElement)(FileBox, { key: "file", name: "SKILL.md", path: `skills/${proposal.name}`, state: update ? "Updated" : "Added", blocks: [rows2] }),
+    proposal.why ? (0, import_react71.createElement)("p", { className: "bt-learning-why", key: "why" }, proposal.why) : null
   ];
   const kind = t(agents ? "AGENTS.md update" : update ? "Skill update" : "New skill");
   if (outcome) {
     const what = agents ? proposal.folder : proposal.name;
-    return (0, import_react69.createElement)(
+    return (0, import_react71.createElement)(
       "section",
       { className: "bt-q bt-q-settled bt-learning-card bt-learning-settled", role: "group", "aria-label": `${kind} · ${what}`, "data-outcome": outcome },
-      (0, import_react69.createElement)(
+      (0, import_react71.createElement)(
         "button",
         { type: "button", className: "bt-learning-fold", "aria-expanded": open, onClick: () => setOpen(!open) },
-        (0, import_react69.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react69.createElement)(agents ? PencilIcon : MemoryIcon)),
-        (0, import_react69.createElement)("span", { className: "bt-learning-kind" }, kind),
-        (0, import_react69.createElement)("span", { className: "bt-learning-sum" }, `${t(outcome === "approved" ? "Approved" : "Declined")} · ${what}`)
+        (0, import_react71.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react71.createElement)(agents ? PencilIcon : MemoryIcon)),
+        (0, import_react71.createElement)("span", { className: "bt-learning-kind" }, kind),
+        (0, import_react71.createElement)("span", { className: "bt-learning-sum" }, `${t(outcome === "approved" ? "Approved" : "Declined")} · ${what}`)
       ),
       open ? change : null
     );
   }
   const oldDetail = update && typeof proposal.previous?.description === "string" && proposal.previous.description !== proposal.description ? proposal.previous.description : void 0;
-  return (0, import_react69.createElement)(
+  return (0, import_react71.createElement)(
     "section",
     { className: "bt-q bt-learning-card", role: "group", "aria-labelledby": titleId, "aria-busy": busy },
-    agents ? (0, import_react69.createElement)(ProposalHead, { titleId, icon: PencilIcon, title: kind }) : (0, import_react69.createElement)(ProposalHead, { titleId, title: proposal.name, kind, detail: proposal.description, oldDetail }),
+    agents ? (0, import_react71.createElement)(ProposalHead, { titleId, icon: PencilIcon, title: kind }) : (0, import_react71.createElement)(ProposalHead, { titleId, title: proposal.name, kind, detail: proposal.description, oldDetail }),
     change,
-    error ? (0, import_react69.createElement)("div", { className: "bt-learning-error", role: "alert" }, error) : null,
-    (0, import_react69.createElement)(ProposalFoot, { busy, answer })
+    error ? (0, import_react71.createElement)("div", { className: "bt-learning-error", role: "alert" }, error) : null,
+    (0, import_react71.createElement)(ProposalFoot, { busy, answer })
   );
 }
 function ProposalHead({ titleId, icon: icon2 = MemoryIcon, title, kind, detail, oldDetail }) {
-  return (0, import_react69.createElement)(
+  return (0, import_react71.createElement)(
     "div",
     { className: "bt-q-head" },
-    (0, import_react69.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react69.createElement)(icon2)),
-    (0, import_react69.createElement)(
+    (0, import_react71.createElement)("span", { className: "bt-learning-icon", "aria-hidden": true }, (0, import_react71.createElement)(icon2)),
+    (0, import_react71.createElement)(
       "div",
       { className: "bt-q-text" },
-      (0, import_react69.createElement)("p", { className: "bt-q-title", id: titleId }, title),
-      kind ? (0, import_react69.createElement)("div", { className: "bt-q-detail" }, kind) : null,
-      oldDetail ? (0, import_react69.createElement)("p", { className: "bt-learning-description bt-learning-old" }, (0, import_react69.createElement)("del", null, oldDetail)) : null,
-      detail ? (0, import_react69.createElement)("p", { className: "bt-learning-description" }, detail) : null
+      (0, import_react71.createElement)("p", { className: "bt-q-title", id: titleId }, title),
+      kind ? (0, import_react71.createElement)("div", { className: "bt-q-detail" }, kind) : null,
+      oldDetail ? (0, import_react71.createElement)("p", { className: "bt-learning-description bt-learning-old" }, (0, import_react71.createElement)("del", null, oldDetail)) : null,
+      detail ? (0, import_react71.createElement)("p", { className: "bt-learning-description" }, detail) : null
     ),
-    (0, import_react69.createElement)("span", { className: "bt-q-badge bt-learning-status" }, (0, import_react69.createElement)("span", { className: "bt-learning-dot", "aria-hidden": true }), t("Awaiting approval"))
+    (0, import_react71.createElement)("span", { className: "bt-q-badge bt-learning-status" }, (0, import_react71.createElement)("span", { className: "bt-learning-dot", "aria-hidden": true }), t("Awaiting approval"))
   );
 }
 function ProposalFoot({ busy, answer }) {
-  return (0, import_react69.createElement)(
+  return (0, import_react71.createElement)(
     "div",
     { className: "bt-q-foot bt-learning-foot" },
-    (0, import_react69.createElement)("button", { type: "button", className: "bt-learning-btn bt-learning-decline", disabled: busy, onClick: () => answer(false) }, t("Decline")),
-    (0, import_react69.createElement)(
+    (0, import_react71.createElement)("button", { type: "button", className: "bt-learning-btn bt-learning-decline", disabled: busy, onClick: () => answer(false) }, t("Decline")),
+    (0, import_react71.createElement)(
       "button",
       { type: "button", className: "bt-learning-btn bt-learning-approve", disabled: busy, onClick: () => answer(true) },
-      (0, import_react69.createElement)(CheckIcon),
+      (0, import_react71.createElement)(CheckIcon),
       t("Approve")
     )
   );
@@ -42227,43 +46513,43 @@ function ProposalFoot({ busy, answer }) {
 var COLLAPSE_ROWS = 8;
 var SIGNS = { added: "+", removed: "−", same: "" };
 function FileBox({ name, path: path2, state, blocks }) {
-  const [open, setOpen] = (0, import_react69.useState)(false);
+  const [open, setOpen] = (0, import_react71.useState)(false);
   const all = blocks.flat();
   const added = all.filter((row) => row.kind === "added").length;
   const removed = all.filter((row) => row.kind === "removed").length;
   const folds = all.length > COLLAPSE_ROWS;
   const shut = folds && !open;
-  return (0, import_react69.createElement)(
+  return (0, import_react71.createElement)(
     "div",
     { className: "bt-learning-file" },
-    (0, import_react69.createElement)(
+    (0, import_react71.createElement)(
       "div",
       { className: "bt-learning-filehead" },
-      (0, import_react69.createElement)("span", { className: "bt-learning-name" }, name),
-      path2 ? (0, import_react69.createElement)("span", { className: "bt-learning-path" }, path2) : null,
-      (0, import_react69.createElement)("span", { className: "bt-learning-spacer" }),
-      added > 0 ? (0, import_react69.createElement)("span", { className: "bt-learning-plus" }, `+${added}`) : null,
-      removed > 0 ? (0, import_react69.createElement)("span", { className: "bt-learning-minus" }, `−${removed}`) : null,
-      (0, import_react69.createElement)("span", { className: `bt-learning-state bt-learning-state-${state.toLowerCase()}` }, t(state))
+      (0, import_react71.createElement)("span", { className: "bt-learning-name" }, name),
+      path2 ? (0, import_react71.createElement)("span", { className: "bt-learning-path" }, path2) : null,
+      (0, import_react71.createElement)("span", { className: "bt-learning-spacer" }),
+      added > 0 ? (0, import_react71.createElement)("span", { className: "bt-learning-plus" }, `+${added}`) : null,
+      removed > 0 ? (0, import_react71.createElement)("span", { className: "bt-learning-minus" }, `−${removed}`) : null,
+      (0, import_react71.createElement)("span", { className: `bt-learning-state bt-learning-state-${state.toLowerCase()}` }, t(state))
     ),
-    (0, import_react69.createElement)(
+    (0, import_react71.createElement)(
       "div",
       { className: shut ? "bt-learning-code bt-learning-shut" : "bt-learning-code" },
       blocks.map((rows2, blockIndex) => [
-        blockIndex > 0 ? (0, import_react69.createElement)("div", { className: "bt-learning-gap", key: `gap-${blockIndex}` }) : null,
-        ...rows2.map((row, rowIndex) => (0, import_react69.createElement)(
+        blockIndex > 0 ? (0, import_react71.createElement)("div", { className: "bt-learning-gap", key: `gap-${blockIndex}` }) : null,
+        ...rows2.map((row, rowIndex) => (0, import_react71.createElement)(
           "div",
           { className: `bt-learning-row bt-learning-${row.kind}`, key: `${blockIndex}-${rowIndex}` },
-          (0, import_react69.createElement)("span", { className: "bt-learning-num", "aria-hidden": true }, row.number ?? ""),
-          (0, import_react69.createElement)("span", { className: "bt-learning-sign", "aria-hidden": true }, SIGNS[row.kind]),
-          (0, import_react69.createElement)("span", { className: "bt-learning-text" }, row.line || " ")
+          (0, import_react71.createElement)("span", { className: "bt-learning-num", "aria-hidden": true }, row.number ?? ""),
+          (0, import_react71.createElement)("span", { className: "bt-learning-sign", "aria-hidden": true }, SIGNS[row.kind]),
+          (0, import_react71.createElement)("span", { className: "bt-learning-text" }, row.line || " ")
         ))
       ])
     ),
-    folds ? (0, import_react69.createElement)(
+    folds ? (0, import_react71.createElement)(
       "div",
       { className: shut ? "bt-learning-morebar bt-learning-morebar-shut" : "bt-learning-morebar" },
-      (0, import_react69.createElement)(
+      (0, import_react71.createElement)(
         "button",
         { type: "button", className: "bt-learning-more", "aria-expanded": open, onClick: () => setOpen(!open) },
         t(open ? "Show less" : "Show all {count} lines", { count: all.length })
@@ -42274,10 +46560,10 @@ function FileBox({ name, path: path2, state, blocks }) {
 function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   const roster = useRoster((value) => value);
   const facts = useTurnFacts(sessionId, actions);
-  const [failed, setFailed] = (0, import_react69.useState)({});
+  const [failed, setFailed] = (0, import_react71.useState)({});
   const bot = roster.byId?.[sessionId];
   const settledIds = (bot === void 0 ? [] : roster.learningSettled?.[bot.id] ?? []).map((entry) => entry.id);
-  (0, import_react69.useEffect)(() => {
+  (0, import_react71.useEffect)(() => {
     const gone = Object.keys(failed).filter((id) => settledIds.includes(id));
     if (gone.length === 0) return;
     for (const id of gone) failedAnswers.delete(id);
@@ -42287,8 +46573,8 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   const proposals = roster.learning?.[bot.id] ?? [];
   const settled = roster.learningSettled?.[bot.id] ?? [];
   const remembered = Object.fromEntries([...failedAnswers.values(), ...Object.values(failed)].filter((entry) => entry.proposal.botId === bot.id).map((entry) => [entry.proposal.id, entry]));
-  const visible = proposalCards({ proposals, settled, failures: remembered });
-  const cards = visible.filter((proposal) => {
+  const visible2 = proposalCards({ proposals, settled, failures: remembered });
+  const cards = visible2.filter((proposal) => {
     const placement = proposalPlacement(proposal, facts?.turns);
     return dock ? placement.kind === "dock" : placement.kind === "turn" && placement.turn === turn?.turn;
   });
@@ -42302,10 +46588,10 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
     failedAnswers.delete(id);
     return withoutEntry(current, id);
   });
-  return (0, import_react69.createElement)("div", { className: dock ? "bt-learning-stack bt-learning-dock" : "bt-learning-stack" }, cards.map((proposal) => (0, import_react69.createElement)(
+  return (0, import_react71.createElement)("div", { className: dock ? "bt-learning-stack bt-learning-dock" : "bt-learning-stack" }, cards.map((proposal) => (0, import_react71.createElement)(
     "div",
     { className: "bt-q-inline", key: proposal.id },
-    (0, import_react69.createElement)(ProposalCard, {
+    (0, import_react71.createElement)(ProposalCard, {
       proposal,
       initialError: failed[proposal.id]?.error ?? failedAnswers.get(proposal.id)?.error,
       onFailure,
@@ -42315,10 +46601,10 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   )));
 }
 function LearningTurnTail(props) {
-  return (0, import_react69.createElement)(LearningProposals, { ...props, dock: false });
+  return (0, import_react71.createElement)(LearningProposals, { ...props, dock: false });
 }
 function LearningDock(props) {
-  return (0, import_react69.createElement)(LearningProposals, { ...props, dock: true });
+  return (0, import_react71.createElement)(LearningProposals, { ...props, dock: true });
 }
 var LEARNING_CSS = `
 .bt-learning-stack{display:flex;flex-direction:column;gap:4px}
@@ -42408,7 +46694,7 @@ function createSwitchWindow(settle) {
 }
 
 // src/client/queue-dock.js
-var import_react70 = require("react");
+var import_react72 = require("react");
 var OWN_QUEUE_KINDS = /* @__PURE__ */ new Set(["user", "schedule", "user-question-reply"]);
 var EMPTY_QUEUE = [];
 var QUEUE_TEXT_FACTS = { collapseWhitespace: true, trimWhitespace: true };
@@ -42425,17 +46711,17 @@ function queueAttachments(content) {
 var fileSizeText2 = (bytes) => typeof bytes !== "number" || !Number.isFinite(bytes) ? "" : bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 function QueueFile({ attachment, label }) {
   const size = fileSizeText2(attachment.bytes);
-  return (0, import_react70.createElement)(
+  return (0, import_react72.createElement)(
     "span",
     { className: "bt-queue-file", "aria-label": label, title: attachment.name },
-    (0, import_react70.createElement)("span", { className: "bt-queue-fileicon", "aria-hidden": true }, (0, import_react70.createElement)(PaperclipIcon)),
-    (0, import_react70.createElement)("span", { className: "bt-queue-filename" }, attachment.name),
-    size !== "" ? (0, import_react70.createElement)("span", { className: "bt-queue-filesize" }, size) : null
+    (0, import_react72.createElement)("span", { className: "bt-queue-fileicon", "aria-hidden": true }, (0, import_react72.createElement)(PaperclipIcon)),
+    (0, import_react72.createElement)("span", { className: "bt-queue-filename" }, attachment.name),
+    size !== "" ? (0, import_react72.createElement)("span", { className: "bt-queue-filesize" }, size) : null
   );
 }
 function QueueThumb({ attachment, loadImage, label }) {
-  const [url, setUrl] = (0, import_react70.useState)(null);
-  (0, import_react70.useEffect)(() => {
+  const [url, setUrl] = (0, import_react72.useState)(null);
+  (0, import_react72.useEffect)(() => {
     let alive = true;
     loadImage(attachment).then((resolved) => {
       if (alive) setUrl(resolved);
@@ -42445,22 +46731,22 @@ function QueueThumb({ attachment, loadImage, label }) {
       alive = false;
     };
   }, [attachment, loadImage]);
-  return url === null ? (0, import_react70.createElement)("span", { className: "bt-queue-thumb", "aria-hidden": true }) : (0, import_react70.createElement)("img", { className: "bt-queue-thumb", src: url, alt: label });
+  return url === null ? (0, import_react72.createElement)("span", { className: "bt-queue-thumb", "aria-hidden": true }) : (0, import_react72.createElement)("img", { className: "bt-queue-thumb", src: url, alt: label });
 }
 function Preview({ text, renderFactorySlot }) {
   const rendered = renderFactorySlot?.("conversation.user.text", { text, facts: QUEUE_TEXT_FACTS, interactive: false, ellipsis: true });
-  return (0, import_react70.createElement)("span", { className: "bt-queue-preview" }, rendered ?? text);
+  return (0, import_react72.createElement)("span", { className: "bt-queue-preview" }, rendered ?? text);
 }
 function EditField({ text, onChange, onSave, onCancel }) {
-  const field = (0, import_react70.useRef)(null);
-  (0, import_react70.useEffect)(() => {
+  const field = (0, import_react72.useRef)(null);
+  (0, import_react72.useEffect)(() => {
     const node = field.current;
     if (node === null) return;
     node.focus();
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight}px`;
   }, [text]);
-  return (0, import_react70.createElement)("textarea", {
+  return (0, import_react72.createElement)("textarea", {
     ref: field,
     className: "bt-queue-edit",
     value: text,
@@ -42479,28 +46765,28 @@ function EditField({ text, onChange, onSave, onCancel }) {
   });
 }
 function RowButton({ label, title, disabled, onClick, children }) {
-  return (0, import_react70.createElement)("button", { type: "button", className: "bt-queue-action", "aria-label": label, title: title ?? label, disabled, onClick }, children);
+  return (0, import_react72.createElement)("button", { type: "button", className: "bt-queue-action", "aria-label": label, title: title ?? label, disabled, onClick }, children);
 }
 function QueueDock({ useSession, useProjection, updateQueue, loadImage, renderFactorySlot, actions }) {
   const inbox = useProjection?.("inbox");
   const pendingSubmissions = useSession?.((s) => s.pendingSubmissions) ?? EMPTY_QUEUE;
-  const queue = (0, import_react70.useMemo)(() => {
+  const queue = (0, import_react72.useMemo)(() => {
     const rows2 = (inbox?.["next-turn"] ?? EMPTY_QUEUE).filter((row) => OWN_QUEUE_KINDS.has(row.source?.kind));
     const inChat = new Set(pendingSubmissions.filter((item) => item.placement === "transcript").map((item) => item.requestId));
     return inChat.size === 0 ? rows2 : rows2.filter(({ source }) => source === null || typeof source !== "object" || !("rpcId" in source) || !inChat.has(source.rpcId));
   }, [inbox, pendingSubmissions]);
-  const pendingQueue = (0, import_react70.useMemo)(() => {
+  const pendingQueue = (0, import_react72.useMemo)(() => {
     const admitted = new Set(queue.flatMap(({ source }) => source !== null && typeof source === "object" && "rpcId" in source ? [source.rpcId] : []));
     return pendingSubmissions.filter((submission) => submission.placement === "queued" && !admitted.has(submission.requestId));
   }, [pendingSubmissions, queue]);
   const rowCount = queue.length + pendingQueue.length;
   const running = useSession?.((s) => s.running) === true;
   const queueMutable = useSession?.((s) => s.subagent === null || s.subagent === void 0 || s.subagent.address?.mode === "continuable") ?? true;
-  const [editing, setEditing] = (0, import_react70.useState)(null);
-  const [busy, setBusy] = (0, import_react70.useState)(null);
-  const [collapsed, setCollapsed] = (0, import_react70.useState)(true);
-  const listId = (0, import_react70.useId)();
-  (0, import_react70.useEffect)(() => {
+  const [editing, setEditing] = (0, import_react72.useState)(null);
+  const [busy, setBusy] = (0, import_react72.useState)(null);
+  const [collapsed, setCollapsed] = (0, import_react72.useState)(true);
+  const listId = (0, import_react72.useId)();
+  (0, import_react72.useEffect)(() => {
     if (rowCount === 0 && !collapsed) setCollapsed(true);
     if (editing !== null && (!queueMutable || !queue.some((row) => row.id === editing.id))) setEditing(null);
   }, [collapsed, editing, queue, queueMutable, rowCount]);
@@ -42528,77 +46814,77 @@ function QueueDock({ useSession, useProjection, updateQueue, loadImage, renderFa
     if (editing === null || editing.text.trim() === "") return;
     if (await applyAction(editing.id, { kind: "edit", content: [{ type: "text", text: editing.text }] }, t("Couldn’t edit the queued message — it may have started already."))) setEditing(null);
   };
-  return (0, import_react70.createElement)(
+  return (0, import_react72.createElement)(
     "div",
     { className: "bt-queue-dock", "data-queue-dock": "" },
-    (0, import_react70.createElement)(
+    (0, import_react72.createElement)(
       "div",
       { className: "bt-queue-panel" },
-      rowCount > 1 && (0, import_react70.createElement)(
+      rowCount > 1 && (0, import_react72.createElement)(
         "button",
         { type: "button", className: "bt-queue-head", "aria-controls": listId, "aria-expanded": expanded, disabled: interactionActive, onClick: () => setCollapsed((value) => !value) },
-        (0, import_react70.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react70.createElement)(QueueIcon)),
-        (0, import_react70.createElement)("span", { className: "bt-queue-count" }, t("{n} queued messages", { n: rowCount })),
-        !listVisible && pendingQueue.length > 0 && (0, import_react70.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
-        (0, import_react70.createElement)("span", { className: "bt-queue-chev", "aria-hidden": true }, expanded ? (0, import_react70.createElement)(ChevronDownIcon) : (0, import_react70.createElement)(ChevronUpIcon))
+        (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+        (0, import_react72.createElement)("span", { className: "bt-queue-count" }, t("{n} queued messages", { n: rowCount })),
+        !listVisible && pendingQueue.length > 0 && (0, import_react72.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
+        (0, import_react72.createElement)("span", { className: "bt-queue-chev", "aria-hidden": true }, expanded ? (0, import_react72.createElement)(ChevronDownIcon) : (0, import_react72.createElement)(ChevronUpIcon))
       ),
-      (0, import_react70.createElement)(
+      (0, import_react72.createElement)(
         "ul",
         { id: listId, className: "bt-queue-list", hidden: !listVisible },
         listVisible && queue.map((row) => {
           const attachments = queueAttachments(row.content);
           const text = textOf(row.content);
-          return (0, import_react70.createElement)(
+          return (0, import_react72.createElement)(
             "li",
             { key: row.id, className: "bt-queue-row" },
-            rowCount === 1 && (0, import_react70.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react70.createElement)(QueueIcon)),
-            editing?.id === row.id ? (0, import_react70.createElement)(EditField, { text: editing.text, onChange: (text2) => setEditing({ id: row.id, text: text2 }), onSave: saveEdit, onCancel: () => setEditing(null) }) : (0, import_react70.createElement)(
-              import_react70.Fragment,
+            rowCount === 1 && (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+            editing?.id === row.id ? (0, import_react72.createElement)(EditField, { text: editing.text, onChange: (text2) => setEditing({ id: row.id, text: text2 }), onSave: saveEdit, onCancel: () => setEditing(null) }) : (0, import_react72.createElement)(
+              import_react72.Fragment,
               null,
-              attachments.length > 0 && (0, import_react70.createElement)(
+              attachments.length > 0 && (0, import_react72.createElement)(
                 "span",
                 { className: "bt-queue-attachments" },
-                attachments.map((item, index) => item.type === "image" ? (0, import_react70.createElement)(QueueThumb, { key: `${item.attachment.attachmentId}:${index}`, attachment: item.attachment, loadImage, label: t("Queued image") }) : (0, import_react70.createElement)(QueueFile, { key: `${item.attachment.attachmentId}:${item.attachment.name}:${index}`, attachment: item.attachment, label: t("Queued file {name}", { name: item.attachment.name }) }))
+                attachments.map((item, index) => item.type === "image" ? (0, import_react72.createElement)(QueueThumb, { key: `${item.attachment.attachmentId}:${index}`, attachment: item.attachment, loadImage, label: t("Queued image") }) : (0, import_react72.createElement)(QueueFile, { key: `${item.attachment.attachmentId}:${item.attachment.name}:${index}`, attachment: item.attachment, label: t("Queued file {name}", { name: item.attachment.name }) }))
               ),
-              (0, import_react70.createElement)(Preview, { text: row.content.filter((block) => block.type === "text").map((block) => block.text).join(""), renderFactorySlot })
+              (0, import_react72.createElement)(Preview, { text: row.content.filter((block) => block.type === "text").map((block) => block.text).join(""), renderFactorySlot })
             ),
-            queueMutable && (0, import_react70.createElement)(
+            queueMutable && (0, import_react72.createElement)(
               "div",
               { className: "bt-queue-actions" },
-              editing?.id === row.id ? (0, import_react70.createElement)(
-                import_react70.Fragment,
+              editing?.id === row.id ? (0, import_react72.createElement)(
+                import_react72.Fragment,
                 null,
-                (0, import_react70.createElement)(RowButton, { label: t("Save queued message"), disabled: busy !== null || editing.text.trim() === "", onClick: saveEdit }, (0, import_react70.createElement)(CheckIcon)),
-                (0, import_react70.createElement)(RowButton, { label: t("Cancel editing"), disabled: busy !== null, onClick: () => setEditing(null) }, (0, import_react70.createElement)(CloseIcon))
-              ) : (0, import_react70.createElement)(
-                import_react70.Fragment,
+                (0, import_react72.createElement)(RowButton, { label: t("Save queued message"), disabled: busy !== null || editing.text.trim() === "", onClick: saveEdit }, (0, import_react72.createElement)(CheckIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Cancel editing"), disabled: busy !== null, onClick: () => setEditing(null) }, (0, import_react72.createElement)(CloseIcon))
+              ) : (0, import_react72.createElement)(
+                import_react72.Fragment,
                 null,
-                (0, import_react70.createElement)(RowButton, { label: t("Edit queued message"), title: text === null ? t("Contains non-text content, so editing is not supported yet") : void 0, disabled: busy !== null || text === null, onClick: () => {
+                (0, import_react72.createElement)(RowButton, { label: t("Edit queued message"), title: text === null ? t("Contains non-text content, so editing is not supported yet") : void 0, disabled: busy !== null || text === null, onClick: () => {
                   if (text !== null) setEditing({ id: row.id, text });
-                } }, (0, import_react70.createElement)(PencilIcon)),
-                (0, import_react70.createElement)(RowButton, { label: t("Delete queued message"), disabled: busy !== null, onClick: () => applyAction(row.id, { kind: "remove" }, t("Couldn’t delete the queued message — it may have started already.")) }, (0, import_react70.createElement)(TrashIcon)),
-                (0, import_react70.createElement)(RowButton, { label: t("Steer queued message"), title: running ? void 0 : t("Only while a turn is running"), disabled: busy !== null || !running, onClick: () => applyAction(row.id, { kind: "steer" }, t("Couldn’t steer the queued message. Try again.")) }, (0, import_react70.createElement)(ArrowUpIcon))
+                } }, (0, import_react72.createElement)(PencilIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Delete queued message"), disabled: busy !== null, onClick: () => applyAction(row.id, { kind: "remove" }, t("Couldn’t delete the queued message — it may have started already.")) }, (0, import_react72.createElement)(TrashIcon)),
+                (0, import_react72.createElement)(RowButton, { label: t("Steer queued message"), title: running ? void 0 : t("Only while a turn is running"), disabled: busy !== null || !running, onClick: () => applyAction(row.id, { kind: "steer" }, t("Couldn’t steer the queued message. Try again.")) }, (0, import_react72.createElement)(ArrowUpIcon))
               )
             )
           );
         }),
-        listVisible && pendingQueue.map((submission) => (0, import_react70.createElement)(
+        listVisible && pendingQueue.map((submission) => (0, import_react72.createElement)(
           "li",
           { key: submission.requestId, className: "bt-queue-row bt-queue-pending" },
-          rowCount === 1 && (0, import_react70.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react70.createElement)(QueueIcon)),
-          submission.attachments.length > 0 && (0, import_react70.createElement)(
+          rowCount === 1 && (0, import_react72.createElement)("span", { className: "bt-queue-lead", "aria-hidden": true }, (0, import_react72.createElement)(QueueIcon)),
+          submission.attachments.length > 0 && (0, import_react72.createElement)(
             "span",
             { className: "bt-queue-attachments" },
-            submission.attachments.map((attachment, index) => attachment.type === "image" ? (0, import_react70.createElement)("img", { key: `${attachment.value.previewUrl}:${index}`, className: "bt-queue-thumb", src: attachment.value.previewUrl, alt: t("Queued image") }) : (0, import_react70.createElement)(QueueFile, { key: `${attachment.value.attachmentId}:${attachment.value.name}:${index}`, attachment: attachment.value, label: t("Queued file {name}", { name: attachment.value.name }) }))
+            submission.attachments.map((attachment, index) => attachment.type === "image" ? (0, import_react72.createElement)("img", { key: `${attachment.value.previewUrl}:${index}`, className: "bt-queue-thumb", src: attachment.value.previewUrl, alt: t("Queued image") }) : (0, import_react72.createElement)(QueueFile, { key: `${attachment.value.attachmentId}:${attachment.value.name}:${index}`, attachment: attachment.value, label: t("Queued file {name}", { name: attachment.value.name }) }))
           ),
-          (0, import_react70.createElement)(Preview, { text: submission.text, renderFactorySlot }),
-          (0, import_react70.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
-          queueMutable && (0, import_react70.createElement)(
+          (0, import_react72.createElement)(Preview, { text: submission.text, renderFactorySlot }),
+          (0, import_react72.createElement)("span", { className: "bt-queue-status", role: "status" }, t("Sending…")),
+          queueMutable && (0, import_react72.createElement)(
             "div",
             { className: "bt-queue-actions" },
-            (0, import_react70.createElement)(RowButton, { label: t("Edit queued message"), title: t("Sending…"), disabled: true }, (0, import_react70.createElement)(PencilIcon)),
-            (0, import_react70.createElement)(RowButton, { label: t("Delete queued message"), title: t("Sending…"), disabled: true }, (0, import_react70.createElement)(TrashIcon)),
-            (0, import_react70.createElement)(RowButton, { label: t("Steer queued message"), title: t("Sending…"), disabled: true }, (0, import_react70.createElement)(ArrowUpIcon))
+            (0, import_react72.createElement)(RowButton, { label: t("Edit queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(PencilIcon)),
+            (0, import_react72.createElement)(RowButton, { label: t("Delete queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(TrashIcon)),
+            (0, import_react72.createElement)(RowButton, { label: t("Steer queued message"), title: t("Sending…"), disabled: true }, (0, import_react72.createElement)(ArrowUpIcon))
           )
         ))
       )
@@ -42743,7 +47029,7 @@ function apply(ctx) {
   const reactionStore = sharedMap(STORAGE.reactions);
   const seenStore = sharedMap(STORAGE.seen);
   let seenAt = seenStore.read();
-  const ui = createSource({ details: null, view: "details", renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, paste: {}, pendingOpen: null, settings: null, memory: null, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {}, panelYield: false, leftDrawer: false, bootFailed: false, goalCompose: null, goalOpen: null });
+  const ui = createSource({ details: null, view: "details", renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, paste: {}, pendingOpen: null, settings: null, memory: null, teamOverview: false, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {}, panelYield: false, leftDrawer: false, bootFailed: false, goalCompose: null, goalOpen: null });
   let sidebarSaved = readSidebar();
   const sidebarPref = createSource(sidebarSaved.pref);
   const frame = createSource({ viewport: typeof window === "undefined" ? 0 : window.innerWidth, sidebarWidth: sidebarSaved.width, collapsedWidth: 0, collapsed: false });
@@ -43170,7 +47456,7 @@ function apply(ctx) {
     isAgentSession: (id) => isAgentSessionId(id),
     openSession: (id) => {
       if (isAgentSessionId(id)) return actions.openAgentSession(id);
-      ui.set((state) => state.newChat || state.exchange || state.menu || state.palette || state.groupSearch ? { ...state, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null } : state);
+      ui.set((state) => state.teamOverview || state.newChat || state.exchange || state.menu || state.palette || state.groupSearch ? { ...state, teamOverview: false, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null } : state);
       setPlain(false);
       const target = partFor(id);
       show2(target);
@@ -43178,7 +47464,7 @@ function apply(ctx) {
     // The conversation replacements withdraw for a plain Session; set the surface
     // before the navigation so the Bot skin never flashes.
     openAgentSession: (sessionId) => {
-      ui.set((state) => ({ ...state, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, details: null, view: "details", renaming: false, tab: null }));
+      ui.set((state) => ({ ...state, teamOverview: false, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, details: null, view: "details", renaming: false, tab: null }));
       setPlain(true);
       show2(sessionId);
     },
@@ -43281,7 +47567,7 @@ function apply(ctx) {
         return;
       }
       if (mode === "agent") {
-        ui.set((state) => ({ ...state, details: null, view: "details", settings: null, palette: null, groupSearch: null, newChat: null, menu: null, voice: null, exchange: null, memory: null, toast: null }));
+        ui.set((state) => ({ ...state, teamOverview: false, details: null, view: "details", settings: null, palette: null, groupSearch: null, newChat: null, menu: null, voice: null, exchange: null, memory: null, toast: null }));
       }
       writeMode(mode);
       surface.set((state) => ({ ...state, mode }));
@@ -43430,10 +47716,10 @@ function apply(ctx) {
   const appComputer = globalThis.dsBotApp;
   if (typeof appComputer?.computer === "function") {
     ctx.effect(() => {
-      const nameOf3 = (id) => roster.getSnapshot().byId[id]?.name ?? "a Bot";
+      const nameOf4 = (id) => roster.getSnapshot().byId[id]?.name ?? "a Bot";
       const sync = () => {
         const live2 = computer.getSnapshot();
-        const name = (id) => nameOf3(id);
+        const name = (id) => nameOf4(id);
         const look = (id) => lookOf(roster.getSnapshot().byId[id]);
         const rows2 = (live2.leases ?? []).map((entry) => ({
           botId: entry.botId,
@@ -43711,6 +47997,7 @@ function apply(ctx) {
     [HANDOFF_CSS, "handoff"],
     [SIDE_CSS, "side"],
     [BROWSER_CSS, "browser"],
+    [TEAM_OVERVIEW_CSS, "team-overview"],
     [TEAM_BOARD_CSS, "team-board"],
     [TEAM_BOARD_HOST_CSS, "team-board-host"]
   ];
