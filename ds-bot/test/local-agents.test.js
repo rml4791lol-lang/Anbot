@@ -5,12 +5,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { LocalAgentAdapter } from '../src/host/local-agents/adapter.js'
 import { AcpEngine } from '../src/host/local-agents/acp.js'
 import { CodexEngine } from '../src/host/local-agents/codex.js'
 import { JsonRpcPeer, wireProcess } from '../src/host/local-agents/jsonrpc.js'
 import { ClaudeEngine } from '../src/host/local-agents/claude.js'
-import { LoopbackMcp, flattenSchema } from '../src/host/local-agents/mcp.js'
+import { LoopbackMcp } from '../src/host/local-agents/mcp.js'
 import { cleanEnv } from '../src/host/local-agents/discover.js'
 import { validateCustom, isLocalAgentRoute, cliMode, acpMode } from '../src/host/local-agents/engines.js'
 import { install as partsInstall } from '../src/host/parts.js'
@@ -742,47 +743,36 @@ test('codex: a resume after the process exits still delivers the reply text', as
   assert.doesNotMatch(second.text, /alpha-one/)
 })
 
-test('MCP: bad token gets 401, tools/list flattens schemas', async () => {
-  const mcp = new LoopbackMcp(() => [{ name: 'message_bot', description: 'd', parameters: { type: 'object', properties: { x: { anyOf: [{ type: 'string' }, { type: 'number' }] } }, required: ['x'] } }], async () => ({ text: 'done' }))
+test('MCP: bad token gets 401 before the official transport sees it', async () => {
+  const mcp = new LoopbackMcp(() => [{ name: 'message_bot', description: 'Message another Bot', parameters: { type: 'object', properties: {} } }], async () => ({ text: 'done' }))
   await mcp.listen()
-  const url = mcp.url
-  const bad = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer wrong' }, body: '{}' })
-  assert.equal(bad.status, 401)
-  const good = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${mcp.token}` }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }) })
-  const list = (await good.json()).result
-  assert.equal(list.tools[0].name, 'message_bot')
-  assert.equal(list.tools[0].inputSchema.properties.x.type, 'string')
-  mcp.close()
+  try {
+    const bad = await fetch(mcp.url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer wrong' }, body: '{}' })
+    assert.equal(bad.status, 401)
+  } finally {
+    await mcp.close()
+  }
 })
 
 test('the adapter\'s MCP server lists the current turn\'s tools (#1061)', async () => {
   const adapter = makeAdapter()
   const live = { pending: new Map(), push: () => {} }
-  const list = async (mcp) => {
-    const response = await fetch(mcp.url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${mcp.token}` }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }) })
-    assert.equal(response.status, 200)
-    return (await response.json()).result.tools.map(tool => tool.name)
+  const connect = async (mcp) => {
+    const client = new Client({ name: 'ds-bot-list-test', version: '1' })
+    await client.connect(new StreamableHTTPClientTransport(new URL(mcp.url), { requestInit: { headers: { Authorization: `Bearer ${mcp.token}` } } }))
+    return client
   }
   const mcp = await adapter.ensureMcp(live, () => [{ name: 'message_bot', parameters: { type: 'object', properties: {} } }])
+  const client = await connect(mcp)
   try {
-    assert.deepEqual(await list(mcp), ['message_bot'])
+    assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), ['message_bot'])
     const again = await adapter.ensureMcp(live, () => [{ name: 'post_to_group', parameters: { type: 'object', properties: {} } }])
     assert.equal(again, mcp, 'one server per live session')
-    assert.deepEqual(await list(mcp), ['post_to_group'])
+    assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), ['post_to_group'])
   } finally {
-    mcp.close()
-    // fetch keeps the socket alive; on Windows a forced exit with it still
-    // closing trips a libuv assertion.
-    mcp.server.closeAllConnections()
+    await client.close()
+    await mcp.close()
   }
-})
-
-test('flattenSchema removes unions, refs and const', () => {
-  const flat = flattenSchema({ type: 'object', $defs: { a: { type: 'string' } }, properties: { p: { $ref: '#/$defs/a' }, q: { const: 'x' }, r: { oneOf: [{ type: 'null' }, { type: 'number' }] } } })
-  assert.equal(flat.$defs, undefined)
-  assert.equal(flat.properties.p.$ref, undefined)
-  assert.equal(flat.properties.q.const, undefined)
-  assert.equal(flat.properties.r.type, 'number')
 })
 
 // The steward must never touch an abot's Session: the pre-step listener returns
