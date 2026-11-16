@@ -172,6 +172,21 @@ test('a goal starts, passes its stages, and completes', async (t) => {
   assert.equal(goal(host).status, 'complete')
 })
 
+test('a named goal change is applied once and its first receipt is replayed', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { request_id: 'start-1' })
+
+  const first = await host.tool('group_goal', { action: 'pass', evidence: 'reviewed', request_id: 'pass-1' }, 'ga')
+  assert.equal(goal(host).current, 1)
+  const replay = await host.tool('group_goal', { action: 'pass', evidence: 'reviewed', request_id: 'pass-1' }, 'ga')
+  assert.equal(replay, first)
+  assert.equal(goal(host).current, 1)
+
+  const conflict = await host.tool('group_goal', { action: 'pass', evidence: 'different', request_id: 'pass-1' }, 'ga')
+  assert.match(conflict, /request_id "pass-1" was already used for a different goal change/)
+  assert.equal(goal(host).current, 1)
+})
+
 test('rework sends the current stage back; revise keeps passed stages and a matching task', async (t) => {
   const host = await start(t)
   await startGoal(host)

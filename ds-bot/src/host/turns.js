@@ -12,6 +12,12 @@ import { viaOf } from '../shared/im-platforms.js'
 import { reminderText } from './schedules.js'
 import { usageChunk } from './usage.js'
 
+// A turn that has produced no Session event for this long is shown as possibly
+// stalled. It stays a heuristic: a model call can legitimately take this long, so
+// this never cancels the turn or changes its real status.
+export const POSSIBLY_STALLED_MS = 2 * 60_000
+const possiblyStalled = at => Number.isFinite(at) && Date.now() - at >= POSSIBLY_STALLED_MS
+
 // Failures only the user can fix: a key, a sign-in, a balance. They block the Bot
 // until it is fixed (`bot.blocked`, for the repair card).
 export const BLOCKING_CODES = new Set(['MISSING_CREDENTIAL', 'INVALID_CREDENTIAL', 'AUTH', 'QUOTA', 'ACCOUNT_QUOTA', 'ACCOUNT_SIGN_IN_REQUIRED', 'ACCOUNT_SIGNED_OUT', 'ACCOUNT_TOKEN_INVALID', 'LOCAL_AGENT_MISSING', 'LOCAL_AGENT_SIGNIN', 'LOCAL_AGENT_QUOTA', 'LOCAL_AGENT_EXIT'])
@@ -353,6 +359,7 @@ export function install(rt) {
       // Its input was consumed before the reload; a later request joins this turn.
       entry.opened = true
       entry.since ??= Date.now()
+      entry.lastEventAt ??= entry.since
       setActivity(sessionId, 'thinking')
     }
   }
@@ -575,7 +582,14 @@ export function install(rt) {
       const owner = rt.groupOwners.get(id)
       const botId = owner?.botId ?? rt.chatOwners.get(id)
       if (botId === undefined || (owner !== undefined && bots[botId] !== undefined)) continue
-      bots[botId] = { since: entry.since, ...doingOf(entry), ...(owner ? { roomId: owner.roomId } : {}) }
+      const lastEventAt = entry.lastEventAt ?? entry.since
+      bots[botId] = {
+        since: entry.since,
+        ...(lastEventAt === undefined ? {} : { lastEventAt }),
+        ...(possiblyStalled(lastEventAt) ? { possiblyStalled: true } : {}),
+        ...doingOf(entry),
+        ...(owner ? { roomId: owner.roomId } : {}),
+      }
     }
     for (const [id] of subagentsByParent) {
       const sub = subagentDoingOf(id)
@@ -583,7 +597,13 @@ export function install(rt) {
       const owner = rt.groupOwners.get(id)
       const botId = owner?.botId ?? rt.chatOwners.get(id)
       if (botId === undefined || bots[botId] !== undefined) continue
-      bots[botId] = { ...sub, ...(owner ? { roomId: owner.roomId } : {}) }
+      const lastEventAt = sub.since
+      bots[botId] = {
+        ...sub,
+        ...(lastEventAt === undefined ? {} : { lastEventAt }),
+        ...(possiblyStalled(lastEventAt) ? { possiblyStalled: true } : {}),
+        ...(owner ? { roomId: owner.roomId } : {}),
+      }
     }
     for (const job of rt.switchJobs()) {
       // `folder` marks the switch the chat must name: the working folder changed. A
@@ -619,7 +639,15 @@ export function install(rt) {
     }
     for (const [id, entry] of live) {
       const owner = rt.groupOwners.get(id)
-      if (entry.turn !== undefined && owner !== undefined) add(owner.roomId, owner.botId, { since: entry.since, ...doingOf(entry) })
+      if (entry.turn !== undefined && owner !== undefined) {
+        const lastEventAt = entry.lastEventAt ?? entry.since
+        add(owner.roomId, owner.botId, {
+          since: entry.since,
+          ...(lastEventAt === undefined ? {} : { lastEventAt }),
+          ...(possiblyStalled(lastEventAt) ? { possiblyStalled: true } : {}),
+          ...doingOf(entry),
+        })
+      }
     }
     for (const [id] of subagentsByParent) {
       const owner = rt.groupOwners.get(id)
@@ -781,6 +809,7 @@ export function install(rt) {
       return
     }
     const entry = liveOf(id)
+    entry.lastEventAt = Number.isFinite(event.time) ? event.time : Date.now()
     if (rt.groupOwners.has(id)) rt.touchRoomTurn?.(id)
     switch (event.type) {
       case 'subagent/catalog': {
@@ -816,6 +845,7 @@ export function install(rt) {
         setActivity(id, 'thinking')
         entry.turn = event.data.turn
         entry.since = event.time ?? Date.now()
+        entry.lastEventAt = entry.since
         entry.texts = []
         entry.shown = 0
         entry.step = undefined
@@ -1101,6 +1131,7 @@ export function install(rt) {
         entry.lastText = undefined
         entry.lastCalled = undefined
         entry.usage = undefined
+        entry.lastEventAt = undefined
         const later = entry.later ?? []
         entry.later = []
         if (steerCut || suppressedSubagent) break

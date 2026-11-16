@@ -64,7 +64,7 @@
 
 | 工具 | 何时用 | 何时别用 | 边界 |
 |---|---|---|---|
-| `group_goal` | 群要跑一个带阶段与验收的目标 | 单个任务不要开 goal | 状态：drafting/active/paused/complete；空闲提醒上限 2 次 |
+| `group_goal` | 群要跑一个带阶段与验收的目标 | 单个任务不要开 goal | 状态：drafting/active/paused/complete；空闲提醒上限 2 次；改变 Goal 时带 `request_id` 可安全重放 |
 
 ### 记忆
 

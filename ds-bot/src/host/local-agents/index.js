@@ -206,7 +206,7 @@ export function install(rt) {
   // ---------------------------------------------------------------------------
   // The Settings page's endpoints.
 
-  const detected = () => [...found.values()].map(entry => ({ route: entry.route, name: entry.name, path: entry.path, version: entry.version ?? null, signIn: entry.signIn, signedIn: entry.signedIn ?? null }))
+  const detected = () => [...found.values()].map(entry => ({ route: entry.route, name: entry.name, path: entry.path, version: entry.version ?? null, signIn: entry.signIn, signedIn: entry.signedIn ?? null, capabilities: ENGINES[entry.route].capabilities }))
   const customView = () => store().custom.map(agent => ({ ...agent, route: customRoute(agent.id) }))
 
   // One CLI's models: the first look starts that CLI, later ones read what it said.
