@@ -2,9 +2,328 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { activityDays, buildTeamActivity } from '../src/host/team-activity.js'
+import { buildTaskDetail, taskSessionIds } from '../src/host/task-detail.js'
 
 const NOW = Date.parse('2026-11-16T12:00:00+08:00')
 const day = (offset, hour = 12) => Date.parse(`2026-11-${String(16 + offset).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00+08:00`)
+
+test('buildTaskDetail does not promote done status or prose into verified evidence', () => {
+  const state = {
+    mainBotIds: ['chief'],
+    bots: {
+      chief: { id: 'chief', name: 'Chief', role: 'Coordinator' },
+      forge: { id: 'forge', name: 'Forge', role: 'Engineer' },
+    },
+    rooms: {
+      r1: {
+        id: 'r1',
+        name: 'Delivery',
+        members: ['chief', 'forge'],
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship MCP', updatedAt: NOW - 500,
+          stages: [{
+            id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'passed', evidence: 'The Bot says it passed',
+            tasks: [{
+              id: 't1', botId: 'forge', task: 'Build the bridge', status: 'done', note: 'Finished',
+              checkpoint: { text: 'Implementation complete', at: NOW - 1_000, sourceId: 'goal:g1:s1:t1' },
+              nextAction: 'Run the acceptance checks',
+              evidence: [{ id: 'e1', kind: 'reported', text: 'The Bot reported completion', at: NOW - 900, sourceId: 'session:forge' }],
+            }],
+          }],
+        },
+      },
+    },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW })
+  assert.equal(detail.task.sourceStatus, 'done')
+  assert.equal(detail.owner.name, 'Forge')
+  assert.equal(detail.location.stageTitle, 'Bridge')
+  assert.equal(detail.checkpoint.text, 'Implementation complete')
+  assert.equal(detail.nextAction.text, 'Run the acceptance checks')
+  assert.deepEqual(detail.evidence.map(item => [item.id, item.trust]), [
+    ['goal:g1:s1:stage-evidence', 'reported'],
+    ['e1', 'reported'],
+  ])
+  assert.deepEqual(detail.artifacts, [])
+  assert.equal(detail.verification.status, 'pending')
+  assert.match(detail.verification.reason, /acceptance verification/)
+})
+
+test('buildTaskDetail derives the latest goal event and a truthful next action from existing work', () => {
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer' } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery',
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship MCP', updatedAt: NOW,
+          events: [{ at: NOW - 20, kind: 'task', stage: 's1', text: 'The bridge is half built' }],
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'forge', task: 'Build the bridge', status: 'working' }] }],
+        },
+      },
+    },
+    works: { w1: { from: 'chief', to: 'forge', open: [], results: [], at: NOW - 10 } },
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const goal = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW })
+  assert.equal(goal.checkpoint.text, 'The bridge is half built')
+  assert.equal(goal.checkpoint.at, NOW - 20)
+  assert.equal(goal.nextAction.text, 'Build the bridge')
+  const handoff = buildTaskDetail({ state, activity, taskId: 'handoff:w1', now: NOW })
+  assert.equal(handoff.nextAction.text, 'Wait for Forge to return.')
+})
+
+test('taskSessionIds includes the group Session fallback that DSH uses for a room', () => {
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge', sessionId: 'forge-chat' } },
+    rooms: { r1: { id: 'r1', name: 'Delivery', goal: { id: 'g1', stages: [{ id: 's1', title: 'Build', tasks: [{ id: 't1', botId: 'forge', task: 'Build it', attempt: { sessionId: 'member-room' } }] }] } } },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  assert.deepEqual(taskSessionIds({ state, activity, taskId: 'goal:g1:s1:t1' }), ['member-room', 'r1', 'forge-chat'])
+})
+
+test('buildTaskDetail joins only the selected task turns and keeps reported, requested, and executed records distinct', () => {
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer' } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery',
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship MCP', updatedAt: NOW,
+          stages: [{
+            id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active',
+            tasks: [{ id: 't1', botId: 'forge', task: 'Build the bridge', status: 'working', attempt: { sessionId: 'room-s1', exchangeId: 'x1' } }],
+          }],
+        },
+      },
+    },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const records = [{
+    sessionId: 'room-s1', hasMore: true,
+    events: [
+      { seq: 1, time: day(0, 9), type: 'turn/start', data: { turn: 1 } },
+      { seq: 2, time: day(0, 9) + 1, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Build it' }], source: { kind: 'ds-bot', role: 'request', exchangeId: 'x1', taskId: 'goal:g1:s1:t1' } } },
+      { seq: 3, time: day(0, 9) + 2, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'The bridge is ready' }] } } },
+      { seq: 4, time: day(0, 9) + 3, type: 'tool/call', data: { turn: 1, callId: 'c1', name: 'shell', arguments: '{"command":"npm test","apiKey":"sk-secret-should-not-leak"}' } },
+      { seq: 5, time: day(0, 9) + 4, type: 'tool/result', data: { turn: 1, message: { toolCallId: 'c1', ok: true, content: [{ type: 'text', text: 'tests pass' }] } } },
+      { seq: 6, time: day(0, 9) + 5, type: 'deliverables/presented', data: { turn: 1, files: [{ path: 'dist/app.zip', digest: 'sha256:abc' }] } },
+      { seq: 7, time: day(0, 10), type: 'turn/start', data: { turn: 2 } },
+      { seq: 8, time: day(0, 10) + 1, type: 'assistant/message', data: { turn: 2, message: { content: [{ type: 'text', text: 'Unrelated work' }] } } },
+    ],
+  }, {
+    sessionId: 'other', events: [
+      { seq: 1, time: day(0, 8), type: 'assistant/message', data: { turn: 9, message: { content: [{ type: 'text', text: 'Other session' }] } } },
+    ],
+  }]
+  const detail = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', records, now: NOW })
+  assert.equal(detail.trace.sourceTaskId, 'goal:g1:s1:t1')
+  assert.equal(detail.trace.sourceId, 'goal:g1:s1:t1')
+  assert.deepEqual(detail.trace.sessionIds, ['room-s1'])
+  assert.equal(detail.trace.truncated, true)
+  assert.deepEqual(detail.trace.records.map(item => item.type), ['user/message', 'assistant/message', 'tool/call', 'tool/result', 'deliverables/presented'])
+  assert.equal(detail.trace.records.find(item => item.type === 'assistant/message').trust, 'reported')
+  assert.equal(detail.trace.records.find(item => item.type === 'tool/call').trust, 'requested')
+  assert.equal(detail.trace.records.find(item => item.type === 'tool/result').trust, 'executed')
+  assert.equal(detail.trace.records.find(item => item.type === 'deliverables/presented').trust, 'executed')
+  assert.ok(detail.trace.relationships.some(item => item.kind === 'task-session' && item.to === 'room-s1'))
+  assert.deepEqual(detail.artifacts.map(item => [item.path, item.digest, item.trust]), [['dist/app.zip', 'sha256:abc', 'executed']])
+  assert.equal(detail.evidence.find(item => item.id === 'trace:room-s1:3:reported').trust, 'reported')
+  assert.equal(detail.evidence.find(item => item.id === 'trace:room-s1:5:executed').trust, 'executed')
+  assert.doesNotMatch(JSON.stringify(detail), /Unrelated work|Other session|sk-secret-should-not-leak/)
+})
+
+test('buildTaskDetail redacts secret-looking state prose in every detail section', () => {
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge' } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery',
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship',
+          stages: [{
+            id: 's1', title: 'Build', acceptance: 'tests pass', evidence: 'token=stage-secret-value',
+            tasks: [{
+              id: 't1', botId: 'forge', task: 'Build it', status: 'blocked',
+              checkpoint: { text: 'token=checkpoint-secret-value', at: NOW - 10 },
+              nextAction: 'api_key=next-secret-value',
+              blockers: ['sk-blockersecretvalue'],
+              evidence: ['password=evidence-secret-value'],
+            }],
+          }],
+        },
+      },
+    },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const output = JSON.stringify(buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW }))
+  assert.doesNotMatch(output, /stage-secret-value|checkpoint-secret-value|next-secret-value|blockersecretvalue|evidence-secret-value/)
+})
+
+test('buildTaskDetail joins a goal attempt by its exchange id when the event has no task id', () => {
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer' } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery',
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship MCP',
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', tasks: [{ id: 't1', botId: 'forge', task: 'Build it', status: 'working', attempt: { sessionId: 'room-s1', exchangeId: 'attempt-1' } }] }],
+        },
+      },
+    },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const records = [{ sessionId: 'room-s1', events: [
+    { seq: 1, time: day(0, 9), type: 'turn/start', data: { turn: 1 } },
+    { seq: 2, time: day(0, 9) + 1, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Work on the attempt' }], source: { kind: 'ds-bot', role: 'request', exchangeId: 'attempt-1' } } },
+    { seq: 3, time: day(0, 9) + 2, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'Attempt reported' }] } } },
+  ] }]
+  const detail = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', records, now: NOW })
+  assert.equal(detail.trace.status, 'ready')
+  assert.deepEqual(detail.trace.records.map(item => item.type), ['user/message', 'assistant/message'])
+})
+
+test('buildTaskDetail accepts verified only through a fresh explicit verification binding', () => {
+  const task = {
+    id: 't1', botId: 'forge', task: 'Build the bridge', status: 'done', updatedAt: NOW,
+    evidence: [{
+      id: 'verify-1', kind: 'verified', text: 'All declared checks matched', at: NOW - 100,
+      sourceId: 'session:forge:12', artifact: { path: 'dist/app.zip', digest: 'sha256:abc' },
+    }],
+  }
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer' } },
+    rooms: { r1: { id: 'r1', name: 'Delivery', goal: { id: 'g1', status: 'active', title: 'Ship MCP', stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', tasks: [task] }] } } },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const unbound = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW })
+  assert.equal(unbound.verification.status, 'pending')
+  task.verification = {
+    status: 'verified', evidenceIds: ['verify-1'], verifiedAt: NOW - 50,
+    checks: [{ text: 'tests pass', status: 'verified', evidenceId: 'verify-1' }],
+  }
+  const verified = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW })
+  assert.equal(verified.verification.status, 'verified')
+  assert.deepEqual(verified.artifacts.map(item => [item.path, item.digest, item.trust]), [['dist/app.zip', 'sha256:abc', 'verified']])
+})
+
+test('buildTaskDetail keeps stale acceptance stale instead of reviving old verified evidence', () => {
+  const task = {
+    id: 't1', botId: 'forge', task: 'Build the bridge', status: 'done',
+    evidence: [{ id: 'verify-1', kind: 'verified', text: 'Old acceptance', at: NOW - 100, artifact: { path: 'dist/app.zip', digest: 'sha256:old' } }],
+    verification: { status: 'stale', reason: 'dist/app.zip changed after acceptance', evidenceIds: ['verify-1'], verifiedAt: NOW - 50 },
+  }
+  const state = {
+    bots: { forge: { id: 'forge', name: 'Forge' } },
+    rooms: { r1: { id: 'r1', name: 'Delivery', goal: { id: 'g1', status: 'active', title: 'Ship', stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', tasks: [task] }] } } },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', now: NOW })
+  assert.equal(detail.verification.status, 'stale')
+  assert.match(detail.verification.reason, /changed after acceptance/)
+  assert.equal(detail.evidence.find(item => item.id === 'verify-1').trust, 'reported')
+})
+
+test('buildTaskDetail exposes existing goal controls and disables every control on a read-only host', () => {
+  const state = {
+    bots: {
+      forge: { id: 'forge', name: 'Forge', role: 'Engineer', blocked: { code: 'AUTH', at: NOW - 10 } },
+    },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery', sessions: { forge: 'room-s1' },
+        goal: {
+          id: 'g1', status: 'active', title: 'Ship MCP', current: 0,
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'forge', task: 'Build the bridge', status: 'working' }] }],
+        },
+      },
+    },
+    works: {},
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', liveSessionIds: ['room-s1'], now: NOW })
+  assert.deepEqual(detail.controls.map(item => [item.id, item.enabled]), [
+    ['pause-goal', true],
+    ['stop-goal', true],
+    ['retry-bot', true],
+    ['cancel-work', true],
+  ])
+  const locked = buildTaskDetail({ state, activity, taskId: 'goal:g1:s1:t1', liveSessionIds: ['room-s1'], now: NOW, readOnly: 'Another host owns this team' })
+  assert.equal(locked.controls.length, 4)
+  assert.ok(locked.controls.every(item => item.enabled === false && item.reason === 'Another host owns this team'))
+})
+
+test('buildTaskDetail represents empty, partial, demo, and recovery states without fake success', () => {
+  const state = {
+    bots: { chief: { id: 'chief', name: 'Chief', role: 'Coordinator' } },
+    rooms: { r1: { id: 'r1', name: 'Delivery' } },
+    works: {
+      w0: { from: 'chief', to: 'chief', open: ['w1'], results: [] },
+      w1: { from: 'chief', to: 'ghost', parent: 'w0', open: ['w2'], name: 'Review bridge', late: true, results: [{ id: 'r1', name: 'Reader', text: 'broken', failed: true }], at: NOW - 300 },
+      w2: { from: 'ghost', to: 'chief', parent: 'w1', open: [], results: [], at: NOW - 200 },
+    },
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const empty = buildTaskDetail({ state, activity, taskId: 'handoff:missing', now: NOW })
+  assert.equal(empty.empty, true)
+  assert.equal(empty.task, null)
+  assert.equal(empty.trace.status, 'empty')
+
+  const work = buildTaskDetail({ state, activity, taskId: 'handoff:w1', sourceWarnings: ['One Session could not be read'], now: NOW })
+  assert.equal(work.owner.missing, true)
+  assert.equal(work.partial, true)
+  assert.equal(work.trace.status, 'partial')
+  assert.deepEqual(work.blockers.map(item => item.kind), ['owner', 'wait', 'failed-result', 'recovery'])
+  assert.match(work.blockers.map(item => item.text).join(' '), /missing owner ghost/i)
+  assert.match(work.blockers.map(item => item.text).join(' '), /waiting for w2/i)
+  assert.match(work.blockers.map(item => item.text).join(' '), /Reader failed/i)
+  assert.match(work.blockers.map(item => item.text).join(' '), /after a restart/i)
+
+  const demo = buildTaskDetail({ state, activity: { ...activity, mode: 'demo' }, taskId: 'handoff:w1', now: NOW })
+  assert.equal(demo.verification.status, 'unavailable')
+  assert.match(demo.verification.reason, /demo data/i)
+  assert.ok(demo.controls.every(item => item.enabled === false))
+})
+
+test('buildTaskDetail offers handoff abandon only for a child that its parent still waits on', () => {
+  const state = {
+    bots: {
+      chief: { id: 'chief', name: 'Chief', role: 'Coordinator' },
+      forge: { id: 'forge', name: 'Forge', role: 'Engineer' },
+    },
+    rooms: { r1: { id: 'r1', name: 'Delivery' } },
+    works: {
+      w0: { from: 'chief', to: 'chief', open: ['w1'], results: [] },
+      w1: { from: 'chief', to: 'forge', parent: 'w0', open: [], results: [], at: NOW - 200 },
+      w2: { from: 'chief', to: 'forge', open: [], results: [], at: NOW - 100 },
+    },
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const child = buildTaskDetail({ state, activity, taskId: 'handoff:w1', now: NOW })
+  assert.deepEqual(child.controls.filter(item => item.id === 'abandon-work').map(item => [item.id, item.workId, item.enabled]), [['abandon-work', 'w1', true]])
+  const root = buildTaskDetail({ state, activity, taskId: 'handoff:w2', now: NOW })
+  assert.equal(root.controls.some(item => item.id === 'abandon-work'), false)
+})
+
+test('buildTaskDetail offers the existing room stop for a group-owned handoff', () => {
+  const state = {
+    bots: { chief: { id: 'chief', name: 'Chief' } },
+    rooms: { r1: { id: 'r1', name: 'Delivery', sessionId: 'group-session' } },
+    works: { w1: { from: 'chief', room: 'r1', open: [], results: [], at: NOW - 100 } },
+  }
+  const activity = buildTeamActivity({ state, now: NOW, timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state, activity, taskId: 'handoff:w1', liveSessionIds: ['group-session'], now: NOW })
+  assert.deepEqual(detail.controls.map(item => [item.id, item.roomId, item.enabled]), [['cancel-room', 'r1', true]])
+})
 
 test('buildTeamActivity projects goal tasks and open handoffs as real source rows', () => {
   const state = {
@@ -136,6 +455,50 @@ test('buildTeamActivity carries source-read warnings into the partial state', ()
   })
   assert.equal(value.partial, true)
   assert.deepEqual(value.warnings, [{ taskId: null, message: 'team board archive: skipped 1 bad row in ops.jsonl' }])
+})
+
+test('buildTeamActivity does not count a done goal task as verified', () => {
+  const value = buildTeamActivity({
+    state: {
+      bots: { forge: { id: 'forge', name: 'Forge' } },
+      rooms: { r1: { id: 'r1', name: 'Delivery', goal: { id: 'g1', status: 'active', title: 'Ship', stages: [{ id: 's1', title: 'Build', acceptance: 'tests pass', status: 'passed', evidence: 'The Bot says so', tasks: [{ id: 't1', botId: 'forge', task: 'Build it', status: 'done' }] }] } } },
+      works: {},
+    },
+    now: NOW,
+    timeZone: 'Asia/Shanghai',
+  })
+  assert.equal(value.summary.verified, 0)
+  assert.equal(value.tasks[0].sourceStatus, 'done')
+  assert.equal(value.tasks[0].evidenceState, 'reported')
+})
+
+test('buildTeamActivity keeps stale or incompletely checked acceptance out of verified', () => {
+  const value = buildTeamActivity({
+    state: {
+      bots: { forge: { id: 'forge', name: 'Forge' } },
+      rooms: {
+        r1: {
+          id: 'r1', name: 'Delivery',
+          goal: {
+            id: 'g1', status: 'active', title: 'Ship',
+            stages: [{
+              id: 's1', title: 'Build', acceptance: 'tests pass', status: 'passed',
+              tasks: [{
+                id: 't1', botId: 'forge', task: 'Build it', status: 'done',
+                evidence: [{ id: 'e1', kind: 'verified', text: 'Old result', stale: true }],
+                verification: { status: 'verified', evidenceIds: ['e1'], checks: [{ status: 'pending' }] },
+              }],
+            }],
+          },
+        },
+      },
+      works: {},
+    },
+    now: NOW,
+    timeZone: 'Asia/Shanghai',
+  })
+  assert.equal(value.tasks[0].evidenceState, 'reported')
+  assert.equal(value.summary.verified, 0)
 })
 
 test('activityDays keeps seven unique calendar days across DST', () => {

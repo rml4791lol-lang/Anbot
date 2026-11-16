@@ -458,3 +458,51 @@ test('team activity returns real goal tasks, open handoffs, and archived activit
   assert.equal(cached.value.partial, true)
   assert.match(cached.value.warnings[0].message, /team board archive: skipped 1 bad row in forge\.jsonl/)
 })
+
+test('task detail reads bounded linked Session records and stays read-only on a locked host', async (t) => {
+  const pages = []
+  const context = {
+    sessionController: {
+      async page(request) {
+        pages.push(request)
+        if (request.address.sessionId === 'group-session') return { hasMore: false, records: [] }
+        return {
+          hasMore: false,
+          records: [
+            { event: { seq: 1, time: Date.now() - 3, type: 'turn/start', data: { turn: 1 } } },
+            { event: { seq: 2, time: Date.now() - 2, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Build it' }], source: { kind: 'ds-bot', role: 'request', taskId: 'goal:g1:s1:t1' } } } },
+            { event: { seq: 3, time: Date.now() - 1, type: 'tool/result', data: { turn: 1, message: { toolCallId: 'c1', ok: true, content: [{ type: 'text', text: 'tests pass' }] } } } },
+          ],
+        }
+      },
+    },
+  }
+  const { call, stop, rt } = start({
+    version: 1,
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer', instructions: '', createdAt: 1 } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery', named: true, sessionId: 'group-session', members: ['forge'], sessions: { forge: 'room-s1' },
+        goal: {
+          id: 'g1', revision: 2, status: 'active', title: 'Ship MCP', updatedAt: Date.now(),
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'forge', task: 'Build it', status: 'working', attempt: { sessionId: 'room-s1' } }] }],
+        },
+      },
+    },
+    works: {},
+  }, { context })
+  t.after(stop)
+  const result = await call('task-detail', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.value.trace.sessionIds, ['room-s1'])
+  assert.equal(result.value.trace.records.find(item => item.type === 'tool/result').trust, 'executed')
+  assert.deepEqual(pages.map(page => [page.address.sessionId, page.maxMessages]), [['room-s1', 60], ['group-session', 60]])
+
+  rt.readOnly = () => 'Another host owns this team'
+  const locked = await call('task-detail', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(locked.ok, true)
+  assert.ok(locked.value.controls.every(item => item.enabled === false && item.reason === 'Another host owns this team'))
+  const write = await call('stop-member-work', { roomId: 'r1', botId: 'forge' })
+  assert.equal(write.ok, false)
+  assert.equal(write.error.code, 'bot/read-only')
+})

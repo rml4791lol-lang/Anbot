@@ -10,6 +10,7 @@ import { validateViewAnswer } from 'deep-view/core'
 import { readTeamBoardLines, teamBoardArchiveSignature, teamBoardDir, readTeamBoardArchive } from './team-board-feed.js'
 import { readTaskLedger } from './task-ledger.js'
 import { buildTeamActivity } from './team-activity.js'
+import { buildTaskDetail, taskSessionIds } from './task-detail.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
 
 const STAGED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -186,7 +187,23 @@ export function install(rt) {
   }
   // What a host that only reads the team may still answer.
   // Updates change the dsh profile, not the team, so a reading host may run them too.
-  const READS = new Set(['state', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'file-download', 'team-activity'])
+  const READS = new Set(['state', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'file-download', 'team-activity', 'task-detail'])
+
+  const teamActivitySnapshot = (now = Date.now()) => {
+    const since = now - 7 * 24 * 60 * 60 * 1000
+    const sourceWarnings = []
+    const timeZone = rt.config?.timeZone
+    const ledger = readTaskLedger(join(rt.home, 'ledger'), since, now, message => { sourceWarnings.push(message); ctx.logger?.warn?.(message) }, activityLedgerCache)
+    const archiveDir = join(teamBoardDir(), 'archive')
+    const archiveKey = teamBoardArchiveSignature(archiveDir)
+    if (activityArchiveCache.key !== archiveKey) {
+      const warnings = []
+      const lines = readTeamBoardArchive(archiveDir, message => { warnings.push(message); ctx.logger?.warn?.(message) })
+      activityArchiveCache = { key: archiveKey, lines, warnings }
+    }
+    sourceWarnings.push(...activityArchiveCache.warnings)
+    return buildTeamActivity({ state, board: activityArchiveCache.lines, ledger: ledger.rows, now, timeZone, sourceWarnings })
+  }
 
   async function setPrefs(body) {
     if (body.theme !== undefined) {
@@ -342,20 +359,37 @@ export function install(rt) {
           return ok(await rt.usageView({ timeZone: typeof body.timeZone === 'string' ? body.timeZone.slice(0, 64) : undefined }))
         case 'team-activity': {
           await rt.load()
+          return ok(teamActivitySnapshot())
+        }
+        case 'task-detail': {
+          await rt.load()
+          const taskId = String(body.taskId ?? '')
+          if (taskId === '') return fail('No task named', 'bot/invalid')
           const now = Date.now()
-          const since = now - 7 * 24 * 60 * 60 * 1000
+          const activity = teamActivitySnapshot(now)
+          const records = []
           const sourceWarnings = []
-          const timeZone = rt.config?.timeZone
-          const ledger = readTaskLedger(join(rt.home, 'ledger'), since, now, message => { sourceWarnings.push(message); ctx.logger?.warn?.(message) }, activityLedgerCache)
-          const archiveDir = join(teamBoardDir(), 'archive')
-          const archiveKey = teamBoardArchiveSignature(archiveDir)
-          if (activityArchiveCache.key !== archiveKey) {
-            const warnings = []
-            const lines = readTeamBoardArchive(archiveDir, message => { warnings.push(message); ctx.logger?.warn?.(message) })
-            activityArchiveCache = { key: archiveKey, lines, warnings }
+          for (const sessionId of taskSessionIds({ state, activity, taskId })) {
+            if (typeof ctx.sessionController?.page !== 'function') {
+              sourceWarnings.push(`Session ${sessionId} could not be read`)
+              continue
+            }
+            try {
+              const page = await ctx.sessionController.page({
+                address: { kind: 'session', sessionId },
+                maxMessages: 60,
+              }, AbortSignal.timeout(15_000))
+              records.push({ sessionId, events: page.records.map(record => record.event), hasMore: page.hasMore === true })
+            } catch (error) {
+              const message = `Session ${sessionId} could not be read: ${error?.message ?? error}`
+              sourceWarnings.push(message)
+              ctx.logger?.warn?.(message)
+            }
           }
-          sourceWarnings.push(...activityArchiveCache.warnings)
-          return ok(buildTeamActivity({ state, board: activityArchiveCache.lines, ledger: ledger.rows, now, timeZone, sourceWarnings }))
+          return ok(buildTaskDetail({
+            state, activity, taskId, records, sourceWarnings,
+            liveSessionIds: [...rt.live.keys()], readOnly: rt.readOnly(), now,
+          }))
         }
         case 'room-progress': {
           // Any part id of the group's own Session means the group itself.

@@ -1,6 +1,6 @@
 // A read-only team activity surface: the task rows and activity records already owned
 // by DS Bot, with no second task state and no client-side completion rules.
-import { createElement as h, useEffect, useState } from 'react'
+import { createElement as h, useEffect, useRef, useState } from 'react'
 import { call as apiCall } from './api.js'
 import { hostText, t } from './i18n.js'
 import { BotAvatar } from './mark.js'
@@ -56,6 +56,37 @@ const copyText = () => ({
   stage: t('Stage'),
   warning: t('Warning'),
   noOwner: t('No owner'),
+  latestCheckpoint: t('Latest checkpoint'),
+  nextAction: t('Next action'),
+  blockers: t('Blockers'),
+  artifacts: t('Artifacts'),
+  traceExplorer: t('Trace Explorer'),
+  timeline: t('Timeline'),
+  relationships: t('Relationships'),
+  records: t('Records'),
+  reported: t('Reported'),
+  executed: t('Executed'),
+  verified: t('Verified'),
+  requested: t('Requested'),
+  pending: t('Pending'),
+  noBlockers: t('No known blockers.'),
+  noEvidence: t('No evidence is attached yet.'),
+  noArtifacts: t('No artifacts are attached yet.'),
+  noTrace: t('No Session records are linked to this task yet.'),
+  tracePartial: t('The trace may be incomplete.'),
+  traceTruncated: t('Older Session records are not shown.'),
+  none: t('None'),
+  detailLoading: t('Loading task detail…'),
+  detailStale: t('Could not refresh this task. Showing the last good detail.'),
+  detailUnavailable: t('This task is no longer available.'),
+  detailError: t('Task detail could not be read.'),
+  pauseGoal: t('Pause goal'),
+  resumeGoal: t('Resume goal'),
+  stopGoal: t('Stop goal'),
+  retryBot: t('Retry Bot'),
+  cancelWork: t('Stop current work'),
+  abandonWait: t('Abandon wait'),
+  verification: t('Verification'),
 })
 
 const sourceLabel = (source, copy) => source === 'goal' ? copy.goalTask
@@ -141,35 +172,156 @@ function TaskRow({ task, roster, role, selected, copy, onSelect }) {
     h('time', { className: 'bt-activity-task-time' }, when(task.updatedAt)))
 }
 
-function Detail({ task, roster, rolesById, allTasks, copy }) {
+const trustLabel = (trust, copy) => trust === 'verified' ? copy.verified
+  : trust === 'executed' ? copy.executed
+    : trust === 'requested' ? copy.requested
+      : trust === 'reported' ? copy.reported : copy.pending
+
+const controlLabel = (id, copy) => id === 'pause-goal' ? copy.pauseGoal
+  : id === 'resume-goal' ? copy.resumeGoal
+    : id === 'stop-goal' ? copy.stopGoal
+      : id === 'retry-bot' ? copy.retryBot
+        : id === 'cancel-work' || id === 'cancel-room' ? copy.cancelWork
+          : id === 'abandon-work' ? copy.abandonWait : id
+
+function TraceRow({ item, copy, selected, onSelect }) {
+  return h('button', {
+    type: 'button',
+    className: 'bt-trace-record',
+    'data-trace-id': item.id,
+    'data-trust': item.trust,
+    'data-selected': selected || undefined,
+    onClick: () => onSelect(item),
+  },
+  h('span', { className: 'bt-trace-record-main' },
+    h('b', null, item.title || item.type),
+    h('span', null, item.detail || ''),
+    h('small', null, [item.sessionId, item.seq === null || item.seq === undefined ? '' : `#${item.seq}`].filter(Boolean).join(' · '))),
+  h('span', { className: 'bt-trace-trust', 'data-trust': item.trust }, trustLabel(item.trust, copy)),
+  h('time', null, when(item.at)))
+}
+
+export function TraceExplorer({ trace, copy, view: forcedView, onSelectEvidence = () => {} }) {
+  const [localView, setLocalView] = useState('timeline')
+  const [selectedRecordId, setSelectedRecordId] = useState(null)
+  const view = forcedView ?? localView
+  const changeView = next => {
+    if (forcedView === undefined) setLocalView(next)
+  }
+  const selectRecord = (item) => {
+    setSelectedRecordId(item.id)
+    if (item.relatedEvidenceId) onSelectEvidence(item.relatedEvidenceId)
+  }
+  const records = Array.isArray(trace?.timeline) ? trace.timeline : []
+  const relationships = Array.isArray(trace?.relationships) ? trace.relationships : []
+  const recordRows = records.map(item => h(TraceRow, { key: item.id, item, copy, selected: selectedRecordId === item.id, onSelect: selectRecord }))
+  const tab = (id, label) => h('button', {
+    type: 'button', className: 'bt-trace-tab', 'data-view': id, 'aria-pressed': view === id,
+    onClick: () => changeView(id),
+  }, label)
+  return h('section', { className: 'bt-trace-explorer', 'aria-label': copy.traceExplorer },
+    h('div', { className: 'bt-trace-head' }, h('h4', null, copy.traceExplorer), h('small', { className: 'bt-activity-id' }, trace?.sourceId || trace?.sourceTaskId || '')),
+    h('div', { className: 'bt-trace-tabs', role: 'tablist' }, tab('timeline', copy.timeline), tab('relationships', copy.relationships), tab('records', copy.records)),
+    trace?.status === 'partial' ? h('p', { className: 'bt-trace-note', role: 'status' }, copy.tracePartial) : null,
+    view === 'relationships'
+      ? relationships.length > 0
+        ? h('div', { className: 'bt-trace-relations' }, relationships.map((item, index) => h('div', { key: `${item.kind}:${index}`, className: 'bt-trace-relation', 'data-kind': item.kind },
+          h('b', null, item.kind), h('span', null, `${item.from} → ${item.to}`))))
+        : h('p', { className: 'bt-activity-detail-empty' }, copy.noTrace)
+      : records.length > 0
+        ? h('div', { className: 'bt-trace-list', role: view === 'timeline' ? 'list' : undefined }, recordRows)
+        : h('p', { className: 'bt-activity-detail-empty' }, copy.noTrace),
+    trace?.truncated ? h('p', { className: 'bt-trace-note' }, copy.traceTruncated) : null)
+}
+
+function EvidenceList({ evidence, selectedId, copy, onSelect }) {
+  if (evidence.length === 0) return h('p', { className: 'bt-activity-detail-empty' }, copy.noEvidence)
+  return h('div', { className: 'bt-task-evidence-list' }, evidence.map(item => h('button', {
+    key: item.id, type: 'button', className: 'bt-task-evidence', 'data-trust': item.trust,
+    'data-evidence-id': item.id, 'data-selected': selectedId === item.id || undefined,
+    onClick: () => onSelect(item.id),
+  },
+  h('span', null,
+    h('b', null, item.title || item.text || item.id),
+    item.title && item.text ? h('span', null, item.text) : null,
+    h('small', null, `${item.sourceId || ''}${item.at ? ` · ${when(item.at)}` : ''}`)),
+  h('em', null, trustLabel(item.trust, copy)))))
+}
+
+function Detail({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy }) {
   if (!task) return h('aside', { className: 'bt-activity-detail' }, h('p', { className: 'bt-activity-detail-empty' }, copy.noDetail))
-  const role = rolesById.get(task.ownerId)
-  const parent = task.parentId ? allTasks.find(item => item.id === task.parentId) : undefined
-  const children = allTasks.filter(item => item.parentId === task.id)
-  const parentText = parent?.title || (task.source === 'goal' && task.subtitle ? `${copy.goal}: ${task.subtitle}` : task.parentId)
-  const warnings = Array.isArray(task.warnings) ? task.warnings : []
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState(null)
+  const shown = detail?.task ?? task
+  const role = rolesById.get(shown.ownerId)
+  const parent = shown.parentId ? allTasks.find(item => item.id === shown.parentId) : undefined
+  const children = allTasks.filter(item => item.parentId === shown.id)
+  const parentText = parent?.title || (shown.source === 'goal' && shown.subtitle ? `${copy.goal}: ${shown.subtitle}` : shown.parentId)
+  const warnings = [
+    ...(Array.isArray(shown.warnings) ? shown.warnings : []),
+    ...(Array.isArray(detail?.warnings) ? detail.warnings.map(item => item.message).filter(Boolean) : []),
+  ]
+  const stageTitle = detail?.location?.stageTitle || shown.stageTitle
+  const blockers = Array.isArray(detail?.blockers) ? detail.blockers : []
+  const evidence = Array.isArray(detail?.evidence) ? detail.evidence : []
+  const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : []
+  const controls = Array.isArray(detail?.controls) ? detail.controls : []
+  const lockReason = typeof roster?.readOnly === 'string' ? roster.readOnly.trim() : ''
+  const visibleControls = controls.map(control => lockReason ? { ...control, enabled: false, reason: lockReason } : control)
+  const runControl = (control) => {
+    if (!control.enabled || !actions) return
+    if (control.id === 'pause-goal') void actions.goalControl?.(control.roomId, control.goalId, 'pause')
+    else if (control.id === 'resume-goal') void actions.goalControl?.(control.roomId, control.goalId, 'resume')
+    else if (control.id === 'stop-goal') void actions.goalControl?.(control.roomId, control.goalId, 'stop')
+    else if (control.id === 'retry-bot') void actions.resume?.(control.botId)
+    else if (control.id === 'cancel-work') void actions.stopMemberWork?.(control.roomId, control.botId)
+    else if (control.id === 'cancel-room') void actions.stopRoomWork?.(control.roomId)
+    else if (control.id === 'abandon-work') void actions.abandonWork?.(control.workId)
+  }
+  const detailNotice = detailStatus === 'loading' && detail === null ? h('p', { className: 'bt-task-detail-state', role: 'status' }, copy.detailLoading)
+    : detail?.empty === true ? h('p', { className: 'bt-task-detail-state', role: 'status' }, copy.detailUnavailable)
+      : detailError ? h('p', { className: 'bt-task-detail-state', role: 'alert' }, detail ? copy.detailStale : (detailError || copy.detailError), detail ? h('span', null, detailError) : null) : null
   return h('aside', { className: 'bt-activity-detail', 'aria-label': copy.detail },
     h('div', { className: 'bt-activity-detail-head' },
-      h(OwnerMark, { task, roster, role, copy, size: 38 }),
+      h(OwnerMark, { task: shown, roster, role, copy, size: 38 }),
       h('div', null,
-        h('b', null, task.title || task.sourceId),
-        h('span', null, `${sourceLabel(task.source, copy)} · ${task.ownerName || copy.noOwner}`),
-        h('small', { 'data-main': role?.main || undefined }, task.ownerKind === 'group' ? copy.room : role ? `${task.ownerRole || role.role || copy.member} · ${permissionOf(role, copy)}` : copy.noOwner))),
+        h('b', null, shown.title || shown.sourceId),
+        h('span', null, `${sourceLabel(shown.source, copy)} · ${shown.ownerName || copy.noOwner}`),
+        h('small', { 'data-main': role?.main || undefined }, shown.ownerKind === 'group' ? copy.room : role ? `${shown.ownerRole || role.role || copy.member} · ${permissionOf(role, copy)}` : copy.noOwner))),
+    detailNotice,
     h('dl', null,
-      h('div', null, h('dt', null, copy.status), h('dd', null, h('span', { className: 'bt-activity-status', 'data-status': task.sourceStatus }, task.sourceStatus))),
-      h('div', null, h('dt', null, copy.sourceId), h('dd', { className: 'bt-activity-id' }, task.sourceId || task.id)),
-      ...(task.stageTitle ? [h('div', { key: 'stage' }, h('dt', null, copy.stage), h('dd', null, task.stageTitle))] : []),
+      h('div', null, h('dt', null, copy.status), h('dd', null, h('span', { className: 'bt-activity-status', 'data-status': shown.sourceStatus }, shown.sourceStatus))),
+      h('div', null, h('dt', null, copy.sourceId), h('dd', { className: 'bt-activity-id' }, shown.sourceId || shown.id)),
+      ...(stageTitle ? [h('div', { key: 'stage' }, h('dt', null, copy.stage), h('dd', null, stageTitle))] : []),
+      ...(detail ? [h('div', { key: 'checkpoint' }, h('dt', null, copy.latestCheckpoint), h('dd', null, detail.checkpoint?.text || copy.none))] : []),
+      ...(detail ? [h('div', { key: 'next' }, h('dt', null, copy.nextAction), h('dd', null, detail.nextAction?.text || copy.none))] : []),
+      ...(detail ? [h('div', { key: 'blockers' }, h('dt', null, copy.blockers), h('dd', null, blockers.length > 0
+        ? h('ul', { className: 'bt-task-blockers' }, blockers.map(item => h('li', { key: item.id, 'data-kind': item.kind }, item.text)))
+        : copy.noBlockers))] : []),
       ...(parentText ? [h('div', { key: 'parent' }, h('dt', null, copy.parent), h('dd', null, parentText))] : []),
       ...(children.length > 0 ? [h('div', { key: 'children' }, h('dt', null, copy.children), h('dd', null,
         h('ul', { className: 'bt-activity-children' }, children.map(child => h('li', { key: child.id }, child.title || child.sourceId))))) ] : []),
-      ...(task.roomName ? [h('div', { key: 'room' }, h('dt', null, copy.room), h('dd', null, task.roomName))] : []),
-      ...(task.acceptance ? [h('div', { key: 'acceptance' }, h('dt', null, copy.acceptance), h('dd', null, task.acceptance))] : []),
-      ...(task.note ? [h('div', { key: 'note' }, h('dt', null, copy.note), h('dd', null, task.note))] : []),
-      ...(task.evidence ? [h('div', { key: 'evidence' }, h('dt', null, copy.evidence), h('dd', null, task.evidence))] : []),
-      ...(warnings.length > 0 ? [h('div', { key: 'warning', className: 'bt-activity-warning' }, h('dt', null, copy.warning), h('dd', null, warnings.join(' · ')))] : [])))
+      ...(shown.roomName ? [h('div', { key: 'room' }, h('dt', null, copy.room), h('dd', null, shown.roomName))] : []),
+      ...(shown.acceptance ? [h('div', { key: 'acceptance' }, h('dt', null, copy.acceptance), h('dd', null, shown.acceptance))] : []),
+      ...(shown.note ? [h('div', { key: 'note' }, h('dt', null, copy.note), h('dd', null, shown.note))] : []),
+      ...(!detail && shown.evidence ? [h('div', { key: 'evidence' }, h('dt', null, copy.evidence), h('dd', null, shown.evidence))] : []),
+      ...(detail ? [h('div', { key: 'verification' }, h('dt', null, copy.verification), h('dd', null, `${detail.verification?.status || copy.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ''}`))] : []),
+      ...(warnings.length > 0 ? [h('div', { key: 'warning', className: 'bt-activity-warning' }, h('dt', null, copy.warning), h('dd', null, warnings.join(' · ')))] : [])),
+    detail ? h('section', { className: 'bt-task-section' },
+      h('h4', null, copy.evidence),
+      h(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy, onSelect: setSelectedEvidenceId })) : null,
+    detail ? h('section', { className: 'bt-task-section' },
+      h('h4', null, copy.artifacts),
+      artifacts.length > 0 ? h('div', { className: 'bt-task-artifacts' }, artifacts.map((item, index) => h('div', {
+        key: `${item.path}:${item.digest ?? index}`, className: 'bt-task-artifact', 'data-trust': item.trust,
+      }, h('b', null, item.name || item.path), h('span', { className: 'bt-activity-id' }, item.path), h('small', null, item.digest || '')))) : h('p', { className: 'bt-activity-detail-empty' }, copy.noArtifacts)) : null,
+    detail && detail.empty !== true ? h(TraceExplorer, { trace: detail.trace, copy, onSelectEvidence: setSelectedEvidenceId }) : null,
+    visibleControls.length > 0 ? h('div', { className: 'bt-detail-controls', 'aria-label': copy.detail }, visibleControls.map(control => h('button', {
+      key: control.id, type: 'button', className: 'bt-soft bt-soft-sm bt-detail-control', 'data-control': control.id,
+      disabled: !control.enabled, title: control.reason || undefined, onClick: () => runControl(control),
+    }, controlLabel(control.id, copy)))) : null)
 }
 
-export function TeamActivityView({ data, roster, status = 'ready', error = '', selectedId = null, filters = {}, onSelect = () => {}, onFilter = () => {}, onClose = () => {}, leaving = false }) {
+export function TeamActivityView({ data, roster, status = 'ready', error = '', selectedId = null, filters = {}, detail = null, detailStatus = 'idle', detailError = '', actions, onSelect = () => {}, onFilter = () => {}, onClose = () => {}, leaving = false }) {
   const copy = copyText()
   const partialData = data
   const partialWarnings = Array.isArray(partialData?.warnings) ? partialData.warnings.map(item => item.message).filter(Boolean) : []
@@ -191,6 +343,7 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
   const roles = data?.roles ?? []
   const rolesById = new Map(roles.map(role => [role.id, role]))
   const selected = tasks.find(task => task.id === selectedId) ?? tasks[0] ?? null
+  const selectedDetail = detail?.taskId === selected?.id || detail?.task?.id === selected?.id ? detail : null
   const empty = allTasks.length === 0 && activity.length === 0
   const noMatch = allTasks.length > 0 && tasks.length === 0
   const noCurrentTasks = allTasks.length === 0
@@ -230,7 +383,7 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
     ? h('div', { className: 'bt-empty bt-activity-empty', role: 'status' }, copy.empty)
     : h('div', { className: 'bt-activity-body' },
       h('div', { className: 'bt-activity-list' }, taskMessage ? h('p', { className: 'bt-empty bt-activity-no-task' }, taskMessage) : taskRows),
-      h(Detail, { task: selected, roster, rolesById, allTasks, copy }),
+      h(Detail, { task: selected, detail: selectedDetail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy }),
       h('div', { className: 'bt-activity-recent' },
         h('h3', null, copy.recent),
         activityRows.length > 0 ? activityRows : h('p', { className: 'bt-activity-detail-empty' }, copy.empty)))
@@ -256,12 +409,22 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
     body)
 }
 
-export function TeamActivity({ roster, onClose = () => {}, callImpl = apiCall, leaving = false }) {
+export async function requestTaskDetail(callImpl, taskId) {
+  const value = await callImpl('task-detail', { taskId })
+  if (value?.taskId !== taskId) throw new Error('Task detail did not match the selected task')
+  return value
+}
+
+export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = apiCall, leaving = false }) {
   const [data, setData] = useState(null)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [filters, setFilters] = useState({ role: 'all', source: 'all', status: 'all', attention: false })
+  const [detail, setDetail] = useState(null)
+  const [detailStatus, setDetailStatus] = useState('idle')
+  const [detailError, setDetailError] = useState('')
+  const detailRef = useRef(null)
   useEscape(onClose)
   useEffect(() => {
     let alive = true
@@ -291,9 +454,36 @@ export function TeamActivity({ roster, onClose = () => {}, callImpl = apiCall, l
       window.removeEventListener('focus', load)
     }
   }, [callImpl])
+  const visibleTasks = data === null ? [] : filterActivityModel(data, filters).tasks
+  const selectedTask = visibleTasks.find(task => task.id === selectedId) ?? visibleTasks[0]
+  const selectedTaskId = selectedTask?.id ?? null
+  const selectedTaskVersion = selectedTask === undefined ? '' : `${selectedTask.sourceStatus}:${selectedTask.evidenceState ?? ''}:${selectedTask.updatedAt ?? ''}`
+  useEffect(() => {
+    if (selectedTaskId === null) {
+      detailRef.current = null
+      setDetail(null)
+      setDetailStatus('idle')
+      setDetailError('')
+      return undefined
+    }
+    let alive = true
+    setDetailStatus('loading')
+    setDetailError('')
+    Promise.resolve().then(() => requestTaskDetail(callImpl, selectedTaskId)).then(value => {
+      if (!alive) return
+      detailRef.current = value
+      setDetail(value)
+      setDetailStatus('ready')
+    }).catch(failure => {
+      if (!alive) return
+      setDetailError(String(failure?.message ?? failure))
+      setDetailStatus(detailRef.current?.taskId === selectedTaskId ? 'ready' : 'error')
+    })
+    return () => { alive = false }
+  }, [selectedTaskId, selectedTaskVersion, callImpl])
   return h('div', { className: 'bt-activity-layer', 'data-leaving': leaving || undefined },
     h('div', { className: 'bt-scrim', onMouseDown: onClose }),
-    h(TeamActivityView, { data, roster, status, error, selectedId, filters, onSelect: setSelectedId, onFilter: setFilters, onClose }))
+    h(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose }))
 }
 
 export const TEAM_ACTIVITY_CSS = `
@@ -346,6 +536,14 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-activity-detail-head{display:flex;gap:8px;align-items:center;margin-bottom:16px}.bt-activity-detail-head>div{display:flex;min-width:0;flex-direction:column;gap:2px}
 .bt-activity-detail-head b{font-size:13px;line-height:18px;overflow-wrap:anywhere}.bt-activity-detail-head span,.bt-activity-detail-head small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-activity-detail-head small[data-main]{color:var(--bt-accent)}
 .bt-activity-detail dl{display:flex;flex-direction:column;gap:10px;margin:0}.bt-activity-detail dl>div{display:flex;flex-direction:column;gap:2px}.bt-activity-detail dt{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-activity-detail dd{margin:0;font-size:12px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}
+.bt-task-detail-state{margin:0 0 12px;padding:8px 10px;border-radius:8px;background:var(--bt-tag-bg);font-size:11px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}.bt-task-detail-state[role=alert]{background:var(--bt-danger-soft);color:var(--bt-danger)}.bt-task-detail-state span{display:block;margin-top:2px;color:var(--bt-ink-2)}
+.bt-task-blockers{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-task-blockers li[data-kind=owner],.bt-task-blockers li[data-kind=failed-result],.bt-task-blockers li[data-kind=recovery]{color:var(--bt-danger)}
+.bt-task-section{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-task-section h4,.bt-trace-head h4{margin:0;font-size:12px;line-height:16px;font-weight:600}
+.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:10px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
+.bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:10px;line-height:14px;color:var(--bt-ink-3);overflow-wrap:anywhere}
+.bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:10px;line-height:14px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:10px;line-height:14px;color:var(--bt-ink-3)}
+.bt-detail-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-detail-control:disabled{opacity:.45;cursor:not-allowed}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}
 .bt-activity-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;line-height:16px!important}
 .bt-activity-children{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-activity-warning dd{color:var(--bt-danger)}
