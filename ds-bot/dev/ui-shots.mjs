@@ -1,5 +1,5 @@
 // Screenshot the main Bot team screens, the same on both ends: the team as it stands, a
-// fresh Main Bot's model card and its greeting, the sidebar with Writer and Coder, a
+// fresh Main Bot's model dock and its greeting, the sidebar with Writer and Coder, a
 // private chat with the model picker in its details panel, the Bot's memory (saved from
 // the chat, its row in the details panel, and the memory dialog), a group chat and its settings
 // in the details panel, Bot settings, the Bots and Group chats pages with one group's
@@ -43,7 +43,7 @@ if (mode === 'desktop') {
 } else {
   const { chromium } = playwright(repo)
   browser = await chromium.launch({ executablePath: findChrome(), headless: true })
-  page = await browser.newPage({ viewport: { width: 1400, height: 860 } })
+  page = await browser.newPage({ viewport: { width: 1400, height: 860 }, locale: 'en-US' })
   const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
   const log = readFileSync(join(root, `.dsh-test-${target}`, 'web.log'), 'utf8')
   const login = log.match(new RegExp(`http://127\\.0\\.0\\.1:${webPort}/\\?token=[^\\s]+`))?.[0]
@@ -87,16 +87,16 @@ const openRow = selector => page.locator(selector).first().click().then(() => pa
 await shot('team')
 
 let state = await api('state', {})
-// A fresh team's Main Bot opens on the model card and greets once a model is picked.
+// A fresh team's Main Bot opens on the model dock and greets once a model is picked.
 const main = state.bots.find(bot => bot.id === state.mainBotId)
 if (main && !main.model) {
   await openRow(`.bt-tile[data-bot-id="${main.id}"]`)
-  const card = page.locator('.bt-model-card')
-  check(await card.waitFor({ timeout: 30_000 }).then(() => true, () => false), `${main.name} opens on a model card`)
+  const card = page.locator('.bt-model-dock')
+  check(await card.waitFor({ timeout: 30_000 }).then(() => true, () => false), `${main.name} opens on a model dock`)
   await page.waitForTimeout(600)
   await shot('model-card')
-  await card.locator('.bt-model-opt').first().click()
-  check(await card.waitFor({ state: 'detached', timeout: 30_000 }).then(() => true, () => false), 'the model card goes once a model is picked')
+  await card.locator('.bt-model-choice-chips .bt-model-chip').first().click()
+  check(await card.waitFor({ state: 'detached', timeout: 30_000 }).then(() => true, () => false), 'the model dock goes once a model is picked')
   check(await page.getByText('先让团队帮你做哪块', { exact: false }).last().waitFor({ timeout: 60_000 }).then(() => true, () => false), `${main.name} greets and asks after the pick`)
   await page.waitForTimeout(1500)
   await shot('main-greets')
@@ -124,8 +124,8 @@ check(await page.getByText('收到：你好', { exact: false }).last().waitFor({
 await page.waitForTimeout(1500)
 await shot('private-chat')
 
-await page.getByRole('button', { name: 'View conversation details' }).first().click()
-const trigger = page.locator('.bt-panel .bt-model-trigger')
+await page.locator('.bt-head .bt-pill').first().click()
+const trigger = page.locator('.bt-panel button[aria-label^="Model:"]').first()
 check(await trigger.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'the details panel shows the model picker')
 await page.waitForTimeout(600)
 await trigger.click()
@@ -137,7 +137,7 @@ await page.locator('.bt-panel [data-info-row="settings"]').click()
 check(await page.locator('.bt-panel .bt-bs').waitFor({ timeout: 5_000 }).then(() => true, () => false), 'the details panel opens Bot settings in place')
 await page.waitForTimeout(600)
 await shot('details-settings')
-await page.getByRole('button', { name: 'Close details' }).first().click()
+await page.locator('.bt-panel .bt-subhead .bt-icon-btn').last().click()
 await page.waitForTimeout(600)
 
 // Memory: Writer saves one entry and may not write the team memory, which the Main Bot
@@ -147,7 +147,7 @@ const waits = (locator, timeout = 30_000) => locator.waitFor({ timeout }).then((
 await send('记住 我喜欢简短的回答，先给结论')
 check(await waits(page.locator('.bt-event button', { hasText: 'Memory updated' }).last()), 'remember shows a "Memory updated" line')
 await send('团队记住 周报在周五下午五点前交')
-check(await waits(page.getByText('没记成：Only Main Bots and group admins write the team memory', { exact: false }).last()), 'a Bot that is neither a Main Bot nor a group admin cannot write the team memory')
+check(await waits(page.getByText(/Only Main Bots and group admins write the team memory/, { exact: false }).last()), 'a Bot that is neither a Main Bot nor a group admin cannot write the team memory')
 await page.waitForTimeout(1200)
 await shot('memory-saved')
 await openRow(`.bt-tile[data-bot-id="${state.mainBotId}"]`)
@@ -156,7 +156,7 @@ check(await waits(page.locator('.bt-event button', { hasText: 'Team memory updat
 await page.waitForTimeout(1200)
 await shot('memory-team')
 await openRow(writerRow)
-await page.getByRole('button', { name: 'View conversation details' }).first().click()
+await page.locator('.bt-head .bt-pill').first().click()
 const memoryRow = page.locator('.bt-panel .bt-mem-row')
 check(await waits(memoryRow.filter({ hasText: '2 entries' }), 10_000), 'the details panel counts 2 memory entries')
 await page.waitForTimeout(400)
@@ -182,15 +182,20 @@ await shot('memory-ask')
 await memory.getByRole('button', { name: 'Close memory' }).click()
 check(await memory.waitFor({ state: 'detached', timeout: 5_000 }).then(() => true, () => false), 'the memory dialog closes')
 check(await waits(memoryRow.filter({ hasText: '3 entries' }), 5_000), 'the Memory row counts the new entry')
-await page.getByRole('button', { name: 'Close details' }).first().click()
+await page.locator('.bt-panel .bt-drawer-top button.bt-round').last().click()
 await page.waitForTimeout(600)
 
 // A lasting preference said in passing is kept by the memory review in the
 // background, and the header pill stretches to say so; clicking it opens the memory.
-await send('以后给我的文档都用 Markdown 表格总结要点')
-check(await waits(page.getByText('收到：以后', { exact: false }).last()), 'Writer answers again')
 const pill = page.locator('.bt-pill[data-memory=updated]')
-check(await waits(pill, 20_000), 'the header pill stretches to say memory was updated')
+const beforeReply = await page.locator('.bt-bubble').count()
+await send('以后给我的文档都用 Markdown 表格总结要点')
+const [answered, noticed] = await Promise.all([
+  page.waitForFunction(count => document.querySelectorAll('.bt-bubble').length > count, beforeReply, { timeout: 30_000 }).then(() => true, () => false),
+  waits(pill, 20_000),
+])
+check(answered, 'Writer answers again')
+check(noticed, 'the header pill stretches to say memory was updated')
 await shot('memory-pill')
 await pill.click()
 check(await waits(memory.locator('.bt-mem-summary')), 'the pill opens the memory dialog')
@@ -207,12 +212,12 @@ const replied = await page.waitForFunction(count => document.querySelectorAll('.
 check(replied, 'the group chat gets a reply')
 await page.waitForTimeout(4000)
 await shot('group-chat')
-await page.getByRole('button', { name: 'View conversation details' }).first().click()
+await page.locator('.bt-head .bt-pill').first().click()
 await page.locator('.bt-panel [data-info-row="settings"]').click()
 check(await page.locator('.bt-panel .bt-bs .bt-seg').waitFor({ timeout: 5_000 }).then(() => true, () => false), 'the details panel opens group settings in place')
 await page.waitForTimeout(600)
 await shot('group-details-settings')
-await page.getByRole('button', { name: 'Close details' }).first().click()
+await page.locator('.bt-panel .bt-subhead .bt-icon-btn').last().click()
 await page.waitForTimeout(600)
 
 await page.locator(writerRow).first().click({ button: 'right' })
@@ -220,7 +225,7 @@ await page.getByRole('menuitem', { name: 'Edit Bot' }).click()
 await page.locator('.bt-settings').waitFor({ timeout: 10_000 })
 await page.waitForTimeout(800)
 await shot('bot-settings')
-check(await page.locator('.bt-settings .bt-model-trigger').count() === 1, 'Bot settings show the model picker')
+check(await page.locator('.bt-settings button[aria-label^="Model:"]').count() === 1, 'Bot settings show the model picker')
 await page.locator('.bt-settings-scroll').evaluate(node => { node.scrollTop = node.scrollHeight })
 await page.waitForTimeout(400)
 await shot('bot-settings-end')
@@ -286,21 +291,23 @@ check(await page.locator('.bt-us-tip').count() === 1, 'hovering a bar shows its 
 await page.locator('.bt-us-chart').screenshot({ path: join(outDir, `${mode}-${String(++index).padStart(2, '0')}-usage-bot-tip.png`) })
 await page.locator('.bt-settings-head .bt-icon-btn').click()
 check(await page.locator('.bt-us-profile').waitFor({ state: 'detached', timeout: 5_000 }).then(() => true, () => false), 'the back button returns to all usage')
-// On the Desktop its account menu holds the shell's settings seat; the link goes through it.
-await page.locator('.bt-settings-nav .bt-settings-shell').click()
-const harness = page.locator('[data-shortcut-modal="settings"]')
-check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Harness settings opens DeepSeek Harness settings')
+// The settings shell lists DSH's own pages beside DS Bot's pages.
+const dshNav = page.locator('.bt-settings-nav').getByRole('button', { name: 'Agent presets', exact: true })
+check(await waits(dshNav, 10_000), 'Settings lists a DeepSeek Harness page')
+await dshNav.click()
+const dshSection = page.locator('.bt-settings .bt-dsh-section')
+check(await waits(dshSection, 10_000), 'a DeepSeek Harness page opens inside Settings')
 await page.waitForTimeout(800)
 await shot('harness-settings')
 await page.keyboard.press('Escape')
-await harness.waitFor({ state: 'detached', timeout: 5_000 }).catch(() => {})
+await page.locator('.bt-settings').waitFor({ state: 'detached', timeout: 5_000 }).catch(() => {})
 await page.waitForTimeout(400)
 
 await openRow(writerRow)
-await page.getByRole('button', { name: 'View conversation details' }).first().click()
-await page.locator('.bt-panel .bt-model-trigger').click()
+await page.locator('.bt-head .bt-pill').first().click()
+await page.locator('.bt-panel button[aria-label^="Model:"]').first().click()
 await page.locator('.bt-model-menu').getByRole('menuitem', { name: 'Models and providers…' }).click()
-check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Models and providers… opens DeepSeek Harness settings')
+check(await waits(page.locator('.bt-settings .bt-settings-head h2', { hasText: 'Models' }), 10_000), 'Models and providers… opens Models settings')
 await page.keyboard.press('Escape')
 
 await browser.close()
