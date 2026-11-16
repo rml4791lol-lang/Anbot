@@ -19,7 +19,7 @@ The Bot team:
 
 ## Hard rules
 
-1. **Build on DSH; never patch it.** Bot features use the documented plugin APIs. The desktop app starts DSH only through its documented entry points (`@deepseek-ai/dsh/profile-boot`, the `dsh` CLI). Never patch DeepSeek Harness or depend on files inside a DSH install. If something is missing in DSH, stop and say so; do not work around it with a patch.
+1. **Build on DSH as the runtime substrate; DSH is mutable when the contract requires it.** Bot features use the documented plugin APIs. General Session, Turn, Tool and UI contracts belong in DSH; Bot-team and product semantics belong in DS Bot. A DSH change needs its own DSH branch, a synchronized pinned version, cross-repo tests and a rollback path. Never patch an installed DSH in place, and never add a second Agent Runtime.
 2. **No secrets.** Never write, print or commit API keys, tokens, cookies or `DSH_HOME` contents. Use the mock model (`ds-bot/dev/mock-llm.mjs`) for tests; it needs no key.
 3. **Only original material.** Do not copy code, text, icons, logos or graphics from other products or websites. Code under a license compatible with Apache 2.0 is the only exception: say where it comes from and add its notice to the `NOTICE` file. This rule is about DS Bot's own interface. To name a third-party product that DS Bot connects to (for example the agent CLI a Bot runs on), use that product's official logo, and list it in `NOTICE` with its source and owner.
 4. **`client.js` is generated.** Change `ds-bot/src/client/`, then run `npm run build` and commit both files. Never edit `client.js` by hand.

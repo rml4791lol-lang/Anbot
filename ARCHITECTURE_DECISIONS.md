@@ -8,15 +8,16 @@ Status values: **Accepted**, **Superseded**, **Proposed**. Every accepted decisi
 
 ---
 
-## ADR-001 — DSH is the only Agent Runtime
+## ADR-001 — DSH is the only Agent Runtime and a mutable substrate
 
 - **Status:** Accepted
-- **Context:** DS-Bot currently runs every Bot through DSH Sessions and the DSH agent loop. Hermes Agent, OpenCode, Pi, Goose, LangGraph and Temporal all provide competing loop/session/state models.
-- **Decision:** DS-Bot does not add a second Agent Runtime. It extends DSH through documented plugin services and adds product adapters only at the boundary of a genuinely different backend.
+- **Context:** DS-Bot currently runs every Bot through DSH Sessions and the DSH agent loop. Hermes Agent, OpenCode, Pi, Goose, LangGraph and Temporal all provide competing loop/session/state models. DSH is also the shared substrate for general Session, Turn, Tool and UI contracts, so treating it as permanently frozen would force product-specific workarounds into DS-Bot.
+- **Decision:** DSH remains the only Agent Runtime and is a mutable foundation. General Session, Turn, Tool and UI contracts should land in DSH first when they are shared concerns; Bot-team organization, product semantics and the control center remain DS-Bot concerns. DSH changes happen in an independent DSH branch with a synchronized pinned version, cross-repo tests and a rollback path. DS-Bot does not add a second Agent Runtime.
 - **Consequences:**
   - Model calls, tool calls, step boundaries, cancellation, compaction and Session replay remain DSH responsibilities.
   - DS-Bot owns Bot identity, teams, rooms, handoffs, memory semantics and the control center.
   - External runtimes may be run as independent products or external services, but may not be embedded as a second execution authority.
+  - Production installs are never patched in place; a DSH change is released as a versioned dependency that both repositories can test and roll back.
 - **Reopen condition:** DSH cannot expose a required lifecycle fact through a documented plugin API after a minimal compatibility spike; the proof must include the missing API and why a wrapper cannot recover it.
 
 ## ADR-002 — DS-Bot remains the only product and organization authority

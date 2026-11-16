@@ -1,7 +1,7 @@
 # DS-Bot vs. the field: an architectural comparison
 
-**Subject:** DS-Bot at `/Users/an/Desktop/Atlas/DS-Bot` (package `ds-bot` 0.3.6, Apache-2.0; README calls it v0.3_preview, pinned to DSH 0.2.2-rc.1).
-**Date:** 2026-11-15. **Method:** read the repo directly (paths + line numbers below), read upstream READMEs and docs via `curl -sk https://raw.githubusercontent.com/...` and docs sites, and ran the installed CLIs (`claude --help`, `codex --help`, `codex exec --help`, `codex queue --help`, `codex sandbox --help`) on this machine: `claude` 2.1.323 at `/opt/homebrew/bin/claude`, `codex-cli` 0.162.1 at `/Users/an/bin/codex`.
+**Subject:** DS-Bot at `<repo-root>` (package `ds-bot` 0.3.6, Apache-2.0; README calls it v0.3_preview, pinned to DSH 0.2.2-rc.1).
+**Date:** 2026-11-15. **Method:** read the repo directly (paths + line numbers below), read upstream READMEs and docs via `curl -sk https://raw.githubusercontent.com/...` and docs sites, and ran the installed CLIs (`claude --help`, `codex --help`, `codex exec --help`, `codex queue --help`, `codex sandbox --help`) on this machine: `claude` 2.1.323 at `/opt/homebrew/bin/claude`, `codex-cli` 0.162.1 at `<path-to-codex>`.
 **Limits:** the GitHub API is unreachable from this machine, so repository file listings were not available; only files whose paths I could name were fetched. Anything I could not verify is marked **unverified** rather than asserted. No repo files were modified; this document is the only output.
 
 ---
