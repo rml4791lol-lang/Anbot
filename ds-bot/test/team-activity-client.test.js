@@ -70,6 +70,33 @@ const data = {
   filters: { sources: ['goal', 'handoff'], statuses: ['working', 'waiting', 'active'], roles: ['chief', 'forge'], attentionStatuses: ['waiting', 'pending', 'paused', 'reported', 'blocked', 'failed', 'unknown'] },
 }
 const roster = { byId: { chief: { id: 'chief', name: 'Chief', role: 'Coordinator' }, forge: { id: 'forge', name: 'Forge', role: 'Engineer' } }, bots: [data.roles[0], data.roles[1]], roomsById: { r1: { id: 'r1', name: 'Delivery' } }, mainBotId: 'chief' }
+const detailData = {
+  schema: 1, mode: 'live', generatedAt: 30, taskId: 'goal:g1:s1:t1', empty: false,
+  task: data.tasks[0],
+  owner: { id: 'forge', name: 'Forge', role: 'Engineer', kind: 'bot', main: false, missing: false },
+  location: { roomId: 'r1', roomName: 'Delivery', goalId: 'g1', goalTitle: 'Ship', goalStatus: 'active', stageId: 's1', stageTitle: 'Bridge', stageIndex: 0, stageCount: 2 },
+  checkpoint: { text: 'Implementation complete', at: 20, kind: 'reported' },
+  nextAction: { text: 'Run the acceptance checks', sourceId: 'goal:g1:s1:t1' },
+  blockers: [{ id: 'b1', kind: 'wait', text: 'Waiting for w2 to return.' }],
+  evidence: [
+    { id: 'e-reported', trust: 'reported', title: 'Bot report', text: 'The bridge is ready', at: 10, sourceId: 'room-s1:3', artifact: null },
+    { id: 'e-executed', trust: 'executed', title: 'shell result', text: 'npm test passed', at: 11, sourceId: 'room-s1:5', artifact: null },
+    { id: 'e-verified', trust: 'verified', title: 'Acceptance', text: 'All checks matched', at: 12, sourceId: 'room-s1:8', artifact: { path: 'dist/app.zip', digest: 'sha256:abc' } },
+  ],
+  artifacts: [{ path: 'dist/app.zip', name: 'app.zip', digest: 'sha256:abc', trust: 'verified', at: 12, sourceId: 'room-s1:8' }],
+  verification: { status: 'verified', reason: 'All declared acceptance checks matched.' },
+  trace: {
+    status: 'ready', sourceTaskId: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', sessionIds: ['room-s1'], truncated: false,
+    relationships: [{ from: 'goal:g1:s1:t1', to: 'room-s1', kind: 'task-session', label: 'session' }],
+    timeline: [{ id: 't1', type: 'tool/result', title: 'shell result', detail: 'npm test passed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed' }],
+    records: [{ id: 't1', type: 'tool/result', title: 'shell result', detail: 'npm test passed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed' }],
+  },
+  controls: [
+    { id: 'pause-goal', roomId: 'r1', goalId: 'g1', enabled: true },
+    { id: 'abandon-work', workId: 'w1', enabled: false, reason: 'The parent is no longer waiting.' },
+  ],
+  partial: false, warnings: [],
+}
 
 test('TeamActivityView renders real task rows, heatmap, and selected source detail', () => {
   const view = mod.TeamActivityView({ data, roster, status: 'ready', selectedId: 'handoff:w1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {} })
@@ -133,6 +160,105 @@ test('TeamActivity forwards the closing state to the rendered dialog', () => {
   assert.equal(shell.props['data-leaving'], true)
   assert.equal(shell.children[0].props.className, 'bt-scrim')
   assert.equal(shell.children[1].type.name, 'TeamActivityView')
+})
+
+test('TeamActivityView renders the selected task operating detail, evidence ladder, artifacts, trace, and controls', () => {
+  const view = mod.TeamActivityView({
+    data, detail: detailData, detailStatus: 'ready', roster, status: 'ready', selectedId: 'goal:g1:s1:t1',
+    filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {},
+  })
+  assert.match(text(view), /Latest checkpoint/)
+  assert.match(text(view), /Implementation complete/)
+  assert.match(text(view), /Next action/)
+  assert.match(text(view), /Run the acceptance checks/)
+  assert.match(text(view), /Blockers/)
+  assert.match(text(view), /Waiting for w2 to return/)
+  assert.match(text(view), /Reported/)
+  assert.match(text(view), /Executed/)
+  assert.match(text(view), /Verified/)
+  assert.equal(all(view, 'bt-task-evidence').length, 3)
+  assert.equal(all(view, 'bt-task-artifact').length, 1)
+  assert.match(text(view), /dist\/app\.zip/)
+  assert.match(text(view), /sha256:abc/)
+  assert.match(text(view), /Trace Explorer/)
+  assert.match(text(view), /Timeline/)
+  assert.match(text(view), /Relationships/)
+  assert.match(text(view), /Records/)
+  assert.equal(all(view, 'bt-trace-tab').length, 3)
+  assert.equal(all(view, 'bt-detail-control').length, 2)
+  assert.match(text(view), /Pause goal/)
+  assert.match(text(view), /Abandon wait/)
+})
+
+test('TraceExplorer renders timeline, relationship, and record views and drills a record to its evidence', () => {
+  const copy = {
+    traceExplorer: 'Trace Explorer', timeline: 'Timeline', relationships: 'Relationships', records: 'Records',
+    reported: 'Reported', executed: 'Executed', verified: 'Verified', requested: 'Requested', pending: 'Pending',
+    noTrace: 'No linked trace', tracePartial: 'Trace partial', traceTruncated: 'Trace truncated',
+  }
+  const timeline = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'timeline' })
+  assert.match(text(timeline), /shell result/)
+  assert.match(text(timeline), /Executed/)
+  assert.equal(all(timeline, 'bt-trace-tab').length, 3)
+  const relationships = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'relationships' })
+  assert.match(text(relationships), /task-session/)
+  assert.match(text(relationships), /goal:g1:s1:t1 → room-s1/)
+  const records = mod.TraceExplorer({ trace: { ...detailData.trace, truncated: true }, copy, view: 'records' })
+  assert.match(text(records), /room-s1 · #5/)
+  assert.match(text(records), /Trace truncated/)
+  let selectedEvidence = null
+  const interactive = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'timeline', onSelectEvidence: id => { selectedEvidence = id } })
+  all(interactive, 'bt-trace-record')[0].props.onClick()
+  assert.equal(selectedEvidence, 'e-executed')
+})
+
+test('task detail controls dispatch existing actions and stay disabled under a read-only roster', () => {
+  const sent = []
+  const actions = {
+    goalControl: (...args) => sent.push(['goalControl', ...args]),
+    resume: (...args) => sent.push(['resume', ...args]),
+    stopMemberWork: (...args) => sent.push(['stopMemberWork', ...args]),
+    stopRoomWork: (...args) => sent.push(['stopRoomWork', ...args]),
+    abandonWork: (...args) => sent.push(['abandonWork', ...args]),
+  }
+  const common = { data, detail: detailData, detailStatus: 'ready', status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, actions, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
+  const view = mod.TeamActivityView({ ...common, roster })
+  const controls = all(view, 'bt-detail-control')
+  controls.find(node => node.props['data-control'] === 'pause-goal').props.onClick()
+  controls.find(node => node.props['data-control'] === 'abandon-work').props.onClick()
+  assert.deepEqual(sent, [['goalControl', 'r1', 'g1', 'pause']])
+  const roomView = mod.TeamActivityView({ ...common, detail: { ...detailData, controls: [{ id: 'cancel-room', roomId: 'r1', enabled: true }] } })
+  const roomControl = all(roomView, 'bt-detail-control')[0]
+  assert.match(text(roomControl), /Stop current work/)
+  roomControl.props.onClick()
+  assert.deepEqual(sent.at(-1), ['stopRoomWork', 'r1'])
+  const locked = mod.TeamActivityView({ ...common, roster: { ...roster, readOnly: 'Another host owns this team' } })
+  assert.ok(all(locked, 'bt-detail-control').every(node => node.props.disabled === true))
+})
+
+test('task detail renders loading, stale, and removed states explicitly', () => {
+  const common = { data, roster, status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
+  const loading = mod.TeamActivityView({ ...common, detail: null, detailStatus: 'loading', detailError: '' })
+  assert.match(text(loading), /Loading task detail/)
+  const stale = mod.TeamActivityView({ ...common, detail: detailData, detailStatus: 'ready', detailError: 'network down' })
+  assert.match(text(stale), /Could not refresh this task/)
+  assert.match(text(stale), /network down/)
+  const removed = mod.TeamActivityView({ ...common, detail: { ...detailData, empty: true, task: null }, detailStatus: 'ready', detailError: '' })
+  assert.match(text(removed), /This task is no longer available/)
+  const absent = mod.TeamActivityView({ ...common, detail: { ...detailData, checkpoint: null, nextAction: null }, detailStatus: 'ready', detailError: '' })
+  assert.match(text(absent), /Latest checkpointNone/)
+  assert.match(text(absent), /Next actionNone/)
+})
+
+test('requestTaskDetail reads exactly the selected task and rejects a mismatched response', async () => {
+  const calls = []
+  const value = await mod.requestTaskDetail(async (name, body) => {
+    calls.push([name, body])
+    return detailData
+  }, 'goal:g1:s1:t1')
+  assert.equal(value, detailData)
+  assert.deepEqual(calls.map(([name, body]) => [name, body.taskId]), [['task-detail', 'goal:g1:s1:t1']])
+  await assert.rejects(mod.requestTaskDetail(async () => ({ ...detailData, taskId: 'goal:other' }), 'goal:g1:s1:t1'), /did not match/)
 })
 
 test('the team activity sheet owns a unique root class', () => {

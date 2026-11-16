@@ -227,7 +227,6 @@ var JA = {
   "Team activity could not be read.": "チームアクティビティを読み取れませんでした。",
   "Loading team activity…": "チームアクティビティを読み込んでいます…",
   "Role": "役割",
-  "Source": "ソース",
   "Status": "ステータス",
   "Waiting + attention": "待機 + 要対応",
   "Task": "タスク",
@@ -256,6 +255,37 @@ var JA = {
   "Stage": "ステージ",
   "Warning": "警告",
   "No owner": "担当者なし",
+  "Source": "ソース",
+  "Latest checkpoint": "最新チェックポイント",
+  "Next action": "次のアクション",
+  "Blockers": "ブロッカー",
+  "Artifacts": "成果物",
+  "Trace Explorer": "トレース エクスプローラー",
+  "Timeline": "タイムライン",
+  "Relationships": "関係",
+  "Records": "レコード",
+  "Reported": "報告済み",
+  "Executed": "実行済み",
+  "Verified": "検証済み",
+  "Requested": "要求済み",
+  "Pending": "保留中",
+  "No known blockers.": "既知のブロッカーはありません。",
+  "No evidence is attached yet.": "証拠はまだ添付されていません。",
+  "No artifacts are attached yet.": "成果物はまだ添付されていません。",
+  "No Session records are linked to this task yet.": "このタスクにリンクされた Session 記録はまだありません。",
+  "The trace may be incomplete.": "トレースは不完全な可能性があります。",
+  "Older Session records are not shown.": "古い Session 記録は表示されていません。",
+  "Loading task detail…": "タスク詳細を読み込み中…",
+  "Could not refresh this task. Showing the last good detail.": "このタスクを更新できませんでした。最後に正常に取得した詳細を表示しています。",
+  "This task is no longer available.": "このタスクはもうありません。",
+  "Task detail could not be read.": "タスク詳細を読み取れませんでした。",
+  "Pause goal": "目標を一時停止",
+  "Resume goal": "目標を再開",
+  "Stop goal": "目標を停止",
+  "Retry Bot": "Bot を再試行",
+  "Stop current work": "現在の作業を停止",
+  "Abandon wait": "待機を放棄",
+  "Verification": "検証",
   "Connectors": "コネクタ",
   "Search connectors": "コネクタを検索",
   "No connectors": "コネクタはありません",
@@ -2578,7 +2608,6 @@ var KO = {
   "Team activity could not be read.": "팀 활동을 읽을 수 없습니다.",
   "Loading team activity…": "팀 활동을 불러오는 중…",
   "Role": "역할",
-  "Source": "소스",
   "Status": "상태",
   "Waiting + attention": "대기 + 주의 필요",
   "Task": "작업",
@@ -2607,6 +2636,37 @@ var KO = {
   "Stage": "단계",
   "Warning": "경고",
   "No owner": "담당자 없음",
+  "Source": "소스",
+  "Latest checkpoint": "최근 체크포인트",
+  "Next action": "다음 작업",
+  "Blockers": "차단 요인",
+  "Artifacts": "산출물",
+  "Trace Explorer": "추적 탐색기",
+  "Timeline": "타임라인",
+  "Relationships": "관계",
+  "Records": "기록",
+  "Reported": "보고됨",
+  "Executed": "실행됨",
+  "Verified": "검증됨",
+  "Requested": "요청됨",
+  "Pending": "대기 중",
+  "No known blockers.": "알려진 차단 요인이 없습니다.",
+  "No evidence is attached yet.": "아직 첨부된 근거가 없습니다.",
+  "No artifacts are attached yet.": "아직 첨부된 산출물이 없습니다.",
+  "No Session records are linked to this task yet.": "아직 이 작업에 연결된 Session 기록이 없습니다.",
+  "The trace may be incomplete.": "추적이 불완전할 수 있습니다.",
+  "Older Session records are not shown.": "이전 Session 기록은 표시되지 않습니다.",
+  "Loading task detail…": "작업 세부 정보를 불러오는 중…",
+  "Could not refresh this task. Showing the last good detail.": "이 작업을 새로 고치지 못했습니다. 마지막 정상 세부 정보를 표시합니다.",
+  "This task is no longer available.": "이 작업은 더 이상 없습니다.",
+  "Task detail could not be read.": "작업 세부 정보를 읽지 못했습니다.",
+  "Pause goal": "목표 일시 중지",
+  "Resume goal": "목표 재개",
+  "Stop goal": "목표 중지",
+  "Retry Bot": "Bot 재시도",
+  "Stop current work": "현재 작업 중지",
+  "Abandon wait": "대기 포기",
+  "Verification": "검증",
   Connectors: "커넥터",
   "Search connectors": "커넥터 검색",
   "No connectors": "커넥터 없음",
@@ -4972,7 +5032,6 @@ var ES = {
   "Team activity could not be read.": "No se pudo leer la actividad del equipo.",
   "Loading team activity…": "Cargando la actividad del equipo…",
   "Role": "Rol",
-  "Source": "Origen",
   "Status": "Estado",
   "Waiting + attention": "En espera + atención",
   "Task": "Tarea",
@@ -5001,6 +5060,37 @@ var ES = {
   "Stage": "Etapa",
   "Warning": "Aviso",
   "No owner": "Sin responsable",
+  "Source": "Origen",
+  "Latest checkpoint": "Último punto de control",
+  "Next action": "Siguiente acción",
+  "Blockers": "Bloqueos",
+  "Artifacts": "Artefactos",
+  "Trace Explorer": "Explorador de trazas",
+  "Timeline": "Cronología",
+  "Relationships": "Relaciones",
+  "Records": "Registros",
+  "Reported": "Informado",
+  "Executed": "Ejecutado",
+  "Verified": "Verificado",
+  "Requested": "Solicitado",
+  "Pending": "Pendiente",
+  "No known blockers.": "No hay bloqueos conocidos.",
+  "No evidence is attached yet.": "Aún no hay evidencia adjunta.",
+  "No artifacts are attached yet.": "Aún no hay artefactos adjuntos.",
+  "No Session records are linked to this task yet.": "Aún no hay registros de Session vinculados a esta tarea.",
+  "The trace may be incomplete.": "La traza puede estar incompleta.",
+  "Older Session records are not shown.": "No se muestran los registros de Session anteriores.",
+  "Loading task detail…": "Cargando detalle de la tarea…",
+  "Could not refresh this task. Showing the last good detail.": "No se pudo actualizar esta tarea. Se muestra el último detalle correcto.",
+  "This task is no longer available.": "Esta tarea ya no está disponible.",
+  "Task detail could not be read.": "No se pudo leer el detalle de la tarea.",
+  "Pause goal": "Pausar objetivo",
+  "Resume goal": "Reanudar objetivo",
+  "Stop goal": "Detener objetivo",
+  "Retry Bot": "Reintentar Bot",
+  "Stop current work": "Detener el trabajo actual",
+  "Abandon wait": "Abandonar espera",
+  "Verification": "Verificación",
   Connectors: "Conectores",
   "Search connectors": "Buscar conectores",
   "No connectors": "Sin conectores",
@@ -7364,7 +7454,6 @@ var FR = {
   "Team activity could not be read.": "Impossible de lire l’activité de l’équipe.",
   "Loading team activity…": "Chargement de l’activité de l’équipe…",
   "Role": "Rôle",
-  "Source": "Source",
   "Status": "Statut",
   "Waiting + attention": "En attente + à traiter",
   "Task": "Tâche",
@@ -7393,6 +7482,37 @@ var FR = {
   "Stage": "Étape",
   "Warning": "Avertissement",
   "No owner": "Sans responsable",
+  "Source": "Source",
+  "Latest checkpoint": "Dernier point de contrôle",
+  "Next action": "Prochaine action",
+  "Blockers": "Blocages",
+  "Artifacts": "Artefacts",
+  "Trace Explorer": "Explorateur de traces",
+  "Timeline": "Chronologie",
+  "Relationships": "Relations",
+  "Records": "Enregistrements",
+  "Reported": "Signalé",
+  "Executed": "Exécuté",
+  "Verified": "Vérifié",
+  "Requested": "Demandé",
+  "Pending": "En attente",
+  "No known blockers.": "Aucun blocage connu.",
+  "No evidence is attached yet.": "Aucune preuve n’est encore jointe.",
+  "No artifacts are attached yet.": "Aucun artefact n’est encore joint.",
+  "No Session records are linked to this task yet.": "Aucun enregistrement de Session n’est encore lié à cette tâche.",
+  "The trace may be incomplete.": "La trace peut être incomplète.",
+  "Older Session records are not shown.": "Les anciens enregistrements de Session ne sont pas affichés.",
+  "Loading task detail…": "Chargement du détail de la tâche…",
+  "Could not refresh this task. Showing the last good detail.": "Impossible d’actualiser cette tâche. Le dernier détail valide est affiché.",
+  "This task is no longer available.": "Cette tâche n’est plus disponible.",
+  "Task detail could not be read.": "Impossible de lire le détail de la tâche.",
+  "Pause goal": "Mettre l’objectif en pause",
+  "Resume goal": "Reprendre l’objectif",
+  "Stop goal": "Arrêter l’objectif",
+  "Retry Bot": "Réessayer le Bot",
+  "Stop current work": "Arrêter le travail en cours",
+  "Abandon wait": "Abandonner l’attente",
+  "Verification": "Vérification",
   "Connectors": "Connecteurs",
   "Search connectors": "Rechercher des connecteurs",
   "No connectors": "Aucun connecteur",
@@ -9715,7 +9835,6 @@ var DE = {
   "Team activity could not be read.": "Die Teamaktivität konnte nicht gelesen werden.",
   "Loading team activity…": "Teamaktivität wird geladen…",
   "Role": "Rolle",
-  "Source": "Quelle",
   "Status": "Status",
   "Waiting + attention": "Wartend + Aufmerksamkeit",
   "Task": "Aufgabe",
@@ -9744,6 +9863,37 @@ var DE = {
   "Stage": "Phase",
   "Warning": "Warnung",
   "No owner": "Kein Verantwortlicher",
+  "Source": "Quelle",
+  "Latest checkpoint": "Letzter Kontrollpunkt",
+  "Next action": "Nächste Aktion",
+  "Blockers": "Blockierungen",
+  "Artifacts": "Artefakte",
+  "Trace Explorer": "Trace-Explorer",
+  "Timeline": "Zeitleiste",
+  "Relationships": "Beziehungen",
+  "Records": "Datensätze",
+  "Reported": "Gemeldet",
+  "Executed": "Ausgeführt",
+  "Verified": "Verifiziert",
+  "Requested": "Angefordert",
+  "Pending": "Ausstehend",
+  "No known blockers.": "Keine bekannten Blockierungen.",
+  "No evidence is attached yet.": "Es ist noch kein Nachweis angehängt.",
+  "No artifacts are attached yet.": "Es sind noch keine Artefakte angehängt.",
+  "No Session records are linked to this task yet.": "Es sind noch keine Session-Datensätze mit dieser Aufgabe verknüpft.",
+  "The trace may be incomplete.": "Die Trace kann unvollständig sein.",
+  "Older Session records are not shown.": "Ältere Session-Datensätze werden nicht angezeigt.",
+  "Loading task detail…": "Aufgabendetails werden geladen…",
+  "Could not refresh this task. Showing the last good detail.": "Diese Aufgabe konnte nicht aktualisiert werden. Die letzten guten Details werden angezeigt.",
+  "This task is no longer available.": "Diese Aufgabe ist nicht mehr verfügbar.",
+  "Task detail could not be read.": "Aufgabendetails konnten nicht gelesen werden.",
+  "Pause goal": "Ziel pausieren",
+  "Resume goal": "Ziel fortsetzen",
+  "Stop goal": "Ziel stoppen",
+  "Retry Bot": "Bot erneut versuchen",
+  "Stop current work": "Aktuelle Arbeit stoppen",
+  "Abandon wait": "Warten aufgeben",
+  "Verification": "Verifizierung",
   Connectors: "Konnektoren",
   "Search connectors": "Konnektoren suchen",
   "No connectors": "Keine Konnektoren",
@@ -12089,7 +12239,6 @@ var ZH = {
   "Team activity could not be read.": "无法读取团队活动。",
   "Loading team activity…": "正在读取团队活动…",
   "Role": "角色",
-  "Source": "来源",
   "Status": "状态",
   "Waiting + attention": "等待 + 待处理",
   "Task": "任务",
@@ -12118,6 +12267,37 @@ var ZH = {
   "Stage": "阶段",
   "Warning": "警告",
   "No owner": "未指定负责人",
+  "Source": "来源",
+  "Latest checkpoint": "最近进度",
+  "Next action": "下一步",
+  "Blockers": "阻塞",
+  "Artifacts": "产物",
+  "Trace Explorer": "调用链浏览器",
+  "Timeline": "时间线",
+  "Relationships": "关系",
+  "Records": "记录",
+  "Reported": "已报告",
+  "Executed": "已执行",
+  "Verified": "已验证",
+  "Requested": "已请求",
+  "Pending": "待处理",
+  "No known blockers.": "暂无已知阻塞。",
+  "No evidence is attached yet.": "暂无附带的依据。",
+  "No artifacts are attached yet.": "暂无附带产物。",
+  "No Session records are linked to this task yet.": "还没有与此任务关联的 Session 记录。",
+  "The trace may be incomplete.": "调用链可能不完整。",
+  "Older Session records are not shown.": "未显示更早的 Session 记录。",
+  "Loading task detail…": "正在读取任务详情…",
+  "Could not refresh this task. Showing the last good detail.": "无法刷新此任务，正在显示上次成功读取的详情。",
+  "This task is no longer available.": "此任务已不存在。",
+  "Task detail could not be read.": "无法读取任务详情。",
+  "Pause goal": "暂停目标",
+  "Resume goal": "继续目标",
+  "Stop goal": "停止目标",
+  "Retry Bot": "重试 Bot",
+  "Stop current work": "停止当前工作",
+  "Abandon wait": "放弃等待",
+  "Verification": "验证",
   Connectors: "连接器",
   "Search connectors": "搜索连接器",
   "No connectors": "暂无连接器",
@@ -18413,14 +18593,14 @@ function ComputerView({ bot, actions, hooks }) {
       current = false;
     };
   }, [entry.lastShot?.attachmentId]);
-  const controlLabel = { idle: "Idle", bot: "Operating", user: "You have the computer", waiting: "Waiting for you" }[entry.state] ?? "Idle";
+  const controlLabel2 = { idle: "Idle", bot: "Operating", user: "You have the computer", waiting: "Waiting for you" }[entry.state] ?? "Idle";
   return (0, import_react11.createElement)(
     "div",
     { className: "bt-cview" },
     (0, import_react11.createElement)(
       "div",
       { className: "bt-cview-head" },
-      (0, import_react11.createElement)("span", { className: "bt-cview-state", "data-state": entry.state }, t(controlLabel)),
+      (0, import_react11.createElement)("span", { className: "bt-cview-state", "data-state": entry.state }, t(controlLabel2)),
       entry.app ? (0, import_react11.createElement)("span", { className: "bt-cview-app" }, entry.app) : null
     ),
     shot?.dataUrl ? (0, import_react11.createElement)("img", { className: "bt-cview-shot", src: shot.dataUrl, alt: t("Latest screenshot") }) : null,
@@ -40889,7 +41069,38 @@ var copyText = () => ({
   sourceId: t("Source ID"),
   stage: t("Stage"),
   warning: t("Warning"),
-  noOwner: t("No owner")
+  noOwner: t("No owner"),
+  latestCheckpoint: t("Latest checkpoint"),
+  nextAction: t("Next action"),
+  blockers: t("Blockers"),
+  artifacts: t("Artifacts"),
+  traceExplorer: t("Trace Explorer"),
+  timeline: t("Timeline"),
+  relationships: t("Relationships"),
+  records: t("Records"),
+  reported: t("Reported"),
+  executed: t("Executed"),
+  verified: t("Verified"),
+  requested: t("Requested"),
+  pending: t("Pending"),
+  noBlockers: t("No known blockers."),
+  noEvidence: t("No evidence is attached yet."),
+  noArtifacts: t("No artifacts are attached yet."),
+  noTrace: t("No Session records are linked to this task yet."),
+  tracePartial: t("The trace may be incomplete."),
+  traceTruncated: t("Older Session records are not shown."),
+  none: t("None"),
+  detailLoading: t("Loading task detail…"),
+  detailStale: t("Could not refresh this task. Showing the last good detail."),
+  detailUnavailable: t("This task is no longer available."),
+  detailError: t("Task detail could not be read."),
+  pauseGoal: t("Pause goal"),
+  resumeGoal: t("Resume goal"),
+  stopGoal: t("Stop goal"),
+  retryBot: t("Retry Bot"),
+  cancelWork: t("Stop current work"),
+  abandonWait: t("Abandon wait"),
+  verification: t("Verification")
 });
 var sourceLabel = (source, copy2) => source === "goal" ? copy2.goalTask : source === "handoff" ? copy2.handoff : source === "board" ? copy2.board : source === "ledger" ? copy2.ledger : source;
 var permissionOf = (role, copy2) => !role ? "" : role.main ? copy2.mainBot : copy2.member;
@@ -40989,49 +41200,187 @@ function TaskRow3({ task, roster, role, selected, copy: copy2, onSelect }) {
     (0, import_react66.createElement)("time", { className: "bt-activity-task-time" }, when3(task.updatedAt))
   );
 }
-function Detail2({ task, roster, rolesById, allTasks, copy: copy2 }) {
+var trustLabel = (trust, copy2) => trust === "verified" ? copy2.verified : trust === "executed" ? copy2.executed : trust === "requested" ? copy2.requested : trust === "reported" ? copy2.reported : copy2.pending;
+var controlLabel = (id, copy2) => id === "pause-goal" ? copy2.pauseGoal : id === "resume-goal" ? copy2.resumeGoal : id === "stop-goal" ? copy2.stopGoal : id === "retry-bot" ? copy2.retryBot : id === "cancel-work" || id === "cancel-room" ? copy2.cancelWork : id === "abandon-work" ? copy2.abandonWait : id;
+function TraceRow({ item, copy: copy2, selected, onSelect }) {
+  return (0, import_react66.createElement)(
+    "button",
+    {
+      type: "button",
+      className: "bt-trace-record",
+      "data-trace-id": item.id,
+      "data-trust": item.trust,
+      "data-selected": selected || void 0,
+      onClick: () => onSelect(item)
+    },
+    (0, import_react66.createElement)(
+      "span",
+      { className: "bt-trace-record-main" },
+      (0, import_react66.createElement)("b", null, item.title || item.type),
+      (0, import_react66.createElement)("span", null, item.detail || ""),
+      (0, import_react66.createElement)("small", null, [item.sessionId, item.seq === null || item.seq === void 0 ? "" : `#${item.seq}`].filter(Boolean).join(" · "))
+    ),
+    (0, import_react66.createElement)("span", { className: "bt-trace-trust", "data-trust": item.trust }, trustLabel(item.trust, copy2)),
+    (0, import_react66.createElement)("time", null, when3(item.at))
+  );
+}
+function TraceExplorer({ trace, copy: copy2, view: forcedView, onSelectEvidence = () => {
+} }) {
+  const [localView, setLocalView] = (0, import_react66.useState)("timeline");
+  const [selectedRecordId, setSelectedRecordId] = (0, import_react66.useState)(null);
+  const view = forcedView ?? localView;
+  const changeView = (next) => {
+    if (forcedView === void 0) setLocalView(next);
+  };
+  const selectRecord = (item) => {
+    setSelectedRecordId(item.id);
+    if (item.relatedEvidenceId) onSelectEvidence(item.relatedEvidenceId);
+  };
+  const records = Array.isArray(trace?.timeline) ? trace.timeline : [];
+  const relationships = Array.isArray(trace?.relationships) ? trace.relationships : [];
+  const recordRows = records.map((item) => (0, import_react66.createElement)(TraceRow, { key: item.id, item, copy: copy2, selected: selectedRecordId === item.id, onSelect: selectRecord }));
+  const tab = (id, label) => (0, import_react66.createElement)("button", {
+    type: "button",
+    className: "bt-trace-tab",
+    "data-view": id,
+    "aria-pressed": view === id,
+    onClick: () => changeView(id)
+  }, label);
+  return (0, import_react66.createElement)(
+    "section",
+    { className: "bt-trace-explorer", "aria-label": copy2.traceExplorer },
+    (0, import_react66.createElement)("div", { className: "bt-trace-head" }, (0, import_react66.createElement)("h4", null, copy2.traceExplorer), (0, import_react66.createElement)("small", { className: "bt-activity-id" }, trace?.sourceId || trace?.sourceTaskId || "")),
+    (0, import_react66.createElement)("div", { className: "bt-trace-tabs", role: "tablist" }, tab("timeline", copy2.timeline), tab("relationships", copy2.relationships), tab("records", copy2.records)),
+    trace?.status === "partial" ? (0, import_react66.createElement)("p", { className: "bt-trace-note", role: "status" }, copy2.tracePartial) : null,
+    view === "relationships" ? relationships.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-trace-relations" }, relationships.map((item, index) => (0, import_react66.createElement)(
+      "div",
+      { key: `${item.kind}:${index}`, className: "bt-trace-relation", "data-kind": item.kind },
+      (0, import_react66.createElement)("b", null, item.kind),
+      (0, import_react66.createElement)("span", null, `${item.from} → ${item.to}`)
+    ))) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace) : records.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-trace-list", role: view === "timeline" ? "list" : void 0 }, recordRows) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace),
+    trace?.truncated ? (0, import_react66.createElement)("p", { className: "bt-trace-note" }, copy2.traceTruncated) : null
+  );
+}
+function EvidenceList({ evidence, selectedId, copy: copy2, onSelect }) {
+  if (evidence.length === 0) return (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noEvidence);
+  return (0, import_react66.createElement)("div", { className: "bt-task-evidence-list" }, evidence.map((item) => (0, import_react66.createElement)(
+    "button",
+    {
+      key: item.id,
+      type: "button",
+      className: "bt-task-evidence",
+      "data-trust": item.trust,
+      "data-evidence-id": item.id,
+      "data-selected": selectedId === item.id || void 0,
+      onClick: () => onSelect(item.id)
+    },
+    (0, import_react66.createElement)(
+      "span",
+      null,
+      (0, import_react66.createElement)("b", null, item.title || item.text || item.id),
+      item.title && item.text ? (0, import_react66.createElement)("span", null, item.text) : null,
+      (0, import_react66.createElement)("small", null, `${item.sourceId || ""}${item.at ? ` · ${when3(item.at)}` : ""}`)
+    ),
+    (0, import_react66.createElement)("em", null, trustLabel(item.trust, copy2))
+  )));
+}
+function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy: copy2 }) {
   if (!task) return (0, import_react66.createElement)("aside", { className: "bt-activity-detail" }, (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noDetail));
-  const role = rolesById.get(task.ownerId);
-  const parent = task.parentId ? allTasks.find((item) => item.id === task.parentId) : void 0;
-  const children = allTasks.filter((item) => item.parentId === task.id);
-  const parentText = parent?.title || (task.source === "goal" && task.subtitle ? `${copy2.goal}: ${task.subtitle}` : task.parentId);
-  const warnings = Array.isArray(task.warnings) ? task.warnings : [];
+  const [selectedEvidenceId, setSelectedEvidenceId] = (0, import_react66.useState)(null);
+  const shown = detail?.task ?? task;
+  const role = rolesById.get(shown.ownerId);
+  const parent = shown.parentId ? allTasks.find((item) => item.id === shown.parentId) : void 0;
+  const children = allTasks.filter((item) => item.parentId === shown.id);
+  const parentText = parent?.title || (shown.source === "goal" && shown.subtitle ? `${copy2.goal}: ${shown.subtitle}` : shown.parentId);
+  const warnings = [
+    ...Array.isArray(shown.warnings) ? shown.warnings : [],
+    ...Array.isArray(detail?.warnings) ? detail.warnings.map((item) => item.message).filter(Boolean) : []
+  ];
+  const stageTitle = detail?.location?.stageTitle || shown.stageTitle;
+  const blockers = Array.isArray(detail?.blockers) ? detail.blockers : [];
+  const evidence = Array.isArray(detail?.evidence) ? detail.evidence : [];
+  const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : [];
+  const controls = Array.isArray(detail?.controls) ? detail.controls : [];
+  const lockReason = typeof roster?.readOnly === "string" ? roster.readOnly.trim() : "";
+  const visibleControls = controls.map((control) => lockReason ? { ...control, enabled: false, reason: lockReason } : control);
+  const runControl = (control) => {
+    if (!control.enabled || !actions) return;
+    if (control.id === "pause-goal") void actions.goalControl?.(control.roomId, control.goalId, "pause");
+    else if (control.id === "resume-goal") void actions.goalControl?.(control.roomId, control.goalId, "resume");
+    else if (control.id === "stop-goal") void actions.goalControl?.(control.roomId, control.goalId, "stop");
+    else if (control.id === "retry-bot") void actions.resume?.(control.botId);
+    else if (control.id === "cancel-work") void actions.stopMemberWork?.(control.roomId, control.botId);
+    else if (control.id === "cancel-room") void actions.stopRoomWork?.(control.roomId);
+    else if (control.id === "abandon-work") void actions.abandonWork?.(control.workId);
+  };
+  const detailNotice = detailStatus === "loading" && detail === null ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailLoading) : detail?.empty === true ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "status" }, copy2.detailUnavailable) : detailError ? (0, import_react66.createElement)("p", { className: "bt-task-detail-state", role: "alert" }, detail ? copy2.detailStale : detailError || copy2.detailError, detail ? (0, import_react66.createElement)("span", null, detailError) : null) : null;
   return (0, import_react66.createElement)(
     "aside",
     { className: "bt-activity-detail", "aria-label": copy2.detail },
     (0, import_react66.createElement)(
       "div",
       { className: "bt-activity-detail-head" },
-      (0, import_react66.createElement)(OwnerMark, { task, roster, role, copy: copy2, size: 38 }),
+      (0, import_react66.createElement)(OwnerMark, { task: shown, roster, role, copy: copy2, size: 38 }),
       (0, import_react66.createElement)(
         "div",
         null,
-        (0, import_react66.createElement)("b", null, task.title || task.sourceId),
-        (0, import_react66.createElement)("span", null, `${sourceLabel(task.source, copy2)} · ${task.ownerName || copy2.noOwner}`),
-        (0, import_react66.createElement)("small", { "data-main": role?.main || void 0 }, task.ownerKind === "group" ? copy2.room : role ? `${task.ownerRole || role.role || copy2.member} · ${permissionOf(role, copy2)}` : copy2.noOwner)
+        (0, import_react66.createElement)("b", null, shown.title || shown.sourceId),
+        (0, import_react66.createElement)("span", null, `${sourceLabel(shown.source, copy2)} · ${shown.ownerName || copy2.noOwner}`),
+        (0, import_react66.createElement)("small", { "data-main": role?.main || void 0 }, shown.ownerKind === "group" ? copy2.room : role ? `${shown.ownerRole || role.role || copy2.member} · ${permissionOf(role, copy2)}` : copy2.noOwner)
       )
     ),
+    detailNotice,
     (0, import_react66.createElement)(
       "dl",
       null,
-      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.status), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-status", "data-status": task.sourceStatus }, task.sourceStatus))),
-      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.sourceId), (0, import_react66.createElement)("dd", { className: "bt-activity-id" }, task.sourceId || task.id)),
-      ...task.stageTitle ? [(0, import_react66.createElement)("div", { key: "stage" }, (0, import_react66.createElement)("dt", null, copy2.stage), (0, import_react66.createElement)("dd", null, task.stageTitle))] : [],
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.status), (0, import_react66.createElement)("dd", null, (0, import_react66.createElement)("span", { className: "bt-activity-status", "data-status": shown.sourceStatus }, shown.sourceStatus))),
+      (0, import_react66.createElement)("div", null, (0, import_react66.createElement)("dt", null, copy2.sourceId), (0, import_react66.createElement)("dd", { className: "bt-activity-id" }, shown.sourceId || shown.id)),
+      ...stageTitle ? [(0, import_react66.createElement)("div", { key: "stage" }, (0, import_react66.createElement)("dt", null, copy2.stage), (0, import_react66.createElement)("dd", null, stageTitle))] : [],
+      ...detail ? [(0, import_react66.createElement)("div", { key: "checkpoint" }, (0, import_react66.createElement)("dt", null, copy2.latestCheckpoint), (0, import_react66.createElement)("dd", null, detail.checkpoint?.text || copy2.none))] : [],
+      ...detail ? [(0, import_react66.createElement)("div", { key: "next" }, (0, import_react66.createElement)("dt", null, copy2.nextAction), (0, import_react66.createElement)("dd", null, detail.nextAction?.text || copy2.none))] : [],
+      ...detail ? [(0, import_react66.createElement)("div", { key: "blockers" }, (0, import_react66.createElement)("dt", null, copy2.blockers), (0, import_react66.createElement)("dd", null, blockers.length > 0 ? (0, import_react66.createElement)("ul", { className: "bt-task-blockers" }, blockers.map((item) => (0, import_react66.createElement)("li", { key: item.id, "data-kind": item.kind }, item.text))) : copy2.noBlockers))] : [],
       ...parentText ? [(0, import_react66.createElement)("div", { key: "parent" }, (0, import_react66.createElement)("dt", null, copy2.parent), (0, import_react66.createElement)("dd", null, parentText))] : [],
       ...children.length > 0 ? [(0, import_react66.createElement)("div", { key: "children" }, (0, import_react66.createElement)("dt", null, copy2.children), (0, import_react66.createElement)(
         "dd",
         null,
         (0, import_react66.createElement)("ul", { className: "bt-activity-children" }, children.map((child) => (0, import_react66.createElement)("li", { key: child.id }, child.title || child.sourceId)))
       ))] : [],
-      ...task.roomName ? [(0, import_react66.createElement)("div", { key: "room" }, (0, import_react66.createElement)("dt", null, copy2.room), (0, import_react66.createElement)("dd", null, task.roomName))] : [],
-      ...task.acceptance ? [(0, import_react66.createElement)("div", { key: "acceptance" }, (0, import_react66.createElement)("dt", null, copy2.acceptance), (0, import_react66.createElement)("dd", null, task.acceptance))] : [],
-      ...task.note ? [(0, import_react66.createElement)("div", { key: "note" }, (0, import_react66.createElement)("dt", null, copy2.note), (0, import_react66.createElement)("dd", null, task.note))] : [],
-      ...task.evidence ? [(0, import_react66.createElement)("div", { key: "evidence" }, (0, import_react66.createElement)("dt", null, copy2.evidence), (0, import_react66.createElement)("dd", null, task.evidence))] : [],
+      ...shown.roomName ? [(0, import_react66.createElement)("div", { key: "room" }, (0, import_react66.createElement)("dt", null, copy2.room), (0, import_react66.createElement)("dd", null, shown.roomName))] : [],
+      ...shown.acceptance ? [(0, import_react66.createElement)("div", { key: "acceptance" }, (0, import_react66.createElement)("dt", null, copy2.acceptance), (0, import_react66.createElement)("dd", null, shown.acceptance))] : [],
+      ...shown.note ? [(0, import_react66.createElement)("div", { key: "note" }, (0, import_react66.createElement)("dt", null, copy2.note), (0, import_react66.createElement)("dd", null, shown.note))] : [],
+      ...!detail && shown.evidence ? [(0, import_react66.createElement)("div", { key: "evidence" }, (0, import_react66.createElement)("dt", null, copy2.evidence), (0, import_react66.createElement)("dd", null, shown.evidence))] : [],
+      ...detail ? [(0, import_react66.createElement)("div", { key: "verification" }, (0, import_react66.createElement)("dt", null, copy2.verification), (0, import_react66.createElement)("dd", null, `${detail.verification?.status || copy2.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ""}`))] : [],
       ...warnings.length > 0 ? [(0, import_react66.createElement)("div", { key: "warning", className: "bt-activity-warning" }, (0, import_react66.createElement)("dt", null, copy2.warning), (0, import_react66.createElement)("dd", null, warnings.join(" · ")))] : []
-    )
+    ),
+    detail ? (0, import_react66.createElement)(
+      "section",
+      { className: "bt-task-section" },
+      (0, import_react66.createElement)("h4", null, copy2.evidence),
+      (0, import_react66.createElement)(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy: copy2, onSelect: setSelectedEvidenceId })
+    ) : null,
+    detail ? (0, import_react66.createElement)(
+      "section",
+      { className: "bt-task-section" },
+      (0, import_react66.createElement)("h4", null, copy2.artifacts),
+      artifacts.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-task-artifacts" }, artifacts.map((item, index) => (0, import_react66.createElement)("div", {
+        key: `${item.path}:${item.digest ?? index}`,
+        className: "bt-task-artifact",
+        "data-trust": item.trust
+      }, (0, import_react66.createElement)("b", null, item.name || item.path), (0, import_react66.createElement)("span", { className: "bt-activity-id" }, item.path), (0, import_react66.createElement)("small", null, item.digest || "")))) : (0, import_react66.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noArtifacts)
+    ) : null,
+    detail && detail.empty !== true ? (0, import_react66.createElement)(TraceExplorer, { trace: detail.trace, copy: copy2, onSelectEvidence: setSelectedEvidenceId }) : null,
+    visibleControls.length > 0 ? (0, import_react66.createElement)("div", { className: "bt-detail-controls", "aria-label": copy2.detail }, visibleControls.map((control) => (0, import_react66.createElement)("button", {
+      key: control.id,
+      type: "button",
+      className: "bt-soft bt-soft-sm bt-detail-control",
+      "data-control": control.id,
+      disabled: !control.enabled,
+      title: control.reason || void 0,
+      onClick: () => runControl(control)
+    }, controlLabel(control.id, copy2)))) : null
   );
 }
-function TeamActivityView({ data, roster, status = "ready", error = "", selectedId = null, filters = {}, onSelect = () => {
+function TeamActivityView({ data, roster, status = "ready", error = "", selectedId = null, filters = {}, detail = null, detailStatus = "idle", detailError = "", actions, onSelect = () => {
 }, onFilter = () => {
 }, onClose = () => {
 }, leaving = false }) {
@@ -41061,6 +41410,7 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
   const roles = data?.roles ?? [];
   const rolesById = new Map(roles.map((role) => [role.id, role]));
   const selected = tasks.find((task) => task.id === selectedId) ?? tasks[0] ?? null;
+  const selectedDetail = detail?.taskId === selected?.id || detail?.task?.id === selected?.id ? detail : null;
   const empty = allTasks.length === 0 && activity.length === 0;
   const noMatch = allTasks.length > 0 && tasks.length === 0;
   const noCurrentTasks = allTasks.length === 0;
@@ -41103,7 +41453,7 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
     "div",
     { className: "bt-activity-body" },
     (0, import_react66.createElement)("div", { className: "bt-activity-list" }, taskMessage ? (0, import_react66.createElement)("p", { className: "bt-empty bt-activity-no-task" }, taskMessage) : taskRows),
-    (0, import_react66.createElement)(Detail2, { task: selected, roster, rolesById, allTasks, copy: copy2 }),
+    (0, import_react66.createElement)(Detail2, { task: selected, detail: selectedDetail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy: copy2 }),
     (0, import_react66.createElement)(
       "div",
       { className: "bt-activity-recent" },
@@ -41144,13 +41494,22 @@ function TeamActivityView({ data, roster, status = "ready", error = "", selected
     body
   );
 }
-function TeamActivity({ roster, onClose = () => {
+async function requestTaskDetail(callImpl, taskId) {
+  const value = await callImpl("task-detail", { taskId });
+  if (value?.taskId !== taskId) throw new Error("Task detail did not match the selected task");
+  return value;
+}
+function TeamActivity({ roster, actions, onClose = () => {
 }, callImpl = call, leaving = false }) {
   const [data, setData] = (0, import_react66.useState)(null);
   const [status, setStatus] = (0, import_react66.useState)("loading");
   const [error, setError] = (0, import_react66.useState)("");
   const [selectedId, setSelectedId] = (0, import_react66.useState)(null);
   const [filters, setFilters] = (0, import_react66.useState)({ role: "all", source: "all", status: "all", attention: false });
+  const [detail, setDetail] = (0, import_react66.useState)(null);
+  const [detailStatus, setDetailStatus] = (0, import_react66.useState)("idle");
+  const [detailError, setDetailError] = (0, import_react66.useState)("");
+  const detailRef = (0, import_react66.useRef)(null);
   useEscape(onClose);
   (0, import_react66.useEffect)(() => {
     let alive = true;
@@ -41182,11 +41541,40 @@ function TeamActivity({ roster, onClose = () => {
       window.removeEventListener("focus", load);
     };
   }, [callImpl]);
+  const visibleTasks = data === null ? [] : filterActivityModel(data, filters).tasks;
+  const selectedTask = visibleTasks.find((task) => task.id === selectedId) ?? visibleTasks[0];
+  const selectedTaskId = selectedTask?.id ?? null;
+  const selectedTaskVersion = selectedTask === void 0 ? "" : `${selectedTask.sourceStatus}:${selectedTask.evidenceState ?? ""}:${selectedTask.updatedAt ?? ""}`;
+  (0, import_react66.useEffect)(() => {
+    if (selectedTaskId === null) {
+      detailRef.current = null;
+      setDetail(null);
+      setDetailStatus("idle");
+      setDetailError("");
+      return void 0;
+    }
+    let alive = true;
+    setDetailStatus("loading");
+    setDetailError("");
+    Promise.resolve().then(() => requestTaskDetail(callImpl, selectedTaskId)).then((value) => {
+      if (!alive) return;
+      detailRef.current = value;
+      setDetail(value);
+      setDetailStatus("ready");
+    }).catch((failure) => {
+      if (!alive) return;
+      setDetailError(String(failure?.message ?? failure));
+      setDetailStatus(detailRef.current?.taskId === selectedTaskId ? "ready" : "error");
+    });
+    return () => {
+      alive = false;
+    };
+  }, [selectedTaskId, selectedTaskVersion, callImpl]);
   return (0, import_react66.createElement)(
     "div",
     { className: "bt-activity-layer", "data-leaving": leaving || void 0 },
     (0, import_react66.createElement)("div", { className: "bt-scrim", onMouseDown: onClose }),
-    (0, import_react66.createElement)(TeamActivityView, { data, roster, status, error, selectedId, filters, onSelect: setSelectedId, onFilter: setFilters, onClose })
+    (0, import_react66.createElement)(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose })
   );
 }
 var TEAM_ACTIVITY_CSS = `
@@ -41239,6 +41627,14 @@ var TEAM_ACTIVITY_CSS = `
 .bt-activity-detail-head{display:flex;gap:8px;align-items:center;margin-bottom:16px}.bt-activity-detail-head>div{display:flex;min-width:0;flex-direction:column;gap:2px}
 .bt-activity-detail-head b{font-size:13px;line-height:18px;overflow-wrap:anywhere}.bt-activity-detail-head span,.bt-activity-detail-head small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-activity-detail-head small[data-main]{color:var(--bt-accent)}
 .bt-activity-detail dl{display:flex;flex-direction:column;gap:10px;margin:0}.bt-activity-detail dl>div{display:flex;flex-direction:column;gap:2px}.bt-activity-detail dt{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-activity-detail dd{margin:0;font-size:12px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}
+.bt-task-detail-state{margin:0 0 12px;padding:8px 10px;border-radius:8px;background:var(--bt-tag-bg);font-size:11px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}.bt-task-detail-state[role=alert]{background:var(--bt-danger-soft);color:var(--bt-danger)}.bt-task-detail-state span{display:block;margin-top:2px;color:var(--bt-ink-2)}
+.bt-task-blockers{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-task-blockers li[data-kind=owner],.bt-task-blockers li[data-kind=failed-result],.bt-task-blockers li[data-kind=recovery]{color:var(--bt-danger)}
+.bt-task-section{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-task-section h4,.bt-trace-head h4{margin:0;font-size:12px;line-height:16px;font-weight:600}
+.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:10px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
+.bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:10px;line-height:14px;color:var(--bt-ink-3);overflow-wrap:anywhere}
+.bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:10px;line-height:14px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:10px;line-height:14px;color:var(--bt-ink-3)}
+.bt-detail-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-detail-control:disabled{opacity:.45;cursor:not-allowed}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}
 .bt-activity-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;line-height:16px!important}
 .bt-activity-children{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-activity-warning dd{color:var(--bt-danger)}
@@ -41314,7 +41710,7 @@ function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useActivity
     menu ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(ContextMenu, { key: `${menu.kind ?? ""}:${menu.id}:${menu.x}:${menu.y}`, menu, roster, actions, useWork, leaving: menuLeaving }), document.body) : null,
     settings ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(SettingsDialog, { page: settings.page, id: settings.id, roster, actions, useUpdate, leaving: settingsLeaving }), document.body) : null,
     owner ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(MemoryDialog, { key: owner.id, owner, actions, leaving: memoryLeaving }), document.body) : null,
-    teamActivity ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(TeamActivity, { roster, onClose: actions.closeTeamActivity, leaving: teamActivityLeaving }), document.body) : null
+    teamActivity ? (0, import_react_dom11.createPortal)((0, import_react67.createElement)(TeamActivity, { roster, actions, onClose: actions.closeTeamActivity, leaving: teamActivityLeaving }), document.body) : null
   );
 }
 

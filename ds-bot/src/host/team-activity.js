@@ -17,6 +17,22 @@ const timeOf = value => {
   return Number.isFinite(time) ? time : undefined
 }
 
+const evidenceStateOf = task => {
+  const verification = task?.verification
+  const evidence = Array.isArray(task?.evidence) ? task.evidence : []
+  const ids = new Set(Array.isArray(verification?.evidenceIds) ? verification.evidenceIds : [])
+  const verifiedAt = timeOf(verification?.verifiedAt)
+  const bound = evidence.filter(item => ids.has(item?.id)
+    && (item?.kind === 'verified' || item?.trust === 'verified')
+    && item?.stale !== true
+    && (verifiedAt === undefined || timeOf(item.at) === undefined || timeOf(item.at) <= verifiedAt))
+  const checks = Array.isArray(verification?.checks) ? verification.checks : []
+  const checksPass = checks.every(check => check?.status === 'verified' && (check.evidenceId === undefined || bound.some(item => item.id === check.evidenceId)))
+  if (verification?.status === 'verified' && verification.fresh !== false && bound.length > 0 && checksPass) return 'verified'
+  if (task?.status === 'reported' || task?.status === 'done') return 'reported'
+  return 'pending'
+}
+
 
 export function activityDays(at = Date.now(), timeZone) {
   const when = Number.isFinite(at) ? at : Date.now()
@@ -131,6 +147,7 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
           sourceStatus,
           displayState: displayStateOf(sourceStatus),
           statusSource: ownStatus ? 'goal.task' : stageStatus ? 'goal.stage' : 'default',
+          evidenceState: evidenceStateOf(task),
           acceptance: text(stage?.acceptance),
           evidence: text(stage?.evidence) || null,
           note: text(task?.note) || null,
@@ -171,6 +188,7 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
       sourceStatus,
       displayState: displayStateOf(sourceStatus),
       statusSource: 'work.open',
+      evidenceState: text(work.evidenceState) || text(work.verification?.status) || 'pending',
       acceptance: '',
       evidence: null,
       note: text(work.held) || null,
@@ -192,7 +210,7 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
     waiting: tasks.filter(task => WAITING_STATUS.has(task.sourceStatus)).length,
     attention: tasks.filter(task => ATTENTION_STATUS.has(task.sourceStatus)).length,
     reported: tasks.filter(task => task.sourceStatus === 'reported').length,
-    verified: tasks.filter(task => task.sourceStatus === 'done').length,
+    verified: tasks.filter(task => task.evidenceState === 'verified').length,
     activity: sourceActivity.length,
   }
   return {
