@@ -6,10 +6,15 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import { LoopbackMcp } from '../src/host/local-agents/mcp.js'
 import { LocalAgentAdapter } from '../src/host/local-agents/adapter.js'
 
-const connect = async (mcp) => {
+const connect = async (mcp, token = mcp.token) => {
   const client = new Client({ name: 'ds-bot-test', version: '1' })
-  await client.connect(new StreamableHTTPClientTransport(new URL(mcp.url), { requestInit: { headers: { Authorization: `Bearer ${mcp.token}` } } }))
-  return client
+  try {
+    await client.connect(new StreamableHTTPClientTransport(new URL(mcp.url), { requestInit: { headers: { Authorization: `Bearer ${token}` } } }))
+    return client
+  } catch (error) {
+    await client.close().catch(() => {})
+    throw error
+  }
 }
 
 test('the official MCP client sees and calls the current schemas without flattening', async (t) => {
@@ -168,4 +173,60 @@ test('the adapter gives the loopback the current DSH inventory without widening 
   assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), ['message_bot'])
   const resource = await client.readResource({ uri: 'dsbot://tool-inventory' })
   assert.deepEqual(JSON.parse(resource.contents[0].text).tools.map(tool => tool.name), ['mcp__github__search'])
+})
+
+test('an authorized request over the transport limit gets 413', async (t) => {
+  const mcp = new LoopbackMcp(() => [], async () => ({ text: 'unused' }))
+  await mcp.listen()
+  t.after(() => mcp.close())
+
+  const response = await fetch(mcp.url, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${mcp.token}`,
+      'content-type': 'application/json',
+    },
+    body: 'x'.repeat(4 * 1024 * 1024 + 1),
+  })
+  assert.equal(response.status, 413)
+})
+
+test('the official client rejects a bad bearer token', async (t) => {
+  const mcp = new LoopbackMcp(() => [], async () => ({ text: 'unused' }))
+  await mcp.listen()
+  t.after(() => mcp.close())
+
+  await assert.rejects(
+    connect(mcp, 'wrong-token'),
+    error => error?.status === 401,
+  )
+})
+
+test('DELETE closes the official MCP session', async (t) => {
+  const mcp = new LoopbackMcp(
+    () => [{ name: 'echo', description: 'Echo', parameters: { type: 'object', properties: {} } }],
+    async () => ({ text: 'ok' }),
+  )
+  await mcp.listen()
+  const transport = new StreamableHTTPClientTransport(new URL(mcp.url), {
+    requestInit: { headers: { Authorization: `Bearer ${mcp.token}` } },
+  })
+  const client = new Client({ name: 'ds-bot-delete-test', version: '1' })
+  await client.connect(transport)
+  t.after(async () => {
+    await client.close().catch(() => {})
+    await mcp.close()
+  })
+
+  const sessionId = transport.sessionId
+  assert.equal(mcp.sessions.has(sessionId), true)
+  const response = await fetch(mcp.url, {
+    method: 'DELETE',
+    headers: {
+      authorization: `Bearer ${mcp.token}`,
+      'mcp-session-id': sessionId,
+    },
+  })
+  assert.equal(response.status, 200)
+  assert.equal(mcp.sessions.has(sessionId), false)
 })

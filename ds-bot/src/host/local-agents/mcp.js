@@ -50,12 +50,12 @@ export function mcpToolInventory(tools) {
 export class LoopbackMcp {
   // onCall(name, args, callId, signal) -> Promise<{text, isError}> runs while
   // the adapter waits for the DSH result; it resolves when the tool call settles.
-  // inventory reads every DSH-visible schema; the tool bridge stays restricted
-  // to the current turn's permitted team tools.
-  constructor(tools, onCall, inventory = tools) {
+  // inventoryTools reads every DSH-visible schema; the tool bridge stays
+  // restricted to the current turn's permitted team tools.
+  constructor(tools, onCall, inventoryTools = tools) {
     this.token = randomBytes(32).toString('hex')
     this.tools = tools
-    this.inventory = inventory
+    this.inventoryTools = inventoryTools
     this.onCall = onCall
     this.calls = new Map()
     this.server = undefined
@@ -106,7 +106,17 @@ export class LoopbackMcp {
       return
     }
 
-    const web = await toWebRequest(request)
+    let web
+    try {
+      web = await toWebRequest(request)
+    } catch (error) {
+      if (error?.status === 413 || error?.name === 'RequestBodyTooLargeError') {
+        response.writeHead(413)
+        response.end()
+        return
+      }
+      throw error
+    }
     const body = await readRequestBody(web)
     if (body.tooLarge) {
       response.writeHead(413)
@@ -144,17 +154,17 @@ export class LoopbackMcp {
       return
     }
 
-    const record = { tools: new Map() }
+    const mcpSession = { tools: new Map() }
     const transport = new NodeStreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       keepAliveMs: KEEPALIVE_MS,
-      onsessioninitialized: id => this.sessions.set(id, record),
+      onsessioninitialized: id => this.sessions.set(id, mcpSession),
       onsessionclosed: id => this.sessions.delete(id),
     })
     const server = this.serverForRequest()
-    record.transport = transport
-    record.server = server
-    this.syncTools(record)
+    mcpSession.transport = transport
+    mcpSession.server = server
+    this.syncTools(mcpSession)
     transport.onclose = () => {
       if (transport.sessionId !== undefined) this.sessions.delete(transport.sessionId)
     }
@@ -178,7 +188,7 @@ export class LoopbackMcp {
       contents: [{
         uri: uri.href,
         mimeType: 'application/json',
-        text: JSON.stringify(mcpToolInventory(this.inventory())),
+        text: JSON.stringify(mcpToolInventory(this.inventoryTools())),
       }],
     }))
     return server
@@ -186,16 +196,16 @@ export class LoopbackMcp {
 
   // DSH can expose a different set on the next turn. Reconcile the same MCP
   // session instead of replacing the server or keeping another registry.
-  syncTools(record) {
+  syncTools(mcpSession) {
     const desired = new Map(this.tools().map(tool => [tool.name, tool]))
-    for (const [name, current] of record.tools) {
+    for (const [name, current] of mcpSession.tools) {
       if (desired.has(name)) continue
       current.registered.remove()
-      record.tools.delete(name)
+      mcpSession.tools.delete(name)
     }
     for (const [name, tool] of desired) {
       const fingerprint = JSON.stringify(canonicalJson({ description: tool.description ?? '', parameters: tool.parameters ?? {} }))
-      const current = record.tools.get(name)
+      const current = mcpSession.tools.get(name)
       if (current?.fingerprint === fingerprint) continue
       const schema = fromJsonSchema(tool.parameters ?? { type: 'object', properties: {} })
       if (current !== undefined) {
@@ -203,11 +213,11 @@ export class LoopbackMcp {
         current.fingerprint = fingerprint
         continue
       }
-      const registered = record.server.registerTool(name, {
+      const registered = mcpSession.server.registerTool(name, {
         description: tool.description ?? '',
         inputSchema: schema,
       }, async (args, context) => this.call(name, args, context))
-      record.tools.set(name, { registered, fingerprint })
+      mcpSession.tools.set(name, { registered, fingerprint })
     }
   }
 

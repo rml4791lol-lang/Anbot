@@ -258,9 +258,9 @@ export class LocalAgentAdapter extends LlmAdapter {
   // The loopback MCP server for one live session; tools/call lands in its event queue.
   // `tools` lists the current turn's tools; the server outlives the turn that
   // started it, so tools/list reads the latest one.
-  async ensureMcp(live, tools, inventory = tools) {
+  async ensureMcp(live, tools, inventoryTools = tools) {
     live.tools = tools
-    live.inventory = inventory
+    live.inventoryTools = inventoryTools
     if (live.mcp !== undefined) return live.mcp
     const mcp = new LoopbackMcp(() => live.tools(), ({ name, arguments: args, callId, signal }) => {
       const dshCallId = `dsbot-${callId}`
@@ -282,7 +282,7 @@ export class LocalAgentAdapter extends LlmAdapter {
         live.pending.set(dshCallId, { name, mcpCallId: callId, resolve: settle })
         live.push({ type: 'call', name, args, dshCallId })
       })
-    }, () => live.inventory?.() ?? [])
+    }, () => live.inventoryTools?.() ?? [])
     await mcp.listen()
     live.mcp = mcp
     return mcp
