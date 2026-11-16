@@ -430,12 +430,13 @@ export function createSession({ context, browser, page, botId, userDataDir, cook
     }
   }
 
-  async function waitForWriteRequests(requests) {
+  async function waitForWriteRequests(requests, failure) {
     if (requests.length === 0) return
     let timer
     try {
       await Promise.race([
         Promise.all(requests),
+        failure,
         new Promise((_, reject) => {
           timer = setTimeout(() => reject(new Error('the browser request did not finish')), actionTimeout)
         }),
@@ -449,6 +450,9 @@ export function createSession({ context, browser, page, botId, userDataDir, cook
     await authorizeWrite(action)
     return captureAction(async () => {
       const requests = []
+      const requestFailures = []
+      let signalFailure
+      const failure = new Promise((resolve) => { signalFailure = resolve })
       const pendingRequests = new Map()
       const onRequest = request => {
         let requestOrigin
@@ -459,12 +463,10 @@ export function createSession({ context, browser, page, botId, userDataDir, cook
         }
         if (requestOrigin !== action.origin || ['GET', 'HEAD'].includes(request.method().toUpperCase())) return
         let resolve
-        let reject
-        requests.push(new Promise((res, rej) => {
+        requests.push(new Promise((res) => {
           resolve = res
-          reject = rej
         }))
-        pendingRequests.set(request, { resolve, reject })
+        pendingRequests.set(request, { resolve })
       }
       const onRequestFinished = request => {
         const pending = pendingRequests.get(request)
@@ -475,7 +477,8 @@ export function createSession({ context, browser, page, botId, userDataDir, cook
       const onRequestFailed = request => {
         const pending = pendingRequests.get(request)
         if (!pending) return
-        pending.reject(new Error(request.failure()?.errorText ?? 'the browser request failed'))
+        requestFailures.push(new Error(request.failure()?.errorText ?? 'the browser request failed'))
+        signalFailure()
         pendingRequests.delete(request)
       }
       target.on('request', onRequest)
@@ -484,7 +487,8 @@ export function createSession({ context, browser, page, botId, userDataDir, cook
       try {
         await perform()
         if (target.isClosed() || crashedPages.has(target)) throw new Error('the browser page closed or crashed during the action')
-        await waitForWriteRequests(requests)
+        await waitForWriteRequests(requests, failure)
+        if (requestFailures.length > 0) throw requestFailures[0]
         await settle()
         if (target.isClosed() || crashedPages.has(target)) throw new Error('the browser page closed or crashed during the action')
         if (target.url().startsWith('chrome-error://')) throw new Error('the browser page navigated to an error page')
