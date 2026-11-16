@@ -57,3 +57,12 @@ test('the details status line asks the host for one Bot\'s current part', async 
   // A read: it does not pull the whole team again.
   assert.equal(pulls(), 0)
 })
+
+test('team activity opens as a read-only dialog and closes without changing the team', () => {
+  const { actions, ui, pulls } = bench()
+  actions.openTeamActivity()
+  assert.equal(ui.getSnapshot().teamActivity, true)
+  actions.closeTeamActivity()
+  assert.equal(ui.getSnapshot().teamActivity, false)
+  assert.equal(pulls(), 0)
+})

@@ -60,6 +60,8 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     // Opening the conversation would move focus to its composer and blur the name field.
     renameBot: (id) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: true, tab: null, panelYield: yieldTo(state, 'details') })) },
     openSettings,
+    openTeamActivity: () => { ui.set(state => ({ ...state, teamActivity: true, menu: null, palette: null, newChat: null })) },
+    closeTeamActivity: () => { ui.set(state => state.teamActivity ? { ...state, teamActivity: false } : state) },
     // DS Bot's own Models page: the providers DSH serves, their keys and models.
     openModels: () => openSettings('models'),
     closeSettings: () => { ui.set(state => (state.settings ? { ...state, settings: null } : state)) },

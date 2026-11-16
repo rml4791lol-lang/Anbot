@@ -7,7 +7,7 @@
 //
 // A row that cannot be written must never stop the work it describes: the failure is
 // warned and the work goes on.
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -59,32 +59,66 @@ export function installTaskLog(rt) {
 
 // Read by event time, not by the file name: the window is half-open [since, until),
 // and a bad or unrelated line is skipped rather than stopping the report.
-export function readTaskLedger(dir, since, until) {
+export function readTaskLedger(dir, since, until, warn = () => {}, cache = undefined) {
   let names
   try {
     names = readdirSync(dir).filter(name => TASK_FILE_RE.test(name)).sort()
-  } catch {
+  } catch (error) {
+    if (error?.code !== 'ENOENT') warn(`task ledger: cannot read ${dir}: ${error.message}`)
     return { rows: [], files: [], days: [] }
+  }
+  if (cache !== undefined) {
+    const present = new Set(names)
+    for (const name of cache.keys()) if (!present.has(name)) cache.delete(name)
   }
   const rows = []
   for (const name of names) {
-    let text
+    let fileKey
     try {
-      text = readFileSync(join(dir, name), 'utf8')
-    } catch {
+      const stat = statSync(join(dir, name))
+      fileKey = `${stat.size}:${stat.mtimeMs}`
+    } catch (error) {
+      if (error?.code !== 'ENOENT') warn(`task ledger: cannot stat ${name}: ${error.message}`)
+      cache?.delete(name)
       continue
     }
-    for (const line of text.split('\n')) {
-      if (line === '') continue
-      let row
+    let parsed = cache?.get(name)
+    if (parsed?.key !== fileKey) {
+      let text
       try {
-        row = JSON.parse(line)
-      } catch {
+        text = readFileSync(join(dir, name), 'utf8')
+      } catch (error) {
+        if (error?.code !== 'ENOENT') warn(`task ledger: skipped ${name}: ${error.message}`)
+        cache?.delete(name)
         continue
       }
-      if (row === null || typeof row !== 'object' || Array.isArray(row)) continue
-      if (!Number.isFinite(row.time) || row.time < since || row.time >= until) continue
-      rows.push(row)
+      const valid = []
+      let badRows = 0
+      for (const line of text.split('\n')) {
+        if (line === '') continue
+        let row
+        try {
+          row = JSON.parse(line)
+        } catch {
+          badRows += 1
+          continue
+        }
+        if (row === null || typeof row !== 'object' || Array.isArray(row)) {
+          badRows += 1
+          continue
+        }
+        if ((row.kind !== 'open' && row.kind !== 'close') || typeof row.id !== 'string' || row.id === '' || !Number.isFinite(row.time)) {
+          badRows += 1
+          continue
+        }
+        valid.push(row)
+      }
+      parsed = { key: fileKey, rows: valid, badRows }
+      cache?.set(name, parsed)
+    }
+    if (parsed.badRows > 0) warn(`task ledger: skipped ${parsed.badRows} bad row${parsed.badRows === 1 ? '' : 's'} in ${name}`)
+    for (const row of parsed.rows) {
+      if (row.time >= since && row.time < until) rows.push(row)
     }
   }
   rows.sort((a, b) => a.time - b.time)

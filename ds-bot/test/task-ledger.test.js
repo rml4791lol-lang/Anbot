@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -89,14 +89,18 @@ test('the report reads by row time, not by the file named for another day', (t) 
   writeFileSync(join(dir, 'tasks-2026-11-15.jsonl'), [
     JSON.stringify({ kind: 'open', id: 'old', day: '2026-11-15', time: 100 }),
     '{torn',
+    JSON.stringify({ kind: 'close', id: 'bad-time', day: '2026-11-15', time: 'not-a-time' }),
+    JSON.stringify({ kind: 'brainstorm', id: 'bad-kind', day: '2026-11-15', time: 220 }),
     JSON.stringify({ kind: 'close', id: 'old', day: '2026-11-15', time: 200, outcome: 'answered' }),
     '',
   ].join('\n'))
   writeFileSync(join(dir, 'tasks-2026-11-16.jsonl'), JSON.stringify({ kind: 'open', id: 'new', day: '2026-11-16', time: 300 }) + '\n')
   writeFileSync(join(dir, 'notes.jsonl'), JSON.stringify({ kind: 'open', id: 'noise', time: 200 }) + '\n')
 
-  const ledger = readTaskLedger(dir, 150, 250)
+  const warn = []
+  const ledger = readTaskLedger(dir, 150, 250, message => warn.push(message))
   assert.deepEqual(ledger.rows.map(row => [row.kind, row.id, row.time]), [['close', 'old', 200]])
+  assert.deepEqual(warn, ['task ledger: skipped 3 bad rows in tasks-2026-11-15.jsonl'])
   assert.deepEqual(ledger.files, ['tasks-2026-11-15.jsonl', 'tasks-2026-11-16.jsonl'])
   assert.deepEqual(ledger.days, ['2026-11-15'])
 })
@@ -125,4 +129,16 @@ test('a read-only host writes no task row, and a failed write only warns', (t) =
   installTaskLog({ home: file, config: {}, warn: (message, ...args) => warn.push([message, ...args]) })({ kind: 'open', id: 'b' })
   assert.match(warn[0][0], /task ledger row not written/)
   assert.equal(warn[0][1], 'b')
+})
+
+test('a warm ledger cache sees an appended row without losing its file entry', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'ds-bot-tasks-cache-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const file = join(dir, 'tasks-2026-11-15.jsonl')
+  writeFileSync(file, JSON.stringify({ kind: 'open', id: 'a', day: '2026-11-15', time: 100 }) + '\n')
+  const cache = new Map()
+  assert.deepEqual(readTaskLedger(dir, 0, Number.MAX_SAFE_INTEGER, () => {}, cache).rows.map(row => row.id), ['a'])
+  appendFileSync(file, JSON.stringify({ kind: 'close', id: 'a', outcome: 'answered', day: '2026-11-15', time: 200 }) + '\n')
+  assert.deepEqual(readTaskLedger(dir, 0, Number.MAX_SAFE_INTEGER, () => {}, cache).rows.map(row => [row.kind, row.id]), [['open', 'a'], ['close', 'a']])
+  assert.equal(cache.size, 1)
 })

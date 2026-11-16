@@ -409,3 +409,52 @@ test('the team board feed merges the one file each Bot owns', async (t) => {
   writeFileSync(join(board, 'broken.json'), '{oops')
   assert.deepEqual((await read()).value.lines.map(entry => entry.what), ['new', 'middle', 'old'])
 })
+
+test('team activity returns real goal tasks, open handoffs, and archived activity', async (t) => {
+  const atlasState = mkdtempSync(join(tmpdir(), 'ds-bot-team-activity-'))
+  const before = process.env.DSH_ATLAS_STATE_DIR
+  process.env.DSH_ATLAS_STATE_DIR = atlasState
+  t.after(() => {
+    if (before === undefined) delete process.env.DSH_ATLAS_STATE_DIR
+    else process.env.DSH_ATLAS_STATE_DIR = before
+    rmSync(atlasState, { recursive: true, force: true })
+  })
+  const archive = join(atlasState, 'board', 'archive')
+  mkdirSync(archive, { recursive: true })
+  writeFileSync(join(archive, 'forge.jsonl'), `${JSON.stringify({ bot: 'Forge', kind: 'delivery', what: 'Bridge delivered', at: new Date().toISOString() })}\n{oops\n`)
+  const { call, stop } = start({
+    version: 1,
+    mainBotIds: ['m1'],
+    bots: {
+      m1: { id: 'm1', name: 'Chief', role: 'Coordinator', instructions: '', createdAt: 1 },
+      b2: { id: 'b2', name: 'Forge', role: 'Engineer', instructions: '', createdAt: 2 },
+    },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery', admin: 'm1', members: ['m1', 'b2'],
+        goal: {
+          id: 'g1', revision: 1, status: 'active', title: 'Ship MCP', updatedAt: 20,
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'b2', task: 'Build it', status: 'working' }] }],
+        },
+      },
+    },
+    works: { w1: { from: 'm1', to: 'b2', at: 10, open: [], results: [] } },
+  })
+  t.after(stop)
+  const result = await call('team-activity')
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.value.tasks.map(task => [task.source, task.sourceStatus, task.ownerName]).sort(), [
+    ['goal', 'working', 'Forge'],
+    ['handoff', 'active', 'Forge'],
+  ])
+  assert.deepEqual(result.value.roles.map(role => [role.name, role.permission]), [['Chief', 'Main Bot'], ['Forge', 'Member']])
+  assert.equal(result.value.activity[0].text, 'Bridge delivered')
+  assert.equal(result.value.partial, true)
+  assert.match(result.value.warnings[0].message, /team board archive: skipped 1 bad row in forge\.jsonl/)
+  assert.equal(result.value.mode, 'live')
+  assert.equal(result.value.heatmap.length, 7)
+  assert.equal(result.value.heatmap.at(-1).count, 1)
+  const cached = await call('team-activity')
+  assert.equal(cached.value.partial, true)
+  assert.match(cached.value.warnings[0].message, /team board archive: skipped 1 bad row in forge\.jsonl/)
+})
