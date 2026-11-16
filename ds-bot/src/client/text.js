@@ -82,6 +82,21 @@ export const contentText = content => (content ?? [])
 // A name can contain brackets. Generated headers end at the newline; without a
 // newline, a legacy inline header still stops at its first closing bracket.
 export const HEADER = /^\[(Message from|Reply from|Group chat|Group post from|Bot team setup|Handoff · part|Secret card)(?:[^\r\n]*\]\r?\n|[^\]\r\n]*\])/
+// Internal control notices are framed for the model, not for the reader. A
+// model can echo one back in its reply; drop that line instead of presenting
+// bracketed plumbing as a user-facing answer. Real prose on the other lines
+// stays intact.
+const INTERNAL_TEXT = /\[\s*(?:SCHEDULE CHANGE|SCHEDULE REMINDER|Retry after a failed turn|Your profile was updated\b[^\]]*|Message from\b[^\]]*|Reply from\b[^\]]*|Group post from\b[^\]]*)\]/i
+const INTERNAL_LINE = /^(?:A scheduled task involving this session|Your profile was updated\b)/i
+export function stripInternalText(text) {
+  return String(text ?? '').split('\n')
+    .filter(line => {
+      const trimmed = line.trim()
+      return !INTERNAL_TEXT.test(trimmed) && !INTERNAL_LINE.test(trimmed) && !/^收到[：:]\s*$/u.test(trimmed)
+    })
+    .join('\n')
+    .trim()
+}
 export const currentPart = bot => bot.sessionId ?? bot.id
 // The prompts in a due scheduled task's message. DSH frames it for the model: one
 // task as `reminder_prompt_json: "…"`, several as `reminders_json: [{reminder_prompt}]`.
@@ -237,8 +252,8 @@ export function previewOf(list, id, hiddenTurns = []) {
   for (let index = outline.length - 1; index >= 0; index -= 1) {
     const entry = outline[index]
     if (hiddenTurns.includes(entry.turn)) continue
-    const text = entry.response || entry.prompt || ''
-    if (text !== '') return stripHeader(text).replace(/\s+/g, ' ').trim()
+    const text = stripHeader(stripInternalText(entry.response || entry.prompt || '')).replace(/\s+/g, ' ').trim()
+    if (text !== '') return text
   }
   return ''
 }

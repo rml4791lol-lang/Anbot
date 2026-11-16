@@ -6,7 +6,7 @@ import { BotMark } from './mark.js'
 import { CheckIcon, CopyIcon } from './icons.js'
 import { dateLocale, t } from './i18n.js'
 import { noHover } from './motion.js'
-import { clockLabel, messageClock } from './text.js'
+import { clockLabel, isRelayContext, messageClock } from './text.js'
 import { useFold } from './fold.js'
 
 // -------------------------------------------------------------------------
@@ -91,6 +91,10 @@ export const ViaTag = ({ via }) => h('span', { className: 'bt-uvia' }, t('via {p
 export function UserMessageCell({ node, sessionId, useRoster, actions, renderMessageImages, openFile, openSkill }) {
   const roster = useRoster(value => value)
   const data = node.data ?? {}
+  // A scheduled task and a Bot-to-Bot relay are model context, not a message
+  // the user sent. Keep them out of the transcript even if a host release
+  // surfaces their source as a user-message node.
+  if (data.source?.kind === 'schedule' || isRelayContext(data)) return null
   const { text, attachments, rest } = contentParts(data.content)
   const referenceLabels = data.referenceLabels ?? []
   const references = openFile && openSkill ? { openFile, openSkill } : undefined

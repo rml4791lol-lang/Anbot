@@ -795,6 +795,7 @@ const ZH = {
   // Bot exchange
   'Bot exchange': 'Bot 间对话',
   'Bot exchange transcript': 'Bot 间对话记录',
+  'Open bot exchange': '查看 Bot 间对话',
   'No messages yet': '还没有消息',
   'Close Chat': '关闭',
   'Show all · {count} characters': '显示全部 · {count} 字',
