@@ -343,13 +343,14 @@ function eventSummary(sessionId, events) {
   for (const event of events) {
     if (event.type === 'tool/call') calls.set(event.data.callId, event.data)
     if (event.type !== 'tool/result') continue
-    const call = calls.get(event.data.callId)
+    const callId = event.data.callId ?? event.data.message?.toolCallId
+    const call = calls.get(callId)
     const meta = event.data.meta ?? event.data.message?.meta
     const content = (event.data.message?.content ?? []).map(block => block.text ?? '').join('\n')
     toolCalls.push({
       name: call?.name,
       arguments: call?.arguments,
-      callId: event.data.callId,
+      callId,
       ok: event.data.message?.ok ?? event.data.message?.isError === false,
       exitCode: event.data.exitCode ?? event.data.message?.exitCode ?? meta?.exitCode,
       output: content.slice(0, 12_000),

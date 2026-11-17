@@ -60,6 +60,13 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   assert.equal(result.chief.goal.createdByTool, 'group_goal')
   assert.notEqual(result.forge.taskId, result.prism.taskId)
   assert.ok(result.prism.toolCalls >= 4)
+  assert.deepEqual(result.prism.tools.map(call => call.name), ['git_diff', 'bash', 'bash', 'bash', 'bash', 'write_file'])
+  assert.deepEqual(result.prism.tools.slice(1, 5).map(call => call.arguments.command), [
+    'git diff --check',
+    'node --test test/acceptance/fixtures/mcp-inventory.test.mjs',
+    'node test/acceptance/fixtures/mcp-inventory-e2e.mjs',
+    'node test/acceptance/fixtures/no-dsh-patch.mjs',
+  ])
   assert.equal(result.prism.checks.noDshPatch.result.dshPatched, false)
   assert.ok(result.prism.checks.noDshPatch.result.targets.length >= 1)
   assert.ok(result.dshInvariant.targets.every(target => target.unchanged === true))
