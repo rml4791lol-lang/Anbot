@@ -12,7 +12,7 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   assert.equal(result.schema, 3)
   assert.equal(result.scenario, 'chief-forge-prism-mcp-repair')
   assert.equal(result.outcome, 'agentloop-verified')
-  assert.deepEqual([result.agentLoop.executed, result.agentLoop.testkit], [true, '@deepseek-ai/dsh-agent-loop-testkit'])
+  assert.deepEqual([result.agentLoop.executed, result.agentLoop.testkit], [true, '@deepseek-ai/dsh-agent-loop-testkit@0.2.2-rc.1'])
   assert.equal(result.agentLoop.sessionEvents, 'real-dsh-session-events')
   assert.equal(result.agentLoop.modelTransport, 'deterministic-local-adapter')
   assert.deepEqual([result.followUpGate.required, result.followUpGate.status, result.followUpGate.scenarioPassed], [true, 'passed', true])
@@ -21,25 +21,28 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   assert.equal(result.forge.worktree.isolated, true)
   assert.deepEqual(result.forge.handoff.changedPaths, ['ds-bot/src/host/local-agents/mcp.js'])
   assert.ok(result.forge.handoff.commands.length >= 2)
-  assert.match(result.forge.handoff.limitations, /scripted/i)
+  assert.match(result.forge.handoff.limitations, /deterministic local model transport/i)
   assert.equal(result.restart.boundary, 'after-forge-durable-result-before-prism-pickup')
   assert.equal(result.restart.hostStarts, 2)
   assert.notEqual(result.restart.processes[0].pid, result.restart.processes[1].pid)
   assert.ok(result.restart.processes.every(process => process.distinctChildProcess === true))
+  assert.ok(result.restart.processes.every(process => process.stoppedBy === 'SIGTERM'))
+  assert.equal(result.restart.prismTurnStartsBeforeRestart, 0)
+  assert.equal(result.restart.prismSessionExistedBeforeRestart, true)
   assert.deepEqual({
-    sameTaskId: result.prism.taskId,
-    sameAttemptId: result.prism.attemptId,
-    queuedBeforeRestart: true,
-    prismPickupsBeforeRestart: 0,
-    prismPickupsAfterRestart: 1,
-    recoveryKind: 'resent',
-  }, {
     sameTaskId: result.restart.sameTaskId,
     sameAttemptId: result.restart.sameAttemptId,
     queuedBeforeRestart: result.restart.queuedBeforeRestart,
     prismPickupsBeforeRestart: result.restart.prismPickupsBeforeRestart,
     prismPickupsAfterRestart: result.restart.prismPickupsAfterRestart,
     recoveryKind: result.restart.recoveryKind,
+  }, {
+    sameTaskId: true,
+    sameAttemptId: true,
+    queuedBeforeRestart: true,
+    prismPickupsBeforeRestart: 0,
+    prismPickupsAfterRestart: 1,
+    recoveryKind: 'resent',
   })
   assert.equal(result.prism.checks.diff.verified, true)
   assert.equal(result.prism.checks.inventory.verified, true)
@@ -48,13 +51,14 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   assert.equal(result.verification.status, 'verified')
   assert.equal(result.detail.attempt.id, result.prism.attemptId)
   assert.equal(result.detail.owner.role, 'Reviewer')
-  assert.equal(result.detail.handoff.from.name, 'Chief')
-  assert.equal(result.detail.handoff.to.name, 'Prism')
+  assert.equal(result.detail.location.stageTitle, 'Review')
+  assert.equal(result.detail.handoff, null)
   assert.equal(result.detail.recovery.records[0].attemptId, result.prism.attemptId)
-  assert.ok(result.typedEvidence.every(item => ['executed', 'verified'].includes(item.trust)))
+  assert.ok(result.typedEvidence.every(item => ['reported', 'executed', 'verified'].includes(item.trust)))
+  assert.ok(result.typedEvidence.filter(item => item.trust === 'verified').length >= 7)
   assert.ok(result.mockSeams.some(item => /deterministic local model adapter/i.test(item)))
   assert.equal(result.chief.goal.createdByTool, 'group_goal')
-  assert.equal(result.forge.taskId, result.prism.taskId)
+  assert.notEqual(result.forge.taskId, result.prism.taskId)
   assert.ok(result.prism.toolCalls >= 4)
   assert.equal(result.prism.checks.noDshPatch.result.dshPatched, false)
   assert.ok(result.prism.checks.noDshPatch.result.targets.length >= 1)

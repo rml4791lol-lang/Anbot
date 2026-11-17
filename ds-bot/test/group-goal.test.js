@@ -213,6 +213,7 @@ test('a goal Bot handoff keeps its goal task binding in activity and task detail
   const state = saved(host)
   const [workId, work] = Object.entries(state.works).find(([, item]) => item.from === 'b' && item.to === 'c')
   assert.deepEqual(work.goalTask, { taskId: goalTaskId, attemptId })
+  assert.deepEqual([host.agentOf('c').calls.at(-1).source.taskId, host.agentOf('c').calls.at(-1).source.attemptId], [goalTaskId, attemptId])
 
   const activity = buildTeamActivity({ state, now: Date.now(), timeZone: 'Asia/Shanghai' })
   const handoff = activity.tasks.find(item => item.id === `handoff:${workId}`)
