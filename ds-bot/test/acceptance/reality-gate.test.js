@@ -62,4 +62,6 @@ test('Reality Gate proves Chief, Forge, restart, then one Prism review with type
   assert.ok(result.prism.toolCalls >= 4)
   assert.equal(result.prism.checks.noDshPatch.result.dshPatched, false)
   assert.ok(result.prism.checks.noDshPatch.result.targets.length >= 1)
+  assert.ok(result.dshInvariant.targets.every(target => target.unchanged === true))
+  assert.ok(result.dshInvariant.targets.some(target => target.kind === 'git-checkout'))
 })

@@ -47,6 +47,7 @@ async function installedState(root) {
 function checkoutState(root) {
   const head = git(root, ['rev-parse', 'HEAD']).trim()
   const status = git(root, ['status', '--porcelain=v1', '--untracked-files=all'])
+  const statusLines = status.split('\n').filter(Boolean)
   const tracked = digest(git(root, ['diff', '--binary', '--no-ext-diff', 'HEAD']))
   const untracked = git(root, ['ls-files', '--others', '--exclude-standard', '-z'])
     .split('\0')
@@ -56,6 +57,7 @@ function checkoutState(root) {
   return {
     head,
     statusDigest: digest(status),
+    statusLines,
     trackedDiffDigest: tracked,
     untracked,
   }

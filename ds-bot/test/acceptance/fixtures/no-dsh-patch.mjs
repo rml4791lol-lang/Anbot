@@ -18,9 +18,8 @@ console.log(JSON.stringify({
     label: target.label,
     kind: target.kind,
     unchanged: true,
-    preexistingChanges: target.kind === 'git-checkout'
-      ? (baseline[index].state.untracked.length + (baseline[index].state.statusDigest === target.state.statusDigest ? 0 : 1))
-      : 0,
+    preexistingChanges: target.kind === 'git-checkout' ? target.state.statusLines.length : 0,
+    preexistingPaths: target.kind === 'git-checkout' ? target.state.statusLines.map(line => line.slice(3)) : [],
     untrackedFiles: target.kind === 'git-checkout' ? target.state.untracked.map(file => file.path) : [],
     files: target.state.files,
     tree: target.state.tree,
