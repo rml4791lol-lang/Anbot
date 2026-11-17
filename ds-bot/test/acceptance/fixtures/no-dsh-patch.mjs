@@ -8,13 +8,13 @@ if (!baselinePath || !targetsText) throw new Error('DSH patch baseline and targe
 const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'))
 const targets = JSON.parse(targetsText)
 const current = await snapshotTargets(targets)
-const changed = current.filter((target, index) => JSON.stringify(target.state) !== JSON.stringify(baseline[index]?.state))
+const changed = current.filter((target, index) => JSON.stringify(target.state) !== JSON.stringify(baseline[index].state))
 if (changed.length > 0) throw new Error(`DSH changed during the run: ${JSON.stringify(changed)}`)
 
 console.log(JSON.stringify({
   changedPaths: [],
   dshPatched: false,
-  targets: current.map((target, index) => ({
+  targets: current.map(target => ({
     label: target.label,
     kind: target.kind,
     unchanged: true,

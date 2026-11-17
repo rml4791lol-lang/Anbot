@@ -1,7 +1,7 @@
 {
   "schema": 3,
   "scenario": "chief-forge-prism-mcp-repair",
-  "generatedAt": "2026-11-17T14:06:38.712Z",
+  "generatedAt": "2026-11-17T14:15:14.209Z",
   "outcome": "agentloop-verified",
   "mocking": "deterministic-local-model-transport-only",
   "agentLoop": {
@@ -97,7 +97,7 @@
           {
             "ok": true,
             "exitCode": 0,
-            "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.665167ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.791709\n"
+            "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.909042ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 161.256875\n"
           },
           {
             "ok": true,
@@ -114,7 +114,7 @@
             "output": "wrote prism-review.json",
             "artifact": {
               "path": "prism-review.json",
-              "digest": "sha256:b120b8c2321d9c18807c8c5ec116812b2b07060eb0c9d307946c62453ebd398f"
+              "digest": "sha256:99b97096e245c390a2653d82a5a225b45f6d1480c9c067a8de703e8f1777e70e"
             }
           }
         ]
@@ -198,7 +198,7 @@
     "role": "Coordinator",
     "view": "Reality Gate",
     "goal": {
-      "id": "goal-b8f31097",
+      "id": "goal-43229844",
       "createdByTool": "group_goal",
       "status": "complete",
       "verification": {
@@ -270,7 +270,7 @@
           "ds-bot/src/host/local-agents/mcp.js": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
         },
         "missing": [],
-        "verifiedAt": 1794924395633
+        "verifiedAt": 1794924911061
       }
     },
     "stages": [
@@ -298,11 +298,11 @@
   },
   "forge": {
     "role": "Engineer",
-    "taskId": "goal:goal-b8f31097:s1:t1",
+    "taskId": "goal:goal-43229844:s1:t1",
     "attemptId": "t1:a1",
     "worktree": {
       "isolated": true,
-      "baselineCommit": "0103719f367a215b9da099b865739c766204d3c9",
+      "baselineCommit": "5b66e8e45a0b5eb96b1b1b395cf1b080bd9936e4",
       "changedPaths": [
         "ds-bot/src/host/local-agents/mcp.js"
       ]
@@ -338,15 +338,15 @@
         "trust": "executed",
         "kind": "executed",
         "source": "tool-result",
-        "at": 1794924388538,
+        "at": 1794924904074,
         "actor": {
           "sessionId": "forge"
         },
-        "summary": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-YLQSXx/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n",
+        "summary": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-NZpLFf/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n",
         "command": {
           "text": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs",
           "exitCode": 1,
-          "outputDigest": "sha256:636202772b2eb42d463aad81c4496eea837fecd50cd1a95c94a23f5503216d35"
+          "outputDigest": "sha256:8bab71b82d403f9355673376231abafc859692cb90c9ce3622b5f37a74004f03"
         },
         "record": {
           "sessionId": "forge",
@@ -362,7 +362,7 @@
         "trust": "verified",
         "kind": "verified",
         "source": "tool-result",
-        "at": 1794924388547,
+        "at": 1794924904082,
         "actor": {
           "sessionId": "forge"
         },
@@ -387,7 +387,7 @@
         "trust": "verified",
         "kind": "verified",
         "source": "tool-result",
-        "at": 1794924388761,
+        "at": 1794924904285,
         "actor": {
           "sessionId": "forge"
         },
@@ -411,7 +411,7 @@
         "trust": "executed",
         "kind": "executed",
         "source": "tool-result",
-        "at": 1794924388765,
+        "at": 1794924904288,
         "actor": {
           "sessionId": "forge"
         },
@@ -430,7 +430,7 @@
         "trust": "reported",
         "kind": "reported",
         "source": "assistant",
-        "at": 1794924388774,
+        "at": 1794924904295,
         "actor": {
           "sessionId": "forge"
         },
@@ -446,7 +446,7 @@
       {
         "ok": true,
         "exitCode": 1,
-        "output": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-YLQSXx/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
+        "output": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-NZpLFf/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
       },
       {
         "ok": true,
@@ -475,18 +475,18 @@
   },
   "prism": {
     "role": "Reviewer",
-    "taskId": "goal:goal-b8f31097:s2:t2",
+    "taskId": "goal:goal-43229844:s2:t2",
     "attemptId": "t2:a1",
     "pickupCount": 1,
     "recovery": [
       {
-        "id": "t2:a1:resent:85c18c63-507a-469d-9886-001c24582293",
-        "at": 1794924392314,
+        "id": "t2:a1:resent:92124135-9a30-4cd6-a501-eac561c3ac05",
+        "at": 1794924907826,
         "attemptId": "t2:a1",
         "kind": "resent",
         "summary": "The queued handoff was delivered again after the host restarted.",
         "sessionId": "prism",
-        "exchangeId": "85c18c63-507a-469d-9886-001c24582293"
+        "exchangeId": "92124135-9a30-4cd6-a501-eac561c3ac05"
       }
     ],
     "toolCalls": 6,
@@ -509,7 +509,7 @@
       {
         "ok": true,
         "exitCode": 0,
-        "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.665167ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.791709\n"
+        "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.909042ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 161.256875\n"
       },
       {
         "ok": true,
@@ -526,7 +526,7 @@
         "output": "wrote prism-review.json",
         "artifact": {
           "path": "prism-review.json",
-          "digest": "sha256:b120b8c2321d9c18807c8c5ec116812b2b07060eb0c9d307946c62453ebd398f"
+          "digest": "sha256:99b97096e245c390a2653d82a5a225b45f6d1480c9c067a8de703e8f1777e70e"
         }
       }
     ],
@@ -547,7 +547,7 @@
         "verified": true,
         "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
         "exitCode": 0,
-        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.665167ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.791709\n"
+        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.909042ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 161.256875\n"
       },
       "inventory": {
         "verified": true,
@@ -625,8 +625,8 @@
           "output": "exit 0\n"
         },
         {
-          "digest": "sha256:c0153f6a11033e4b73278775dafe78873bbe5b797d3c7803e17cd03387439f40",
-          "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.665167ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.791709\n"
+          "digest": "sha256:55540b91d76f5046bed9b91da1d7c27e1f30bb1ebc161a4d8bb1b339c5015b69",
+          "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.909042ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 161.256875\n"
         },
         {
           "digest": "sha256:8e9a0596620b6b31f00d5d2807cfa0a3ef84865bd6ce965fdb3da92e54a32ab1",
@@ -647,8 +647,8 @@
     "processes": [
       {
         "role": "first-host",
-        "pid": 36370,
-        "markerPid": 36370,
+        "pid": 47609,
+        "markerPid": 47609,
         "distinctChildProcess": true,
         "stoppedBy": "SIGTERM",
         "processSignal": "SIGTERM",
@@ -656,8 +656,8 @@
       },
       {
         "role": "second-host",
-        "pid": 36388,
-        "markerPid": 36388,
+        "pid": 47633,
+        "markerPid": 47633,
         "distinctChildProcess": true,
         "stoppedBy": "SIGTERM",
         "processSignal": "SIGTERM",
@@ -771,18 +771,18 @@
   "detail": {
     "schema": 1,
     "dataMode": "live",
-    "generatedAt": 1794924398710,
-    "taskId": "goal:goal-b8f31097:s2:t2",
+    "generatedAt": 1794924914208,
+    "taskId": "goal:goal-43229844:s2:t2",
     "task": {
-      "id": "goal:goal-b8f31097:s2:t2",
-      "sourceId": "goal:goal-b8f31097:s2:t2",
+      "id": "goal:goal-43229844:s2:t2",
+      "sourceId": "goal:goal-43229844:s2:t2",
       "source": "goal",
       "kind": "goal_task",
       "title": "PRISM_REVIEW Independently inspect the actual diff, run MCP inventory behavior and targeted tests, and prove DSH was not patched.",
       "subtitle": "Repair MCP inventory drift",
       "stageTitle": "Review",
       "stageId": "s2",
-      "parentId": "goal:goal-b8f31097",
+      "parentId": "goal:goal-43229844",
       "ownerId": "prism",
       "ownerName": "Prism",
       "ownerKind": "bot",
@@ -804,12 +804,12 @@
           "ev:tool-result:prism:prism-1-inventory",
           "ev:tool-result:prism:prism-1-no-patch"
         ],
-        "verifiedAt": 1794924395633
+        "verifiedAt": 1794924911061
       },
       "acceptance": "Prism independently runs the diff, inventory, targeted tests and no-DSH-patch checks after the restart.",
       "evidence": "Prism ran the actual diff, inventory, targeted tests and no-DSH-patch checks after restart.",
       "note": "Independent review evidence received.",
-      "updatedAt": 1794924395633,
+      "updatedAt": 1794924911061,
       "warnings": []
     },
     "empty": false,
@@ -824,7 +824,7 @@
     "location": {
       "roomId": "r1",
       "roomName": "Reality Gate",
-      "goalId": "goal-b8f31097",
+      "goalId": "goal-43229844",
       "goalTitle": "Repair MCP inventory drift",
       "goalStatus": "complete",
       "stageId": "s2",
@@ -836,10 +836,10 @@
       "id": "t2:a1",
       "number": 1,
       "status": "verified",
-      "startedAt": 1794924388797,
-      "updatedAt": 1794924395631,
+      "startedAt": 1794924904318,
+      "updatedAt": 1794924911058,
       "sessionId": "prism",
-      "exchangeId": "85c18c63-507a-469d-9886-001c24582293",
+      "exchangeId": "92124135-9a30-4cd6-a501-eac561c3ac05",
       "turn": 1
     },
     "handoff": null,
@@ -847,8 +847,8 @@
       "state": "recovered",
       "records": [
         {
-          "id": "t2:a1:resent:85c18c63-507a-469d-9886-001c24582293",
-          "at": 1794924392314,
+          "id": "t2:a1:resent:92124135-9a30-4cd6-a501-eac561c3ac05",
+          "at": 1794924907826,
           "attemptId": "t2:a1",
           "kind": "resent",
           "summary": "The queued handoff was delivered again after the host restarted.",
@@ -858,22 +858,22 @@
     },
     "checkpoint": {
       "text": "Stage acceptance verified.",
-      "at": 1794924395631,
+      "at": 1794924911058,
       "kind": "verified"
     },
     "nextAction": {
       "text": "Provide acceptance verification for: Prism independently runs the diff, inventory, targeted tests and no-DSH-patch checks after the restart.",
-      "sourceId": "goal:goal-b8f31097:s2:t2"
+      "sourceId": "goal:goal-43229844:s2:t2"
     },
     "blockers": [],
     "evidence": [
       {
-        "id": "goal:goal-b8f31097:s2:stage-evidence",
+        "id": "goal:goal-43229844:s2:stage-evidence",
         "trust": "reported",
         "title": "",
         "text": "Prism ran the actual diff, inventory, targeted tests and no-DSH-patch checks after restart.",
-        "at": 1794924395631,
-        "sourceId": "goal:goal-b8f31097:s2",
+        "at": 1794924911058,
+        "sourceId": "goal:goal-43229844:s2",
         "artifact": null
       },
       {
@@ -881,7 +881,7 @@
         "trust": "verified",
         "title": "",
         "text": "actual diff ds-bot/src/host/local-agents/mcp.js: 9729 bytes -> 9780 bytes",
-        "at": 1794924392332,
+        "at": 1794924907848,
         "sourceId": "tool-result",
         "artifact": null,
         "diff": {
@@ -897,7 +897,7 @@
         "trust": "verified",
         "title": "",
         "text": "exit 0\n",
-        "at": 1794924392534,
+        "at": 1794924908053,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
@@ -911,14 +911,14 @@
         "id": "ev:tool-result:prism:prism-1-targeted",
         "trust": "verified",
         "title": "",
-        "text": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.665167ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.791709\n",
-        "at": 1794924392801,
+        "text": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.909042ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 161.256875\n",
+        "at": 1794924908313,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
           "text": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
           "exitCode": 0,
-          "outputDigest": "sha256:c0153f6a11033e4b73278775dafe78873bbe5b797d3c7803e17cd03387439f40"
+          "outputDigest": "sha256:55540b91d76f5046bed9b91da1d7c27e1f30bb1ebc161a4d8bb1b339c5015b69"
         },
         "stale": false
       },
@@ -927,7 +927,7 @@
         "trust": "verified",
         "title": "",
         "text": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n",
-        "at": 1794924393016,
+        "at": 1794924908513,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
@@ -942,7 +942,7 @@
         "trust": "verified",
         "title": "",
         "text": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"DSH_HARNESS-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":50111,\"tree\":\"sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":12,\"preexistingPaths\":[\"apps/web/public/apple-touch-icon.png\",\"apps/web/public/icon-192.png\",\"apps/web/public/icon-512.png\",\"apps/web/public/icon-maskable-512.png\",\"packages/experimental/skill-badge/assets/dsh-badge.png\",\"packages/llm/llm-deepseek/tests/fixtures/red.png\",\"packages/llm/llm-pi-ai/tests/fixtures/qr-code.png\",\"snapshots/sdk/minimal-image-compaction/workspace/red.png\",\"snapshots/session/ptc-read-image-attachment-path/workspace/red.png\",\"snapshots/session/ptc-read-image/workspace.expected/red.png\",\"snapshots/session/read-image-attachment-path/workspace/red.png\",\"snapshots/session/read-image-text-route/workspace/red.png\"],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d\",\"trackedDiffDiges",
-        "at": 1794924395569,
+        "at": 1794924910997,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
@@ -957,7 +957,7 @@
         "trust": "executed",
         "title": "",
         "text": "wrote prism-review.json",
-        "at": 1794924395576,
+        "at": 1794924911004,
         "sourceId": "tool-result",
         "artifact": null,
         "stale": false
@@ -967,7 +967,7 @@
         "trust": "reported",
         "title": "",
         "text": "Prism review passed. The actual diff, MCP inventory, targeted tests and no-DSH-patch checks all ran through real DSH tool calls. Review: prism-review.json",
-        "at": 1794924395583,
+        "at": 1794924911011,
         "sourceId": "assistant",
         "artifact": null,
         "stale": false
@@ -986,17 +986,17 @@
         "ev:tool-result:prism:prism-1-inventory",
         "ev:tool-result:prism:prism-1-no-patch"
       ],
-      "verifiedAt": 1794924395633
+      "verifiedAt": 1794924911061
     },
     "trace": {
       "status": "empty",
-      "sourceTaskId": "goal:goal-b8f31097:s2:t2",
-      "sourceId": "goal:goal-b8f31097:s2:t2",
+      "sourceTaskId": "goal:goal-43229844:s2:t2",
+      "sourceId": "goal:goal-43229844:s2:t2",
       "sessionIds": [],
       "relationships": [
         {
-          "from": "goal:goal-b8f31097:s2:t2",
-          "to": "goal:goal-b8f31097:s2:t2",
+          "from": "goal:goal-43229844:s2:t2",
+          "to": "goal:goal-43229844:s2:t2",
           "kind": "task-source",
           "labelKey": "trace.source"
         }
@@ -1018,7 +1018,7 @@
       "id": "ev:tool-result:forge:forge-2-before",
       "trust": "executed",
       "title": "",
-      "text": "sha256:636202772b2eb42d463aad81c4496eea837fecd50cd1a95c94a23f5503216d35",
+      "text": "sha256:8bab71b82d403f9355673376231abafc859692cb90c9ce3622b5f37a74004f03",
       "sourceId": "tool-result"
     },
     {
@@ -1067,7 +1067,7 @@
       "id": "ev:tool-result:prism:prism-1-targeted",
       "trust": "verified",
       "title": "",
-      "text": "sha256:c0153f6a11033e4b73278775dafe78873bbe5b797d3c7803e17cd03387439f40",
+      "text": "sha256:55540b91d76f5046bed9b91da1d7c27e1f30bb1ebc161a4d8bb1b339c5015b69",
       "sourceId": "tool-result"
     },
     {
