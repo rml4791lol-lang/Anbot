@@ -121,7 +121,8 @@ function dshTargets() {
     else addInstalled(label, real)
   }
 
-  addInstalled('pinned-DSH-install', PLUGIN)
+  addInstalled('pinned-DSH-install', join(PLUGIN, 'dev', 'harness'))
+  addInstalled('plugin-DSH-install', PLUGIN)
   if (process.env.DSH_HARNESS) addCheckout('DSH_HARNESS-install', process.env.DSH_HARNESS)
   const listed = command(REPO, 'git worktree list --porcelain')
   const mainWorktree = listed.stdout.split('\n').find(line => line.startsWith('worktree '))?.slice('worktree '.length)
