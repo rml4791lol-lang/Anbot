@@ -227,7 +227,7 @@ export function buildTeamActivity({ state, board = [], ledger = [], now = Date.n
   }
   return {
     schema: 1,
-    mode: 'live',
+    dataMode: 'live',
     generatedAt: at,
     roles,
     tasks,

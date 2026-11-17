@@ -2,19 +2,21 @@
 // by DS Bot, with no second task state and no client-side completion rules.
 import { createElement as h, useEffect, useRef, useState } from 'react'
 import { call as apiCall } from './api.js'
-import { hostText, t } from './i18n.js'
+import { hostText, localText, t } from './i18n.js'
 import { BotAvatar } from './mark.js'
-import { ProposalCard } from './learning-card-view.js'
 import { SPRING_SHAPE } from './motion.js'
 import { useEscape } from './overlay-hooks.js'
+import { isLiveDataMode, resolveDataMode } from '../shared/data-mode.js'
 
 const copyText = () => ({
   title: t('Team activity'),
   subtitle: t('Real tasks, handoffs, and recent activity'),
-  live: t('Live data'),
-  demo: t('Demo data'),
-  readOnly: t('Read-only'),
-  readOnlyHost: t('Read-only host'),
+  live: localText('Live data'),
+  preview: localText('Preview data (not live)'),
+  demo: localText('Demo data'),
+  dataUnavailable: localText('Activity data is unavailable'),
+  readOnly: localText('This activity view is read-only'),
+  readOnlyHost: localText('Read-only host'),
   close: t('Close'),
   active: t('Active'),
   waiting: t('Waiting'),
@@ -84,20 +86,8 @@ const copyText = () => ({
   detailStale: t('Could not refresh this task. Showing the last good detail.'),
   detailUnavailable: t('This task is no longer available.'),
   detailError: t('Task detail could not be read.'),
-  pauseGoal: t('Pause goal'),
-  resumeGoal: t('Resume goal'),
-  stopGoal: t('Stop goal'),
-  retryBot: t('Retry Bot'),
-  cancelWork: t('Stop current work'),
-  abandonWait: t('Abandon wait'),
+  detailModeMismatch: t('Task detail data mode does not match the team activity data.'),
   verification: t('Verification'),
-  improvements: t('Improvement proposals'),
-  proposeImprovement: t('Propose improvement'),
-  proposingImprovement: t('Reading verified evidence…'),
-  noImprovement: t('No reusable improvement was found in this verified evidence.'),
-  noImprovements: t('No improvements have been proposed for this task yet.'),
-  proposalError: t('The improvement proposal could not be created.'),
-  verifiedOnly: t('Only verified task evidence can produce an improvement proposal.'),
 })
 
 const sourceLabel = (source, copy) => source === 'goal' ? copy.goalTask
@@ -140,12 +130,15 @@ function OwnerMark({ task, roster, role, copy, size }) {
   return h(BotAvatar, { bot: botFor(roster, task, role), size, state: task.displayState ?? 'idle', main: role?.main === true })
 }
 
-function DialogHead({ copy, onClose, data, partial, roster }) {
+function DialogHead({ copy, onClose, dataMode, partial, roster }) {
   const lockReason = typeof roster?.readOnly === 'string' ? roster.readOnly.trim() : ''
+  const modeLabel = dataMode === 'preview' ? copy.preview
+    : dataMode === 'demo' ? copy.demo
+      : isLiveDataMode(dataMode) ? copy.live : copy.dataUnavailable
   return h('header', { className: 'bt-activity-head' },
     h('div', null, h('h2', null, copy.title), h('p', null, copy.subtitle)),
     h('div', { className: 'bt-activity-head-meta' },
-      data ? h('span', { className: 'bt-activity-mode', 'data-mode': data.mode ?? 'live' }, data.mode === 'live' ? copy.live : copy.demo) : null,
+      dataMode ? h('span', { className: 'bt-activity-mode', 'data-mode': dataMode }, modeLabel) : null,
       partial ? h('span', { className: 'bt-activity-mode', 'data-partial': true }, copy.partial) : null,
       h('span', { className: 'bt-activity-mode', 'data-host-locked': lockReason || undefined, title: lockReason ? hostText(lockReason) : undefined }, lockReason ? copy.readOnlyHost : copy.readOnly),
       h('button', { type: 'button', className: 'bt-soft bt-soft-sm bt-activity-close', onClick: onClose }, copy.close)))
@@ -187,13 +180,6 @@ const trustLabel = (trust, copy) => trust === 'verified' ? copy.verified
   : trust === 'executed' ? copy.executed
     : trust === 'requested' ? copy.requested
       : trust === 'reported' ? copy.reported : copy.pending
-
-const controlLabel = (id, copy) => id === 'pause-goal' ? copy.pauseGoal
-  : id === 'resume-goal' ? copy.resumeGoal
-    : id === 'stop-goal' ? copy.stopGoal
-      : id === 'retry-bot' ? copy.retryBot
-        : id === 'cancel-work' || id === 'cancel-room' ? copy.cancelWork
-          : id === 'abandon-work' ? copy.abandonWait : id
 
 function TraceRow({ item, copy, selected, onSelect }) {
   return h('button', {
@@ -259,17 +245,8 @@ function EvidenceList({ evidence, selectedId, copy, onSelect }) {
   h('em', null, trustLabel(item.trust, copy)))))
 }
 
-function Detail({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy }) {
+function Detail({ task, detail, detailStatus, detailError, roster, rolesById, allTasks, copy }) {
   const [selectedEvidenceId, setSelectedEvidenceId] = useState(null)
-  const [improvements, setImprovements] = useState(detail?.improvements ?? { proposals: [], history: [] })
-  const [proposalBusy, setProposalBusy] = useState(false)
-  const [proposalError, setProposalError] = useState('')
-  const [proposalNotice, setProposalNotice] = useState('')
-  useEffect(() => {
-    if (detail?.improvements) setImprovements(detail.improvements)
-    setProposalError('')
-    setProposalNotice('')
-  }, [detail?.taskId, detail?.generatedAt])
   if (!task) return h('aside', { className: 'bt-activity-detail' }, h('p', { className: 'bt-activity-detail-empty' }, copy.noDetail))
   const shown = detail?.task ?? task
   const role = rolesById.get(shown.ownerId)
@@ -292,47 +269,6 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
   const recovery = detail?.recovery
   const evidence = Array.isArray(detail?.evidence) ? detail.evidence : []
   const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : []
-  const controls = Array.isArray(detail?.controls) ? detail.controls : []
-  const lockReason = typeof roster?.readOnly === 'string' ? roster.readOnly.trim() : ''
-  const visibleControls = controls.map(control => lockReason ? { ...control, enabled: false, reason: lockReason } : control)
-  const verified = detail?.verification?.status === 'verified' && detail?.empty !== true
-  const canPropose = verified && shown.ownerKind === 'bot' && Boolean(actions?.proposeImprovement) && !lockReason && !proposalBusy
-  const proposalDisabledReason = lockReason || (verified ? '' : copy.verifiedOnly)
-  const proposalCards = [...(improvements.proposals ?? []), ...(improvements.history ?? [])]
-  const proposeImprovement = () => {
-    if (!canPropose) return
-    setProposalBusy(true)
-    setProposalError('')
-    setProposalNotice('')
-    let result
-    try {
-      result = actions.proposeImprovement(shown.id)
-    } catch (error) {
-      setProposalError(error?.message ?? String(error))
-      setProposalBusy(false)
-      return
-    }
-    void Promise.resolve(result).then(proposal => {
-      if (proposal) setImprovements(current => ({ ...current, proposals: [...(current.proposals ?? []), proposal] }))
-      else setProposalNotice(copy.noImprovement)
-    }, error => setProposalError(error?.message ?? String(error))).finally(() => setProposalBusy(false))
-  }
-  const proposalResolved = (id, approve) => setImprovements(current => ({
-    ...current,
-    proposals: (current.proposals ?? []).map(proposal => proposal.id === id
-      ? { ...proposal, outcome: approve ? 'approved' : 'declined' }
-      : proposal),
-  }))
-  const runControl = (control) => {
-    if (!control.enabled || !actions) return
-    if (control.id === 'pause-goal') void actions.goalControl?.(control.roomId, control.goalId, 'pause')
-    else if (control.id === 'resume-goal') void actions.goalControl?.(control.roomId, control.goalId, 'resume')
-    else if (control.id === 'stop-goal') void actions.goalControl?.(control.roomId, control.goalId, 'stop')
-    else if (control.id === 'retry-bot') void actions.resume?.(control.botId)
-    else if (control.id === 'cancel-work') void actions.stopMemberWork?.(control.roomId, control.botId)
-    else if (control.id === 'cancel-room') void actions.stopRoomWork?.(control.roomId)
-    else if (control.id === 'abandon-work') void actions.abandonWork?.(control.workId)
-  }
   const detailNotice = detailStatus === 'loading' && detail === null ? h('p', { className: 'bt-task-detail-state', role: 'status' }, copy.detailLoading)
     : detail?.empty === true ? h('p', { className: 'bt-task-detail-state', role: 'status' }, copy.detailUnavailable)
       : detailError ? h('p', { className: 'bt-task-detail-state', role: 'alert' }, detail ? copy.detailStale : (detailError || copy.detailError), detail ? h('span', null, detailError) : null) : null
@@ -365,24 +301,6 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
       ...(!detail && shown.evidence ? [h('div', { key: 'evidence' }, h('dt', null, copy.evidence), h('dd', null, shown.evidence))] : []),
       ...(detail ? [h('div', { key: 'verification' }, h('dt', null, copy.verification), h('dd', null, `${detail.verification?.status || copy.pending}${detail.verification?.reason ? ` · ${detail.verification.reason}` : ''}`))] : []),
       ...(warnings.length > 0 ? [h('div', { key: 'warning', className: 'bt-activity-warning' }, h('dt', null, copy.warning), h('dd', null, warnings.join(' · ')))] : [])),
-    detail ? h('section', { className: 'bt-task-section bt-improvement-section' },
-      h('div', { className: 'bt-improvement-head' },
-        h('h4', null, copy.improvements),
-        h('button', {
-          type: 'button', className: 'bt-soft bt-soft-sm bt-improvement-propose',
-          disabled: !canPropose, title: proposalDisabledReason || undefined, onClick: proposeImprovement,
-        }, proposalBusy ? copy.proposingImprovement : copy.proposeImprovement)),
-      proposalError ? h('p', { className: 'bt-learning-error', role: 'alert' }, `${copy.proposalError} ${proposalError}`) : null,
-      proposalNotice ? h('p', { className: 'bt-activity-detail-empty', role: 'status' }, proposalNotice) : null,
-      proposalCards.length > 0
-        ? h('div', { className: 'bt-improvement-list' }, proposalCards.map(proposal => h(ProposalCard, {
-          key: proposal.id,
-          proposal,
-          actions,
-          onResolved: proposalResolved,
-          disabledReason: proposal.outcome ? '' : lockReason,
-        })))
-        : h('p', { className: 'bt-activity-detail-empty' }, copy.noImprovements)) : null,
     detail ? h('section', { className: 'bt-task-section' },
       h('h4', null, copy.evidence),
       h(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy, onSelect: setSelectedEvidenceId })) : null,
@@ -391,14 +309,10 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
       artifacts.length > 0 ? h('div', { className: 'bt-task-artifacts' }, artifacts.map((item, index) => h('div', {
         key: `${item.path}:${item.digest ?? index}`, className: 'bt-task-artifact', 'data-trust': item.trust,
       }, h('b', null, item.name || item.path), h('span', { className: 'bt-activity-id' }, item.path), h('small', null, item.digest || '')))) : h('p', { className: 'bt-activity-detail-empty' }, copy.noArtifacts)) : null,
-    detail && detail.empty !== true ? h(TraceExplorer, { trace: detail.trace, copy, onSelectEvidence: setSelectedEvidenceId }) : null,
-    visibleControls.length > 0 ? h('div', { className: 'bt-detail-controls', 'aria-label': copy.detail }, visibleControls.map(control => h('button', {
-      key: control.id, type: 'button', className: 'bt-soft bt-soft-sm bt-detail-control', 'data-control': control.id,
-      disabled: !control.enabled, title: control.reason || undefined, onClick: () => runControl(control),
-    }, controlLabel(control.id, copy)))) : null)
+    detail && detail.empty !== true ? h(TraceExplorer, { trace: detail.trace, copy, onSelectEvidence: setSelectedEvidenceId }) : null)
 }
 
-export function TeamActivityView({ data, roster, status = 'ready', error = '', selectedId = null, filters = {}, detail = null, detailStatus = 'idle', detailError = '', actions, onSelect = () => {}, onFilter = () => {}, onClose = () => {}, leaving = false }) {
+export function TeamActivityView({ data, roster, status = 'ready', error = '', selectedId = null, filters = {}, detail = null, detailStatus = 'idle', detailError = '', onSelect = () => {}, onFilter = () => {}, onClose = () => {}, leaving = false }) {
   const copy = copyText()
   const partialData = data
   const partialWarnings = Array.isArray(partialData?.warnings) ? partialData.warnings.map(item => item.message).filter(Boolean) : []
@@ -412,6 +326,12 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
       h(DialogHead, { copy, onClose, roster }),
       h('div', { className: 'bt-activity-skeleton', role: 'status', 'aria-label': copy.loading }, h('span'), h('span'), h('span')))
   }
+  const dataMode = resolveDataMode(data)
+  if (dataMode === 'unknown') {
+    return h('section', { className: 'bt-team-activity', role: 'dialog', 'aria-modal': true, 'aria-label': copy.title, 'aria-busy': false, 'data-leaving': leaving || undefined },
+      h(DialogHead, { copy, onClose, dataMode, roster }),
+      h('p', { className: 'bt-error bt-activity-error', role: 'alert' }, copy.dataUnavailable))
+  }
 
   const view = filterActivityModel(data, filters)
   const tasks = view.tasks ?? []
@@ -420,7 +340,10 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
   const roles = data?.roles ?? []
   const rolesById = new Map(roles.map(role => [role.id, role]))
   const selected = tasks.find(task => task.id === selectedId) ?? tasks[0] ?? null
-  const selectedDetail = detail?.taskId === selected?.id || detail?.task?.id === selected?.id ? detail : null
+  const matchingDetail = detail?.taskId === selected?.id || detail?.task?.id === selected?.id ? detail : null
+  const detailModeMismatch = matchingDetail !== null && resolveDataMode(matchingDetail) !== dataMode
+  const selectedDetail = detailModeMismatch ? null : matchingDetail
+  const selectedDetailError = detailModeMismatch ? copy.detailModeMismatch : detailError
   const empty = allTasks.length === 0 && activity.length === 0
   const noMatch = allTasks.length > 0 && tasks.length === 0
   const noCurrentTasks = allTasks.length === 0
@@ -460,12 +383,12 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
     ? h('div', { className: 'bt-empty bt-activity-empty', role: 'status' }, copy.empty)
     : h('div', { className: 'bt-activity-body' },
       h('div', { className: 'bt-activity-list' }, taskMessage ? h('p', { className: 'bt-empty bt-activity-no-task' }, taskMessage) : taskRows),
-      h(Detail, { task: selected, detail: selectedDetail, detailStatus, detailError, roster, rolesById, allTasks, actions, copy }),
+      h(Detail, { task: selected, detail: selectedDetail, detailStatus, detailError: selectedDetailError, roster, rolesById, allTasks, copy }),
       h('div', { className: 'bt-activity-recent' },
         h('h3', null, copy.recent),
         activityRows.length > 0 ? activityRows : h('p', { className: 'bt-activity-detail-empty' }, copy.empty)))
   return h('section', { className: 'bt-team-activity', role: 'dialog', 'aria-modal': true, 'aria-label': copy.title, 'data-leaving': leaving || undefined, 'data-partial': partial || undefined },
-    h(DialogHead, { copy, onClose, data, partial, roster }),
+    h(DialogHead, { copy, onClose, dataMode, partial, roster }),
     error ? h('p', { className: 'bt-activity-stale', role: 'status' }, copy.stale, h('span', null, error)) : null,
     lockReason ? h('p', { className: 'bt-activity-host-read-only', role: 'status' }, copy.readOnlyHost, h('span', null, hostText(lockReason))) : null,
     partial ? h('p', { className: 'bt-activity-partial-note', role: 'status' }, `${copy.partial}: ${warningMessages.join(' · ')}`) : null,
@@ -489,6 +412,7 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
 export async function requestTaskDetail(callImpl, taskId) {
   const value = await callImpl('task-detail', { taskId })
   if (value?.taskId !== taskId) throw new Error('Task detail did not match the selected task')
+  if (resolveDataMode(value) === 'unknown') throw new Error('Task detail data mode is missing or invalid')
   return value
 }
 
@@ -528,7 +452,7 @@ export function trapDialogFocus(root) {
   }
 }
 
-export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = apiCall, leaving = false }) {
+export function TeamActivity({ roster, onClose = () => {}, callImpl = apiCall, leaving = false }) {
   const [data, setData] = useState(null)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
@@ -550,6 +474,7 @@ export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = a
       inFlight = true
       Promise.resolve().then(() => callImpl('team-activity')).then(value => {
         if (!alive) return
+        if (resolveDataMode(value) === 'unknown') throw new Error('Team activity data mode is missing or invalid')
         loaded = true
         setData(value)
         setStatus('ready')
@@ -598,7 +523,7 @@ export function TeamActivity({ roster, actions, onClose = () => {}, callImpl = a
   }, [selectedTaskId, selectedTaskVersion, callImpl])
   return h('div', { ref: layerRef, className: 'bt-activity-layer', 'data-leaving': leaving || undefined },
     h('div', { className: 'bt-scrim', onMouseDown: onClose }),
-    h(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, actions, onSelect: setSelectedId, onFilter: setFilters, onClose }))
+    h(TeamActivityView, { data, roster, status, error, selectedId, filters, detail, detailStatus, detailError, onSelect: setSelectedId, onFilter: setFilters, onClose }))
 }
 
 export const TEAM_ACTIVITY_CSS = `
@@ -658,8 +583,6 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:var(--bt-card-shadow)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:11px;line-height:16px;color:var(--bt-ink-3)}
-.bt-detail-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-detail-control:disabled{opacity:.45;cursor:not-allowed}
-.bt-improvement-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.bt-improvement-head h4{margin:0}.bt-improvement-propose:disabled{opacity:.45;cursor:not-allowed}.bt-improvement-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.bt-improvement-section .bt-learning-card{margin:0}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}
 .bt-activity-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px!important;line-height:16px!important}
 .bt-activity-children{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-activity-warning dd{color:var(--bt-danger)}

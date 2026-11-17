@@ -295,7 +295,7 @@ test('buildTaskDetail exposes existing goal controls and disables every control 
   assert.ok(locked.controls.every(item => item.enabled === false && item.reason === 'Another host owns this team'))
 })
 
-test('buildTaskDetail represents empty, partial, demo, and recovery states without fake success', () => {
+test('buildTaskDetail represents empty, partial, preview, unknown, and recovery states without fake success', () => {
   const state = {
     bots: { chief: { id: 'chief', name: 'Chief', role: 'Coordinator' } },
     rooms: { r1: { id: 'r1', name: 'Delivery' } },
@@ -321,10 +321,20 @@ test('buildTaskDetail represents empty, partial, demo, and recovery states witho
   assert.match(work.blockers.map(item => item.text).join(' '), /Reader failed/i)
   assert.match(work.blockers.map(item => item.text).join(' '), /after a restart/i)
 
-  const demo = buildTaskDetail({ state, activity: { ...activity, mode: 'demo' }, taskId: 'handoff:w1', now: NOW })
-  assert.equal(demo.verification.status, 'unavailable')
-  assert.match(demo.verification.reason, /demo data/i)
-  assert.ok(demo.controls.every(item => item.enabled === false))
+  const preview = buildTaskDetail({ state, activity: { ...activity, dataMode: 'preview' }, taskId: 'handoff:w1', now: NOW })
+  assert.equal(preview.dataMode, 'preview')
+  assert.equal(preview.verification.status, 'unavailable')
+  assert.match(preview.verification.reason, /preview data/i)
+  assert.ok(preview.controls.every(item => item.enabled === false))
+
+  const missingMode = { ...activity }
+  delete missingMode.dataMode
+  for (const invalid of [missingMode, { ...activity, dataMode: 'unknown' }, { ...activity, mode: 'preview' }, { ...activity, dataMode: 'preview', mode: 'live' }]) {
+    const detail = buildTaskDetail({ state, activity: invalid, taskId: 'handoff:w1', now: NOW })
+    assert.equal(detail.dataMode, 'unknown')
+    assert.equal(detail.verification.status, 'unavailable')
+    assert.ok(detail.controls.every(item => item.enabled === false))
+  }
 })
 
 test('buildTaskDetail offers handoff abandon only for a child that its parent still waits on', () => {

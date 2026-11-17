@@ -217,7 +217,10 @@ const ZH = {
   'Team activity': '团队动态',
   "Real tasks, handoffs, and recent activity": "真实任务、交接和最近活动",
   "Live data": "实时数据",
+  "Preview data (not live)": "预览数据（非实时）",
   "Demo data": "演示数据",
+  "Activity data is unavailable": "活动数据不可用",
+  "This activity view is read-only": "此活动视图为只读",
   "Active": "进行中",
   "Waiting": "等待",
   "No team activity yet. Real records appear here once Bots start working.": "还没有团队活动。Bot 开始工作后，真实记录会出现在这里。",
@@ -281,6 +284,7 @@ const ZH = {
   "Could not refresh this task. Showing the last good detail.": "无法刷新此任务，正在显示上次成功读取的详情。",
   "This task is no longer available.": "此任务已不存在。",
   "Task detail could not be read.": "无法读取任务详情。",
+  "Task detail data mode does not match the team activity data.": "任务详情的数据模式与团队动态不一致。",
   "Pause goal": "暂停目标",
   "Resume goal": "继续目标",
   "Stop goal": "停止目标",
@@ -2243,6 +2247,12 @@ export function installLocale(locale) {
 
 export function t(key, params) {
   return bound ? bound(key, params) : fill(key, params)
+}
+
+// Product-owned labels stay on DS Bot's dictionary even if another plugin
+// registers the same generic English key in the shared locale service.
+export function localText(key) {
+  return DICTIONARY[resolveLangKey(language())]?.[key] ?? key
 }
 
 // A message from the host, in the interface language.

@@ -22,10 +22,10 @@ const require = (name) => {
   const platform = {
     react,
     'react-dom': { createPortal: node => node },
-    './api.js': { call: async () => ({ schema: 1, mode: 'live', tasks: [], activity: [], heatmap: [] }) },
+    './api.js': { call: async () => ({ schema: 1, dataMode: 'live', tasks: [], activity: [], heatmap: [] }) },
     './mark.js': { BotAvatar: () => null },
     './motion.js': { reducedMotion: () => true, SPRING_SHAPE: { duration: 420, easing: 'linear(0, 1)' } },
-    './i18n.js': { t: key => key, hostText: key => `host:${key}` },
+    './i18n.js': { t: key => key, localText: key => key, hostText: key => `host:${key}` },
     './overlay-hooks.js': { useEscape: () => {} },
   }
   if (!(name in platform)) throw new Error(`no platform module ${name}`)
@@ -90,7 +90,7 @@ const all = (node, cls, out = []) => {
   return out
 }
 const data = {
-  schema: 1, mode: 'live', generatedAt: 1,
+  schema: 1, dataMode: 'live', generatedAt: 1,
   roles: [{ id: 'chief', name: 'Chief', role: 'Coordinator', color: 'deepseek', avatar: { shape: 'whale' }, main: true, permission: 'Main Bot' }, { id: 'forge', name: 'Forge', role: 'Engineer', color: 'orange', avatar: { shape: 'fox' }, main: false, permission: 'Member' }],
   tasks: [
     { id: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', source: 'goal', kind: 'goal_task', title: 'Ship MCP', subtitle: 'Ship', stageTitle: 'Bridge', parentId: 'goal:g1', ownerId: 'forge', ownerName: 'Forge', ownerRole: 'Engineer', ownerMain: false, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'working', displayState: 'working', statusSource: 'goal.task', acceptance: 'tests pass', updatedAt: 10 },
@@ -106,7 +106,7 @@ const data = {
 }
 const roster = { byId: { chief: { id: 'chief', name: 'Chief', role: 'Coordinator' }, forge: { id: 'forge', name: 'Forge', role: 'Engineer' } }, bots: [data.roles[0], data.roles[1]], roomsById: { r1: { id: 'r1', name: 'Delivery' } }, mainBotId: 'chief' }
 const detailData = {
-  schema: 1, mode: 'live', generatedAt: 30, taskId: 'goal:g1:s1:t1', empty: false,
+  schema: 1, dataMode: 'live', generatedAt: 30, taskId: 'goal:g1:s1:t1', empty: false,
   task: data.tasks[0],
   owner: { id: 'forge', name: 'Forge', role: 'Engineer', kind: 'bot', main: false, missing: false },
   location: { roomId: 'r1', roomName: 'Delivery', goalId: 'g1', goalTitle: 'Ship', goalStatus: 'active', stageId: 's1', stageTitle: 'Bridge', stageIndex: 0, stageCount: 2 },
@@ -146,6 +146,7 @@ test('TeamActivityView renders real task rows, heatmap, and selected source deta
   assert.match(text(view), /Main Bot/)
   assert.match(text(view), /Engineer/)
   assert.match(text(view), /Member/)
+  assert.match(text(view), /This activity view is read-only/)
   assert.match(text(view), /Review bridge/)
   assert.match(text(view), /Source ID/)
   assert.match(text(view), /handoff:w1/)
@@ -155,7 +156,7 @@ test('TeamActivityView renders real task rows, heatmap, and selected source deta
   assert.match(text(view), /Team board · delivery · Delivered the bridge/)
 })
 
-test('TeamActivityView makes empty, filtered, partial, stale, demo, and error states explicit', () => {
+test('TeamActivityView makes empty, filtered, partial, stale, preview, and error states explicit', () => {
   const common = { roster, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
   const empty = mod.TeamActivityView({ data: { ...data, tasks: [], activity: [], summary: { active: 0, waiting: 0, attention: 0, reported: 0, verified: 0, activity: 0 } }, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
   assert.match(text(empty), /No team activity yet/)
@@ -172,7 +173,10 @@ test('TeamActivityView makes empty, filtered, partial, stale, demo, and error st
   const stale = mod.TeamActivityView({ data, status: 'ready', error: 'network down', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
   assert.match(text(stale), /Could not refresh. Showing the last good result/)
   assert.match(text(stale), /network down/)
-  const demo = mod.TeamActivityView({ data: { ...data, mode: 'demo' }, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
+  const preview = mod.TeamActivityView({ data: { ...data, dataMode: 'preview' }, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
+  assert.match(text(preview), /Preview data \(not live\)/)
+  assert.doesNotMatch(text(preview), /(?<!Not )Live data/)
+  const demo = mod.TeamActivityView({ data: { ...data, dataMode: 'demo' }, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
   assert.match(text(demo), /Demo data/)
   const locked = mod.TeamActivityView({ data, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common, roster: { ...roster, readOnly: 'Another host owns this team' } })
   assert.match(text(locked), /Read-only host/)
@@ -181,6 +185,32 @@ test('TeamActivityView makes empty, filtered, partial, stale, demo, and error st
   assert.match(text(error), /Team activity could not be read/)
   assert.equal(error.props.role, 'dialog')
   assert.equal(all(error, 'bt-activity-skeleton').length, 0)
+})
+
+test('TeamActivityView fails closed when the data mode is missing, unknown, or inconsistent', () => {
+  const common = { roster, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
+  const missing = { ...data }
+  delete missing.dataMode
+  const cases = [
+    missing,
+    { ...data, dataMode: 'unknown' },
+    { ...data, mode: 'preview' },
+    { ...data, dataMode: 'preview', mode: 'live' },
+  ]
+  for (const value of cases) {
+    const view = mod.TeamActivityView({ data: value, status: 'ready', selectedId: null, filters: { role: 'all', source: 'all', status: 'all', attention: false }, ...common })
+    assert.match(text(view), /Activity data is unavailable/)
+    assert.doesNotMatch(text(view), /Live data/)
+    assert.doesNotMatch(text(view), /Ship MCP/)
+  }
+})
+
+test('a task detail with a different data mode is not shown as live activity', () => {
+  const common = { roster, status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
+  const view = mod.TeamActivityView({ ...common, data: { ...data, dataMode: 'preview' }, detail: detailData, detailStatus: 'ready' })
+  assert.match(text(view), /Preview data/)
+  assert.match(text(view), /Task detail data mode does not match/)
+  assert.doesNotMatch(text(view), /All checks matched/)
 })
 
 test('filterActivityModel keeps only matching source, role, status, and attention tasks', () => {
@@ -200,7 +230,7 @@ test('TeamActivity forwards the closing state to the rendered dialog', () => {
   assert.equal(shell.children[1].type.name, 'TeamActivityView')
 })
 
-test('TeamActivityView renders the selected task operating detail, evidence ladder, artifacts, trace, and controls', () => {
+test('TeamActivityView renders the selected task operating detail, evidence ladder, artifacts, and trace without writes', () => {
   const view = mod.TeamActivityView({
     data, detail: detailData, detailStatus: 'ready', roster, status: 'ready', selectedId: 'goal:g1:s1:t1',
     filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {},
@@ -228,9 +258,9 @@ test('TeamActivityView renders the selected task operating detail, evidence ladd
   assert.match(text(view), /Relationships/)
   assert.match(text(view), /Records/)
   assert.equal(all(view, 'bt-trace-tab').length, 3)
-  assert.equal(all(view, 'bt-detail-control').length, 2)
-  assert.match(text(view), /Pause goal/)
-  assert.match(text(view), /Abandon wait/)
+  assert.equal(all(view, 'bt-detail-control').length, 0)
+  assert.doesNotMatch(text(view), /Pause goal/)
+  assert.doesNotMatch(text(view), /Abandon wait/)
 })
 
 test('TraceExplorer renders timeline, relationship, and record views and drills a record to its evidence', () => {
@@ -255,7 +285,7 @@ test('TraceExplorer renders timeline, relationship, and record views and drills 
   assert.equal(selectedEvidence, 'e-executed')
 })
 
-test('task detail controls dispatch existing actions and stay disabled under a read-only roster', () => {
+test('task detail never dispatches state-changing actions from the read-only activity view', () => {
   const sent = []
   const actions = {
     goalControl: (...args) => sent.push(['goalControl', ...args]),
@@ -266,17 +296,10 @@ test('task detail controls dispatch existing actions and stay disabled under a r
   }
   const common = { data, detail: detailData, detailStatus: 'ready', status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, actions, onSelect: () => {}, onFilter: () => {}, onClose: () => {} }
   const view = mod.TeamActivityView({ ...common, roster })
-  const controls = all(view, 'bt-detail-control')
-  controls.find(node => node.props['data-control'] === 'pause-goal').props.onClick()
-  controls.find(node => node.props['data-control'] === 'abandon-work').props.onClick()
-  assert.deepEqual(sent, [['goalControl', 'r1', 'g1', 'pause']])
+  assert.equal(all(view, 'bt-detail-control').length, 0)
   const roomView = mod.TeamActivityView({ ...common, detail: { ...detailData, controls: [{ id: 'cancel-room', roomId: 'r1', enabled: true }] } })
-  const roomControl = all(roomView, 'bt-detail-control')[0]
-  assert.match(text(roomControl), /Stop current work/)
-  roomControl.props.onClick()
-  assert.deepEqual(sent.at(-1), ['stopRoomWork', 'r1'])
-  const locked = mod.TeamActivityView({ ...common, roster: { ...roster, readOnly: 'Another host owns this team' } })
-  assert.ok(all(locked, 'bt-detail-control').every(node => node.props.disabled === true))
+  assert.equal(all(roomView, 'bt-detail-control').length, 0)
+  assert.deepEqual(sent, [])
 })
 
 test('task detail renders loading, stale, and removed states explicitly', () => {
@@ -302,6 +325,9 @@ test('requestTaskDetail reads exactly the selected task and rejects a mismatched
   assert.equal(value, detailData)
   assert.deepEqual(calls.map(([name, body]) => [name, body.taskId]), [['task-detail', 'goal:g1:s1:t1']])
   await assert.rejects(mod.requestTaskDetail(async () => ({ ...detailData, taskId: 'goal:other' }), 'goal:g1:s1:t1'), /did not match/)
+  const missingMode = { ...detailData }
+  delete missingMode.dataMode
+  await assert.rejects(mod.requestTaskDetail(async () => missingMode, 'goal:g1:s1:t1'), /data mode/i)
 })
 
 test('the team activity sheet owns a unique root class', () => {
@@ -330,7 +356,7 @@ test('unknown and group owners do not invent member permissions', () => {
   assert.doesNotMatch(text(group), /Member · Member/)
 })
 
-test('task detail creates and renders evidence-linked improvement proposals through learning cards', async () => {
+test('task detail does not expose improvement proposal writes from the read-only activity view', () => {
   const calls = []
   const improvement = {
     taskId: 'goal:g1:s1:t1',
@@ -354,29 +380,10 @@ test('task detail creates and renders evidence-linked improvement proposals thro
   }
   const common = { data, roster, status: 'ready', selectedId: 'goal:g1:s1:t1', filters: { role: 'all', source: 'all', status: 'all', attention: false }, onSelect: () => {}, onFilter: () => {}, onClose: () => {}, actions }
   const view = mod.TeamActivityView({ ...common, detail: { ...detailData, improvements: { proposals: [pending], history: [settled] } }, detailStatus: 'ready' })
-  assert.match(text(view), /Propose improvement/)
-  assert.match(text(view), /Observed problem/)
-  assert.match(text(view), /completion report without rerunning acceptance/)
-  assert.match(text(view), /Expected benefit/)
-  assert.match(text(view), /Rollback path/)
-  assert.match(text(view), /Affects/)
-  assert.match(text(view), /Forge · Skill · verified-delivery-checks/)
-  assert.match(text(view), /e-verified/)
-  assert.equal(all(view, 'bt-learning-card').length, 2)
-  all(view, 'bt-improvement-propose')[0].props.onClick()
-  assert.deepEqual(calls.at(-1), ['proposeImprovement', 'goal:g1:s1:t1'])
-  all(view, 'bt-learning-approve')[0].props.onClick()
-  await Promise.resolve()
-  assert.deepEqual(calls.at(-1), ['learningAnswer', 'improvement-1', true])
-
-  const locked = mod.TeamActivityView({ ...common, roster: { ...roster, readOnly: 'Another host owns this team' }, detail: { ...detailData, improvements: { proposals: [], history: [] } }, detailStatus: 'ready' })
-  assert.equal(all(locked, 'bt-improvement-propose')[0].props.disabled, true)
-
-  const stale = mod.TeamActivityView({ ...common, detail: { ...detailData, verification: { status: 'stale', reason: 'artifact changed' }, improvements: { proposals: [], history: [] } }, detailStatus: 'ready' })
-  assert.equal(all(stale, 'bt-improvement-propose')[0].props.disabled, true)
-  assert.match(all(stale, 'bt-improvement-propose')[0].props.title, /verified task evidence/)
-  const reviewed = mod.TeamActivityView({ ...common, detail: { ...detailData, improvements: { proposals: [{ ...pending, requiresReview: true, reviewReason: 'The task evidence is stale.' }], history: [] } }, detailStatus: 'ready' })
-  assert.match(text(reviewed), /Review required/)
-  assert.equal(all(reviewed, 'bt-learning-approve')[0].props.disabled, true)
-  assert.equal(all(reviewed, 'bt-learning-decline')[0].props.disabled, false)
+  assert.doesNotMatch(text(view), /Propose improvement/)
+  assert.doesNotMatch(text(view), /Observed problem/)
+  assert.equal(all(view, 'bt-improvement-propose').length, 0)
+  assert.equal(all(view, 'bt-learning-card').length, 0)
+  assert.equal(all(view, 'bt-learning-approve').length, 0)
+  assert.deepEqual(calls, [])
 })

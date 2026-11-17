@@ -1,5 +1,6 @@
 // A selected-task read projection over the goal task or open work DS Bot already keeps.
 // Session records are supplied by the channel; this module only joins and labels them.
+import { isLiveDataMode, resolveDataMode } from '../shared/data-mode.js'
 
 const text = value => (value === undefined || value === null ? '' : String(value))
 const timeOf = value => {
@@ -517,10 +518,11 @@ function blockersFor(raw, task) {
 // splitting them would make the detail response contract harder to follow.
 export function buildTaskDetail({ state, activity, taskId, records = [], sourceWarnings = [], liveSessionIds = [], readOnly, now = Date.now() } = {}) {
   const at = Number.isFinite(now) ? now : Date.now()
+  const dataMode = resolveDataMode(activity)
   const activityTask = (activity?.tasks ?? []).find(task => task.id === taskId)
   if (activityTask === undefined) {
     return {
-      schema: 1, mode: activity?.mode ?? 'live', generatedAt: at, taskId, task: null, empty: true,
+      schema: 1, dataMode, generatedAt: at, taskId, task: null, empty: true,
       evidence: [], artifacts: [], handoffs: [], blockers: [], controls: [],
       verification: { status: 'unavailable', reason: 'The selected task is no longer present.' },
       trace: { status: 'empty', sourceTaskId: taskId, sourceId: taskId, sessionIds: [], relationships: [], timeline: [], records: [], truncated: false },
@@ -531,16 +533,19 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
   const traceParts = traceFor({ records, task: activityTask, raw })
   const checked = verificationFor(raw, [...evidenceFor(raw, activityTask.id), ...traceParts.evidence])
   const evidence = checked.evidence
-  const demo = (activity?.mode ?? 'live') !== 'live'
-  const verification = demo ? { status: 'unavailable', reason: 'Demo data is not verification.' } : checked.verification
+  const nonLive = !isLiveDataMode(dataMode)
+  const nonLiveReason = dataMode === 'preview' ? 'Preview data is not verification.'
+    : dataMode === 'demo' ? 'Demo data is not verification.'
+      : 'Data mode is unavailable, so verification cannot be trusted.'
+  const verification = nonLive ? { status: 'unavailable', reason: nonLiveReason } : checked.verification
   const artifacts = mergedArtifacts([...artifactsFor(raw, evidence), ...traceParts.artifacts])
   const blockers = blockersFor(raw, activityTask)
   const recovery = recoveryFor(raw)
   const recoveryNeeded = recovery.state === 'needs-review'
   const hasSourceWarning = Array.isArray(sourceWarnings) && sourceWarnings.length > 0
   const trace = hasSourceWarning || recoveryNeeded ? { ...traceParts.trace, status: 'partial' } : traceParts.trace
-  const controls = controlsFor({ state, raw, task: activityTask, liveSessionIds, readOnly }).map(control => demo
-    ? { ...control, enabled: false, reason: 'Demo data is read-only.' }
+  const controls = controlsFor({ state, raw, task: activityTask, liveSessionIds, readOnly }).map(control => nonLive
+    ? { ...control, enabled: false, reason: 'Non-live data is read-only.' }
     : control)
   const safeTask = {
     ...activityTask,
@@ -554,7 +559,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
   }
   return {
     schema: 1,
-    mode: activity?.mode ?? 'live',
+    dataMode,
     generatedAt: at,
     taskId,
     task: safeTask,
