@@ -93,9 +93,9 @@ const data = {
   schema: 1, dataMode: 'live', generatedAt: 1,
   roles: [{ id: 'chief', name: 'Chief', role: 'Coordinator', color: 'deepseek', avatar: { shape: 'whale' }, main: true, permission: 'Main Bot' }, { id: 'forge', name: 'Forge', role: 'Engineer', color: 'orange', avatar: { shape: 'fox' }, main: false, permission: 'Member' }],
   tasks: [
-    { id: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', source: 'goal', kind: 'goal_task', title: 'Ship MCP', subtitle: 'Ship', stageTitle: 'Bridge', parentId: 'goal:g1', ownerId: 'forge', ownerName: 'Forge', ownerRole: 'Engineer', ownerMain: false, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'working', displayState: 'working', statusSource: 'goal.task', acceptance: 'tests pass', updatedAt: 10 },
-    { id: 'handoff:w1', sourceId: 'handoff:w1', source: 'handoff', kind: 'handoff', title: 'Chief to Forge', parentId: null, ownerId: 'forge', ownerName: 'Forge', ownerRole: 'Engineer', ownerMain: false, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'waiting', displayState: 'waiting', statusSource: 'work.open', updatedAt: 20 },
-    { id: 'handoff:w2', sourceId: 'handoff:w2', source: 'handoff', kind: 'handoff', title: 'Review bridge', parentId: 'handoff:w1', ownerId: 'chief', ownerName: 'Chief', ownerRole: 'Coordinator', ownerMain: true, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'active', displayState: 'working', statusSource: 'work.open', updatedAt: 30 },
+    { id: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', source: 'goal', kind: 'goal_task', title: 'Ship MCP', subtitle: 'Ship', stageTitle: 'Bridge', parentId: 'goal:g1', ownerId: 'forge', ownerName: 'Forge', ownerRole: 'Engineer', ownerMain: false, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'working', displayState: 'working', statusSource: 'goal.task', evidenceState: 'executed', acceptance: 'tests pass', updatedAt: 10 },
+    { id: 'handoff:w1', sourceId: 'handoff:w1', source: 'handoff', kind: 'handoff', title: 'Chief to Forge', parentId: null, ownerId: 'forge', ownerName: 'Forge', ownerRole: 'Engineer', ownerMain: false, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'waiting', displayState: 'waiting', statusSource: 'work.open', evidenceState: 'pending', updatedAt: 20 },
+    { id: 'handoff:w2', sourceId: 'handoff:w2', source: 'handoff', kind: 'handoff', title: 'Review bridge', parentId: 'handoff:w1', ownerId: 'chief', ownerName: 'Chief', ownerRole: 'Coordinator', ownerMain: true, ownerKind: 'bot', roomName: 'Delivery', sourceStatus: 'active', displayState: 'working', statusSource: 'work.open', evidenceState: 'reported', updatedAt: 30 },
   ],
   activity: [
     { id: 'a1', source: 'board', kind: 'delivery', text: 'Delivered the bridge', botName: 'Forge', at: 10 },
@@ -115,7 +115,11 @@ const detailData = {
   blockers: [{ id: 'b1', kind: 'wait', text: 'Waiting for w2 to return.' }],
   evidence: [
     { id: 'e-reported', trust: 'reported', title: 'Bot report', text: 'The bridge is ready', at: 10, sourceId: 'room-s1:3', artifact: null },
-    { id: 'e-executed', trust: 'executed', title: 'shell result', text: 'npm test passed', at: 11, sourceId: 'room-s1:5', artifact: null },
+    {
+      id: 'e-executed', trust: 'executed', titleKey: 'trace.toolResult', toolName: 'shell', text: '1 test failed', at: 11, sourceId: 'room-s1:5', artifact: null,
+      command: { text: 'npm test', exitCode: 1, outputDigest: 'sha256:feed' },
+      diff: { paths: ['src/app.js'], digest: 'sha256:beef' },
+    },
     { id: 'e-verified', trust: 'verified', title: 'Acceptance', text: 'All checks matched', at: 12, sourceId: 'room-s1:8', artifact: { path: 'dist/app.zip', digest: 'sha256:abc' } },
   ],
   artifacts: [{ path: 'dist/app.zip', name: 'app.zip', digest: 'sha256:abc', trust: 'verified', at: 12, sourceId: 'room-s1:8' }],
@@ -125,9 +129,9 @@ const detailData = {
   verification: { status: 'verified', reason: 'All declared acceptance checks matched.' },
   trace: {
     status: 'ready', sourceTaskId: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', sessionIds: ['room-s1'], truncated: false,
-    relationships: [{ from: 'goal:g1:s1:t1', to: 'room-s1', kind: 'task-session', label: 'session' }],
-    timeline: [{ id: 't1', type: 'tool/result', title: 'shell result', detail: 'npm test passed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed' }],
-    records: [{ id: 't1', type: 'tool/result', title: 'shell result', detail: 'npm test passed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed' }],
+    relationships: [{ from: 'goal:g1:s1:t1', to: 'room-s1', kind: 'task-session', labelKey: 'trace.session' }],
+    timeline: [{ id: 't1', type: 'tool/result', titleKey: 'trace.toolResult', toolName: 'shell', resultKey: 'trace.failed', detail: '1 test failed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed', command: { text: 'npm test', exitCode: 1, outputDigest: 'sha256:feed' }, diff: { paths: ['src/app.js'], digest: 'sha256:beef' } }],
+    records: [{ id: 't1', type: 'tool/result', titleKey: 'trace.toolResult', toolName: 'shell', resultKey: 'trace.failed', detail: '1 test failed', trust: 'executed', at: 11, sessionId: 'room-s1', seq: 5, relatedEvidenceId: 'e-executed', command: { text: 'npm test', exitCode: 1, outputDigest: 'sha256:feed' }, diff: { paths: ['src/app.js'], digest: 'sha256:beef' } }],
   },
   controls: [
     { id: 'pause-goal', roomId: 'r1', goalId: 'g1', enabled: true },
@@ -141,6 +145,7 @@ test('TeamActivityView renders real task rows, heatmap, and selected source deta
   assert.ok(view.props.className.split(' ').includes('bt-team-activity'))
   assert.equal(all(view, 'bt-activity-heat-cell').length, 7)
   assert.equal(all(view, 'bt-activity-task').length, 3)
+  assert.deepEqual(all(view, 'bt-activity-task-evidence').map(node => node.props['data-evidence-state']), ['executed', 'pending', 'reported', 'pending'])
   assert.match(text(view), /Team roster/)
   assert.match(text(view), /Coordinator/)
   assert.match(text(view), /Main Bot/)
@@ -253,6 +258,10 @@ test('TeamActivityView renders the selected task operating detail, evidence ladd
   assert.equal(all(view, 'bt-task-artifact').length, 1)
   assert.match(text(view), /dist\/app\.zip/)
   assert.match(text(view), /sha256:abc/)
+  assert.match(text(view), /shell result/)
+  assert.match(text(view), /Exit code 1/)
+  assert.match(text(view), /sha256:beef/)
+  assert.match(text(view), /src\/app\.js/)
   assert.match(text(view), /Trace Explorer/)
   assert.match(text(view), /Timeline/)
   assert.match(text(view), /Relationships/)
@@ -268,16 +277,23 @@ test('TraceExplorer renders timeline, relationship, and record views and drills 
     traceExplorer: 'Trace Explorer', timeline: 'Timeline', relationships: 'Relationships', records: 'Records',
     reported: 'Reported', executed: 'Executed', verified: 'Verified', requested: 'Requested', pending: 'Pending',
     noTrace: 'No linked trace', tracePartial: 'Trace partial', traceTruncated: 'Trace truncated',
+    toolCall: 'Tool call', toolResult: 'Tool result', toolResultNamed: '{name} result', artifacts: 'Artifacts presented',
+    completed: 'Completed', failed: 'Failed', session: 'Session', source: 'Source', task: 'Task',
+    command: 'Command', exitCode: 'Exit code', diffDigest: 'Diff digest',
   }
   const timeline = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'timeline' })
   assert.match(text(timeline), /shell result/)
   assert.match(text(timeline), /Executed/)
   assert.equal(all(timeline, 'bt-trace-tab').length, 3)
   const relationships = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'relationships' })
-  assert.match(text(relationships), /task-session/)
+  assert.match(text(relationships), /Session/)
   assert.match(text(relationships), /goal:g1:s1:t1 → room-s1/)
   const records = mod.TraceExplorer({ trace: { ...detailData.trace, truncated: true }, copy, view: 'records' })
   assert.match(text(records), /room-s1 · #5/)
+  assert.match(text(records), /shell result/)
+  assert.match(text(records), /Failed/)
+  assert.match(text(records), /Exit code 1/)
+  assert.match(text(records), /sha256:beef/)
   assert.match(text(records), /Trace truncated/)
   let selectedEvidence = null
   const interactive = mod.TraceExplorer({ trace: detailData.trace, copy, view: 'timeline', onSelectEvidence: id => { selectedEvidence = id } })

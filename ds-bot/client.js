@@ -113,6 +113,18 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  "Task request": "タスクリクエスト",
+  "Bot report": "Bot レポート",
+  "Tool call": "ツール呼び出し",
+  "Tool result": "ツール結果",
+  "{name} result": "{name} の結果",
+  "Artifacts presented": "提示された成果物",
+  "Completed": "完了",
+  "Failed": "失敗",
+  "Session": "セッション",
+  "Command": "コマンド",
+  "Exit code": "終了コード",
+  "Diff digest": "差分ダイジェスト",
   "Improvement proposals": "改善提案",
   "Propose improvement": "改善を提案",
   "Reading verified evidence…": "検証済みの根拠を読み込んでいます…",
@@ -502,7 +514,6 @@ var JA = {
   "Connection": "接続方式",
   "Local command": "ローカルコマンド",
   "HTTP server": "HTTP サーバー",
-  "Command": "コマンド",
   "Arguments (one per line)": "引数（1 行に 1 つ）",
   "Environment (JSON)": "環境変数（JSON）",
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -1845,7 +1856,6 @@ var JA = {
   "Bcc": "Bcc",
   "Attachments: {names}": "添付ファイル: {names}",
   "Sent": "送信済み",
-  "Failed": "失敗",
   "Request failed": "リクエストに失敗しました",
   "Permissions are not available in this DeepSeek Harness": "この DeepSeek Harness では権限設定を利用できません",
   "Avatar images must be PNG, JPEG, WebP, or GIF": "アバター画像は PNG、JPEG、WebP、または GIF 形式である必要があります",
@@ -2798,6 +2808,18 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  "Failed": "실패",
+  "Task request": "작업 요청",
+  "Bot report": "Bot 보고",
+  "Tool call": "도구 호출",
+  "Tool result": "도구 결과",
+  "{name} result": "{name} 결과",
+  "Artifacts presented": "제시된 산출물",
+  "Completed": "완료",
+  "Session": "세션",
+  "Command": "명령",
+  "Exit code": "종료 코드",
+  "Diff digest": "변경 내용 다이제스트",
   "Improvement proposals": "개선 제안",
   "Propose improvement": "개선 제안하기",
   "Reading verified evidence…": "검증된 근거를 읽는 중…",
@@ -3189,7 +3211,6 @@ var KO = {
   Connection: "연결 방식",
   "Local command": "로컬 명령",
   "HTTP server": "HTTP 서버",
-  Command: "명령어",
   "Arguments (one per line)": "인수 (줄당 하나씩)",
   "Environment (JSON)": "환경 변수 (JSON)",
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -4572,7 +4593,6 @@ var KO = {
   "Bcc": "숨은 참조",
   "Attachments: {names}": "첨부파일: {names}",
   "Sent": "전송됨",
-  "Failed": "실패",
   // Host static strings (HOST_ZH)
   "Request failed": "요청 실패",
   "Permissions are not available in this DeepSeek Harness": "이 DeepSeek Harness에서는 권한 설정을 지원하지 않습니다",
@@ -5528,6 +5548,17 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  "Task request": "Solicitud de tarea",
+  "Bot report": "Informe del Bot",
+  "Tool call": "Llamada de herramienta",
+  "Tool result": "Resultado de herramienta",
+  "{name} result": "Resultado de {name}",
+  "Artifacts presented": "Artefactos presentados",
+  "Completed": "Completado",
+  "Session": "Sesión",
+  "Command": "Comando",
+  "Exit code": "Código de salida",
+  "Diff digest": "Resumen de diferencias",
   "Improvement proposals": "Propuestas de mejora",
   "Propose improvement": "Proponer mejora",
   "Reading verified evidence…": "Leyendo evidencia verificada…",
@@ -5920,7 +5951,6 @@ var ES = {
   Connection: "Conexión",
   "Local command": "Comando local",
   "HTTP server": "Servidor HTTP",
-  Command: "Comando",
   "Arguments (one per line)": "Argumentos (uno por línea)",
   "Environment (JSON)": "Entorno (JSON)",
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -8258,6 +8288,18 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  "Failed": "Échoué",
+  "Task request": "Demande de tâche",
+  "Bot report": "Rapport du Bot",
+  "Tool call": "Appel d’outil",
+  "Tool result": "Résultat d’outil",
+  "{name} result": "Résultat de {name}",
+  "Artifacts presented": "Artefacts présentés",
+  "Completed": "Terminé",
+  "Session": "Session",
+  "Command": "Commande",
+  "Exit code": "Code de sortie",
+  "Diff digest": "Empreinte du diff",
   "Improvement proposals": "Propositions d’amélioration",
   "Propose improvement": "Proposer une amélioration",
   "Reading verified evidence…": "Lecture des preuves vérifiées…",
@@ -8648,7 +8690,6 @@ var FR = {
   "Connection": "Connexion",
   "Local command": "Commande locale",
   "HTTP server": "Serveur HTTP",
-  "Command": "Commande",
   "Arguments (one per line)": "Arguments (un par ligne)",
   "Environment (JSON)": "Environnement (JSON)",
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -9991,7 +10032,6 @@ var FR = {
   "Bcc": "Cci",
   "Attachments: {names}": "Pièces jointes : {names}",
   "Sent": "Envoyé",
-  "Failed": "Échec",
   "Request failed": "Échec de la requête",
   "Permissions are not available in this DeepSeek Harness": "Les autorisations ne sont pas disponibles dans ce DeepSeek Harness",
   "Avatar images must be PNG, JPEG, WebP, or GIF": "Les images d’avatar doivent être au format PNG, JPEG, WebP ou GIF",
@@ -10943,6 +10983,18 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  "Task request": "Aufgabenanfrage",
+  "Bot report": "Bot-Bericht",
+  "Tool call": "Tool-Aufruf",
+  "Tool result": "Tool-Ergebnis",
+  "{name} result": "Ergebnis von {name}",
+  "Artifacts presented": "Präsentierte Artefakte",
+  "Completed": "Abgeschlossen",
+  "Failed": "Fehlgeschlagen",
+  "Session": "Sitzung",
+  "Command": "Befehl",
+  "Exit code": "Exit-Code",
+  "Diff digest": "Diff-Digest",
   "Improvement proposals": "Verbesserungsvorschläge",
   "Propose improvement": "Verbesserung vorschlagen",
   "Reading verified evidence…": "Verifizierte Nachweise werden gelesen…",
@@ -11336,7 +11388,6 @@ var DE = {
   Connection: "Verbindung",
   "Local command": "Lokaler Befehl",
   "HTTP server": "HTTP-Server",
-  Command: "Befehl",
   "Arguments (one per line)": "Argumente (eines pro Zeile)",
   "Environment (JSON)": "Umgebungsvariablen (JSON)",
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -12719,7 +12770,6 @@ var DE = {
   "Bcc": "Bcc",
   "Attachments: {names}": "Anhänge: {names}",
   "Sent": "Gesendet",
-  "Failed": "Fehlgeschlagen",
   // HOST_ZH + lines 1601-1653
   "Request failed": "Anfrage fehlgeschlagen",
   "Permissions are not available in this DeepSeek Harness": "Berechtigungen werden in diesem DeepSeek Harness nicht unterstützt",
@@ -13674,6 +13724,17 @@ var DSH_DE = {
 // src/client/i18n.js
 var NAMESPACE = "ds-bot";
 var ZH = {
+  "Failed": "失败",
+  "Task request": "任务请求",
+  "Bot report": "Bot 报告",
+  "Tool call": "工具调用",
+  "Tool result": "工具结果",
+  "{name} result": "{name} 结果",
+  "Artifacts presented": "已呈现产物",
+  "Completed": "已完成",
+  "Session": "会话",
+  "Exit code": "退出码",
+  "Diff digest": "差异摘要",
   // Shared
   "Main Bot": "主 Bot",
   Working: "进行中",
@@ -15453,8 +15514,7 @@ var ZH = {
   "Cc": "抄送",
   "Bcc": "密送",
   "Attachments: {names}": "附件：{names}",
-  "Sent": "已发送",
-  "Failed": "失败"
+  "Sent": "已发送"
 };
 var HOST_ERRORS = [
   [/^Could not reach the mail server at (.+)\. Check the server address\.$/, "连不上邮件服务器 $1，请检查服务器地址。"],
@@ -45549,6 +45609,20 @@ var copyText = () => ({
   verified: t("Verified"),
   requested: t("Requested"),
   pending: t("Pending"),
+  taskRequest: t("Task request"),
+  botReport: t("Bot report"),
+  toolCall: t("Tool call"),
+  toolResult: t("Tool result"),
+  toolResultNamed: t("{name} result"),
+  artifactsPresented: t("Artifacts presented"),
+  completed: t("Completed"),
+  failed: t("Failed"),
+  session: t("Session"),
+  command: t("Command"),
+  exitCode: t("Exit code"),
+  diffDigest: t("Diff digest"),
+  staleEvidence: t("Stale"),
+  needsReview: t("Needs review"),
   noBlockers: t("No known blockers."),
   noEvidence: t("No evidence is attached yet."),
   noArtifacts: t("No artifacts are attached yet."),
@@ -45657,12 +45731,30 @@ function TaskRow3({ task, roster, role, selected, copy: copy2, onSelect }) {
       { className: "bt-activity-task-main" },
       (0, import_react68.createElement)("span", { className: "bt-activity-task-title" }, task.title || task.sourceId),
       (0, import_react68.createElement)("span", { className: "bt-activity-task-meta" }, `${sourceLabel(task.source, copy2)} · ${task.ownerName || copy2.noOwner}${roleLabel ? ` · ${roleLabel}` : ""}`),
-      (0, import_react68.createElement)("span", { className: "bt-activity-task-state", "data-status": task.sourceStatus }, task.sourceStatus)
+      (0, import_react68.createElement)("span", { className: "bt-activity-task-state", "data-status": task.sourceStatus }, task.sourceStatus),
+      (0, import_react68.createElement)("span", { className: "bt-activity-task-evidence", "data-evidence-state": task.evidenceState ?? "pending" }, evidenceStateLabel(task.evidenceState, copy2))
     ),
     (0, import_react68.createElement)("time", { className: "bt-activity-task-time" }, when3(task.updatedAt))
   );
 }
 var trustLabel = (trust, copy2) => trust === "verified" ? copy2.verified : trust === "executed" ? copy2.executed : trust === "requested" ? copy2.requested : trust === "reported" ? copy2.reported : copy2.pending;
+var evidenceStateLabel = (state, copy2) => state === "verified" ? copy2.verified : state === "executed" ? copy2.executed : state === "reported" ? copy2.reported : state === "stale" ? copy2.staleEvidence : state === "needs-review" ? copy2.needsReview : copy2.pending;
+var traceTitle = (item, copy2) => {
+  if (item.titleKey === "trace.request") return copy2.taskRequest;
+  if (item.titleKey === "trace.report") return copy2.botReport;
+  if (item.titleKey === "trace.toolCall") return item.toolName || copy2.toolCall;
+  if (item.titleKey === "trace.toolResult") return item.toolName ? copy2.toolResultNamed.replace("{name}", item.toolName) : copy2.toolResult;
+  if (item.titleKey === "trace.artifacts") return copy2.artifactsPresented;
+  return item.title || item.type;
+};
+var traceResultLabel = (item, copy2) => item.resultKey === "trace.completed" ? copy2.completed : item.resultKey === "trace.failed" ? copy2.failed : "";
+var traceDetail = (item, copy2) => [item.requestDetail, traceResultLabel(item, copy2), item.detail].filter(Boolean).join(" · ");
+var relationLabel = (item, copy2) => item.labelKey === "trace.source" ? copy2.source : item.labelKey === "trace.session" ? copy2.session : item.labelKey === "trace.task" ? copy2.task : item.kind;
+var evidenceFacts = (item, copy2) => [
+  ...item.command ? [`${copy2.command}: ${item.command.text}${Number.isInteger(item.command.exitCode) ? ` · ${copy2.exitCode} ${item.command.exitCode}` : ""}`] : [],
+  ...item.diff ? [`${copy2.diffDigest}: ${item.diff.digest || copy2.none}${item.diff.paths?.length ? ` · ${item.diff.paths.join(", ")}` : ""}`] : [],
+  ...item.stale === true ? [copy2.staleEvidence] : []
+];
 function TraceRow({ item, copy: copy2, selected, onSelect }) {
   return (0, import_react68.createElement)(
     "button",
@@ -45677,8 +45769,9 @@ function TraceRow({ item, copy: copy2, selected, onSelect }) {
     (0, import_react68.createElement)(
       "span",
       { className: "bt-trace-record-main" },
-      (0, import_react68.createElement)("b", null, item.title || item.type),
-      (0, import_react68.createElement)("span", null, item.detail || ""),
+      (0, import_react68.createElement)("b", null, traceTitle(item, copy2)),
+      (0, import_react68.createElement)("span", null, traceDetail(item, copy2)),
+      ...evidenceFacts(item, copy2).map((fact, index) => (0, import_react68.createElement)("span", { key: `fact:${index}`, className: "bt-evidence-fact" }, fact)),
       (0, import_react68.createElement)("small", null, [item.sessionId, item.seq === null || item.seq === void 0 ? "" : `#${item.seq}`].filter(Boolean).join(" · "))
     ),
     (0, import_react68.createElement)("span", { className: "bt-trace-trust", "data-trust": item.trust }, trustLabel(item.trust, copy2)),
@@ -45716,7 +45809,7 @@ function TraceExplorer({ trace, copy: copy2, view: forcedView, onSelectEvidence 
     view === "relationships" ? relationships.length > 0 ? (0, import_react68.createElement)("div", { className: "bt-trace-relations" }, relationships.map((item, index) => (0, import_react68.createElement)(
       "div",
       { key: `${item.kind}:${index}`, className: "bt-trace-relation", "data-kind": item.kind },
-      (0, import_react68.createElement)("b", null, item.kind),
+      (0, import_react68.createElement)("b", null, relationLabel(item, copy2)),
       (0, import_react68.createElement)("span", null, `${item.from} → ${item.to}`)
     ))) : (0, import_react68.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace) : records.length > 0 ? (0, import_react68.createElement)("div", { className: "bt-trace-list", role: view === "timeline" ? "list" : void 0 }, recordRows) : (0, import_react68.createElement)("p", { className: "bt-activity-detail-empty" }, copy2.noTrace),
     trace?.truncated ? (0, import_react68.createElement)("p", { className: "bt-trace-note" }, copy2.traceTruncated) : null
@@ -45738,8 +45831,9 @@ function EvidenceList({ evidence, selectedId, copy: copy2, onSelect }) {
     (0, import_react68.createElement)(
       "span",
       null,
-      (0, import_react68.createElement)("b", null, item.title || item.text || item.id),
-      item.title && item.text ? (0, import_react68.createElement)("span", null, item.text) : null,
+      (0, import_react68.createElement)("b", null, traceTitle(item, copy2) || item.text || item.id),
+      (item.title || item.titleKey) && item.text ? (0, import_react68.createElement)("span", null, item.text) : null,
+      ...evidenceFacts(item, copy2).map((fact, index) => (0, import_react68.createElement)("span", { key: `fact:${index}`, className: "bt-evidence-fact" }, fact)),
       (0, import_react68.createElement)("small", null, `${item.sourceId || ""}${item.at ? ` · ${when3(item.at)}` : ""}`)
     ),
     (0, import_react68.createElement)("em", null, trustLabel(item.trust, copy2))
@@ -45790,6 +45884,7 @@ function Detail2({ task, detail, detailStatus, detailError, roster, rolesById, a
       "dl",
       null,
       (0, import_react68.createElement)("div", null, (0, import_react68.createElement)("dt", null, copy2.status), (0, import_react68.createElement)("dd", null, (0, import_react68.createElement)("span", { className: "bt-activity-status", "data-status": shown.sourceStatus }, shown.sourceStatus))),
+      (0, import_react68.createElement)("div", null, (0, import_react68.createElement)("dt", null, copy2.evidence), (0, import_react68.createElement)("dd", null, (0, import_react68.createElement)("span", { className: "bt-activity-task-evidence", "data-evidence-state": shown.evidenceState ?? "pending" }, evidenceStateLabel(shown.evidenceState, copy2)))),
       (0, import_react68.createElement)("div", null, (0, import_react68.createElement)("dt", null, copy2.sourceId), (0, import_react68.createElement)("dd", { className: "bt-activity-id" }, shown.sourceId || shown.id)),
       ...stageTitle ? [(0, import_react68.createElement)("div", { key: "stage" }, (0, import_react68.createElement)("dt", null, copy2.stage), (0, import_react68.createElement)("dd", null, stageTitle))] : [],
       ...detail && attempt ? [(0, import_react68.createElement)("div", { key: "attempt" }, (0, import_react68.createElement)("dt", null, copy2.attempt), (0, import_react68.createElement)("dd", null, (0, import_react68.createElement)("span", { className: "bt-activity-id" }, `${attempt.id || copy2.none}${attempt.number ? ` · ${attempt.number}` : ""}${attempt.status ? ` · ${attempt.status}` : ""}`)))] : [],
@@ -46119,7 +46214,7 @@ var TEAM_ACTIVITY_CSS = `
 .bt-activity-task-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
 .bt-activity-task-title{font-size:12px;line-height:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt-activity-task-meta,.bt-activity-task-time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-activity-task-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence[data-evidence-state=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=stale],.bt-activity-task-evidence[data-evidence-state=needs-review]{color:var(--bt-danger)}
 .bt-activity-task-state[data-status=waiting],.bt-activity-status[data-status=waiting]{color:var(--bt-star)}.bt-activity-task-state[data-status=reported],.bt-activity-task-state[data-status=blocked],.bt-activity-task-state[data-status=failed],.bt-activity-task-state[data-status=unknown],.bt-activity-status[data-status=reported],.bt-activity-status[data-status=blocked],.bt-activity-status[data-status=failed],.bt-activity-status[data-status=unknown]{color:var(--bt-danger)}
 .bt-activity-task-time{flex:none}
 .bt-activity-owner-mark{display:inline-flex;flex:none;align-items:center;justify-content:center;border-radius:999px;background:var(--bt-tag-bg);color:var(--bt-ink-2);font-size:12px;font-weight:600}
@@ -46130,7 +46225,7 @@ var TEAM_ACTIVITY_CSS = `
 .bt-task-detail-state{margin:0 0 12px;padding:8px 10px;border-radius:8px;background:var(--bt-tag-bg);font-size:11px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}.bt-task-detail-state[role=alert]{background:var(--bt-danger-soft);color:var(--bt-danger)}.bt-task-detail-state span{display:block;margin-top:2px;color:var(--bt-ink-2)}
 .bt-task-blockers{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-task-blockers li[data-kind=owner],.bt-task-blockers li[data-kind=failed-result],.bt-task-blockers li[data-kind=recovery]{color:var(--bt-danger)}
 .bt-task-section{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-task-section h4,.bt-trace-head h4{margin:0;font-size:12px;line-height:16px;font-weight:600}
-.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
+.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-evidence-fact{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--bt-ink-2)!important}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
 .bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:var(--bt-card-shadow)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:11px;line-height:16px;color:var(--bt-ink-3)}

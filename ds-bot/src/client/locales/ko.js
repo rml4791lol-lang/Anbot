@@ -1,6 +1,18 @@
 // Korean (ko) localization for DS Bot client and DSH settings namespaces.
 
 export const KO = {
+  'Failed': '실패',
+  'Task request': '작업 요청',
+  'Bot report': 'Bot 보고',
+  'Tool call': '도구 호출',
+  'Tool result': '도구 결과',
+  '{name} result': '{name} 결과',
+  'Artifacts presented': '제시된 산출물',
+  'Completed': '완료',
+  'Session': '세션',
+  'Command': '명령',
+  'Exit code': '종료 코드',
+  'Diff digest': '변경 내용 다이제스트',
   'Improvement proposals': '개선 제안',
   'Propose improvement': '개선 제안하기',
   'Reading verified evidence…': '검증된 근거를 읽는 중…',
@@ -394,7 +406,6 @@ export const KO = {
   Connection: '연결 방식',
   'Local command': '로컬 명령',
   'HTTP server': 'HTTP 서버',
-  Command: '명령어',
   'Arguments (one per line)': '인수 (줄당 하나씩)',
   'Environment (JSON)': '환경 변수 (JSON)',
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -1766,7 +1777,6 @@ export const KO = {
   'Bcc': '숨은 참조',
   'Attachments: {names}': '첨부파일: {names}',
   'Sent': '전송됨',
-  'Failed': '실패',
 
   // Host static strings (HOST_ZH)
   'Request failed': '요청 실패',

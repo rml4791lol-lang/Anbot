@@ -11,6 +11,17 @@ import { DSH_DE, HOST_ERRORS_DE, DE } from './locales/de.js'
 export const NAMESPACE = 'ds-bot'
 
 const ZH = {
+  'Failed': '失败',
+  'Task request': '任务请求',
+  'Bot report': 'Bot 报告',
+  'Tool call': '工具调用',
+  'Tool result': '工具结果',
+  '{name} result': '{name} 结果',
+  'Artifacts presented': '已呈现产物',
+  'Completed': '已完成',
+  'Session': '会话',
+  'Exit code': '退出码',
+  'Diff digest': '差异摘要',
   // Shared
   'Main Bot': '主 Bot',
   Working: '进行中',
@@ -1783,7 +1794,6 @@ const ZH = {
   'Bcc': '密送',
   'Attachments: {names}': '附件：{names}',
   'Sent': '已发送',
-  'Failed': '失败',
 
 }
 

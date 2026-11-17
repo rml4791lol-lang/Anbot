@@ -75,6 +75,20 @@ const copyText = () => ({
   verified: t('Verified'),
   requested: t('Requested'),
   pending: t('Pending'),
+  taskRequest: t('Task request'),
+  botReport: t('Bot report'),
+  toolCall: t('Tool call'),
+  toolResult: t('Tool result'),
+  toolResultNamed: t('{name} result'),
+  artifactsPresented: t('Artifacts presented'),
+  completed: t('Completed'),
+  failed: t('Failed'),
+  session: t('Session'),
+  command: t('Command'),
+  exitCode: t('Exit code'),
+  diffDigest: t('Diff digest'),
+  staleEvidence: t('Stale'),
+  needsReview: t('Needs review'),
   noBlockers: t('No known blockers.'),
   noEvidence: t('No evidence is attached yet.'),
   noArtifacts: t('No artifacts are attached yet.'),
@@ -172,7 +186,8 @@ function TaskRow({ task, roster, role, selected, copy, onSelect }) {
     h('span', { className: 'bt-activity-task-main' },
       h('span', { className: 'bt-activity-task-title' }, task.title || task.sourceId),
       h('span', { className: 'bt-activity-task-meta' }, `${sourceLabel(task.source, copy)} · ${task.ownerName || copy.noOwner}${roleLabel ? ` · ${roleLabel}` : ''}`),
-      h('span', { className: 'bt-activity-task-state', 'data-status': task.sourceStatus }, task.sourceStatus)),
+      h('span', { className: 'bt-activity-task-state', 'data-status': task.sourceStatus }, task.sourceStatus),
+      h('span', { className: 'bt-activity-task-evidence', 'data-evidence-state': task.evidenceState ?? 'pending' }, evidenceStateLabel(task.evidenceState, copy))),
     h('time', { className: 'bt-activity-task-time' }, when(task.updatedAt)))
 }
 
@@ -180,6 +195,36 @@ const trustLabel = (trust, copy) => trust === 'verified' ? copy.verified
   : trust === 'executed' ? copy.executed
     : trust === 'requested' ? copy.requested
       : trust === 'reported' ? copy.reported : copy.pending
+
+const evidenceStateLabel = (state, copy) => state === 'verified' ? copy.verified
+  : state === 'executed' ? copy.executed
+    : state === 'reported' ? copy.reported
+      : state === 'stale' ? copy.staleEvidence
+        : state === 'needs-review' ? copy.needsReview : copy.pending
+
+const traceTitle = (item, copy) => {
+  if (item.titleKey === 'trace.request') return copy.taskRequest
+  if (item.titleKey === 'trace.report') return copy.botReport
+  if (item.titleKey === 'trace.toolCall') return item.toolName || copy.toolCall
+  if (item.titleKey === 'trace.toolResult') return item.toolName ? copy.toolResultNamed.replace('{name}', item.toolName) : copy.toolResult
+  if (item.titleKey === 'trace.artifacts') return copy.artifactsPresented
+  return item.title || item.type
+}
+
+const traceResultLabel = (item, copy) => item.resultKey === 'trace.completed' ? copy.completed
+  : item.resultKey === 'trace.failed' ? copy.failed : ''
+
+const traceDetail = (item, copy) => [item.requestDetail, traceResultLabel(item, copy), item.detail].filter(Boolean).join(' · ')
+
+const relationLabel = (item, copy) => item.labelKey === 'trace.source' ? copy.source
+  : item.labelKey === 'trace.session' ? copy.session
+    : item.labelKey === 'trace.task' ? copy.task : item.kind
+
+const evidenceFacts = (item, copy) => [
+  ...(item.command ? [`${copy.command}: ${item.command.text}${Number.isInteger(item.command.exitCode) ? ` · ${copy.exitCode} ${item.command.exitCode}` : ''}`] : []),
+  ...(item.diff ? [`${copy.diffDigest}: ${item.diff.digest || copy.none}${item.diff.paths?.length ? ` · ${item.diff.paths.join(', ')}` : ''}`] : []),
+  ...(item.stale === true ? [copy.staleEvidence] : []),
+]
 
 function TraceRow({ item, copy, selected, onSelect }) {
   return h('button', {
@@ -191,8 +236,9 @@ function TraceRow({ item, copy, selected, onSelect }) {
     onClick: () => onSelect(item),
   },
   h('span', { className: 'bt-trace-record-main' },
-    h('b', null, item.title || item.type),
-    h('span', null, item.detail || ''),
+    h('b', null, traceTitle(item, copy)),
+    h('span', null, traceDetail(item, copy)),
+    ...evidenceFacts(item, copy).map((fact, index) => h('span', { key: `fact:${index}`, className: 'bt-evidence-fact' }, fact)),
     h('small', null, [item.sessionId, item.seq === null || item.seq === undefined ? '' : `#${item.seq}`].filter(Boolean).join(' · '))),
   h('span', { className: 'bt-trace-trust', 'data-trust': item.trust }, trustLabel(item.trust, copy)),
   h('time', null, when(item.at)))
@@ -223,7 +269,7 @@ export function TraceExplorer({ trace, copy, view: forcedView, onSelectEvidence 
     view === 'relationships'
       ? relationships.length > 0
         ? h('div', { className: 'bt-trace-relations' }, relationships.map((item, index) => h('div', { key: `${item.kind}:${index}`, className: 'bt-trace-relation', 'data-kind': item.kind },
-          h('b', null, item.kind), h('span', null, `${item.from} → ${item.to}`))))
+          h('b', null, relationLabel(item, copy)), h('span', null, `${item.from} → ${item.to}`))))
         : h('p', { className: 'bt-activity-detail-empty' }, copy.noTrace)
       : records.length > 0
         ? h('div', { className: 'bt-trace-list', role: view === 'timeline' ? 'list' : undefined }, recordRows)
@@ -239,8 +285,9 @@ function EvidenceList({ evidence, selectedId, copy, onSelect }) {
     onClick: () => onSelect(item.id),
   },
   h('span', null,
-    h('b', null, item.title || item.text || item.id),
-    item.title && item.text ? h('span', null, item.text) : null,
+    h('b', null, traceTitle(item, copy) || item.text || item.id),
+    (item.title || item.titleKey) && item.text ? h('span', null, item.text) : null,
+    ...evidenceFacts(item, copy).map((fact, index) => h('span', { key: `fact:${index}`, className: 'bt-evidence-fact' }, fact)),
     h('small', null, `${item.sourceId || ''}${item.at ? ` · ${when(item.at)}` : ''}`)),
   h('em', null, trustLabel(item.trust, copy)))))
 }
@@ -282,6 +329,7 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
     detailNotice,
     h('dl', null,
       h('div', null, h('dt', null, copy.status), h('dd', null, h('span', { className: 'bt-activity-status', 'data-status': shown.sourceStatus }, shown.sourceStatus))),
+      h('div', null, h('dt', null, copy.evidence), h('dd', null, h('span', { className: 'bt-activity-task-evidence', 'data-evidence-state': shown.evidenceState ?? 'pending' }, evidenceStateLabel(shown.evidenceState, copy)))),
       h('div', null, h('dt', null, copy.sourceId), h('dd', { className: 'bt-activity-id' }, shown.sourceId || shown.id)),
       ...(stageTitle ? [h('div', { key: 'stage' }, h('dt', null, copy.stage), h('dd', null, stageTitle))] : []),
       ...(detail && attempt ? [h('div', { key: 'attempt' }, h('dt', null, copy.attempt), h('dd', null, h('span', { className: 'bt-activity-id' }, `${attempt.id || copy.none}${attempt.number ? ` · ${attempt.number}` : ''}${attempt.status ? ` · ${attempt.status}` : ''}`)))] : []),
@@ -568,7 +616,7 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-activity-task-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
 .bt-activity-task-title{font-size:12px;line-height:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt-activity-task-meta,.bt-activity-task-time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-activity-task-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence[data-evidence-state=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=stale],.bt-activity-task-evidence[data-evidence-state=needs-review]{color:var(--bt-danger)}
 .bt-activity-task-state[data-status=waiting],.bt-activity-status[data-status=waiting]{color:var(--bt-star)}.bt-activity-task-state[data-status=reported],.bt-activity-task-state[data-status=blocked],.bt-activity-task-state[data-status=failed],.bt-activity-task-state[data-status=unknown],.bt-activity-status[data-status=reported],.bt-activity-status[data-status=blocked],.bt-activity-status[data-status=failed],.bt-activity-status[data-status=unknown]{color:var(--bt-danger)}
 .bt-activity-task-time{flex:none}
 .bt-activity-owner-mark{display:inline-flex;flex:none;align-items:center;justify-content:center;border-radius:999px;background:var(--bt-tag-bg);color:var(--bt-ink-2);font-size:12px;font-weight:600}
@@ -579,7 +627,7 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-task-detail-state{margin:0 0 12px;padding:8px 10px;border-radius:8px;background:var(--bt-tag-bg);font-size:11px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}.bt-task-detail-state[role=alert]{background:var(--bt-danger-soft);color:var(--bt-danger)}.bt-task-detail-state span{display:block;margin-top:2px;color:var(--bt-ink-2)}
 .bt-task-blockers{display:flex;flex-direction:column;gap:4px;margin:0;padding-left:16px}.bt-task-blockers li[data-kind=owner],.bt-task-blockers li[data-kind=failed-result],.bt-task-blockers li[data-kind=recovery]{color:var(--bt-danger)}
 .bt-task-section{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-task-section h4,.bt-trace-head h4{margin:0;font-size:12px;line-height:16px;font-weight:600}
-.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
+.bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-evidence-fact{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--bt-ink-2)!important}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
 .bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:var(--bt-card-shadow)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:11px;line-height:16px;color:var(--bt-ink-3)}
