@@ -207,3 +207,14 @@ test('the account menu switches to classic Agent mode, and only where the surfac
   const plain = launcher()
   assert.equal(plain.item(plain.open(), 'Classic Agent mode'), undefined)
 })
+
+test('the account menu opens team activity only when the host provides it', () => {
+  const calls = []
+  const side = launcher({ actions: { openTeamActivity: () => calls.push('activity') } })
+  const item = side.item(side.open(), 'Team activity')
+  assert.ok(item !== undefined)
+  item.props.onClick()
+  assert.deepEqual(calls, ['activity'])
+  const none = launcher()
+  assert.equal(none.item(none.open(), 'Team activity'), undefined)
+})

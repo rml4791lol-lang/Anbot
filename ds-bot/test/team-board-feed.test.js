@@ -118,5 +118,7 @@ test('an old archive with duplicates, a torn row and an unknown kind still reads
     '{torn',
     '',
   ].join('\n'))
-  assert.deepEqual(readTeamBoardArchive(dir).map(entry => entry.what), ['done'])
+  const warned = []
+  assert.deepEqual(readTeamBoardArchive(dir, message => warned.push(message)).map(entry => entry.what), ['done'])
+  assert.deepEqual(warned, ['team board archive: skipped 2 bad rows in ops.jsonl'])
 })

@@ -17,6 +17,7 @@
 // and refuses any other, as it does.
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 const exitAfterTurn = process.argv.includes('--exit-after-turn')
 const cursorModes = process.argv.includes('--cursor-modes')
 const MODES = cursorModes ? ['agent', 'plan', 'ask'] : ['ask', 'accept-edits', 'bypass']
@@ -36,13 +37,15 @@ const ask = (method, params) => {
 }
 
 async function mcpCall(server, name, args) {
-  const headers = { 'content-type': 'application/json', authorization: `Bearer ${server.token}` }
-  const post = (body) => fetch(server.url, { method: 'POST', headers, body: JSON.stringify(body) })
-  await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'fake', version: '1' } } })
-  const response = await post({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name, arguments: args } })
-  const text = await response.text()
-  const line = text.split('\n').map(row => row.trim()).find(row => row.startsWith('data: ') && row.includes('"result"'))
-  return JSON.parse(line.slice(6)).result
+  const client = new Client({ name: 'fake-acp', version: '1' })
+  await client.connect(new StreamableHTTPClientTransport(new URL(server.url), {
+    requestInit: { headers: { Authorization: `Bearer ${server.token}` } },
+  }))
+  try {
+    return await client.callTool({ name, arguments: args })
+  } finally {
+    await client.close()
+  }
 }
 
 async function runPrompt(session, prompt, requestId) {

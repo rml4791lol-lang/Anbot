@@ -134,6 +134,121 @@ test('an exchange sent again under the same id is taken up once, and every note 
   assert.equal(second.agentOf('b').calls.length, 0)
 })
 
+test('a restart keeps the task and attempt identity while resuming once', async (t) => {
+  const home = freshHome(t)
+  const first = await start(home)
+  await first.rt.deliver({
+    toId: 'b', role: 'reply', exchangeId: 'e-task', text: 'Run the task once.',
+    taskId: 'handoff:w1', attemptId: 'handoff:w1:a1',
+  })
+  const delivered = first.agentOf('b').calls[0]
+  assert.equal(delivered.source.taskId, 'handoff:w1')
+  assert.equal(delivered.source.attemptId, 'handoff:w1:a1')
+  run(first, 'b', 1, delivered)
+  await delay(20)
+  await first.stop()
+
+  const second = await start(home)
+  await delay(3300)
+  assert.equal(second.agentOf('b').calls.length, 1)
+  assert.equal(second.agentOf('b').calls[0].source.taskId, 'handoff:w1')
+  assert.equal(second.agentOf('b').calls[0].source.attemptId, 'handoff:w1:a1')
+  assert.equal(second.agentOf('b').calls[0].source.resumed, true)
+  await second.stop()
+})
+
+test('a resumed handoff keeps its attempt and records the restart on the work', async (t) => {
+  const home = freshHome(t)
+  const now = Date.now()
+  const team = seed()
+  team.works = {
+    w1: {
+      from: 'a', to: 'b', open: [], results: [], at: now,
+      attempt: { id: 'w1:a1', n: 1, status: 'working', startedAt: now, updatedAt: now },
+      verification: { state: 'pending', status: 'pending', evidenceIds: [], checks: [], missing: [] },
+      evidence: [],
+    },
+  }
+  writeFileSync(join(home, 'state.json'), JSON.stringify(team))
+
+  const first = await start(home)
+  await first.rt.deliver({
+    fromId: 'a', toId: 'b', role: 'request', exchangeId: 'w1', text: 'Review the repair.',
+    taskId: 'handoff:w1', attemptId: 'w1:a1',
+  })
+  const delivered = first.agentOf('b').calls[0]
+  run(first, 'b', 1, delivered)
+  await delay(20)
+  await first.stop()
+
+  const second = await start(home)
+  await delay(3300)
+  assert.equal(second.agentOf('b').calls.length, 1)
+  assert.deepEqual(
+    [second.agentOf('b').calls[0].source.taskId, second.agentOf('b').calls[0].source.attemptId, second.agentOf('b').calls[0].source.resumed],
+    ['handoff:w1', 'w1:a1', true],
+  )
+  const work = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  assert.equal(work.attempt.id, 'w1:a1')
+  run(second, 'b', 1, second.agentOf('b').calls[0])
+  await delay(20)
+  const resumedWork = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  assert.equal(resumedWork.recovery.length, 1)
+  assert.equal(resumedWork.recovery[0].attemptId, 'w1:a1')
+  assert.equal(resumedWork.recovery[0].kind, 'resumed')
+  await second.stop()
+})
+
+test('a restart reconciles pending evidence into the same task attempt', async (t) => {
+  const home = freshHome(t)
+  const now = Date.now()
+  const team = seed()
+  team.rooms.r1 = {
+    id: 'r1', name: 'Ops', members: ['a', 'b'], mode: 'admin', admin: 'a', named: true,
+    sessions: { a: 'ga', b: 'gb' }, log: [], seq: 0, seen: {},
+    goal: {
+      id: 'g1', revision: 1, status: 'active', title: 'Ship', brief: '', objective: 'Ship it', acceptance: 'tests pass',
+      constraints: [], current: 0, nudges: 0, by: 'a', createdAt: now, updatedAt: now, events: [], counter: { stage: 1, task: 1 },
+      stages: [{
+        id: 's1', title: 'Check', acceptance: 'tests pass', status: 'active', reworks: 0,
+        checks: [{ id: 'tests', kind: 'command', label: 'tests', command: 'npm test', expect: { exitCode: 0 } }],
+        verification: { state: 'pending', checkEvidence: {}, missing: ['tests'] },
+        tasks: [{
+          id: 't1', botId: 'b', task: 'run tests', status: 'working',
+          checks: [{ id: 'tests', kind: 'command', label: 'tests', command: 'npm test', expect: { exitCode: 0 } }],
+          attempt: { id: 't1:a1', n: 1, status: 'working', startedAt: now, updatedAt: now },
+          checkpoint: { at: now, attemptId: 't1:a1', kind: 'progress', summary: 'Started.' },
+          progress: { state: 'moving', fingerprint: '', unchangedTurns: 0 },
+          verification: { state: 'pending', checkEvidence: {}, missing: ['tests'] },
+          evidence: [],
+        }],
+      }],
+    },
+  }
+  writeFileSync(join(home, 'state.json'), JSON.stringify(team))
+  writeFileSync(join(home, 'inflight.json'), JSON.stringify({
+    turns: { gb: { botId: 'b', roomId: 'r1', since: now, trigger: { role: 'room', roomId: 'r1', exchangeId: 'e1', taskId: 'goal:g1:s1:t1', attemptId: 't1:a1' } } },
+    queued: {},
+  }))
+  const logs = new Map([['gb', [
+    { type: 'turn/start', seq: 1, data: { turn: 1 } },
+    { type: 'user/message', seq: 2, data: { content: [], source: { kind: 'bot', role: 'room', roomId: 'r1', exchangeId: 'e1', taskId: 'goal:g1:s1:t1', attemptId: 't1:a1' } } },
+    { type: 'tool/call', seq: 3, data: { turn: 1, callId: 'c1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) } },
+    { type: 'tool/result', seq: 4, data: { turn: 1, callId: 'c1', message: { ok: true, content: [{ type: 'text', text: 'green' }] } } },
+    { type: 'turn/end', seq: 5, data: { turn: 1, reason: { kind: 'interrupted' } } },
+  ]]])
+
+  const host = await start(home, logs)
+  await delay(3300)
+  const task = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).rooms.r1.goal.stages[0].tasks[0]
+  assert.equal(task.attempt.id, 't1:a1')
+  assert.equal(task.evidence[0].attemptId, 't1:a1')
+  assert.equal(task.evidence[0].command.text, 'npm test')
+  assert.equal(task.evidence[0].command.exitCode, 0)
+  assert.equal(host.agentOf('gb').calls.length, 1)
+  await host.stop()
+})
+
 test('forgetDelivery drops every note of an exchange, in every Session it was noted under', async (t) => {
   const home = freshHome(t)
   const first = await start(home)
@@ -171,6 +286,7 @@ test('a turn the shutdown cut off does not swallow a note that was never sent', 
   const second = await start(home, logs)
   await delay(3300)
   assert.equal(second.agentOf('b').calls.length, 1)
+  assert.equal(second.agentOf('b').calls[0].source.resent, true)
   await second.stop()
 })
 
@@ -196,6 +312,7 @@ test('a turn DSH disposed does not swallow a note that was never sent', async (t
   const second = await start(home, logs)
   await delay(3300)
   assert.equal(second.agentOf('b').calls.length, 1)
+  assert.equal(second.agentOf('b').calls[0].source.resent, true)
   await second.stop()
 })
 

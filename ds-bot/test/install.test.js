@@ -7,10 +7,10 @@ import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
 
 let rt
-function start(state, { config = {}, services } = {}) {
+function start(state, { config = {}, services, context } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-install-'))
   if (state) writeFileSync(join(home, 'state.json'), JSON.stringify(state))
-  const ctx = fakeContext({ services })
+  const ctx = Object.assign(fakeContext({ services }), context)
   const routes = new Map()
   const register = ctx.connection.fetch.register
   ctx.connection.fetch.register = (options) => {
@@ -301,6 +301,29 @@ test('config.browser turns Bot browsers off even in the Desktop profile', (t) =>
   assert.ok(!rt.teamTools.some(d => d.name === 'read_browser'))
 })
 
+test('disposing while local-agent discovery runs does not touch the disposed host', async () => {
+  let registrations = 0
+  let replacements = 0
+  const { stop } = start({ version: 1, localAgents: { custom: [{ id: 'a1', name: 'A', command: 'node', args: [] }], sessions: {} } }, {
+    context: {
+      llm: {
+        listProviders: () => [],
+        listModels: async () => [],
+        resolveModelInfo: async () => ({}),
+        registerAdapter: () => {
+          registrations += 1
+          return Object.assign(() => {}, { replace: () => { replacements += 1 } })
+        },
+      },
+    },
+  })
+  const beforeStop = registrations
+  await stop()
+  await new Promise(resolve => setTimeout(resolve, 50))
+  assert.equal(registrations, beforeStop)
+  assert.equal(replacements, 0)
+})
+
 test('a custom agent keeps the local agents adapter live after install', async (t) => {
   const { ctx, stop, rt } = start({ version: 1, localAgents: { custom: [{ id: 'a1', name: 'A', command: 'node', args: [] }], sessions: {} } })
   t.after(stop)
@@ -409,4 +432,112 @@ test('the team board feed merges the one file each Bot owns', async (t) => {
   // A file that does not parse costs its own lines and nothing else.
   writeFileSync(join(board, 'broken.json'), '{oops')
   assert.deepEqual((await read()).value.lines.map(entry => entry.what), ['new', 'middle', 'old'])
+})
+
+test('team activity returns real goal tasks, open handoffs, and archived activity', async (t) => {
+  const atlasState = mkdtempSync(join(tmpdir(), 'ds-bot-team-activity-'))
+  const before = process.env.DSH_ATLAS_STATE_DIR
+  process.env.DSH_ATLAS_STATE_DIR = atlasState
+  t.after(() => {
+    if (before === undefined) delete process.env.DSH_ATLAS_STATE_DIR
+    else process.env.DSH_ATLAS_STATE_DIR = before
+    rmSync(atlasState, { recursive: true, force: true })
+  })
+  const archive = join(atlasState, 'board', 'archive')
+  mkdirSync(archive, { recursive: true })
+  writeFileSync(join(archive, 'forge.jsonl'), `${JSON.stringify({ bot: 'Forge', kind: 'delivery', what: 'Bridge delivered', at: new Date().toISOString() })}\n{oops\n`)
+  const { call, stop } = start({
+    version: 1,
+    mainBotIds: ['m1'],
+    bots: {
+      m1: { id: 'm1', name: 'Chief', role: 'Coordinator', instructions: '', createdAt: 1 },
+      b2: { id: 'b2', name: 'Forge', role: 'Engineer', instructions: '', createdAt: 2 },
+    },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery', admin: 'm1', members: ['m1', 'b2'],
+        goal: {
+          id: 'g1', revision: 1, status: 'active', title: 'Ship MCP', updatedAt: 20,
+          stages: [{ id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active', tasks: [{ id: 't1', botId: 'b2', task: 'Build it', status: 'working' }] }],
+        },
+      },
+    },
+    works: { w1: { from: 'm1', to: 'b2', at: 10, open: [], results: [] } },
+  })
+  t.after(stop)
+  const result = await call('team-activity')
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.value.tasks.map(task => [task.source, task.sourceStatus, task.ownerName]).sort(), [
+    ['goal', 'working', 'Forge'],
+    ['handoff', 'active', 'Forge'],
+  ])
+  assert.deepEqual(result.value.roles.map(role => [role.name, role.permission]), [['Chief', 'Main Bot'], ['Forge', 'Member']])
+  assert.equal(result.value.activity[0].text, 'Bridge delivered')
+  assert.equal(result.value.partial, true)
+  assert.match(result.value.warnings[0].message, /team board archive: skipped 1 bad row in forge\.jsonl/)
+  assert.equal(result.value.mode, 'live')
+  assert.equal(result.value.heatmap.length, 7)
+  assert.equal(result.value.heatmap.at(-1).count, 1)
+  const cached = await call('team-activity')
+  assert.equal(cached.value.partial, true)
+  assert.match(cached.value.warnings[0].message, /team board archive: skipped 1 bad row in forge\.jsonl/)
+})
+
+test('task detail reads bounded linked Session records and stays read-only on a locked host', async (t) => {
+  const pages = []
+  const context = {
+    sessionController: {
+      async page(request) {
+        pages.push(request)
+        if (request.address.sessionId === 'group-session') return { hasMore: false, records: [] }
+        return {
+          hasMore: false,
+          records: [
+            { event: { seq: 1, time: Date.now() - 3, type: 'turn/start', data: { turn: 1 } } },
+            { event: { seq: 2, time: Date.now() - 2, type: 'user/message', data: { turn: 1, content: [{ type: 'text', text: 'Build it DATABASE_PASSWORD=trace-value' }], source: { kind: 'ds-bot', role: 'request', taskId: 'goal:g1:s1:t1' } } } },
+            { event: { seq: 3, time: Date.now() - 1, type: 'tool/result', data: { turn: 1, message: { toolCallId: 'c1', ok: true, content: [{ type: 'text', text: 'tests pass DATABASE_PASSWORD=trace-result-value' }] } } } },
+          ],
+        }
+      },
+    },
+  }
+  const { call, stop, rt } = start({
+    version: 1,
+    bots: { forge: { id: 'forge', name: 'Forge', role: 'Engineer', instructions: '', createdAt: 1 } },
+    rooms: {
+      r1: {
+        id: 'r1', name: 'Delivery DATABASE_PASSWORD=room-name-value', named: true, sessionId: 'group-session', members: ['forge'], sessions: { forge: 'room-s1' },
+        goal: {
+          id: 'g1', revision: 2, status: 'active', title: 'Ship MCP DATABASE_PASSWORD=goal-title-value', updatedAt: Date.now(),
+          stages: [{
+            id: 's1', title: 'Bridge', acceptance: 'tests pass', status: 'active',
+            tasks: [{
+              id: 't1', botId: 'forge', task: 'Build it DATABASE_PASSWORD=task-body-value', status: 'working', note: 'DATABASE_PASSWORD=note-value',
+              nextAction: 'DATABASE_PASSWORD=next-value', evidence: ['DATABASE_PASSWORD=evidence-value'], attempt: { sessionId: 'room-s1' },
+            }],
+          }],
+        },
+      },
+    },
+    works: {},
+  }, { context })
+  t.after(stop)
+  rt.improvementView = () => ({
+    proposals: [{ id: 'improvement-1', description: 'Use DATABASE_PASSWORD=improvement-value', nested: { credential: 'DATABASE_PASSWORD=nested-value' } }],
+    history: [],
+  })
+  const result = await call('task-detail', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.value.trace.sessionIds, ['room-s1'])
+  assert.equal(result.value.trace.records.find(item => item.type === 'tool/result').trust, 'executed')
+  assert.deepEqual(pages.map(page => [page.address.sessionId, page.maxMessages]), [['room-s1', 60], ['group-session', 60]])
+  assert.doesNotMatch(JSON.stringify(result.value), /goal-title-value|room-name-value|task-body-value|note-value|next-value|evidence-value|trace-value|trace-result-value|improvement-value|nested-value/)
+
+  rt.readOnly = () => 'Another host owns this team'
+  const locked = await call('task-detail', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(locked.ok, true)
+  assert.ok(locked.value.controls.every(item => item.enabled === false && item.reason === 'Another host owns this team'))
+  const write = await call('stop-member-work', { roomId: 'r1', botId: 'forge' })
+  assert.equal(write.ok, false)
+  assert.equal(write.error.code, 'bot/read-only')
 })

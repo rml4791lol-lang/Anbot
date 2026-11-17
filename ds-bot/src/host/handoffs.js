@@ -11,6 +11,7 @@ import { join } from 'node:path'
 import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
 import { installTaskLog } from './task-ledger.js'
+import { PendingCallCache, clearRecoveryNeeded, evidenceFromEvents, noteAttemptRecovery, noteRecoveryNeeded, progressAfterTurn, progressFingerprint } from './task-evidence.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
@@ -29,6 +30,7 @@ export function install(rt) {
   const { ctx, state } = rt
   const logTask = installTaskLog(rt)
   const works = () => (state.works ??= {})
+  const callsBySession = new PendingCallCache()
   // What came back, whole; state.json keeps the start of each.
   const whole = new Map()
   const save = () => void rt.save().catch(() => {})
@@ -108,9 +110,23 @@ export function install(rt) {
   // `parent`: the work the sender was doing when it sent this one. `child`: the
   // session id of the subagent a run of this work belongs to — the run, not the
   // child, is the sub-work, so a child that is continued hands up a result per run.
-  function openWork(id, { from, to, parent, fromRoom, room, name, child }) {
+  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask }) {
     const above = parent === undefined ? undefined : works()[parent]
-    works()[id] = { ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}), ...(fromRoom ? { fromRoom } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}), open: [], results: [], at: Date.now() }
+    const now = Date.now()
+    const attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
+    const goalTaskId = typeof goalTask?.taskId === 'string' ? goalTask.taskId : ''
+    const goalTaskAttemptId = typeof goalTask?.attemptId === 'string' ? goalTask.attemptId : ''
+    works()[id] = {
+      ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}),
+      ...(fromRoom ? { fromRoom } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}),
+      ...(goalTaskId ? { goalTask: { taskId: goalTaskId, ...(goalTaskAttemptId ? { attemptId: goalTaskAttemptId } : {}) } } : {}),
+      open: [], results: [], at: now,
+      attempt,
+      checkpoint: { at: now, attemptId: attempt.id, kind: 'progress', summary: 'Work started.', nextAction: name ?? 'Complete the requested work.' },
+      progress: { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now },
+      verification: { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' },
+      evidence: [],
+    }
     if (above !== undefined) above.open.push(id)
     save()
     logTask({ kind: 'open', id, from, to, parent, room, child, name })
@@ -220,6 +236,172 @@ export function install(rt) {
     if (work === undefined || work.late === true) return
     work.late = true
     save()
+  }
+
+  const evidenceOf = work => (Array.isArray(work?.evidence) ? work.evidence : [])
+    .filter(item => work?.attempt?.id === undefined || item.attemptId === work.attempt.id)
+
+  const currentFingerprint = (progress, fingerprint) => ({
+    ...progress,
+    lastTurnFingerprint: progress?.lastTurnFingerprint ?? progress?.fingerprint ?? progressFingerprint([]),
+    fingerprint,
+    state: 'moving',
+  })
+
+  function ensureAttempt(id, work, now = Date.now()) {
+    if (work.attempt === undefined) {
+      work.attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
+      work.checkpoint ??= { at: now, attemptId: work.attempt.id, kind: 'progress', summary: 'Recovered work.', nextAction: work.name ?? 'Continue the requested work.' }
+      work.progress ??= { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now }
+      work.verification ??= { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' }
+      work.evidence ??= []
+    }
+    return work.attempt
+  }
+
+  function workForSession(info) {
+    const id = workOf(info)
+    const work = id === undefined ? undefined : works()[id]
+    return work === undefined ? undefined : { id, work }
+  }
+
+  function noteEvidence(sessionId, event, info, now = Date.now()) {
+    if (rt.readOnly?.() !== undefined) return false
+    const callId = String(event?.data?.callId ?? '')
+    if (event?.type === 'tool/call' && callId !== '') {
+      callsBySession.remember(sessionId, callId, {
+        seq: Number.isInteger(event.seq) ? event.seq - 1 : 0,
+        type: 'tool/call',
+        time: event.time,
+        data: event.data,
+      })
+      return false
+    }
+    const events = []
+    if (event?.type === 'tool/result') {
+      const call = callsBySession.take(sessionId, callId)
+      if (call !== undefined) events.push(call)
+    }
+    events.push(event)
+    const evidence = evidenceFromEvents({ sessionId, actor: { sessionId }, events })
+    if (evidence.length === 0) return false
+    const target = workForSession(info)
+    if (target === undefined) return false
+    const { work } = target
+    ensureAttempt(target.id, work, now)
+    const tagged = evidence.map(item => ({ ...item, attemptId: work.attempt.id }))
+    const known = new Set(evidenceOf(work).map(item => item.id))
+    const added = tagged.filter(item => !known.has(item.id))
+    if (added.length === 0) return false
+    work.evidence = [...evidenceOf(work), ...added].slice(-32)
+    const last = added.at(-1)
+    work.checkpoint = {
+      at: now,
+      attemptId: work.attempt.id,
+      kind: last.state,
+      summary: last.command?.text ?? last.artifact?.path ?? last.diff?.paths?.join(', ') ?? headOf(last.summary, TEXT_KEPT),
+      nextAction: work.name ?? 'Continue the requested work.',
+      sessionId,
+      evidenceId: last.id,
+      progressFingerprint: progressFingerprint(evidenceOf(work)),
+    }
+    work.attempt.updatedAt = now
+    work.progress = currentFingerprint(work.progress, work.checkpoint.progressFingerprint)
+    save()
+    return true
+  }
+
+  function bindAttempt(sessionId, info, turn) {
+    if (rt.readOnly?.() !== undefined) return undefined
+    const target = workForSession(info)
+    if (target === undefined) return undefined
+    const now = Date.now()
+    ensureAttempt(target.id, target.work, now)
+    target.work.attempt.sessionId = sessionId
+    if (info?.exchangeId !== undefined) target.work.attempt.exchangeId = info.exchangeId
+    if (Number.isInteger(turn)) target.work.attempt.turn = turn
+    target.work.attempt.updatedAt = now
+    noteAttemptRecovery(target.work, { attemptId: target.work.attempt.id, info, sessionId, now })
+    save()
+    return { taskId: `handoff:${target.id}`, attemptId: target.work.attempt.id }
+  }
+
+  const binding = id => works()[id]?.attempt === undefined ? undefined : {
+    taskId: `handoff:${id}`,
+    attemptId: works()[id].attempt.id,
+  }
+
+  function finishTurn(sessionId, info, outcome = 'completed') {
+    callsBySession.clearSession(sessionId)
+    if (rt.readOnly?.() !== undefined || outcome !== 'completed') return false
+    const target = workForSession(info)
+    if (target === undefined) return false
+    const now = Date.now()
+    ensureAttempt(target.id, target.work, now)
+    target.work.progress = progressAfterTurn(target.work.progress, evidenceOf(target.work), { now })
+    if (target.work.progress.state === 'stalled') {
+      target.work.verification = { state: 'needs-review', status: 'needs-review', reason: 'Two completed turns produced no new diff, command, artifact, or evidence.', missing: [] }
+      target.work.checkpoint = { at: now, attemptId: target.work.attempt.id, kind: 'reported', summary: 'No measurable progress in repeated turns.', nextAction: 'Change the approach or report a blocker; do not repeat the same work.', sessionId }
+      target.work.attempt.status = 'stalled'
+      target.work.attempt.updatedAt = now
+      save()
+      return true
+    }
+    target.work.attempt.updatedAt = now
+    save()
+    return false
+  }
+
+  function reconcileEvidence(sessionId, events, trigger) {
+    if (rt.readOnly?.() !== undefined || !Array.isArray(events) || events.length === 0) return false
+    const taskId = String(trigger?.taskId ?? '')
+    const id = taskId.startsWith('handoff:') ? taskId.slice('handoff:'.length) : String(trigger?.work ?? '') || undefined
+    const work = id === undefined ? undefined : works()[id]
+    if (work === undefined || (trigger?.attemptId !== undefined && work.attempt?.id !== trigger.attemptId)) return false
+    ensureAttempt(id, work)
+    const turns = new Set()
+    let turn
+    for (const event of events) {
+      if (event.type === 'turn/start' && Number.isInteger(event.data?.turn)) turn = event.data.turn
+      else if (Number.isInteger(event.data?.turn)) turn = event.data.turn
+      if (event.type !== 'user/message') continue
+      const source = event.data?.source ?? {}
+      if ((trigger?.exchangeId === undefined || source.exchangeId === trigger.exchangeId)
+        && (trigger?.taskId === undefined || source.taskId === trigger.taskId)
+        && (trigger?.attemptId === undefined || source.attemptId === trigger.attemptId)
+        && Number.isInteger(turn)) turns.add(turn)
+    }
+    if (turns.size === 0) {
+      noteRecoveryNeeded(work, {
+        attemptId: work.attempt?.id,
+        sessionId,
+        reason: 'Session events could not be matched to this hand-off attempt after a restart; recover it before accepting the result.',
+      })
+      save()
+      return false
+    }
+    const scoped = events.filter(event => Number.isInteger(event.data?.turn) && turns.has(event.data.turn))
+    const evidence = evidenceFromEvents({ sessionId, actor: { sessionId }, events: scoped })
+      .map(item => ({ ...item, attemptId: work.attempt.id }))
+    const known = new Set(evidenceOf(work).map(item => item.id))
+    const added = evidence.filter(item => !known.has(item.id))
+    if (added.length === 0) return false
+    clearRecoveryNeeded(work)
+    work.evidence = [...evidenceOf(work), ...added].slice(-32)
+    const last = added.at(-1)
+    work.checkpoint = {
+      at: last.at ?? Date.now(),
+      attemptId: work.attempt.id,
+      kind: last.state,
+      summary: last.command?.text ?? last.artifact?.path ?? last.diff?.paths?.join(', ') ?? headOf(last.summary, TEXT_KEPT),
+      nextAction: work.name ?? 'Continue the requested work.',
+      sessionId,
+      evidenceId: last.id,
+      progressFingerprint: progressFingerprint(evidenceOf(work)),
+    }
+    work.progress = currentFingerprint(work.progress, work.checkpoint.progressFingerprint)
+    save()
+    return true
   }
 
   // The reply carrying a result never reached the asker: the failure reaches it
@@ -445,5 +627,5 @@ export function install(rt) {
     return lines.join('; ')
   }
 
-  Object.assign(rt, { workOf, openWork, closeWork, dropWork, takenWork: taken, lateWork, answerMissed, ownsWork: owns, waitsWork: waits, holdWork: hold, workAsker: askedBy, answerText, upstreamOf, sameWork, forgetBotWork: forgetBot, statusOf, waitingView, settleSubWork, subWorkRun, nameSubWork, abandonWork, abandonedWork: takeAbandoned })
+  Object.assign(rt, { workOf, openWork, closeWork, dropWork, takenWork: taken, lateWork, answerMissed, ownsWork: owns, waitsWork: waits, holdWork: hold, workAsker: askedBy, answerText, upstreamOf, sameWork, forgetBotWork: forgetBot, statusOf, waitingView, settleSubWork, subWorkRun, nameSubWork, abandonWork, abandonedWork: takeAbandoned, workBinding: binding, noteWorkEvidence: noteEvidence, bindWorkAttempt: bindAttempt, finishWorkTurn: finishTurn, reconcileWorkEvidence: reconcileEvidence })
 }
