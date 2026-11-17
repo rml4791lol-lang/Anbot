@@ -1,6 +1,17 @@
 // Spanish (es) localization for DS Bot client and DSH settings namespaces.
 
 export const ES = {
+  'Task request': 'Solicitud de tarea',
+  'Bot report': 'Informe del Bot',
+  'Tool call': 'Llamada de herramienta',
+  'Tool result': 'Resultado de herramienta',
+  '{name} result': 'Resultado de {name}',
+  'Artifacts presented': 'Artefactos presentados',
+  'Completed': 'Completado',
+  'Session': 'Sesión',
+  'Command': 'Comando',
+  'Exit code': 'Código de salida',
+  'Diff digest': 'Resumen de diferencias',
   'Improvement proposals': 'Propuestas de mejora',
   'Propose improvement': 'Proponer mejora',
   'Reading verified evidence…': 'Leyendo evidencia verificada…',
@@ -395,7 +406,6 @@ export const ES = {
   Connection: 'Conexión',
   'Local command': 'Comando local',
   'HTTP server': 'Servidor HTTP',
-  Command: 'Comando',
   'Arguments (one per line)': 'Argumentos (uno por línea)',
   'Environment (JSON)': 'Entorno (JSON)',
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',

@@ -1,6 +1,18 @@
 // German (de) localization for DS Bot client and DSH settings namespaces.
 
 export const DE = {
+  'Task request': 'Aufgabenanfrage',
+  'Bot report': 'Bot-Bericht',
+  'Tool call': 'Tool-Aufruf',
+  'Tool result': 'Tool-Ergebnis',
+  '{name} result': 'Ergebnis von {name}',
+  'Artifacts presented': 'Präsentierte Artefakte',
+  'Completed': 'Abgeschlossen',
+  'Failed': 'Fehlgeschlagen',
+  'Session': 'Sitzung',
+  'Command': 'Befehl',
+  'Exit code': 'Exit-Code',
+  'Diff digest': 'Diff-Digest',
   'Improvement proposals': 'Verbesserungsvorschläge',
   'Propose improvement': 'Verbesserung vorschlagen',
   'Reading verified evidence…': 'Verifizierte Nachweise werden gelesen…',
@@ -396,7 +408,6 @@ export const DE = {
   Connection: 'Verbindung',
   'Local command': 'Lokaler Befehl',
   'HTTP server': 'HTTP-Server',
-  Command: 'Befehl',
   'Arguments (one per line)': 'Argumente (eines pro Zeile)',
   'Environment (JSON)': 'Umgebungsvariablen (JSON)',
   '{"API_KEY": "$DSH_SECRET_MY_KEY"}': '{"API_KEY": "$DSH_SECRET_MY_KEY"}',
@@ -1768,7 +1779,6 @@ export const DE = {
   'Bcc': 'Bcc',
   'Attachments: {names}': 'Anhänge: {names}',
   'Sent': 'Gesendet',
-  'Failed': 'Fehlgeschlagen',
 
   // HOST_ZH + lines 1601-1653
   'Request failed': 'Anfrage fehlgeschlagen',

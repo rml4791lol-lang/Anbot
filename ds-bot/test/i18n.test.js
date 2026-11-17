@@ -66,6 +66,22 @@ test('every literal the client translates has an entry in all supported locales'
   assert.deepEqual(missing, [])
 })
 
+test('trace labels resolve in every supported locale', () => {
+  const keys = [
+    'Task request', 'Bot report', 'Tool call', 'Tool result', '{name} result', 'Artifacts presented',
+    'Completed', 'Failed', 'Session', 'Source', 'Task', 'Command', 'Exit code', 'Diff digest',
+  ]
+  const locales = ['zh', 'zh-TW', 'ja', 'ko', 'es', 'fr', 'de']
+  for (const locale of locales) {
+    const dictionary = DICTIONARY[locale]
+    for (const key of keys) {
+      assert.equal(typeof dictionary[key], 'string', `${locale} is missing ${key}`)
+      assert.notEqual(dictionary[key], '', `${locale} has an empty ${key}`)
+    }
+    assert.notDeepEqual(keys.map(key => dictionary[key]), keys, `${locale} leaves trace labels untranslated`)
+  }
+})
+
 test('copy follows the DSH language across all locales and stays English without a locale service', () => {
   assert.equal(t('Message {name}', { name: 'Chief' }), 'Message Chief')
   assert.equal(language(), 'en')
