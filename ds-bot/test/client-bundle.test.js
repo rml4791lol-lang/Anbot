@@ -1,6 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { bundleClient } from '../scripts/build-client.mjs'
 
@@ -38,6 +40,20 @@ test('client.js registers a factory that exports apply and inject', () => {
   // No `configForms`: the client never writes the user's DSH settings, such as the
   // work-details mode it once held at `verbose`.
   assert.deepEqual(Array.from(exports.inject), ['sessions', 'uiWorkspace', 'uiConversation', 'slots', 'theme', 'layout'])
+})
+
+const clientFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const path = join(dir, entry.name)
+  return entry.isDirectory() ? clientFiles(path) : entry.name.endsWith('.js') ? [path] : []
+})
+
+test('client code reaches DSH primitives only through the adapter', () => {
+  const root = fileURLToPath(new URL('../src/client/', import.meta.url))
+  const adapter = join(root, 'dsh-primitives.js')
+  const direct = clientFiles(root)
+    .filter(path => path !== adapter && readFileSync(path, 'utf8').includes('@deepseek-ai/dsh-client-ui-primitives'))
+    .map(path => relative(root, path))
+  assert.deepEqual(direct, [], 'client files must import dsh-primitives.js instead')
 })
 
 // The rightbar slot is single: the shell's own session panel already holds it, so
