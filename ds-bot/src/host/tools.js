@@ -815,10 +815,10 @@ export function install(rt) {
       // work handed on for that request (handoffs.js).
       const work = reportBack ? worksOf(exec).find(id => rt.ownsWork(self, id)) : undefined
       const sub = work === undefined ? undefined : randomUUID()
-      if (sub !== undefined) rt.openWork(sub, { from: self, room: room.id, parent: work })
       const missingFiles = folder === undefined ? [] : missingFileRefs(text, folder)
       const claims = missingFiles.length > 0 ? { missingFiles } : undefined
       try {
+        if (sub !== undefined) await rt.openWork(sub, { from: self, room: room.id, parent: work })
         // A post that wants the replies names the conversation it was written
         // from, so the report comes back there instead of the own chat.
         await rt.postToRoom(room, sender, long.text, { mentions, ...(claims ? { claims } : {}), ...(reportBack ? { reportBack: true, ...callerRoom(exec) } : {}), ...(member ? { member: true } : {}), ...(sub ? { sub } : {}), ...(long.length ? { length: long.length } : {}) }, long.files)

@@ -239,16 +239,43 @@ test('message_bot waits for the handoff work record before it returns', async (t
     }
     return original(...args)
   }
+  const deliver = host.rt.deliver.bind(host.rt)
+  let delivered = false
+  host.rt.deliver = async (...args) => {
+    delivered = true
+    return deliver(...args)
+  }
 
   const sending = host.tool('message_bot', { to: 'Tester', message: 'Review it.' }, 'b')
   await settle(() => entered)
-  let finished = false
-  void sending.then(() => { finished = true }, () => { finished = true })
-  await new Promise(resolve => setImmediate(resolve))
-  assert.equal(finished, false, 'message_bot returned before the work record was durable')
+  for (let i = 0; i < 20; i += 1) await new Promise(resolve => setImmediate(resolve))
+  assert.equal(delivered, false, 'the request was delivered before the work record was durable')
   release()
   await sending
+  assert.equal(delivered, true)
   assert.equal(Object.values(saved(host).works).some(work => work.from === 'b' && work.to === 'c'), true)
+})
+
+test('message_bot does not deliver when the handoff work cannot be saved', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: [STAGES[0]] })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const save = host.rt.save.bind(host.rt)
+  host.rt.save = async (...args) => {
+    const handoff = Object.values(host.rt.state.works ?? {}).some(work => work.from === 'b' && work.to === 'c')
+    if (handoff) throw new Error('disk full')
+    return save(...args)
+  }
+  const deliver = host.rt.deliver.bind(host.rt)
+  let delivered = false
+  host.rt.deliver = async (...args) => {
+    delivered = true
+    return deliver(...args)
+  }
+
+  await assert.rejects(() => host.tool('message_bot', { to: 'Tester', message: 'Review it.' }, 'b'), /disk full/)
+  assert.equal(delivered, false)
+  assert.equal(Object.values(host.rt.state.works ?? {}).some(work => work.from === 'b' && work.to === 'c'), false)
 })
 
 test('typed acceptance checks refuse prose and report the missing check', async (t) => {
