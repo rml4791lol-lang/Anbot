@@ -124,13 +124,24 @@ export function install(rt) {
       return process.cwd()
     }
   }
+  // A preset publishes its services in a per-session scope. `agent.ctx.skills`
+  // does not necessarily address that instance, so ask the preset roster for
+  // the agent's own service first; the host-plane registry is the fallback for
+  // callers that have no live agent (the settings picker before a session).
+  const presetSkillService = (agent) => {
+    if (agent === undefined) return undefined
+    try { return ctx.get?.('agentPresets')?.serviceFor?.(agent, 'skills') } catch { return undefined }
+  }
+  const hostSkillService = () => {
+    try { return ctx.get?.('skills') } catch { return undefined }
+  }
   const listProfileSkills = async ({ agent, cwd, strict = false } = {}) => {
-    // `agent.ctx.skills` is the scoped view. A host without that service (for
-    // example an older embedder or a focused unit test) simply has no profile
-    // catalog; reading through `ctx.get` avoids Cordis' inject guard.
-    let service
-    try { service = agent?.ctx?.skills } catch { /* the caller has no skill scope */ }
-    service ??= ctx.get?.('skills')
+    // An agent-scoped read sees the preset's providers; a host read sees the
+    // root `ds-bot-profile` provider mounted by cordis.patch.yml. A test
+    // embedder with neither simply has no profile catalog.
+    let service = presetSkillService(agent)
+    try { service ??= agent?.ctx?.skills } catch { /* the caller has no skill scope */ }
+    service ??= hostSkillService()
     if (typeof service?.list !== 'function' && typeof service?.snapshot !== 'function') return []
     if (strict && typeof service.snapshot !== 'function') throw new Error('This DSH cannot verify the skill catalog.')
     const options = { cwd, ...(agent === undefined ? {} : { scope: agent }) }
@@ -153,6 +164,22 @@ export function install(rt) {
       }
       return typeof service.list === 'function' ? service.list({ cwd }) : []
     }
+  }
+  // Reportable before/after evidence for the host-side catalog: the service
+  // exists, but an empty provider layer is the failure this fixes.
+  rt.skillCatalogDiagnostics = async () => {
+    const host = hostSkillService()
+    const out = { hostService: host !== undefined, hostProviderRead: false }
+    if (typeof host?.list !== 'function') return out
+    try {
+      const skills = await host.list({ cwd: skillCwd({}) })
+      out.hostProviderRead = true
+      out.hostSkillCount = skills.length
+      out.hostSkillNames = skills.slice(0, 8).map(skill => skill.name)
+    } catch (error) {
+      out.hostError = error instanceof Error ? error.message : String(error)
+    }
+    return out
   }
   const buildCatalog = async (options = {}) => catalogEntries(
     await listProfileSkills({ agent: options.agent, cwd: options.cwd ?? skillCwd(options), strict: options.strict === true }),
@@ -204,9 +231,59 @@ export function install(rt) {
       .map(skill => skill.byBot?.[botId] === undefined ? skill : { ...skill, ...skill.byBot[botId] })
   rt.skillCatalogSignature = () => catalogSignature(catalogCache)
   rt.refreshSkillCatalog = refreshSkillCatalog
+  // Plugin-provided skills (ppt-studio, graphlint, office-docx, …) are registered
+  // in the Agent's own scope by the preset's plugins and never reach the host
+  // registry. Masking already runs at that layer, so validation has to see the
+  // same names: read the Bot's live Agents and accept their union with the host
+  // catalog. A Bot with no Agent yet keeps the host-only result.
+  const liveBotAgents = async botId => {
+    const live = []
+    const add = sessionId => {
+      const agent = typeof sessionId === 'string' ? agents.get(sessionId)?.deref() : undefined
+      if (agent !== undefined && !live.includes(agent)) live.push(agent)
+    }
+    try {
+      add(rt.chatOf(botId))
+    } catch (error) {
+      rt.warn('ds-bot: skill validation chat session for %s unreadable: %s', botId, error)
+    }
+    try {
+      for (const sessionId of rt.groupSessionsOf(botId) ?? []) add(sessionId)
+    } catch (error) {
+      rt.warn('ds-bot: skill validation group sessions for %s unreadable: %s', botId, error)
+    }
+    if (live.length > 0) return live
+    // Saving a policy already resolves this Agent before mounting, so the same
+    // lookup here cannot create a Session the Bot would not have had.
+    try {
+      const agent = await rt.resolveAgent(rt.chatOf(botId))
+      if (agent !== undefined) {
+        try { trackAgent(agent) } catch { /* an Agent this build cannot track is still readable */ }
+        live.push(agent)
+      }
+    } catch (error) {
+      rt.warn('ds-bot: skill validation Agent for %s could not be resolved: %s', botId, error)
+    }
+    return live
+  }
   rt.validateSkillShortlist = async (list, options = {}) => {
     if (list === undefined) return undefined
-    const catalog = await buildCatalog(options)
+    const cwd = options.cwd ?? skillCwd(options)
+    let catalog = await buildCatalog({ ...options, cwd })
+    if (options.botId !== undefined) {
+      const byName = new Map(catalog.map(skill => [skill.name, skill]))
+      for (const agent of await liveBotAgents(options.botId)) {
+        let scoped
+        try {
+          scoped = catalogEntries(await listProfileSkills({ agent, cwd }), skillItems(), { includeMasked: true })
+        } catch (error) {
+          rt.warn('ds-bot: skill validation catalog for %s unreadable: %s', options.botId, error)
+          continue
+        }
+        for (const skill of scoped) if (!byName.has(skill.name)) byName.set(skill.name, skill)
+      }
+      catalog = [...byName.values()]
+    }
     return validateShortlistAgainstCatalog(list, catalog)
   }
   // Hide every profile skill this Bot did not choose. Registration goes through a

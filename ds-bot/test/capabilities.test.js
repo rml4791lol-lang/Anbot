@@ -549,6 +549,60 @@ test('a strict mask failure disables the skill loader instead of failing open', 
   assert.equal((await gate({ agent, messages: [] }, async () => ({ kind: 'enter', messages: [] }))).kind, 'enter')
 })
 
+test('a shortlist naming a skill removed from the catalog masks the rest and does not fail', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { rt, mounts, skills } = env
+  const catalog = [
+    { name: 'still-there', description: 'still here', provider: 'filesystem' },
+    { name: 'also-there', description: 'also here', provider: 'filesystem' },
+  ]
+  const agent = testAgent('chief', mounts, skills, { catalog })
+  const bot = { ...rt.state.bots.chief, skillShortlist: [{ name: 'gone', purpose: 'it was uninstalled' }] }
+  // The name no longer resolves: reconciliation neither throws nor leaves the
+  // remaining skills visible.
+  await rt.applySkillMasks(agent, bot)
+  assert.equal(skills.get('chief').has('gone'), false)
+  assert.equal(skills.get('chief').get('still-there').invocation.modelInvocable, false)
+  assert.equal(skills.get('chief').get('also-there').invocation.modelInvocable, false)
+  assert.equal(rt.skillCatalogView('chief').some(skill => skill.name === 'gone'), false)
+})
+
+test('a saved shortlist masks again when the host starts and the Bot Agent is created', async t => {
+  const state = team()
+  state.bots.chief.skillShortlist = [{ name: 'visible', purpose: 'use it' }]
+  const env = await setup({ state })
+  t.after(() => env.dispose())
+  const { ctx, rt, mounts, skills } = env
+  const agent = testAgent('chief', mounts, skills, {
+    catalog: [
+      { name: 'visible', description: 'visible', provider: 'filesystem' },
+      { name: 'other', description: 'other', provider: 'filesystem' },
+    ],
+  })
+  // A fresh host reads the saved state, not a live edit.
+  await ctx.emitAsync('agent/created', { agent })
+  await rt.scheduleCapabilitiesReconcile()
+  assert.equal(skills.get('chief').get('other').invocation.modelInvocable, false)
+  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['visible'])
+})
+
+test('a skill installed after the Agent started is masked on the next reconcile', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { ctx, rt, mounts, skills } = env
+  const catalog = [{ name: 'kept', description: 'kept', provider: 'filesystem' }]
+  const agent = testAgent('chief', mounts, skills, { catalog })
+  rt.state.bots.chief.skillShortlist = [{ name: 'kept', purpose: 'use it' }]
+  await ctx.emitAsync('agent/created', { agent })
+  await rt.scheduleCapabilitiesReconcile()
+  assert.equal(skills.get('chief').has('late'), false)
+  // The profile gains a skill while the Agent is already running.
+  catalog.push({ name: 'late', description: 'installed later', provider: 'filesystem' })
+  await rt.scheduleCapabilitiesReconcile()
+  assert.equal(skills.get('chief').get('late').invocation.modelInvocable, false)
+})
+
 test('attaching or detaching a skill capability keeps the shortlist in sync', async t => {
   const env = await setup()
   t.after(() => env.dispose())

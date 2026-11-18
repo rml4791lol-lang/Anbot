@@ -1434,6 +1434,10 @@ test('a Bot keeps a skill shortlist of at most five, and a sixth is refused', as
   const writer = (await call('state', {})).value.bots.find(bot => bot.name === 'Writer')
   assert.deepEqual(writer.skillShortlist, five)
 
+  // A name from the real profile catalog must pass the same host validation
+  // the live app uses (this is the regression that rejected every DSH skill).
+  assert.match(await create({ name: 'Reviewer', role: 'Reviewer', instructions: 'Review.', skills: [{ name: 'code-review-and-quality', purpose: 'review a change' }] }), /^Created Reviewer/)
+
   // A sixth is refused with a reason, and no Bot is half-made.
   const six = [...five, { name: 'doubt-driven-development', purpose: 'challenge a decision' }]
   assert.match(await create({ name: 'Six', role: 'Six', instructions: 'Six.', skills: six }), /at most 5 skills/)
@@ -1474,6 +1478,32 @@ test('a shortlisted DS-Bot skill capability stays effective without a manual att
   assert.equal(await update({ bot: 'Chief', skills: [{ name: 'zh-tdd', purpose: 'write the failing test first' }] }), 'Updated Chief.')
   assert.deepEqual(rt.state.bots.chief.capabilities, [])
   assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['zh-tdd'])
+})
+
+test('a skill only the Bot live Agent can see passes shortlist validation', async (t) => {
+  const { stop, ctx } = start({ version: 1, mainBotIds: ['chief'], bots: { chief: { id: 'chief', name: 'Chief', capabilities: [] } } }, { models: ['deepseek-v4-flash'] })
+  t.after(stop)
+  // Plugin-provided skills live in the Agent's own scope, not the host registry:
+  // the host list loses `ppt-studio` and only this Agent can still see it.
+  const host = ctx.get('skills')
+  host.list = async () => SKILL_CATALOG.filter(skill => skill.name !== 'ppt-studio')
+  ctx.sessionController.resolveAgent = async sessionId => ({
+    agent: {
+      session: { id: String(sessionId) },
+      ctx: {
+        effect: () => {},
+        skills: { list: async () => SKILL_CATALOG.filter(skill => skill.name === 'ppt-studio') },
+      },
+    },
+  })
+  const update = args => rt.teamTools.find(tool => tool.name === 'update_bot').execute({ bot: 'Chief', ...args }, { agent: { id: 'chief' } })
+
+  // The host catalog alone would refuse this name; the Bot's Agent catalog has it.
+  assert.equal(await update({ skills: [{ name: 'ppt-studio', purpose: 'build a deck' }] }), 'Updated Chief.')
+  assert.deepEqual(rt.state.bots.chief.skillShortlist, [{ name: 'ppt-studio', purpose: 'build a deck' }])
+  // A name no scope offers is still refused, so the union did not loosen typos.
+  assert.match(await update({ skills: [{ name: 'not-a-skill', purpose: 'nowhere' }] }), /No skill named not-a-skill/)
+  assert.deepEqual(rt.state.bots.chief.skillShortlist, [{ name: 'ppt-studio', purpose: 'build a deck' }])
 })
 
 test('a team saved before skill shortlists keeps no shortlist field', async (t) => {
