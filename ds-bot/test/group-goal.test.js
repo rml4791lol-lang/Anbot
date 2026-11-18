@@ -223,6 +223,34 @@ test('a goal Bot handoff keeps its goal task binding in activity and task detail
   assert.deepEqual(detail.handoffs.map(item => [item.id, item.owner, item.status]), [[`handoff:${workId}`, 'Tester', 'active']])
 })
 
+test('message_bot waits for the handoff work record before it returns', async (t) => {
+  const host = await start(t)
+  await startGoal(host, { stages: [STAGES[0]] })
+  await host.tool('group_goal', { action: 'task', bot: 'Writer', status: 'working' }, 'ga')
+  const original = host.rt.save.bind(host.rt)
+  let entered = false
+  let release
+  const held = new Promise(resolve => { release = resolve })
+  host.rt.save = async (...args) => {
+    const handoff = Object.values(host.rt.state.works ?? {}).some(work => work.from === 'b' && work.to === 'c')
+    if (handoff && !entered) {
+      entered = true
+      await held
+    }
+    return original(...args)
+  }
+
+  const sending = host.tool('message_bot', { to: 'Tester', message: 'Review it.' }, 'b')
+  await settle(() => entered)
+  let finished = false
+  void sending.then(() => { finished = true }, () => { finished = true })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(finished, false, 'message_bot returned before the work record was durable')
+  release()
+  await sending
+  assert.equal(Object.values(saved(host).works).some(work => work.from === 'b' && work.to === 'c'), true)
+})
+
 test('typed acceptance checks refuse prose and report the missing check', async (t) => {
   const host = await start(t)
   await startGoal(host, { stages: CHECKED_STAGES })

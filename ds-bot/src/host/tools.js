@@ -350,7 +350,7 @@ export function install(rt) {
         const steer = (args.when !== 'queue' && !toUser) || (joins && earlier.steered)
         const exchangeId = joins ? earlier.message.source.exchangeId : randomUUID()
         if (joins) rt.forgetDelivery?.(exchangeId)
-        else if (!toUser) rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask })
+        else if (!toUser) await rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask })
         const binding = toUser ? undefined : rt.workBinding?.(exchangeId)
         try {
           await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}), ...binding, ...goalTask })

@@ -33,7 +33,7 @@ export function install(rt) {
   const callsBySession = new PendingCallCache()
   // What came back, whole; state.json keeps the start of each.
   const whole = new Map()
-  const save = () => void rt.save().catch(() => {})
+  const save = () => rt.save().catch(() => {})
   const nameOf = id => rt.botOf(id)?.name
 
   // The whole result of a work, in a file of its own: state.json is written whole on
@@ -128,8 +128,9 @@ export function install(rt) {
       evidence: [],
     }
     if (above !== undefined) above.open.push(id)
-    save()
+    const persisted = save()
     logTask({ kind: 'open', id, from, to, parent, room, child, name })
+    return persisted
   }
 
   // The answer to work `id` is on its way, with `result` from `name`. Returns the work
