@@ -222,17 +222,17 @@ export function install(rt) {
     save()
   }
 
-  const dropWork = (id) => {
+  const dropWork = (id, { required = false } = {}) => {
     const work = works()[id]
-    if (work === undefined) return
+    if (work === undefined) return Promise.resolve()
     const { parent } = work
     delete works()[id]
     const above = works()[parent]
     if (above !== undefined) above.open = above.open.filter(other => other !== id)
     for (const result of work.results ?? []) whole.delete(result.id)
-    void rt.save().then(() => {
+    return save({ required }).then(() => {
       for (const result of work.results ?? []) dropResult(result.file)
-    }).catch(() => {})
+    })
   }
 
   function taken(workId, id) {

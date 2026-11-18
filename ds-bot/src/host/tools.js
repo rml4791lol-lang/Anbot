@@ -358,7 +358,11 @@ export function install(rt) {
           // The delivery stays noted for the next start while its Bot exists
           // (resume.js), and the resent request still answers up the tree, so the
           // work it opened stays too. Only a target that is gone drops the work.
-          if (!joins && rt.botOf(target.id) === undefined) rt.dropWork(exchangeId)
+          if (!joins && rt.botOf(target.id) === undefined) {
+            await rt.dropWork(exchangeId, { required: true }).catch(cleanup => {
+              throw new AggregateError([error, cleanup], `Delivery failed and its work record could not be removed: ${cleanup.message}`)
+            })
+          }
           throw error
         }
         const sent = toUser
@@ -823,7 +827,11 @@ export function install(rt) {
         // from, so the report comes back there instead of the own chat.
         await rt.postToRoom(room, sender, long.text, { mentions, ...(claims ? { claims } : {}), ...(reportBack ? { reportBack: true, ...callerRoom(exec) } : {}), ...(member ? { member: true } : {}), ...(sub ? { sub } : {}), ...(long.length ? { length: long.length } : {}) }, long.files)
       } catch (failure) {
-        if (sub !== undefined) rt.dropWork(sub)
+        if (sub !== undefined) {
+          await rt.dropWork(sub, { required: true }).catch(cleanup => {
+            throw new AggregateError([failure, cleanup], `Could not post in "${room.name}": ${failure.message}; its work record could not be removed: ${cleanup.message}`)
+          })
+        }
         return `Could not post in "${room.name}": ${failure.message}`
       }
       if (member && named.length === 0) return `Posted in "${room.name}", where the user and its members read it. Nobody answers it: your post only calls the members you name with @Name.`
