@@ -127,6 +127,9 @@ export function install(rt) {
     // Key names and who may use them; values never leave the host.
     secrets: rt.secretsView(),
     capabilities: rt.capabilityLibraryView(),
+    // The names a Bot may put in its shortlist: DSH's live catalog plus DS-Bot
+    // skill capabilities, already merged and labelled by the host.
+    skillCatalog: rt.skillCatalogView?.() ?? [],
     secretRequests: state.secretRequests ?? {},
     connectorRequests: state.connectorRequests ?? {},
     mailRequests: state.mailRequests ?? {},
@@ -163,6 +166,9 @@ export function install(rt) {
     learningSettled: rt.learningSettledView(),
     connectors: rt.connectorsView(),
     capabilityStatuses: rt.capabilityStatusesView(),
+    // A skill installed or removed changes this list without a team save; the
+    // live key makes windows ask for the state carrying the new catalog.
+    skillCatalog: rt.skillCatalogView?.() ?? [],
     phone: rt.phoneView(),
     imStatus: rt.imStatusView?.() ?? {},
     imVia: rt.imViaView?.() ?? {},
@@ -447,12 +453,12 @@ export function install(rt) {
         }
         case 'create-bot': {
           await rt.bootstrap()
-          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir, section: body.section, sectionId: body.sectionId })
+          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir, section: body.section, sectionId: body.sectionId, skillShortlist: body.skills })
           return ok(bot)
         }
         case 'update-bot':
           await rt.load()
-          return ok(await rt.updateBot(body.id, body))
+          return ok(await rt.updateBot(body.id, body.skills === undefined ? body : { ...body, skillShortlist: body.skills }))
         // Give up one wait for a hand-off that will not come back: only that sub-work
         // closes, with an explicit result for the work above it.
         case 'abandon-work':

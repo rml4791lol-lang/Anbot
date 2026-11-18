@@ -1,6 +1,16 @@
 // Japanese (ja) localization for DS Bot client and DSH settings namespaces.
 
 export const JA = {
+  'No skills are installed for this DSH profile yet.': 'この DSH プロファイルにはまだスキルがインストールされていません。',
+  'Up to 5 skills. The prompt lists each name with one line saying when to use it.': '最大 5 個のスキル。プロンプトには各スキルの名前と使う場面を 1 行ずつ表示します。',
+  'Search skills': 'スキルを検索',
+  'Not in the current catalog': '現在のカタログにありません',
+  'All profile skills are available.': 'プロファイルのスキルはすべて利用できます。',
+  'All profile skills are disabled.': 'プロファイルのスキルはすべて無効です。',
+  'Only the selected skills are available.': '選択したスキルだけを利用できます。',
+  'Use all skills': 'すべてのスキルを使用',
+  'Disable all profile skills': 'プロファイルのスキルをすべて無効化',
+
   'Task request': 'タスクリクエスト',
   'Bot report': 'Bot レポート',
   'Tool call': 'ツール呼び出し',
@@ -424,6 +434,7 @@ export const JA = {
   "Edit": "編集",
   "Click again to delete.": "もう一度クリックすると削除します。",
   "Ready": "準備完了",
+  'Partially ready': '一部準備完了',
   "Needs approval": "承認が必要",
   "No items": "項目なし",
   "Save an MCP server or skill first.": "先に MCP サーバーまたはスキルを保存してください。",

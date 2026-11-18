@@ -1,6 +1,16 @@
 // French (fr) localization for DS Bot client and DSH settings namespaces.
 
 export const FR = {
+  'No skills are installed for this DSH profile yet.': 'Ce profil DSH n’a pas encore de compétences installées.',
+  'Up to 5 skills. The prompt lists each name with one line saying when to use it.': 'Jusqu’à 5 compétences. Le prompt indique chaque nom et une ligne expliquant quand l’utiliser.',
+  'Search skills': 'Rechercher des compétences',
+  'Not in the current catalog': 'Absent du catalogue actuel',
+  'All profile skills are available.': 'Toutes les compétences du profil sont disponibles.',
+  'All profile skills are disabled.': 'Toutes les compétences du profil sont désactivées.',
+  'Only the selected skills are available.': 'Seules les compétences sélectionnées sont disponibles.',
+  'Use all skills': 'Utiliser toutes les compétences',
+  'Disable all profile skills': 'Désactiver toutes les compétences du profil',
+
   'Failed': 'Échoué',
   'Task request': 'Demande de tâche',
   'Bot report': 'Rapport du Bot',
@@ -425,6 +435,7 @@ export const FR = {
   "Edit": "Modifier",
   "Click again to delete.": "Cliquez à nouveau pour supprimer.",
   "Ready": "Prêt",
+  'Partially ready': 'Partiellement prêt',
   "Needs approval": "Approbation requise",
   "No items": "Aucun élément",
   "Save an MCP server or skill first.": "Enregistrez d’abord un serveur MCP ou une compétence.",

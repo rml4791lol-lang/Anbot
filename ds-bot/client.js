@@ -113,6 +113,15 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  "No skills are installed for this DSH profile yet.": "この DSH プロファイルにはまだスキルがインストールされていません。",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "最大 5 個のスキル。プロンプトには各スキルの名前と使う場面を 1 行ずつ表示します。",
+  "Search skills": "スキルを検索",
+  "Not in the current catalog": "現在のカタログにありません",
+  "All profile skills are available.": "プロファイルのスキルはすべて利用できます。",
+  "All profile skills are disabled.": "プロファイルのスキルはすべて無効です。",
+  "Only the selected skills are available.": "選択したスキルだけを利用できます。",
+  "Use all skills": "すべてのスキルを使用",
+  "Disable all profile skills": "プロファイルのスキルをすべて無効化",
   "Task request": "タスクリクエスト",
   "Bot report": "Bot レポート",
   "Tool call": "ツール呼び出し",
@@ -535,6 +544,7 @@ var JA = {
   "Edit": "編集",
   "Click again to delete.": "もう一度クリックすると削除します。",
   "Ready": "準備完了",
+  "Partially ready": "一部準備完了",
   "Needs approval": "承認が必要",
   "No items": "項目なし",
   "Save an MCP server or skill first.": "先に MCP サーバーまたはスキルを保存してください。",
@@ -2808,6 +2818,15 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  "No skills are installed for this DSH profile yet.": "이 DSH 프로필에는 아직 스킬이 설치되어 있지 않습니다.",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "최대 5개 스킬. 프롬프트에는 각 스킬 이름과 사용 시점을 한 줄씩 표시합니다.",
+  "Search skills": "스킬 검색",
+  "Not in the current catalog": "현재 카탈로그에 없음",
+  "All profile skills are available.": "모든 프로필 스킬을 사용할 수 있습니다.",
+  "All profile skills are disabled.": "모든 프로필 스킬이 비활성화되어 있습니다.",
+  "Only the selected skills are available.": "선택한 스킬만 사용할 수 있습니다.",
+  "Use all skills": "모든 스킬 사용",
+  "Disable all profile skills": "모든 프로필 스킬 비활성화",
   "Failed": "실패",
   "Task request": "작업 요청",
   "Bot report": "Bot 보고",
@@ -3232,6 +3251,7 @@ var KO = {
   Edit: "편집",
   "Click again to delete.": "삭제하려면 한 번 더 클릭하세요.",
   Ready: "준비됨",
+  "Partially ready": "일부 준비됨",
   "Needs approval": "승인 필요",
   "No items": "항목 없음",
   "Save an MCP server or skill first.": "먼저 MCP 서버나 스킬을 저장하세요.",
@@ -5548,6 +5568,15 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  "No skills are installed for this DSH profile yet.": "Este perfil de DSH aún no tiene habilidades instaladas.",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "Hasta 5 habilidades. El prompt muestra cada nombre y una línea sobre cuándo usarla.",
+  "Search skills": "Buscar habilidades",
+  "Not in the current catalog": "No está en el catálogo actual",
+  "All profile skills are available.": "Todas las habilidades del perfil están disponibles.",
+  "All profile skills are disabled.": "Todas las habilidades del perfil están desactivadas.",
+  "Only the selected skills are available.": "Solo están disponibles las habilidades seleccionadas.",
+  "Use all skills": "Usar todas las habilidades",
+  "Disable all profile skills": "Desactivar todas las habilidades del perfil",
   "Task request": "Solicitud de tarea",
   "Bot report": "Informe del Bot",
   "Tool call": "Llamada de herramienta",
@@ -5972,6 +6001,7 @@ var ES = {
   Edit: "Editar",
   "Click again to delete.": "Haz clic de nuevo para eliminar.",
   Ready: "Listo",
+  "Partially ready": "Parcialmente listo",
   "Needs approval": "Requiere aprobación",
   "No items": "Sin elementos",
   "Save an MCP server or skill first.": "Guarda primero un servidor MCP o una habilidad.",
@@ -8288,6 +8318,15 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  "No skills are installed for this DSH profile yet.": "Ce profil DSH n’a pas encore de compétences installées.",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "Jusqu’à 5 compétences. Le prompt indique chaque nom et une ligne expliquant quand l’utiliser.",
+  "Search skills": "Rechercher des compétences",
+  "Not in the current catalog": "Absent du catalogue actuel",
+  "All profile skills are available.": "Toutes les compétences du profil sont disponibles.",
+  "All profile skills are disabled.": "Toutes les compétences du profil sont désactivées.",
+  "Only the selected skills are available.": "Seules les compétences sélectionnées sont disponibles.",
+  "Use all skills": "Utiliser toutes les compétences",
+  "Disable all profile skills": "Désactiver toutes les compétences du profil",
   "Failed": "Échoué",
   "Task request": "Demande de tâche",
   "Bot report": "Rapport du Bot",
@@ -8711,6 +8750,7 @@ var FR = {
   "Edit": "Modifier",
   "Click again to delete.": "Cliquez à nouveau pour supprimer.",
   "Ready": "Prêt",
+  "Partially ready": "Partiellement prêt",
   "Needs approval": "Approbation requise",
   "No items": "Aucun élément",
   "Save an MCP server or skill first.": "Enregistrez d’abord un serveur MCP ou une compétence.",
@@ -10983,6 +11023,15 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  "No skills are installed for this DSH profile yet.": "Für dieses DSH-Profil sind noch keine Skills installiert.",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "Bis zu 5 Skills. Der Prompt zeigt jeden Namen mit einer Zeile, wann er zu verwenden ist.",
+  "Search skills": "Skills durchsuchen",
+  "Not in the current catalog": "Nicht im aktuellen Katalog",
+  "All profile skills are available.": "Alle Profil-Skills sind verfügbar.",
+  "All profile skills are disabled.": "Alle Profil-Skills sind deaktiviert.",
+  "Only the selected skills are available.": "Nur die ausgewählten Skills sind verfügbar.",
+  "Use all skills": "Alle Skills verwenden",
+  "Disable all profile skills": "Alle Profil-Skills deaktivieren",
   "Task request": "Aufgabenanfrage",
   "Bot report": "Bot-Bericht",
   "Tool call": "Tool-Aufruf",
@@ -11409,6 +11458,7 @@ var DE = {
   Edit: "Bearbeiten",
   "Click again to delete.": "Zum Löschen erneut klicken.",
   Ready: "Bereit",
+  "Partially ready": "Teilweise bereit",
   "Needs approval": "Freigabe erforderlich",
   "No items": "Keine Einträge",
   "Save an MCP server or skill first.": "Speichere zuerst einen MCP-Server oder Skill.",
@@ -13724,6 +13774,15 @@ var DSH_DE = {
 // src/client/i18n.js
 var NAMESPACE = "ds-bot";
 var ZH = {
+  "No skills are installed for this DSH profile yet.": "这个 DSH 配置还没有安装技能。",
+  "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "最多 5 个技能。提示词只列出每个技能的名称和一句使用时机。",
+  "Search skills": "搜索技能",
+  "Not in the current catalog": "不在当前技能目录中",
+  "All profile skills are available.": "所有 DSH 配置技能都可用。",
+  "All profile skills are disabled.": "所有 DSH 配置技能都已禁用。",
+  "Only the selected skills are available.": "只有选中的技能可用。",
+  "Use all skills": "使用全部技能",
+  "Disable all profile skills": "禁用全部配置技能",
   "Failed": "失败",
   "Task request": "任务请求",
   "Bot report": "Bot 报告",
@@ -14129,6 +14188,7 @@ var ZH = {
   Edit: "编辑",
   "Click again to delete.": "再点一次删除。",
   Ready: "就绪",
+  "Partially ready": "部分就绪",
   "Needs approval": "需要批准",
   "No items": "没有项目",
   "Save an MCP server or skill first.": "请先保存 MCP 服务或技能。",
@@ -18072,6 +18132,7 @@ button.bt-set-row:hover .bt-chevron{transform:translateX(2px);color:var(--bt-ink
 .bt-set-row:last-child{border-bottom-left-radius:12px;border-bottom-right-radius:12px}
 .bt-set-copy{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .bt-set-hint{font-size:12px;line-height:17px;color:color-mix(in srgb,var(--bt-ink-2) 55%,var(--bt-ink-3))}
+.bt-set-search{margin:12px 16px 0;padding:8px 10px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;font-size:13px;outline:none}.bt-set-search:focus{border-color:var(--bt-accent)}
 .bt-set-control{flex:none;display:flex;align-items:center;gap:8px}
 .bt-set-places .bt-set-control{flex:0 1 auto;max-width:50%;min-width:0}
 /* Shrinkable, so a long model name gets its ellipsis instead of pushing Reset out of the card. */
@@ -25463,7 +25524,7 @@ var parseMap = (text, label) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(t("{label} must be a JSON object.", { label }));
   return value;
 };
-var statusText = (status) => !status ? void 0 : status.state === "ready" ? t("Ready") : status.state === "needs-approval" ? t("Needs approval") : status.state === "error" ? t("Could not connect: {error}", { error: status.error ?? "" }) : t("Connecting…");
+var statusText = (status) => !status ? void 0 : status.state === "ready" ? t("Ready") : status.state === "partial" ? t("Partially ready") : status.state === "needs-approval" ? t("Needs approval") : status.state === "error" ? t("Could not connect: {error}", { error: status.error ?? "" }) : t("Connecting…");
 function Field({ label, value, onChange, multiline = false, disabled = false, placeholder }) {
   return (0, import_react23.createElement)(
     "label",
@@ -25656,6 +25717,12 @@ function CapabilitiesPage({ roster, actions, run: run2 }) {
 function BotCapabilitiesCard({ bot, roster, actions, run: run2, Card: Card3, SwitchRow: SwitchRow2 }) {
   const items = [...roster.capabilities ?? []].sort((a, b) => Number(b.kind === "pack") - Number(a.kind === "pack") || a.name.localeCompare(b.name));
   const attached = new Set(bot.capabilities ?? []);
+  const shortlisted = new Set((bot.skillShortlist ?? []).map((skill) => skill.name));
+  for (const item of items) {
+    if (item.kind !== "skill") continue;
+    if (Array.isArray(bot.skillShortlist) && !shortlisted.has(item.name)) attached.delete(item.name);
+    else if (shortlisted.has(item.name)) attached.add(item.name);
+  }
   const statuses = roster.capabilityStatuses?.[bot.id] ?? {};
   if (items.length === 0) return null;
   return (0, import_react23.createElement)(
@@ -26699,6 +26766,116 @@ function MemoryCard({ bot, actions }) {
     )
   );
 }
+var SKILL_SHORTLIST_MAX = 5;
+var SKILL_PURPOSE_MAX = 160;
+var skillPurpose = (skill) => {
+  const text = String(skill.description || skill.name).replace(/\s+/g, " ").trim();
+  return text.length <= SKILL_PURPOSE_MAX ? text : `${text.slice(0, SKILL_PURPOSE_MAX - 3)}...`;
+};
+function BotSkillShortlistCard({ bot, roster, actions, run: run2, Card: Card3, SwitchRow: SwitchRow2 }) {
+  const [query, setQuery] = (0, import_react26.useState)("");
+  const [draft, setDraft] = (0, import_react26.useState)(null);
+  const [draftActive, setDraftActive] = (0, import_react26.useState)(false);
+  const catalog = (Array.isArray(roster.skillCatalog) ? roster.skillCatalog : []).filter((skill) => !Array.isArray(skill.bots) || skill.bots.includes(bot.id)).map((skill) => skill.byBot?.[bot.id] === void 0 ? skill : { ...skill, ...skill.byBot[bot.id] });
+  const saved = Array.isArray(bot.skillShortlist) ? bot.skillShortlist : void 0;
+  const chosen = draftActive ? draft : saved;
+  const current = (0, import_react26.useRef)(chosen);
+  const confirmed = (0, import_react26.useRef)(saved);
+  const queue = (0, import_react26.useRef)(Promise.resolve());
+  current.current = chosen;
+  if (!draftActive) confirmed.current = saved;
+  const known = new Set(catalog.map((skill) => skill.name));
+  const rows2 = [
+    ...catalog,
+    ...(chosen ?? []).filter((skill) => !known.has(skill.name)).map((skill) => ({
+      name: skill.name,
+      description: "",
+      provider: "",
+      missing: true
+    }))
+  ];
+  if (rows2.length === 0) {
+    return (0, import_react26.createElement)(
+      Card3,
+      { title: t("Skills") },
+      (0, import_react26.createElement)("div", { className: "bt-set-row" }, (0, import_react26.createElement)("span", { className: "bt-set-hint" }, t("No skills are installed for this DSH profile yet.")))
+    );
+  }
+  const full2 = (chosen?.length ?? 0) >= SKILL_SHORTLIST_MAX;
+  const save = (next, payload = next) => {
+    current.current = next;
+    setDraft(next);
+    setDraftActive(true);
+    queue.current = queue.current.then(() => run2(actions.updateBot(bot.id, { skills: payload }))).then((done) => {
+      if (done === false && current.current === next) {
+        current.current = confirmed.current;
+        setDraft(confirmed.current);
+        setDraftActive(false);
+      } else if (current.current === next) {
+        confirmed.current = next;
+        setDraftActive(false);
+        setDraft(null);
+      }
+      return done;
+    }, () => {
+      if (current.current === next) {
+        current.current = confirmed.current;
+        setDraft(confirmed.current);
+        setDraftActive(false);
+      }
+      return false;
+    });
+  };
+  const useAll = () => save(void 0, null);
+  const disableAll = () => save([]);
+  const status = chosen === void 0 ? t("All profile skills are available.") : chosen.length === 0 ? t("All profile skills are disabled.") : t("Only the selected skills are available.");
+  const needle = query.trim().toLowerCase();
+  const visible2 = rows2.filter((item) => needle === "" || `${item.name} ${item.description} ${item.provider}`.toLowerCase().includes(needle)).sort((a, b) => ((chosen ?? []).some((skill) => skill.name === a.name) ? 0 : 1) - ((chosen ?? []).some((skill) => skill.name === b.name) ? 0 : 1));
+  return (0, import_react26.createElement)(
+    Card3,
+    { title: t("Skills") },
+    (0, import_react26.createElement)(
+      "div",
+      { className: "bt-set-row" },
+      (0, import_react26.createElement)("span", { className: "bt-set-copy" }, (0, import_react26.createElement)("span", { className: "bt-bs-label" }, t("Skills")), (0, import_react26.createElement)("span", { className: "bt-set-hint" }, status)),
+      (0, import_react26.createElement)(
+        "span",
+        { className: "bt-set-control" },
+        chosen === void 0 ? null : (0, import_react26.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: useAll }, t("Use all skills")),
+        chosen === void 0 || chosen.length > 0 ? (0, import_react26.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", onClick: disableAll }, t("Disable all profile skills")) : null
+      )
+    ),
+    (0, import_react26.createElement)("div", { className: "bt-set-row" }, (0, import_react26.createElement)("span", { className: "bt-set-hint" }, t("Up to 5 skills. The prompt lists each name with one line saying when to use it."))),
+    rows2.length > 8 ? (0, import_react26.createElement)("input", {
+      type: "search",
+      className: "bt-set-search",
+      placeholder: t("Search skills"),
+      value: query,
+      onChange: (event) => setQuery(event.target.value),
+      "aria-label": t("Search skills")
+    }) : null,
+    visible2.map((item) => {
+      const selected = (chosen ?? []).find((skill) => skill.name === item.name);
+      const source = item.missing ? t("Not in the current catalog") : item.provider;
+      return (0, import_react26.createElement)(SwitchRow2, {
+        key: item.name,
+        label: item.name,
+        hint: `${source}${item.description ? ` — ${item.description}` : ""}`,
+        on: selected !== void 0,
+        disabled: selected === void 0 && full2,
+        onChange: (enabled) => {
+          const list = Array.isArray(current.current) ? current.current : [];
+          if (enabled) {
+            if (list.length >= SKILL_SHORTLIST_MAX || list.some((skill) => skill.name === item.name)) return;
+            save([...list, { name: item.name, purpose: skillPurpose(item) }]);
+          } else {
+            save(list.filter((skill) => skill.name !== item.name));
+          }
+        }
+      });
+    })
+  );
+}
 function BotSettingsForm({ bot, roster, actions, run: run2 }) {
   const [editing, setEditing] = (0, import_react26.useState)(false);
   const [editorShown, editorLeaving] = useLinger(editing, 120);
@@ -26796,6 +26973,7 @@ function BotSettingsForm({ bot, roster, actions, run: run2 }) {
       )
     ),
     (0, import_react26.createElement)(BotCapabilitiesCard, { bot, roster, actions, run: run2, Card: Card2, SwitchRow }),
+    (0, import_react26.createElement)(BotSkillShortlistCard, { bot, roster, actions, run: run2, Card: Card2, SwitchRow }),
     (0, import_react26.createElement)(BotComputerCard, { bot, roster, actions, run: run2, Card: Card2, Row }),
     roster.memory === false ? null : (0, import_react26.createElement)(MemoryCard, { bot, actions }),
     (0, import_react26.createElement)(BotSchedules, { bot, roster, actions }),

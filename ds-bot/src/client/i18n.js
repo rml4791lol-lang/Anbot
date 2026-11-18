@@ -11,6 +11,16 @@ import { DSH_DE, HOST_ERRORS_DE, DE } from './locales/de.js'
 export const NAMESPACE = 'ds-bot'
 
 const ZH = {
+  'No skills are installed for this DSH profile yet.': '这个 DSH 配置还没有安装技能。',
+  'Up to 5 skills. The prompt lists each name with one line saying when to use it.': '最多 5 个技能。提示词只列出每个技能的名称和一句使用时机。',
+  'Search skills': '搜索技能',
+  'Not in the current catalog': '不在当前技能目录中',
+  'All profile skills are available.': '所有 DSH 配置技能都可用。',
+  'All profile skills are disabled.': '所有 DSH 配置技能都已禁用。',
+  'Only the selected skills are available.': '只有选中的技能可用。',
+  'Use all skills': '使用全部技能',
+  'Disable all profile skills': '禁用全部配置技能',
+
   'Failed': '失败',
   'Task request': '任务请求',
   'Bot report': 'Bot 报告',
@@ -417,6 +427,7 @@ const ZH = {
   Edit: '编辑',
   'Click again to delete.': '再点一次删除。',
   Ready: '就绪',
+  'Partially ready': '部分就绪',
   'Needs approval': '需要批准',
   'No items': '没有项目',
   'Save an MCP server or skill first.': '请先保存 MCP 服务或技能。',
