@@ -350,7 +350,7 @@ export function install(rt) {
         const steer = (args.when !== 'queue' && !toUser) || (joins && earlier.steered)
         const exchangeId = joins ? earlier.message.source.exchangeId : randomUUID()
         if (joins) rt.forgetDelivery?.(exchangeId)
-        else if (!toUser) rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask })
+        else if (!toUser) await rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask })
         const binding = toUser ? undefined : rt.workBinding?.(exchangeId)
         try {
           await rt.deliver({ fromId: sender.id, toId: target.id, text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}), ...binding, ...goalTask })
@@ -358,7 +358,11 @@ export function install(rt) {
           // The delivery stays noted for the next start while its Bot exists
           // (resume.js), and the resent request still answers up the tree, so the
           // work it opened stays too. Only a target that is gone drops the work.
-          if (!joins && rt.botOf(target.id) === undefined) rt.dropWork(exchangeId)
+          if (!joins && rt.botOf(target.id) === undefined) {
+            await rt.dropWork(exchangeId, { required: true }).catch(cleanup => {
+              throw new AggregateError([error, cleanup], `Delivery failed and its work record could not be removed: ${cleanup.message}`)
+            })
+          }
           throw error
         }
         const sent = toUser
@@ -815,15 +819,19 @@ export function install(rt) {
       // work handed on for that request (handoffs.js).
       const work = reportBack ? worksOf(exec).find(id => rt.ownsWork(self, id)) : undefined
       const sub = work === undefined ? undefined : randomUUID()
-      if (sub !== undefined) rt.openWork(sub, { from: self, room: room.id, parent: work })
       const missingFiles = folder === undefined ? [] : missingFileRefs(text, folder)
       const claims = missingFiles.length > 0 ? { missingFiles } : undefined
       try {
+        if (sub !== undefined) await rt.openWork(sub, { from: self, room: room.id, parent: work })
         // A post that wants the replies names the conversation it was written
         // from, so the report comes back there instead of the own chat.
         await rt.postToRoom(room, sender, long.text, { mentions, ...(claims ? { claims } : {}), ...(reportBack ? { reportBack: true, ...callerRoom(exec) } : {}), ...(member ? { member: true } : {}), ...(sub ? { sub } : {}), ...(long.length ? { length: long.length } : {}) }, long.files)
       } catch (failure) {
-        if (sub !== undefined) rt.dropWork(sub)
+        if (sub !== undefined) {
+          await rt.dropWork(sub, { required: true }).catch(cleanup => {
+            throw new AggregateError([failure, cleanup], `Could not post in "${room.name}": ${failure.message}; its work record could not be removed: ${cleanup.message}`)
+          })
+        }
         return `Could not post in "${room.name}": ${failure.message}`
       }
       if (member && named.length === 0) return `Posted in "${room.name}", where the user and its members read it. Nobody answers it: your post only calls the members you name with @Name.`

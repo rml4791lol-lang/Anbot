@@ -1416,7 +1416,8 @@ export function install(rt) {
     const work = rt.workOf?.(entry?.info)
     const self = id === undefined ? undefined : rt.selfOf(id)
     if (work === undefined || self === undefined || !rt.chatOwners.has(id) || typeof info?.id !== 'string' || typeof info?.runId !== 'string' || !rt.ownsWork?.(self, work)) return
-    rt.openWork?.(info.runId, { from: self, parent: work, name: 'subagent', child: info.id })
+    void rt.openWork?.(info.runId, { from: self, parent: work, name: 'subagent', child: info.id })
+      ?.catch?.(error => rt.warn('ds-bot: subagent work was not saved: %s', error))
   })
   // A settled run closes its sub-work: its closing text joins the results of
   // the work it hung under.
