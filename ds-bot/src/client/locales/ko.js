@@ -1,6 +1,16 @@
 // Korean (ko) localization for DS Bot client and DSH settings namespaces.
 
 export const KO = {
+  'No skills are installed for this DSH profile yet.': '이 DSH 프로필에는 아직 스킬이 설치되어 있지 않습니다.',
+  'Up to 5 skills. The prompt lists each name with one line saying when to use it.': '최대 5개 스킬. 프롬프트에는 각 스킬 이름과 사용 시점을 한 줄씩 표시합니다.',
+  'Search skills': '스킬 검색',
+  'Not in the current catalog': '현재 카탈로그에 없음',
+  'All profile skills are available.': '모든 프로필 스킬을 사용할 수 있습니다.',
+  'All profile skills are disabled.': '모든 프로필 스킬이 비활성화되어 있습니다.',
+  'Only the selected skills are available.': '선택한 스킬만 사용할 수 있습니다.',
+  'Use all skills': '모든 스킬 사용',
+  'Disable all profile skills': '모든 프로필 스킬 비활성화',
+
   'Failed': '실패',
   'Task request': '작업 요청',
   'Bot report': 'Bot 보고',
@@ -427,6 +437,7 @@ export const KO = {
   Edit: '편집',
   'Click again to delete.': '삭제하려면 한 번 더 클릭하세요.',
   Ready: '준비됨',
+  'Partially ready': '일부 준비됨',
   'Needs approval': '승인 필요',
   'No items': '항목 없음',
   'Save an MCP server or skill first.': '먼저 MCP 서버나 스킬을 저장하세요.',

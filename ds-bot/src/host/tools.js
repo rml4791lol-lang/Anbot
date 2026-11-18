@@ -48,6 +48,24 @@ const AVATAR_PARAM = {
   type: 'string',
   description: 'Profile picture: a local image path (a relative path starts in your working folder) or a data URL. PNG, JPEG, WebP, or GIF; square, 256x256 recommended, up to 120 KB. Images are not resized.',
 }
+// The shortlist names the skills a Bot should reach for, with one line each saying when.
+const SKILLS_PARAM = {
+  description: 'At most 5 skills this Bot should reach for, each as { name, purpose }. The prompt shows the names and those lines only; an empty list hides all skills, and null returns to inheriting the profile catalog.',
+  oneOf: [
+    {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          name: { type: 'string', required: true, description: 'Skill name exactly as the skill catalog lists it, e.g. "test-driven-development"' },
+          purpose: { type: 'string', required: true, description: 'One line, at most 160 characters, saying when to use this skill' },
+        },
+      },
+    },
+    { type: 'null' },
+  ],
+}
 const WORKING_DIRECTORY_TOOL = 'working_directory'
 
 export function install(rt) {
@@ -407,6 +425,7 @@ export function install(rt) {
       work_dir: WORK_DIR_PARAM,
       section: SECTION_PARAM,
       avatar: AVATAR_PARAM,
+      skills: SKILLS_PARAM,
     },
     output,
     async execute(args, exec) {
@@ -424,7 +443,7 @@ export function install(rt) {
         const served = new Set((await rt.catalog()).filter(entry => entry.needsKey !== true && rt.isLocalAgentRef?.(entry.ref) !== true).map(entry => entry.ref))
         const fallback = [state.prefs.defaultBotModel, creator?.model].find(ref => ref && served.has(ref))
         const model = args.model || fallback
-        const bot = await rt.createBot({ ...args, avatar: avatar === undefined ? undefined : { image: avatar }, model, workDir, effort: args.effort, section: args.section, createdBy: creator?.id })
+        const bot = await rt.createBot({ ...args, avatar: avatar === undefined ? undefined : { image: avatar }, model, workDir, effort: args.effort, section: args.section, createdBy: creator?.id, skillShortlist: args.skills })
         return `Created ${bot.name}${workDir ? `, working in ${workDir}` : ''}. It is greeting the user now.`
       } catch (error) {
         return `Could not create the Bot: ${error.message}`
@@ -446,6 +465,7 @@ export function install(rt) {
       effort: { type: 'string', description: 'Thinking level for the Bot\'s model, as list_bot_models shows; an empty string returns to the model\'s default' },
       work_dir: { ...WORK_DIR_PARAM, description: `${WORK_DIR_PARAM.description}; an empty string returns it to the team workspace` },
       section: { ...SECTION_PARAM, description: `${SECTION_PARAM.description}; an empty string removes the Bot from its section (Main Bot only)` },
+      skills: SKILLS_PARAM,
     },
     output,
     async execute(args, exec) {
@@ -470,7 +490,7 @@ export function install(rt) {
         // does: setting one keeps a custom character, and clearing removes only the image.
         // They are read here, after the waits above, so a change made meanwhile stays.
         const avatar = image === undefined ? undefined : { ...rt.botOf(bot.id)?.avatar, image }
-        const next = await rt.updateBot(bot.id, { name: newName, role, instructions, color, ...(avatar !== undefined ? { avatar } : {}), ...(model ? { model } : {}), ...(effort === undefined ? {} : { effort }), ...(section === undefined ? {} : { section }), ...(moving ? { workDir: workDir ?? '' } : {}) }, self, exec.agent?.id)
+        const next = await rt.updateBot(bot.id, { name: newName, role, instructions, color, ...(avatar !== undefined ? { avatar } : {}), ...(model ? { model } : {}), ...(effort === undefined ? {} : { effort }), ...(section === undefined ? {} : { section }), ...(moving ? { workDir: workDir ?? '' } : {}), ...(args.skills === undefined ? {} : { skillShortlist: args.skills }) }, self, exec.agent?.id)
         if (!moving) return `Updated ${next.name}.`
         const folder = workDir ?? 'the team workspace'
         return bot.id === caller.id ? `Updated ${next.name}. From your next step on, you work in ${folder}.` : `Updated ${next.name}. It now works in ${folder}.`
@@ -1300,7 +1320,8 @@ export function install(rt) {
           : item.kind === 'mcp' && item.transport === 'stdio' ? `; ${item.approved ? 'allowed' : 'needs user approval'}` : ''
         const itemStatus = statuses[item.name]
         const state = itemStatus ? ` (${itemStatus.state}${itemStatus.error ? `: ${itemStatus.error}` : ''})` : ''
-        const status = bot.capabilities?.includes(item.name) ? `; attached to you${state}` : ''
+        const shortlisted = (bot.skillShortlist ?? []).some(skill => skill.name === item.name)
+        const status = bot.capabilities?.includes(item.name) || shortlisted ? `; attached to you${state}` : ''
         return `- ${item.name} (${item.kind})${item.description ? ` — ${item.description}` : ''}${extra}${status}`
       })
       return ['Shared capabilities:', ...lines].join('\n')
