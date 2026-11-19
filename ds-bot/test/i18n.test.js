@@ -82,6 +82,17 @@ test('trace labels resolve in every supported locale', () => {
   }
 })
 
+test('every DICTIONARY.zh key exists in all other supported locales', () => {
+  const missing = []
+  const locales = ['zh-TW', 'ja', 'ko', 'es', 'fr', 'de']
+  for (const key of Object.keys(DICTIONARY.zh)) {
+    for (const loc of locales) {
+      if (!Object.hasOwn(DICTIONARY[loc] ?? {}, key)) missing.push(`${loc}: ${key}`)
+    }
+  }
+  assert.deepEqual(missing, [])
+})
+
 test('copy follows the DSH language across all locales and stays English without a locale service', () => {
   assert.equal(t('Message {name}', { name: 'Chief' }), 'Message Chief')
   assert.equal(language(), 'en')

@@ -1,4 +1,5 @@
 import { createElement as h, Fragment, useEffect, useRef, useState } from 'react'
+import { NotificationWatcher } from './notifications.js'
 import { createPortal } from 'react-dom'
 import { CommandPalette } from './palette.js'
 import { GroupSearch } from './group-search.js'
@@ -10,7 +11,7 @@ import { ContextMenu } from './context-menu.js'
 import { PANEL_LINGER_MS, BotPanel } from './browser-pane.js'
 import { frameLayout, FALLBACK_SIDEBAR_WIDTH } from './frame-layout.js'
 import { MemoryDialog } from './memory-panel.js'
-import { useLinger } from './motion.js'
+import { reducedMotion, useLinger } from './motion.js'
 import { OpeningCover, openingModel } from './opening.js'
 import { TeamOverviewPanel, TeamOverviewTab } from './team-overview.js'
 import { TeamActivity } from './team-activity.js'
@@ -47,7 +48,7 @@ export function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useA
   const [kept, setKept] = useState(shown)
   useEffect(() => {
     if (shown) { setKept(shown); return undefined }
-    const timer = setTimeout(() => setKept(null), PANEL_LINGER_MS)
+    const timer = setTimeout(() => setKept(null), reducedMotion() ? 0 : PANEL_LINGER_MS)
     return () => clearTimeout(timer)
   }, [ui.details, ui.view, ui.renaming, ui.tab, shown === null])
   const pane = shown ?? kept
@@ -71,6 +72,7 @@ export function Overlays({ useRoster, useUi, useSessions, useSessionStatus, useA
   const opening = openingModel({ pending: ui.pendingOpen ?? null, current, roster })
   return h(Fragment, null,
     h(TeamOverviewTab, { useUi, useSurface, actions }),
+    h(NotificationWatcher, { key: 'ds-bot:notifications', useSessions, useSessionStatus, useRoster, useWork, actions }),
     opening ? createPortal(h(OpeningCover, { model: opening, column: layout.column }), document.body) : null,
     teamOverview ? createPortal(h(TeamOverviewPanel, { useRoster, useWork, useSessionStatus, useUi, actions, leaving: teamOverviewLeaving }), document.body) : null,
     pane ? createPortal(h(BotPanel, { pane, leaving: shown === null, room: layout.room, overlay: layout.panel === 'overlay', roster, actions, useSessions, useSessionStatus, useActivity, useWork, useBrowserTabs, useBrowserPages, useBrowserHolds }), document.body) : null,

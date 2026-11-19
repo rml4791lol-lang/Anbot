@@ -136,6 +136,15 @@ export class LoopbackMcp {
       await session.transport.handleRequest(request, response, parsed)
       return
     }
+    // A payload of notifications or responses only carries no work, and the spec
+    // answers it with 202 and no body (upstream behaviour; the SDK session path
+    // above answers the same way).
+    const messages = Array.isArray(parsed) ? parsed : [parsed]
+    if (parsed !== undefined && messages.every(item => item?.method === undefined || item?.id === undefined)) {
+      response.writeHead(202)
+      response.end()
+      return
+    }
     if (sessionId !== undefined) {
       writeJson(response, 404, {
         jsonrpc: '2.0',

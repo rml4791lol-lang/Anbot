@@ -120,8 +120,9 @@ export function install(rt) {
   // one its recipient had not read, under that one's exchange. `silent`: a note with no
   // question in it (a profile update, a stop receipt) is put in the queue and read at the
   // recipient's next turn instead of waking it; a turn spent acknowledging a note is a turn
-  // the user reads as an answer that never came.
-  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, queue = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work, taskId, attemptId }) {
+  // the user reads as an answer that never came. `fromPart`: the Session
+  // of the sending Bot, which a reply comes back to when that is a background part.
+  async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, queue = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, fromPart, images = [], files = [], length, work, taskId, attemptId }) {
     // #1517: a model that writes its tool call in DSML form leaves wire tags in
     // the text it hands delivery; neither the book nor the recipient sees them.
     text = stripWireTags(text)
@@ -145,6 +146,7 @@ export function install(rt) {
       ...(taskId ? { taskId } : {}),
       ...(attemptId ? { attemptId } : {}),
       ...(fromId ? { senderSessionId: fromId } : {}),
+      ...(fromPart ? { senderPart: fromPart } : {}),
       ...(replyTo ? { replyTo } : {}),
       ...(roomId ? { roomId } : {}),
       ...(audience === 'user' ? { audience } : {}),

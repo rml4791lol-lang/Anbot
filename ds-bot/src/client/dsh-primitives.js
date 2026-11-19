@@ -1,6 +1,6 @@
 // The DSH interface primitives the Bot views draw with. The desktop app's window does not
 // load DSH's interface; its build puts its own module in place of this one.
-export {
+import {
   Button,
   ConnectionIndicator,
   FileTypeIcon,
@@ -21,3 +21,24 @@ export {
   projectUserText,
   writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+export {
+  Button,
+  ConnectionIndicator,
+  FileTypeIcon,
+  FishLogo,
+  IconAgentPresetOutlineMedium,
+  IconArchiveOutlineMedium,
+  IconDownloadOutlineRegular,
+  IconLoadingOutlineRegular,
+  IconPersonalizationOutlineMedium,
+  IconSettingsOutlineMedium,
+  IconUserOutlineMedium,
+  JsonBlock,
+  MarkdownText,
+  Modal,
+  Tooltip,
+  fileExtension,
+  fileSizeText,
+  projectUserText,
+  writeClipboard,
+}

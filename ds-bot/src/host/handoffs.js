@@ -12,6 +12,7 @@ import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
 import { installTaskLog } from './task-ledger.js'
 import { PendingCallCache, clearRecoveryNeeded, evidenceFromEvents, noteAttemptRecovery, noteRecoveryNeeded, progressAfterTurn, progressFingerprint } from './task-evidence.js'
+import { isOpenPart, ownChatSessions } from './threads.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
@@ -112,7 +113,9 @@ export function install(rt) {
   // `parent`: the work the sender was doing when it sent this one. `child`: the
   // session id of the subagent a run of this work belongs to — the run, not the
   // child, is the sub-work, so a child that is continued hands up a result per run.
-  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask }) {
+  // `fromPart`: the part of the sender's own chat it wrote from, which its answer goes
+  // back to when that is a background part.
+  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask, fromPart }) {
     const above = parent === undefined ? undefined : works()[parent]
     const now = Date.now()
     const attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
@@ -120,7 +123,7 @@ export function install(rt) {
     const goalTaskAttemptId = typeof goalTask?.attemptId === 'string' ? goalTask.attemptId : ''
     const record = {
       ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}),
-      ...(fromRoom ? { fromRoom } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}),
+      ...(fromRoom ? { fromRoom } : {}), ...(fromPart ? { fromPart } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}),
       ...(goalTaskId ? { goalTask: { taskId: goalTaskId, ...(goalTaskAttemptId ? { attemptId: goalTaskAttemptId } : {}) } } : {}),
       open: [], results: [], at: now,
       attempt,
@@ -442,7 +445,7 @@ export function install(rt) {
   // Who asked for the work, as the turn that answers a request sees its trigger.
   const askedBy = workId => {
     const work = works()[workId]
-    return work === undefined ? undefined : { kind: 'bot', role: 'request', exchangeId: workId, senderSessionId: work.from, ...(work.fromRoom ? { senderRoomId: work.fromRoom } : {}) }
+    return work === undefined ? undefined : { kind: 'bot', role: 'request', exchangeId: workId, senderSessionId: work.from, ...(work.fromPart ? { senderPart: work.fromPart } : {}), ...(work.fromRoom ? { senderRoomId: work.fromRoom } : {}) }
   }
   // The answer that goes up: what the Bot said last for this work, then what came back.
   function answerText(workId, reply, botName) {
@@ -595,10 +598,16 @@ export function install(rt) {
   // What a Bot is doing, in one line for the Bots that work with it.
   function statusOf(botId) {
     const chat = rt.chatOf(botId)
-    const sessions = [...new Set([chat, ...(rt.groupSessionsOf?.(botId) ?? [])])]
+    // A Bot's own chat may keep parts running in the background, as its group Sessions
+    // may run: a Bot working there is not idle, and the line says where.
+    const bot = rt.botOf(botId)
+    const own = bot === undefined ? [chat] : ownChatSessions(bot)
+    const sessions = [...new Set([...own, ...(rt.groupSessionsOf?.(botId) ?? [])])]
     const place = sessionId => {
       const room = rt.roomOf(rt.groupOwners.get(sessionId)?.roomId)
-      return room ? `in group "${room.name}"` : 'in its own chat'
+      if (room) return `in group "${room.name}"`
+      // The same words the message_bot note uses for a background part.
+      return isOpenPart(bot, sessionId) ? 'in another of its conversations' : 'in its own chat'
     }
     const forWhom = (sessionId, info) => {
       if (rt.groupOwners.has(sessionId)) return info?.askedBy && nameOf(info.askedBy) ? `, for ${nameOf(info.askedBy)}` : ''

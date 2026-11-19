@@ -35,5 +35,10 @@ export const stripWireTags = (text) => {
     out += match[0]
     at = match.index + match[0].length
   }
-  return (out + stripLines(value.slice(at))).trim()
+  // Edge newlines left by removed tag lines go; a first line's own indentation stays
+  // (Markdown code or a quoted sample must look unchanged).
+  return (out + stripLines(value.slice(at)))
+    .replace(/^[ \t]*\n+/, '')
+    .replace(/\n+[ \t]*$/, '')
+    .replace(/[ \t]+$/, '')
 }
