@@ -2,7 +2,7 @@ import { createElement as h, Fragment, useEffect, useLayoutEffect, useMemo, useR
 import { createPortal } from 'react-dom'
 import { MarkdownText, writeClipboard } from './dsh-primitives.js'
 import { inkText } from './inks.js'
-import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripInternalText, stripToolCallTags, isHiddenTurn, isRelayContext, relaysBefore, relayPart, commRunOf, toolName, toolArgs, elapsedLabel, clockLabel, messageClock } from './text.js'
+import { linkMentions, mentionTarget, dayLabel, contentText, stripHeader, stripInternalText, stripToolCallTags, isHiddenTurn, isRelayContext, toolName, toolArgs, elapsedLabel, clockLabel, messageClock } from './text.js'
 import { SmileIcon, ReplyIcon, DotsIcon, CheckIcon, DownloadIcon, CopyIcon, GoalIcon, MemoryIcon } from './icons.js'
 import { ChangesCard } from './changes-card.js'
 import { goalEventText } from './goal.js'
@@ -262,11 +262,10 @@ function useFileMentions({ node, openFile, fileMentions, useTurnData }) {
   }, [fileMentions, openFile, seq, tail, turn])
 }
 
-export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, useTurnData, useRoster, useUi, useTurnSteps, useTurnContext, useTurnClock, turnProcess, actions }) {
+export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, useTurnData, useRoster, useUi, useTurnSteps, useTurnClock, turnProcess, actions }) {
   const roster = useRoster(value => value)
   const data = node.data
   const steps = useTurnSteps(String(data.turn))
-  const contexts = useTurnContext(String(data.turn))
   const mentions = useFileMentions({ node, openFile, fileMentions, useTurnData })
   const texts = groupPart === 'reasoning' ? [] : data.blocks
     .filter(block => block.kind === 'text')
@@ -294,12 +293,10 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
   // A streaming reply stands in for the activity row.
   useLiveNote(actions, sessionId, `text:${node.key ?? data.seq}`, !hidden && running && texts.length > 0 ? { text: true } : null)
   if (hidden) return h(CellEmpty)
-  // A relay spliced mid-turn is a 'context' node, hidden from the chat flow on
-  // DSH 0.2; the step that answers it shows the event line where it was read,
-  // once, in the step's first cell.
-  const relays = relayPart(data, groupPart) ? relaysBefore(contexts, steps, data) : []
+  // A relay spliced mid-turn is a 'context' node and stays out of the user's chat:
+  // only the Bot exchange dialog shows what the Bots said to each other.
   const activity = groupPart === 'response' ? [] : stepActivity(data)
-  if (texts.length === 0 && !reasoning && relays.length === 0 && activity.length === 0) return h(CellEmpty)
+  if (texts.length === 0 && !reasoning && activity.length === 0) return h(CellEmpty)
   const selfId = roster.byId[sessionId]?.id ?? sessionId
   // The flat layout heads a reply with who speaks, once per Turn: in the step that opens
   // it, in that step's reasoning part when the reasoning shows there.
@@ -307,20 +304,6 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
   const head = speaker !== undefined && opensReply(steps, data, shown)
     && (reasoning !== '' || (texts.length > 0 && !(groupPart === 'response' && shown && turnReasoning(steps, data) !== '')))
   return h(Fragment, null,
-    relays.map(relay => {
-      const source = relay.source
-      const sender = roster.byId[source.senderSessionId] ?? { id: source.senderSessionId, name: source.senderName ?? t('a Bot'), color: 'gray' }
-      return h(EventLine, {
-        key: relay.seq,
-        prefix: source.role === 'stopped' ? t('Stopped by') : source.role === 'reply' ? t('Reply from') : t('Message from'),
-        bots: [sender],
-        onOpen: () => { if (sender.id) actions.openExchange(selfId, sender.id) },
-        whole: true,
-        quiet: true,
-        summary: t('Bot exchange'),
-        detail: stripHeader(contentText(relay.content)),
-      })
-    }),
     head ? h(SpeakerHead, { bot: speaker, time: data.time }) : null,
     activity.length ? h('div', { className: 'bt-agent-activity' }, activity.map((line, index) => h('div', { key: index, className: 'bt-agent-act', title: line }, h('span', { className: 'bt-agent-act-mark', 'aria-hidden': true }), h('span', { className: 'bt-agent-act-text' }, activityParts(line))))) : null,
     reasoning ? h(ThinkingRow, {
@@ -701,8 +684,6 @@ export function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnCl
   const roster = useRoster(value => value)
   const data = node.data
   const source = data.source !== null && typeof data.source === 'object' ? data.source : {}
-  // Team state (exchanges) is keyed by the Bot id; Session state by the part shown.
-  const selfId = roster.byId[sessionId]?.id ?? sessionId
   // A resumed handoff keeps the relayed message's source, but it opens a part, not a run.
   // A deferred request was already shown where the Bot read it mid-turn; the turn
   // that answers it adds no second line.
@@ -717,11 +698,6 @@ export function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnCl
   const order = useSessions((list) => {
     const outline = list.projectionsBySession?.[sessionId]?.values?.turnOutline ?? list.byId[sessionId]?.projectionValues?.turnOutline
     return Array.isArray(outline) ? outline.map(entry => entry.turn).join(',') : ''
-  })
-  const peers = useTurnClock((state) => {
-    if (!relayed) return ''
-    const turns = state[sessionId] ?? {}
-    return Object.keys(turns).filter(key => turns[key].peer !== undefined).map(key => `${key}:${turns[key].peer}`).join(',')
   })
   // A conversation opened for the first time since it began starts under the
   // unread divider, with its opening time below it.
@@ -774,29 +750,10 @@ export function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnCl
       if (source.role === 'retry' || source.retried === true) return h('div', { className: 'bt-event' }, t('Asked to make the tool call it wrote as text'))
       // The repair card's Retry: the user's message is not sent again, nor is the note to the Bot.
       if (source.role === 'continue') return h('div', { className: 'bt-event' }, t('Went on after the failed turn'))
-      const run = relayed ? commRunOf(
-        order.split(',').filter(Boolean).map(Number),
-        Object.fromEntries(peers.split(',').filter(Boolean).map(pair => [Number(pair.slice(0, pair.indexOf(':'))), pair.slice(pair.indexOf(':') + 1)])),
-        turn,
-        hiddenTurns,
-      ) : null
-      if (run === 'folded') return null
-      const sender = roster.byId[source.senderSessionId] ?? { id: source.senderSessionId, name: source.senderName ?? t('a Bot'), color: 'gray' }
-      const count = run?.count ?? (isHiddenTurn(roster, sessionId, turn) ? 2 : 1)
-      // Peers may be named by any part of their chat, so they are matched by Bot.
-      const bots = [sender]
-      for (const peer of (run?.peerIds ?? []).map(id => roster.byId[id]).filter(Boolean)) {
-        if (!bots.some(bot => bot.id === peer.id)) bots.push(peer)
-      }
-      return h(EventLine, {
-        prefix: source.role === 'stopped' ? t('Stopped by') : count > 1 ? t('{count} messages with', { count }) : t('Message from'),
-        bots,
-        onOpen: bot => actions.openExchange(selfId, bot.id),
-        whole: true,
-        quiet: true,
-        summary: t('Bot exchange'),
-        detail: stripHeader(contentText(data.content)),
-      })
+      // A reply from another Bot opens this turn, but what the Bots said to each
+      // other stays in their exchange dialog: the user's chat shows only its own
+      // conversation with this Bot.
+      if (relayed) return null
     }
     // A scheduled task is automation metadata, not something the user said in
     // the chat. Its task remains in Details → Scheduled tasks.

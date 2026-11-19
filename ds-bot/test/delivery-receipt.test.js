@@ -208,3 +208,49 @@ test('a receipt that cannot reach the board still reaches the Main Bot', async (
   assert.doesNotMatch(body, /\[\[receipt\]\]/)
   assert.equal(existsSync(boardFile(board)), false)
 })
+
+test('an unmarked reply that only says there is nothing to do lands on the board', async (t) => {
+  const { rt, agentOf, board } = await setup(t)
+  await rt.deliver({
+    fromId: 'b',
+    toId: 'a',
+    role: 'reply',
+    replyTo: 'x',
+    text: '本轮不回复：这条是静默标记，不需要动作。',
+    exchangeId: 'r8',
+  })
+
+  assert.deepEqual(agentOf('a').calls, [])
+  const lines = boardLines(board)
+  assert.equal(lines.length, 1)
+  assert.equal(lines[0].what, '回执 · 本轮不回复：这条是静默标记，不需要动作。')
+})
+
+test('a bare acknowledgement still reaches the Main Bot', async (t) => {
+  const { rt, agentOf, board } = await setup(t)
+  await rt.deliver({ fromId: 'b', toId: 'a', role: 'reply', replyTo: 'x', text: '好的', exchangeId: 'r9' })
+
+  const calls = agentOf('a').calls
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0][0], 'followup')
+  assert.match(textOf(calls[0][1].content), /好的/)
+  assert.equal(existsSync(boardFile(board)), false)
+})
+
+test('a marked no-work reply also lands on the board, without the marker', async (t) => {
+  const { rt, agentOf, board } = await setup(t)
+  await rt.deliver({
+    fromId: 'b',
+    toId: 'a',
+    role: 'reply',
+    replyTo: 'x',
+    text: '[[receipt]] 本轮不回复：这条是静默标记，不需要动作。',
+    exchangeId: 'r10',
+  })
+
+  assert.deepEqual(agentOf('a').calls, [])
+  const lines = boardLines(board)
+  assert.equal(lines.length, 1)
+  assert.doesNotMatch(lines[0].what, /\[\[receipt\]\]/)
+  assert.match(lines[0].what, /静默标记/)
+})

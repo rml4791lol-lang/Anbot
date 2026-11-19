@@ -1132,9 +1132,9 @@ test('a scheduled task trigger stays out of the transcript', () => {
   assert.ok(emptied(out))
 })
 
-// A Bot-to-Bot relay is still available in the exchange view, but its transcript
-// line is a quiet disclosure rather than another message competing for attention.
-test('a Bot-to-Bot line is a compact expandable context row', () => {
+// A Bot-to-Bot relay stays in the exchange view: a relay that opens a turn draws
+// no line in the user's chat, which shows only its own conversation with this Bot.
+test('a Bot-to-Bot line stays out of the user chat', () => {
   const out = expand(TriggerCell({
     node: {
       key: 'trigger', kind: 'turn-trigger', location: { turn: { turn: 1 } },
@@ -1144,11 +1144,9 @@ test('a Bot-to-Bot line is a compact expandable context row', () => {
     useRoster: select => select(team()), useSessions: select => select({ byId: {} }),
     useTurnClock: select => select({}), useUi: select => select({ visits: {}, reactions: {} }),
   }))
-  const details = find(out, node => node.type === 'details')
-  assert.equal(details.props.className, 'bt-event bt-event-quiet')
-  assert.match(text(details), /Bot exchange/)
-  assert.match(text(details), /Writer/)
-  assert.match(text(details), /Please check the draft\./)
+  assert.equal(find(out, node => node.type === 'details'), undefined)
+  assert.doesNotMatch(text(out), /Bot exchange|Writer|Please check the draft/)
+  assert.ok(emptied(out))
 })
 
 // The repair card's Retry reaches the Bot as a plugin trigger; the chat shows that it went

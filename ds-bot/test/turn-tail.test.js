@@ -154,7 +154,7 @@ test('the turn tail entry notes when the turn ended and shows the pause before t
   assert.equal(find(out, node => node.props?.className === 'bt-time-sep').length, 1)
 })
 
-test('a relay that arrives beside a reply is context, not a second transcript', () => {
+test('a relay that arrives beside a reply stays out of the transcript', () => {
   const { props } = cellProps()
   props.node.data = {
     turn: 3, step: 1, seq: 10, time: 10, status: 'done', finalNode: { seq: 10 },
@@ -170,10 +170,8 @@ test('a relay that arrives beside a reply is context, not a second transcript', 
     content: [{ type: 'text', text: '[Message from Writer]\nPlease check the draft.' }],
   }]
   const out = expand(AssistantCell(props), ['Bubbles', 'Bubble'])
-  const line = find(out, node => node.props?.quiet === true)[0]
-  assert.equal(line.props.quiet, true)
-  assert.equal(line.props.summary, 'Bot exchange')
-  assert.equal(line.props.detail, 'Please check the draft.')
+  assert.equal(find(out, node => node.props?.quiet === true).length, 0)
+  assert.deepEqual(markdownOf(props).map(node => node.props.text), ['The brief is ready.'])
 })
 
 test('an internal schedule marker in a reply does not reach the reader', () => {

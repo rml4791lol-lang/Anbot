@@ -6,6 +6,7 @@ import { headOf, stripControlMarkers, textOf } from './text.js'
 import { WAITING_MAX_MS, WAITING_QUIET_MS, mergeBacklog, plainRelay } from './backlog.js'
 import { readTeamBoardLines, writeTeamBoard } from './team-board-feed.js'
 import { stripWireTags } from '../shared/wire-tags.js'
+import { isNoWorkStatusText } from '../shared/idle-text.js'
 
 // A routine receipt a Bot sends a Main Bot: the marker is what the sender means, because
 // at this layer a receipt and a request have the same shape.
@@ -153,36 +154,38 @@ export function install(rt) {
     const fromName = senderName ?? from?.name ?? 'You'
     const room = rt.roomOf(roomId)
     const asker = work === undefined ? undefined : rt.botOf(state.works?.[work]?.from)?.name
-    // A marked receipt for a Main Bot lands on the board instead of opening a turn (see
-    // publishReceipt). It stays a normal message when it answers someone, comes from or
-    // goes to a room or the user, carries an attachment, or was merged into an earlier
-    // request: those are the cases where someone needs to read it as a message.
+    // A routine receipt for a Main Bot lands on the board instead of opening a turn (see
+    // publishReceipt). The marker is the sender's explicit statement; a reply that only
+    // reports "nothing to do" is the same receipt when the sender forgot it, because it
+    // carries no work either. A marked message stays a normal message when it answers
+    // someone, comes from or goes to a room or the user, carries an attachment, or was
+    // merged into an earlier request: those are the cases where someone needs to read it.
     const marked = typeof text === 'string' ? text.match(RECEIPT_MARKER) : null
-    if (marked !== null) {
-      const body = text.slice(marked[0].length).trim()
-      const receipt = from !== undefined && rt.isMain(toId) && role === 'request'
-        && replyTo === undefined && roomId === undefined && audience === undefined && fromRoomId === undefined
-        && merged !== true && images.length === 0 && files.length === 0
-      if (receipt) {
-        let onBoard = false
-        try {
-          publishReceipt(from, body === '' ? '（无正文）' : body)
-          onBoard = true
-        } catch (error) {
-          // A board that cannot be written must not swallow the message: it goes out
-          // as the message it would have been.
-          rt.warn('ds-bot: a receipt from %s was not written to the team board: %s', from.id, error?.message ?? error)
-        }
-        if (onBoard) {
-          // message_bot opened a work for this request before delivering it; a receipt
-          // gets no answer, so the work goes with the turn it saves.
-          try { await rt.dropWork?.(exchangeId) } catch { /* the board line is what matters */ }
-          return exchangeId
-        }
+    const body = marked === null ? text : text.slice(marked[0].length).trim()
+    const routine = from !== undefined && rt.isMain(toId)
+      && roomId === undefined && audience === undefined && fromRoomId === undefined
+      && merged !== true && images.length === 0 && files.length === 0
+    const noWork = work === undefined && (role === 'request' || role === 'reply') && isNoWorkStatusText(body)
+    const receipt = routine && (noWork || (marked !== null && role === 'request' && replyTo === undefined))
+    if (receipt) {
+      let onBoard = false
+      try {
+        publishReceipt(from, body === '' ? '（无正文）' : body)
+        onBoard = true
+      } catch (error) {
+        // A board that cannot be written must not swallow the message: it goes out
+        // as the message it would have been.
+        rt.warn('ds-bot: a receipt from %s was not written to the team board: %s', from.id, error?.message ?? error)
       }
-      // Even when it goes out as a message, the marker is for the board, not the reader.
-      text = body
+      if (onBoard) {
+        // message_bot opened a work for this request before delivering it; a receipt
+        // gets no answer, so the work goes with the turn it saves.
+        try { await rt.dropWork?.(exchangeId) } catch { /* the board line is what matters */ }
+        return exchangeId
+      }
     }
+    // Even when it goes out as a message, the marker is for the board, not the reader.
+    if (marked !== null) text = body
     // Session events reject `undefined` members, so optional fields are omitted instead.
     const source = {
       kind: SOURCE_KIND,

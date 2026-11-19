@@ -17651,8 +17651,8 @@ function mentionSpans(text, bots, { references = [] } = {}) {
 }
 
 // src/shared/wire-tags.js
-var WIRE_TAG = /<\s*\/?\s*(?:[｜|]+\s*)?(?:DSML|final)\s*(?:(?:[｜|]+\s*)?(?:invoke|calls|parameter)\b)?[^>\n]{0,200}>/giu;
-var HAS_WIRE_TAG = /DSML|final/i;
+var WIRE_TAG = /<\s*\/?\s*(?:[｜|]+\s*)?(?:DSML|antml|final|clusive)(?::[A-Za-z_-]+)?\s*(?:(?:[｜|]+\s*)?(?:invoke|calls|parameter)\b)?[^>\n]{0,200}>/giu;
+var HAS_WIRE_TAG = /DSML|antml|final|clusive/i;
 var FENCE = /(^|\n)(```|~~~)[\s\S]*?\n\2[^\n]*(\n|$)/g;
 var stripLines = (chunk) => {
   if (!HAS_WIRE_TAG.test(chunk)) return chunk;
@@ -30584,7 +30584,8 @@ var IDLE_STATUS_WORDS = [
   "(?:收口)?(?:当前|目前|今日|今天|本轮|本次)*(?:暂无|没有|无)+(?:待办|任务|新进展|新内容|新变化|进展|动作|变化|安排|操作|内容)",
   "(?:本轮|本次)*(?:不|无需)(?:输出|报告|回复)(?:任何)?(?:内容|文字|消息)?",
   "(?:当前|目前|本次|本轮)?(?:没有|无)(?:需要)?(?:向|向您|向你)?(?:汇报|回复|报告|说明|处理)(?:的)?(?:事项|内容|问题|动作|操作)?",
-  "(?:无需|不用|不需要)(?:向|向您|向你)?(?:操作|处理|回复|汇报|报告|说明)(?:任何)?(?:事项|内容|动作|操作)?",
+  "(?:无需|不用|不需要)(?:向|向您|向你)?(?:操作|处理|回复|汇报|报告|说明|动作)(?:任何)?(?:事项|内容|动作|操作)?",
+  "(?:这条是)?静默(?:标记|通知|回执)",
   "(?:本次|本轮|当前)?(?:巡检|检查|检查后|运行)?无(?:新)?变化",
   "无动作",
   "无需操作",
@@ -30619,6 +30620,7 @@ var IDLE_STATUS_WORDS = [
 ].join("|");
 var IDLE_BODY = new RegExp(`^(?:(?:${IDLE_ACK_WORDS}|${IDLE_CLOSING_WORDS}|${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, "i");
 var ACK_BODY = new RegExp(`^(?:(?:${ACK_WORDS}|${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, "i");
+var NO_WORK_BODY = new RegExp(`^(?:(?:${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, "i");
 var IDLE_TEXT_MAX = 45;
 var normalizeIdleText = (text) => String(text ?? "").replace(/[\s，,、。.!！?？;；:：'"“”‘’()（）[\]【】~～-]+/g, " ").trim().toLowerCase();
 var isIdleOnlyText = (text) => {
@@ -30628,6 +30630,10 @@ var isIdleOnlyText = (text) => {
 var isAcknowledgementOnlyText = (text) => {
   const normalized = normalizeIdleText(text);
   return normalized !== "" && normalized.length <= IDLE_TEXT_MAX && ACK_BODY.test(normalized);
+};
+var isNoWorkStatusText = (text) => {
+  const normalized = normalizeIdleText(text);
+  return normalized !== "" && normalized.length <= IDLE_TEXT_MAX && NO_WORK_BODY.test(normalized);
 };
 
 // src/client/cells.js
@@ -30892,11 +30898,10 @@ function useFileMentions({ node, openFile, fileMentions, useTurnData }) {
     return tail?.closing?.finalNode.seq === seq ? fileMentions({ turn, seq, openFile }) : void 0;
   }, [fileMentions, openFile, seq, tail, turn]);
 }
-function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, useTurnData, useRoster, useUi, useTurnSteps, useTurnContext, useTurnClock, turnProcess, actions }) {
+function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, useTurnData, useRoster, useUi, useTurnSteps, useTurnClock, turnProcess, actions }) {
   const roster = useRoster((value) => value);
   const data = node.data;
   const steps = useTurnSteps(String(data.turn));
-  const contexts = useTurnContext(String(data.turn));
   const mentions = useFileMentions({ node, openFile, fileMentions, useTurnData });
   const texts2 = groupPart === "reasoning" ? [] : data.blocks.filter((block) => block.kind === "text").map((block) => stripInternalText(stripToolCallTags(block.text))).filter((text) => text.trim() !== "");
   const triggerKind = useTurnClock?.((state) => state[sessionId]?.[data.turn]?.trigger);
@@ -30912,31 +30917,14 @@ function AssistantCell({ node, groupPart, sessionId, openFile, fileMentions, use
   const ms = useThinkingMs({ sessionId, turn: data.turn, settledSteps: members.filter((step) => step.status !== "running").length, skip: hidden || reasoning === "" });
   useLiveNote(actions, sessionId, `text:${node.key ?? data.seq}`, !hidden && running && texts2.length > 0 ? { text: true } : null);
   if (hidden) return (0, import_react34.createElement)(CellEmpty);
-  const relays = relayPart(data, groupPart) ? relaysBefore(contexts, steps, data) : [];
   const activity = groupPart === "response" ? [] : stepActivity(data);
-  if (texts2.length === 0 && !reasoning && relays.length === 0 && activity.length === 0) return (0, import_react34.createElement)(CellEmpty);
+  if (texts2.length === 0 && !reasoning && activity.length === 0) return (0, import_react34.createElement)(CellEmpty);
   const selfId = roster.byId[sessionId]?.id ?? sessionId;
   const speaker = layoutOf(roster.prefs) === "flat" ? roster.byId[sessionId] : void 0;
   const head = speaker !== void 0 && opensReply(steps, data, shown) && (reasoning !== "" || texts2.length > 0 && !(groupPart === "response" && shown && turnReasoning(steps, data) !== ""));
   return (0, import_react34.createElement)(
     import_react34.Fragment,
     null,
-    relays.map((relay) => {
-      const source = relay.source;
-      const sender = roster.byId[source.senderSessionId] ?? { id: source.senderSessionId, name: source.senderName ?? t("a Bot"), color: "gray" };
-      return (0, import_react34.createElement)(EventLine, {
-        key: relay.seq,
-        prefix: source.role === "stopped" ? t("Stopped by") : source.role === "reply" ? t("Reply from") : t("Message from"),
-        bots: [sender],
-        onOpen: () => {
-          if (sender.id) actions.openExchange(selfId, sender.id);
-        },
-        whole: true,
-        quiet: true,
-        summary: t("Bot exchange"),
-        detail: stripHeader(contentText(relay.content))
-      });
-    }),
     head ? (0, import_react34.createElement)(SpeakerHead, { bot: speaker, time: data.time }) : null,
     activity.length ? (0, import_react34.createElement)("div", { className: "bt-agent-activity" }, activity.map((line, index) => (0, import_react34.createElement)("div", { key: index, className: "bt-agent-act", title: line }, (0, import_react34.createElement)("span", { className: "bt-agent-act-mark", "aria-hidden": true }), (0, import_react34.createElement)("span", { className: "bt-agent-act-text" }, activityParts(line))))) : null,
     reasoning ? (0, import_react34.createElement)(ThinkingRow, {
@@ -31346,7 +31334,6 @@ function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnClock, us
   const roster = useRoster((value) => value);
   const data = node.data;
   const source = data.source !== null && typeof data.source === "object" ? data.source : {};
-  const selfId = roster.byId[sessionId]?.id ?? sessionId;
   const deferred = source.kind === "bot" && source.deferred === true;
   const relayed = isRelayContext(data);
   const turn = node.location?.turn?.turn ?? data.turn;
@@ -31357,11 +31344,6 @@ function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnClock, us
   const order = useSessions((list) => {
     const outline = list.projectionsBySession?.[sessionId]?.values?.turnOutline ?? list.byId[sessionId]?.projectionValues?.turnOutline;
     return Array.isArray(outline) ? outline.map((entry) => entry.turn).join(",") : "";
-  });
-  const peers = useTurnClock((state) => {
-    if (!relayed) return "";
-    const turns = state[sessionId] ?? {};
-    return Object.keys(turns).filter((key) => turns[key].peer !== void 0).map((key) => `${key}:${turns[key].peer}`).join(",");
   });
   const visit = useUi((state) => state.visits?.[sessionId]);
   const hiddenTurns = roster.exchangeTurns[sessionId];
@@ -31405,28 +31387,7 @@ function TriggerCell({ node, sessionId, useRoster, useSessions, useTurnClock, us
       if (source.role === "resume" || source.resumed === true) return (0, import_react34.createElement)("div", { className: "bt-event" }, t("Picked up its work after a restart"));
       if (source.role === "retry" || source.retried === true) return (0, import_react34.createElement)("div", { className: "bt-event" }, t("Asked to make the tool call it wrote as text"));
       if (source.role === "continue") return (0, import_react34.createElement)("div", { className: "bt-event" }, t("Went on after the failed turn"));
-      const run2 = relayed ? commRunOf(
-        order.split(",").filter(Boolean).map(Number),
-        Object.fromEntries(peers.split(",").filter(Boolean).map((pair) => [Number(pair.slice(0, pair.indexOf(":"))), pair.slice(pair.indexOf(":") + 1)])),
-        turn,
-        hiddenTurns
-      ) : null;
-      if (run2 === "folded") return null;
-      const sender = roster.byId[source.senderSessionId] ?? { id: source.senderSessionId, name: source.senderName ?? t("a Bot"), color: "gray" };
-      const count = run2?.count ?? (isHiddenTurn(roster, sessionId, turn) ? 2 : 1);
-      const bots = [sender];
-      for (const peer of (run2?.peerIds ?? []).map((id) => roster.byId[id]).filter(Boolean)) {
-        if (!bots.some((bot) => bot.id === peer.id)) bots.push(peer);
-      }
-      return (0, import_react34.createElement)(EventLine, {
-        prefix: source.role === "stopped" ? t("Stopped by") : count > 1 ? t("{count} messages with", { count }) : t("Message from"),
-        bots,
-        onOpen: (bot) => actions.openExchange(selfId, bot.id),
-        whole: true,
-        quiet: true,
-        summary: t("Bot exchange"),
-        detail: stripHeader(contentText(data.content))
-      });
+      if (relayed) return null;
     }
     if (source.kind === "schedule") return null;
     if (source.kind === "user-question-reply" || source.kind === "goal") return null;

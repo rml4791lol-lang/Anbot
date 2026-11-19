@@ -8,7 +8,8 @@ const IDLE_STATUS_WORDS = [
   '(?:收口)?(?:当前|目前|今日|今天|本轮|本次)*(?:暂无|没有|无)+(?:待办|任务|新进展|新内容|新变化|进展|动作|变化|安排|操作|内容)',
   '(?:本轮|本次)*(?:不|无需)(?:输出|报告|回复)(?:任何)?(?:内容|文字|消息)?',
   '(?:当前|目前|本次|本轮)?(?:没有|无)(?:需要)?(?:向|向您|向你)?(?:汇报|回复|报告|说明|处理)(?:的)?(?:事项|内容|问题|动作|操作)?',
-  '(?:无需|不用|不需要)(?:向|向您|向你)?(?:操作|处理|回复|汇报|报告|说明)(?:任何)?(?:事项|内容|动作|操作)?',
+  '(?:无需|不用|不需要)(?:向|向您|向你)?(?:操作|处理|回复|汇报|报告|说明|动作)(?:任何)?(?:事项|内容|动作|操作)?',
+  '(?:这条是)?静默(?:标记|通知|回执)',
   '(?:本次|本轮|当前)?(?:巡检|检查|检查后|运行)?无(?:新)?变化',
   '无动作', '无需操作',
   '待命', '保持待命', '继续待命', '原地待命', '静候', '静候下一步', '静候指令', '等候指令',
@@ -24,6 +25,9 @@ const IDLE_STATUS_WORDS = [
 const IDLE_BODY = new RegExp(`^(?:(?:${IDLE_ACK_WORDS}|${IDLE_CLOSING_WORDS}|${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, 'i')
 // `ok` and `okay` can be real yes/no answers, so they stay idle-only.
 const ACK_BODY = new RegExp(`^(?:(?:${ACK_WORDS}|${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, 'i')
+// A status that says there is nothing to do, without a bare "ok": the latter is
+// often the answer to a yes/no question the Main Bot asked.
+const NO_WORK_BODY = new RegExp(`^(?:(?:${IDLE_STATUS_WORDS})(?:[\\s，,、。.!！~～：:；;]+|$))+$`, 'i')
 const IDLE_TEXT_MAX = 45
 
 export const normalizeIdleText = text => String(text ?? '')
@@ -41,6 +45,13 @@ export const isIdleOnlyText = (text) => {
 export const isAcknowledgementOnlyText = (text) => {
   const normalized = normalizeIdleText(text)
   return normalized !== '' && normalized.length <= IDLE_TEXT_MAX && ACK_BODY.test(normalized)
+}
+
+// A reply that only reports "nothing to do" (a silent receipt a Bot forgot to
+// mark) carries no work for the Main Bot, so it can go to the team board.
+export const isNoWorkStatusText = (text) => {
+  const normalized = normalizeIdleText(text)
+  return normalized !== '' && normalized.length <= IDLE_TEXT_MAX && NO_WORK_BODY.test(normalized)
 }
 
 export { IDLE_BODY, IDLE_TEXT_MAX }

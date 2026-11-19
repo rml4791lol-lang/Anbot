@@ -122,6 +122,19 @@ test('earlier user and Bot rows retain independent quote boundaries', () => {
   assert.equal(sources(tree).length, 2)
 })
 
+test('a Bot exchange entry is not drawn in the user chat', () => {
+  const props = assistantProps({
+    blocks: [],
+    relays: [{
+      seq: 7, time: 5,
+      source: { kind: 'bot', role: 'reply', senderSessionId: 'b', senderName: '编制官' },
+      content: [{ type: 'text', text: '[Reply from 编制官]\n本轮不回复：这条是静默标记，不需要动作。' }],
+    }],
+  })
+  const words = findAll(expand(AssistantCell(props)), node => typeof node === 'string').join(' ')
+  assert.doesNotMatch(words, /Bot exchange|编制官|静默标记/)
+})
+
 test('image-only earlier messages do not expose their image-count label as quoted text', () => {
   const imageOnly = expand(ChatRows({
     items: [{ kind: 'user', text: '', images: 1, time: 1 }], sessionId: 'b', roster, actions: {},

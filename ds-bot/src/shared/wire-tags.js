@@ -1,12 +1,14 @@
 // Wire syntax, not words: a model that writes its tool call in DSML form can
 // leave the tags in the text block DSH hands the chat, and some models wrap the
-// whole answer in <final>. Neither belongs in a message, on either side of the
-// plugin: the host reads text through this on the way to storage, delivery and
-// the search index; the client reads it on the way to the screen.
+// whole answer in <final> or use antml-style tags, whose closing fragments
+// (`</antml>`, `</clusive>`) have also reached a message. None of this belongs
+// in a message, on either side of the plugin: the host reads text through this
+// on the way to storage, delivery and the search index; the client reads it on
+// the way to the screen.
 // The CJK and ASCII pipe spellings both appear, and a copied tag can lose a bar,
 // so the bars are taken loosely.
-const WIRE_TAG = /<\s*\/?\s*(?:[｜|]+\s*)?(?:DSML|final)\s*(?:(?:[｜|]+\s*)?(?:invoke|calls|parameter)\b)?[^>\n]{0,200}>/giu
-const HAS_WIRE_TAG = /DSML|final/i
+const WIRE_TAG = /<\s*\/?\s*(?:[｜|]+\s*)?(?:DSML|antml|final|clusive)(?::[A-Za-z_-]+)?\s*(?:(?:[｜|]+\s*)?(?:invoke|calls|parameter)\b)?[^>\n]{0,200}>/giu
+const HAS_WIRE_TAG = /DSML|antml|final|clusive/i
 // Text inside a fenced block is code or a quoted sample: leave it exactly as written.
 const FENCE = /(^|\n)(```|~~~)[\s\S]*?\n\2[^\n]*(\n|$)/g
 

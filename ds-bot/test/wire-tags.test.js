@@ -30,6 +30,20 @@ test('the host reads model content without the tags', () => {
   assert.equal(textOf([{ type: 'text', text: dsml('invoke') + '\n' + dsml('calls') }]), '')
 })
 
+test('antml tags and copied closing fragments are wire syntax too', () => {
+  const leaks = [
+    '\u5DF2\u5B8C\u6210\u3002\n' + C + 'antml>',
+    '\u5DF2\u5B8C\u6210\u3002\n' + C + 'clusive>',
+    '<antml:invoke>\u5DF2\u5B8C\u6210\u3002' + C + 'antml:invoke>',
+    '\u5DF2\u5B8C\u6210\u3002\n' + C + 'antml:parameter>',
+  ]
+  for (const leak of leaks) {
+    const out = stripWireTags(leak)
+    assert.ok(!out.includes('<') && !out.includes('>'), out)
+    assert.match(out, /\u5DF2\u5B8C\u6210\u3002/)
+  }
+})
+
 test('code inside a fence is left as written', () => {
   const code = '```\n' + dsml('invoke') + '\n```'
   assert.equal(stripWireTags('\u770B\u8FD9\u6BB5\uFF1A\n' + code), '\u770B\u8FD9\u6BB5\uFF1A\n' + code)
@@ -38,4 +52,6 @@ test('code inside a fence is left as written', () => {
 test('ordinary text is untouched', () => {
   assert.equal(stripWireTags('a < b and c > d'), 'a < b and c > d')
   assert.equal(stripWireTags('\u6700\u7EC8\u7B54\u6848\u3002'), '\u6700\u7EC8\u7B54\u6848\u3002')
+  // "inclusive" contains "clusive": the fast gate may run, the tag pattern must not.
+  assert.equal(stripWireTags('an inclusive list, for real.'), 'an inclusive list, for real.')
 })
