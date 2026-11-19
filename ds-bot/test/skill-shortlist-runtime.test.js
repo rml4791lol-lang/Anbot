@@ -15,7 +15,9 @@ import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deep
 import SkillRegistry from '@deepseek-ai/dsh-skill'
 import * as FsSkill from '@deepseek-ai/dsh-skill-filesystem'
 import * as ToolSkill from '@deepseek-ai/dsh-tool-skill'
+import { createRuntime } from '../index.js'
 import { skillMaskPreStepGate } from '../src/host/capabilities.js'
+import { fakeContext } from './fake-ctx.js'
 
 function writeSkill(root, name, body = name) {
   const dir = join(root, name)
@@ -23,22 +25,43 @@ function writeSkill(root, name, body = name) {
   writeFileSync(join(dir, 'SKILL.md'), `---\nname: ${name}\ndescription: ${name} skill\n---\n\n${body}\n`)
 }
 
-function maskPlugin(names) {
-  return {
-    name: `test-skill-mask-${names.join('-')}`,
-    inject: ['skills'],
-    apply(c) {
-      for (const name of names) {
-        c.effect(() => c.skills.register({
-          name,
-          description: 'masked by a shortlist',
-          source: 'shortlist-mask',
-          content: '',
-          invocation: { modelInvocable: false, userInvocable: false },
-        }))
-      }
-    },
+// A runtime whose only job is to own the production applySkillMasks. The mask then
+// lands in the real Agent scope through src/host/capabilities.js; a test-local
+// register() call would prove DSH semantics but never this code path.
+function maskRuntimeHome() {
+  const home = mkdtempSync(join(tmpdir(), 'ds-bot-skill-mask-rt-'))
+  writeFileSync(join(home, 'state.json'), JSON.stringify({
+    version: 1,
+    mainBotIds: ['s1'],
+    bots: { s1: { id: 's1', sessionId: 's1', name: 'Chief', capabilities: [], createdAt: 1 } },
+    rooms: {},
+    agents: {},
+    exchanges: [],
+    exchangeTurns: {},
+    questions: {},
+    revision: 1,
+  }))
+  return home
+}
+
+async function mountMaskRuntime(t, skills) {
+  const home = maskRuntimeHome()
+  const loader = {
+    import: async () => ({ default: { name: 'mcp-client', apply() {} } }),
+    unwrapExports: exports => exports.default,
   }
+  // The host provider layer is what cordis.patch.yml mounts in production; the real
+  // registry is exposed here so listProfileSkills reads the catalog the Agent sees.
+  const fake = fakeContext({ services: { loader, skills } })
+  const runtime = createRuntime(fake, { home, github: false, diagnosticsFile: false })
+  runtime.resolveAgent = async () => undefined
+  await runtime.load()
+  t.after(async () => {
+    fake.dispose()
+    await runtime.scheduleCapabilitiesReconcile()
+    rmSync(home, { recursive: true, force: true, maxRetries: 5 })
+  })
+  return runtime
 }
 
 test('the real DSH catalog and skill tool obey an Agent-scoped shortlist mask', async (t) => {
@@ -59,6 +82,7 @@ test('the real DSH catalog and skill tool obey an Agent-scoped shortlist mask', 
   await ctx.plugin(FsSkill, { includeDefaultRoots: false, customSkillDirs: [root], watch: false })
   await ctx.plugin(ToolSkill)
   await mountAgentLoopTestHarness(ctx)
+  const runtime = await mountMaskRuntime(t, ctx.skills)
   const agent = await ctx.agentLoop.create(SessionId('s1'), {})
   const all = (await ctx.skills.snapshot({ cwd: root, scope: agent })).skills
     .filter(skill => skill.invocation.modelInvocable)
@@ -66,14 +90,19 @@ test('the real DSH catalog and skill tool obey an Agent-scoped shortlist mask', 
     .sort()
   assert.deepEqual(all, ['linked', 'skill-0', 'skill-1', 'skill-2', 'skill-3', 'skill-4'])
 
-  const chosen = new Set(['linked', 'skill-0', 'skill-1', 'skill-2', 'skill-3'])
-  const masked = agent.ctx.plugin(maskPlugin(all.filter(name => !chosen.has(name))))
-  await masked.await()
+  const chosen = ['linked', 'skill-0', 'skill-1', 'skill-2', 'skill-3']
+  const bot = {
+    ...runtime.state.bots.s1,
+    skillShortlist: chosen.map(name => ({ name, purpose: `use ${name} when the task calls for it` })),
+  }
+  // The production path: capabilities.js builds the mask and mounts it in the Agent
+  // scope. Flipping modelInvocable at capabilities.js:339 must turn this test red.
+  await runtime.applySkillMasks(agent, bot)
   const visible = (await ctx.skills.snapshot({ cwd: root, scope: agent })).skills
     .filter(skill => skill.invocation.modelInvocable)
     .map(skill => skill.name)
     .sort()
-  assert.deepEqual(visible, ['linked', 'skill-0', 'skill-1', 'skill-2', 'skill-3'])
+  assert.deepEqual(visible, chosen)
 
   const tool = ctx.tools.get('skill', agent)
   const exec = { agent, signal: new AbortController().signal }
@@ -83,7 +112,7 @@ test('the real DSH catalog and skill tool obey an Agent-scoped shortlist mask', 
   assert.equal(hidden.invocation.userInvocable, false)
   assert.equal(hidden.invocation.modelInvocable, false)
 
-  await masked.dispose()
+  await runtime.applySkillMasks(agent, { ...bot, skillShortlist: undefined })
   const restored = (await ctx.skills.snapshot({ cwd: root, scope: agent })).skills
     .filter(skill => skill.invocation.modelInvocable)
     .map(skill => skill.name)
