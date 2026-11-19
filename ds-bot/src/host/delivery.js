@@ -4,7 +4,13 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { HISTORY_TIMEOUT_MS, LONG_HEAD, MESSAGE_INLINE_MAX, READ_LINE_MAX, SOURCE_KIND, TEXT_KEPT, TEXT_SHOW_MAX } from './constants.js'
 import { headOf, stripControlMarkers, textOf } from './text.js'
 import { WAITING_MAX_MS, WAITING_QUIET_MS, mergeBacklog, plainRelay } from './backlog.js'
+import { readTeamBoardLines, writeTeamBoard } from './team-board-feed.js'
 import { stripWireTags } from '../shared/wire-tags.js'
+
+// A routine receipt a Bot sends a Main Bot: the marker is what the sender means, because
+// at this layer a receipt and a request have the same shape.
+const RECEIPT_MARKER = /^\s*\[\[receipt\]\]\s*/i
+const RECEIPT_PREFIX = '回执 · '
 
 export function install(rt) {
   const { ctx, state } = rt
@@ -121,6 +127,18 @@ export function install(rt) {
   // question in it (a profile update, a stop receipt) is put in the queue and read at the
   // recipient's next turn instead of waking it; a turn spent acknowledging a note is a turn
   // the user reads as an answer that never came.
+  // A routine receipt from a Bot to a Main Bot is a board line, not a message: the Main
+  // Bot reads it with the rest of the board and spends no turn on it. Only the sender can
+  // say a message needs no answer, so the marker is explicit (`[[receipt]]`). The board
+  // keeps the newest receipt of each Bot — the archive keeps every one — so receipts do
+  // not push that Bot's delivery, decision and blocked lines off the three-line board.
+  const publishReceipt = (bot, body) => {
+    const kept = readTeamBoardLines(undefined, message => rt.warn('ds-bot: %s', message))
+      .filter(line => line.bot === bot.name && !String(line.what ?? '').startsWith(RECEIPT_PREFIX))
+    const what = `${RECEIPT_PREFIX}${body.replace(/\s+/g, ' ').trim()}`
+    writeTeamBoard(bot.name, [{ bot: bot.name, kind: 'delivery', what, at: new Date().toISOString() }, ...kept].slice(0, 3))
+  }
+
   async function deliver({ fromId, fromName: senderName, toId, sessionId, text, role, replyTo, roomId, audience, note, exchangeId = randomUUID(), steer = false, silent = false, queue = false, deferred = false, resumed = false, retried = false, resent = false, merged = false, abandoned = false, recordExchange = true, askedBy, fromRoomId, images = [], files = [], length, work, taskId, attemptId }) {
     // #1517: a model that writes its tool call in DSML form leaves wire tags in
     // the text it hands delivery; neither the book nor the recipient sees them.
@@ -134,6 +152,36 @@ export function install(rt) {
     const fromName = senderName ?? from?.name ?? 'You'
     const room = rt.roomOf(roomId)
     const asker = work === undefined ? undefined : rt.botOf(state.works?.[work]?.from)?.name
+    // A marked receipt for a Main Bot lands on the board instead of opening a turn (see
+    // publishReceipt). It stays a normal message when it answers someone, comes from or
+    // goes to a room or the user, carries an attachment, or was merged into an earlier
+    // request: those are the cases where someone needs to read it as a message.
+    const marked = typeof text === 'string' ? text.match(RECEIPT_MARKER) : null
+    if (marked !== null) {
+      const body = text.slice(marked[0].length).trim()
+      const receipt = from !== undefined && rt.isMain(toId) && role === 'request'
+        && replyTo === undefined && roomId === undefined && audience === undefined && fromRoomId === undefined
+        && merged !== true && images.length === 0 && files.length === 0
+      if (receipt) {
+        let onBoard = false
+        try {
+          publishReceipt(from, body === '' ? '（无正文）' : body)
+          onBoard = true
+        } catch (error) {
+          // A board that cannot be written must not swallow the message: it goes out
+          // as the message it would have been.
+          rt.warn('ds-bot: a receipt from %s was not written to the team board: %s', from.id, error?.message ?? error)
+        }
+        if (onBoard) {
+          // message_bot opened a work for this request before delivering it; a receipt
+          // gets no answer, so the work goes with the turn it saves.
+          try { await rt.dropWork?.(exchangeId) } catch { /* the board line is what matters */ }
+          return exchangeId
+        }
+      }
+      // Even when it goes out as a message, the marker is for the board, not the reader.
+      text = body
+    }
     // Session events reject `undefined` members, so optional fields are omitted instead.
     const source = {
       kind: SOURCE_KIND,
