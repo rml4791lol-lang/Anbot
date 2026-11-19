@@ -254,3 +254,20 @@ test('a marked no-work reply also lands on the board, without the marker', async
   assert.doesNotMatch(lines[0].what, /\[\[receipt\]\]/)
   assert.match(lines[0].what, /静默标记/)
 })
+
+test('a reply listing every kind of no-op also lands on the board', async (t) => {
+  const { rt, agentOf, board } = await setup(t)
+  await rt.deliver({
+    fromId: 'b',
+    toId: 'a',
+    role: 'reply',
+    replyTo: 'x',
+    text: '本轮不发送任何消息，也不回复；也不做任何动作。',
+    exchangeId: 'r11',
+  })
+
+  assert.deepEqual(agentOf('a').calls, [])
+  const lines = boardLines(board)
+  assert.equal(lines.length, 1)
+  assert.equal(lines[0].what, '回执 · 本轮不发送任何消息，也不回复；也不做任何动作。')
+})
