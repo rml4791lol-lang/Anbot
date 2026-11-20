@@ -10,6 +10,10 @@ files:
   - assets/**
   # The LibreOffice engine goes beside the app instead (extraResources).
   - '!node_modules/@deepseek-ai/libreoffice-kit-*{,/**/*}'
+  # The native engine is also nested in the kit package's node_modules. If that
+  # virtual copy stays in app.asar, Electron sees its mode as 0644 and refuses
+  # to execute it even though the unpacked/extraResources copy is executable.
+  - '!node_modules/@deepseek-ai/libreoffice-kit/node_modules/@deepseek-ai/libreoffice-kit-*{,/**/*}'
 # The Host runs pnpm as a separate Node process to install plugins, and the Office payload's
 # plain Node runs the LibreOffice Kit CLI: both must be plain files outside the asar.
 asarUnpack:
@@ -112,5 +116,5 @@ deb:
 # so the build itself never publishes (--publish never).
 publish:
   provider: github
-  owner: Fei2411
+  owner: rml4791lol-lang
   repo: DS-Bot

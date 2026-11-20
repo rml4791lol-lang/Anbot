@@ -32,9 +32,10 @@ const team = () => ({
 const mcp = (name, command = 'node') => ({ name, kind: 'mcp', description: 'Echo service', transport: 'stdio', command, args: [], env: {} })
 const created = env => env.ctx.listeners.get('agent/created').find(listener => listener.name === 'prepareCapabilities')
 
-function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, catalog = [], complete = true } = {}) {
+function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, catalog = [], complete = true, incompleteReads = 0 } = {}) {
   const disposers = []
   const skills = new Map()
+  let catalogReads = 0
   skillsBySession.set(id, skills)
   const currentCatalog = () => [
     ...catalog.filter(entry => !skills.has(entry.name)),
@@ -48,7 +49,7 @@ function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, c
     on() { return () => {} },
     skills: {
       list: async () => currentCatalog(),
-      snapshot: async () => ({ skills: currentCatalog(), complete }),
+      snapshot: async () => ({ skills: currentCatalog(), complete: catalogReads++ >= incompleteReads && complete }),
     },
     plugin(plugin, config) {
       const record = { plugin, config, sessionId: id, disposed: false }
@@ -508,6 +509,51 @@ test('an incomplete scoped catalog refuses to change the execution masks', async
   const bot = { ...rt.state.bots.chief, skillShortlist: [] }
   await assert.rejects(() => rt.applySkillMasks(agent, bot), /catalog is incomplete/)
   assert.equal(skills.get('chief').has('profile-only'), false)
+})
+
+test('mask application is serialized across Agents', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { rt, mounts, skills } = env
+  let releaseFirst
+  let started = 0
+  const first = new Promise(resolve => { releaseFirst = resolve })
+  const awaitMount = () => {
+    started += 1
+    return started === 1 ? first : undefined
+  }
+  const catalog = [
+    { name: 'keep', description: 'keep', provider: 'filesystem' },
+    { name: 'hide', description: 'hide', provider: 'filesystem' },
+  ]
+  const one = testAgent('chief', mounts, skills, { catalog, awaitMount })
+  const two = testAgent('worker', mounts, skills, { catalog, awaitMount })
+  const bot = { ...rt.state.bots.chief, skillShortlist: [{ name: 'keep', purpose: 'use it' }] }
+  const firstRun = rt.applySkillMasks(one, bot)
+  const secondRun = rt.applySkillMasks(two, bot)
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(started, 1)
+  releaseFirst()
+  await Promise.all([firstRun, secondRun])
+  assert.equal(started, 2)
+})
+
+test('a transiently incomplete scoped catalog is retried before changing masks', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { ctx, rt, mounts, skills } = env
+  const agent = testAgent('chief', mounts, skills, {
+    catalog: [
+      { name: 'visible', description: 'visible', provider: 'filesystem' },
+      { name: 'other', description: 'other', provider: 'filesystem' },
+    ],
+    incompleteReads: 2,
+  })
+  rt.state.bots.chief.skillShortlist = [{ name: 'visible', purpose: 'use it' }]
+  await ctx.emitAsync('agent/created', { agent })
+  await rt.scheduleCapabilitiesReconcile()
+  assert.equal(skills.get('chief').get('other').invocation.modelInvocable, false)
+  assert.equal(skills.get('chief').get('visible'), undefined)
 })
 
 test('a failed same-name capability mount keeps the profile skill masked', async t => {

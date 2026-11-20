@@ -716,6 +716,48 @@ export function createAutoSearchProvider(deps, config = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Selection repair for issue #128: the web row keeps `searchProvider: auto` when this row
+// is turned off, and every session's web_search then fails with
+// WEB_PROVIDER_CONFIGURED_MISSING. While the row is off, park a notice provider under the
+// same id: it serves another registered, usable provider when one exists, and otherwise
+// reports that web search is off here. apply() evicts it before registering the real one.
+
+const noticeProvider = Symbol('web-search-auto off')
+
+function createDisabledSearchProvider(web) {
+  return {
+    id: AUTO_PROVIDER_ID,
+    [noticeProvider]: true,
+    available: () => true,
+    async search(request, signal) {
+      for (const provider of web.searchProviders.values()) {
+        if (provider.id === AUTO_PROVIDER_ID) continue
+        if (provider.available?.() === false) continue
+        return provider.search(request, signal)
+      }
+      throw new WebError([
+        'Web search is unavailable: the web-search-auto plugin row is disabled in this profile.',
+        'No other usable search provider is registered, so the query was not run.',
+        'Do not guess URLs or present pages you remember as search results. Tell the user that web search is turned off here and can be re-enabled by turning the web-search-auto row back on.',
+      ].join('\n'), 'WEB_SEARCH_DISABLED')
+    },
+  }
+}
+
+/**
+ * Park the notice provider while the web-search-auto row is off and the web row still
+ * selects `auto`. No-op for any other selection, so a user-named provider is never
+ * overridden.
+ * @param web - the `ctx.web` seam, or undefined.
+ */
+export function repairWebSearchSelection(web) {
+  if (web?.searchProviders === undefined) return
+  if (web.searchProviders.has(AUTO_PROVIDER_ID)) return
+  if (web.config?.searchProvider?.get?.() !== AUTO_PROVIDER_ID) return
+  web.searchProviders.set(AUTO_PROVIDER_ID, createDisabledSearchProvider(web))
+}
+
+// ---------------------------------------------------------------------------
 // Host wiring: read the asking Session's route through public dsh services only.
 
 const stringRecord = value => (isRecord(value) ? Object.fromEntries(Object.entries(value).filter(([, item]) => typeof item === 'string')) : {})
@@ -761,7 +803,12 @@ const envOf = ctx => name => ctx.get('launchEnvironment')?.get(name)?.value ?? p
 
 export function apply(ctx, config = {}) {
   const env = envOf(ctx)
-  ctx.web.registerSearchProvider(createAutoSearchProvider({
+  const web = ctx.web
+  // A notice provider parked while this row was off (issue #128); take the id
+  // back, or registerSearchProvider below fails with WEB_DUPLICATE_PROVIDER.
+  const parked = web.searchProviders.get(AUTO_PROVIDER_ID)
+  if (parked?.[noticeProvider] === true) web.searchProviders.delete(AUTO_PROVIDER_ID)
+  web.registerSearchProvider(createAutoSearchProvider({
     route: () => routeOf(ctx),
     resolveKey: async (ref) => {
       const credentials = ctx.get('credentials')
@@ -772,4 +819,10 @@ export function apply(ctx, config = {}) {
     fetch: (url, init) => fetch(url, init),
     webFetch: (request, signal) => ctx.web.fetch(request, signal),
   }, config))
+  // Turning this row off unregisters the provider above; park the notice
+  // provider in its place so the selection stays whole. The microtask lets
+  // the registration disposer run first.
+  ctx.effect(() => () => {
+    queueMicrotask(() => repairWebSearchSelection(web))
+  })
 }

@@ -2,8 +2,11 @@
 // (npmRebuild: false), so they fit only the architecture of the Node that ran npm. An app built for
 // another architecture would carry them and not start, so such a build stops here.
 import { Arch } from 'electron-builder'
-import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { x as extractTar } from 'tar'
 import { preparePrimaryRuntime, runtimeTarget } from './prepare-runtime.mjs'
 
 const WHERE = {
@@ -41,11 +44,41 @@ export function officeRuntimeRequest(context) {
   }
 }
 
-export async function beforePack(context, prepare = preparePrimaryRuntime) {
+/**
+ * Refresh the installed file dependency from the package's published file list. npm does not
+ * recopy a `file:../ds-bot` dependency when only its source changes, which would silently ship
+ * an older plugin than the one tested in this checkout.
+ * @param {{ appDir?: string, run?: typeof execFileSync, extract?: typeof extractTar }} [options]
+ * @returns {Promise<string>} the refreshed package directory
+ */
+export async function syncDsBotPackage({ appDir = process.cwd(), run = execFileSync, extract = extractTar } = {}) {
+  const source = join(appDir, '..', 'ds-bot')
+  const destination = join(appDir, 'node_modules', 'ds-bot')
+  const staging = mkdtempSync(join(tmpdir(), 'ds-bot-package-'))
+  try {
+    const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', staging], {
+      cwd: source,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    }))
+    const filename = Array.isArray(packed) ? packed[0]?.filename : packed?.filename
+    if (typeof filename !== 'string' || filename === '') throw new Error('ds-bot package: npm pack returned no filename.')
+    rmSync(destination, { recursive: true, force: true })
+    mkdirSync(destination, { recursive: true })
+    await extract({ file: join(staging, filename), cwd: destination, strip: 1 })
+    return destination
+  } finally {
+    rmSync(staging, { recursive: true, force: true })
+  }
+}
+
+export async function beforePack(context, prepare = preparePrimaryRuntime, sync = syncDsBotPackage) {
   const targets = []
   for (const archToNames of context.packager?.packagerOptions?.targets?.values() ?? [])
     for (const arch of archToNames.keys()) targets.push(Arch[arch])
   const problem = archProblem({ target: Arch[context.arch], platform: context.electronPlatformName, targets })
   if (problem !== undefined) throw new Error(problem)
+  const appDir = context.packager.appDir ?? context.packager.projectDir
+  await sync({ appDir })
   await prepare(officeRuntimeRequest(context))
 }

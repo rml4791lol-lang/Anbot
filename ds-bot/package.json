@@ -51,6 +51,7 @@
     "harness": "npm install --prefix dev/harness --legacy-peer-deps=false --no-package-lock --no-fund --no-audit",
     "setup": "sh ../scripts/setup.sh",
     "check": "sh dev/check.sh",
+    "eval:golden": "node dev/eval/judge.mjs --checks",
     "test:acceptance": "node --import ./test/harness-resolve.mjs --import ./test/drain.mjs --test --test-timeout=180000 \"test/acceptance/*.test.js\""
   },
   "peerDependencies": {

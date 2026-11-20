@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { describe, test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { isNewer, RELEASES_URL, watchReleases, watchUpdates } from '../src/updates.mjs'
+import { isNewer, RELEASE_FEED, RELEASE_PAGE, RELEASES_URL, UPDATE_REPOSITORY, watchReleases, watchUpdates } from '../src/updates.mjs'
 
 // electron-updater's AppUpdater, as far as the app uses it. `found` makes the answer of a
 // check that finds a version, with the download that autoDownload starts.
@@ -33,6 +33,8 @@ class FakeUpdater extends EventEmitter {
 
 const finds = (version, download) => () => ({ isUpdateAvailable: true, updateInfo: { version }, downloadPromise: download() })
 
+const releasePage = version => `https://github.com/${UPDATE_REPOSITORY}/releases/tag/v${version}`
+
 const quietLog = () => {
   const lines = []
   return { lines, info: (line) => { lines.push(line) }, error: (line) => { lines.push(line) } }
@@ -42,7 +44,7 @@ const release = (version, options = {}) => {
   const arch = options.arch ?? 'arm64'
   return {
     tag_name: `v${version}`,
-    html_url: options.page ?? `https://github.com/Fei2411/DS-Bot/releases/tag/v${version}`,
+    html_url: options.page ?? releasePage(version),
     draft: options.draft ?? false,
     prerelease: options.prerelease ?? false,
     assets: options.assets ?? [{ name: `DS-Bot-${version}-mac-${arch}.zip` }],
@@ -95,8 +97,22 @@ describe('watchReleases', () => {
     assert.equal(calls[1].url, feed)
   })
 
+  test('falls back to the release Atom feed when the GitHub API is rate limited', async (t) => {
+    const calls = []
+    const atom = `<feed><entry><link rel="alternate" type="text/html" href="https://github.com/${UPDATE_REPOSITORY}/releases/tag/v0.1.9"/><title>v0.1.9: release</title></entry></feed>`
+    const fetch = async (url) => {
+      calls.push(url)
+      if (url === RELEASES_URL) return releaseResponse({}, 403)
+      return { ok: true, status: 200, text: async () => atom }
+    }
+    const updates = watchReleases({ current: '0.1.7', arch: 'arm64', fetch, log: quietLog() })
+    t.after(updates.stop)
+    assert.deepEqual(await updates.latest(), { version: '0.1.9', page: `https://github.com/${UPDATE_REPOSITORY}/releases/tag/v0.1.9` })
+    assert.deepEqual(calls, [RELEASES_URL, RELEASE_FEED])
+  })
+
   test('reports a newer release and opens its page only when accepted', async (t) => {
-    const page = 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.1.9'
+    const page = 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.1.9'
     for (const accepted of [true, false]) {
       const asked = []
       const opened = []
@@ -168,10 +184,10 @@ describe('watchReleases', () => {
 
   test('logs failed requests, invalid JSON, and non-HTTPS release pages without throwing', async (t) => {
     const cases = [
-      [async () => releaseResponse({}, 403), 'DS Bot: update check failed: HTTP 403'],
+      [async () => releaseResponse({}, 403), 'DS Bot: update check failed: GitHub API HTTP 403, Atom feed HTTP 403'],
       [async () => { throw new Error('offline') }, 'DS Bot: update check failed: offline'],
       [async () => ({ ok: true, status: 200, json: async () => { throw new Error('bad JSON') } }), 'DS Bot: update check failed: bad JSON'],
-      [async () => releaseResponse([release('0.1.9', { page: 'http://github.com/Fei2411/DS-Bot' })]), 'DS Bot: update check failed: release page URL is not HTTPS'],
+      [async () => releaseResponse([release('0.1.9', { page: 'http://github.com/rml4791lol-lang/DS-Bot' })]), 'DS Bot: update check failed: release page URL is not HTTPS'],
     ]
     for (const [fetch, message] of cases) {
       const log = quietLog()
@@ -212,14 +228,14 @@ describe('watchReleases', () => {
     attached = true
     t.mock.timers.tick(4 * 60 * 60_000)
     assert.deepEqual(await updates.latest(), {
-      version: '0.1.9', page: 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.1.9',
+      version: '0.1.9', page: 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.1.9',
     })
     await sleep(0)
     assert.deepEqual(asked, ['0.1.9'])
   })
 
   test('a given asset replaces the mac zip: the deb of a Linux install', async (t) => {
-    const page = 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.1.9'
+    const page = 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.1.9'
     // The deb's file name uses the Debian architecture (x64 → amd64).
     const deb = version => `DS-Bot-${version}-linux-amd64.deb`
     // A release with only the mac zip does not count for a deb install.
@@ -257,7 +273,7 @@ describe('watchReleases', () => {
     })
     t.after(updates.stop)
     assert.deepEqual(await updates.latest(), {
-      version: '0.2.0-rc.2', page: 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.2.0-rc.2',
+      version: '0.2.0-rc.2', page: 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.2.0-rc.2',
     })
   })
 
@@ -279,7 +295,7 @@ describe('watchReleases', () => {
     })
     t.after(updates.stop)
     assert.deepEqual(await updates.latest(), {
-      version: '0.1.10', page: 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.1.10',
+      version: '0.1.10', page: 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.1.10',
     })
   })
 
@@ -322,7 +338,7 @@ describe('watchReleases', () => {
     assert.equal(await none.latest(), null)
     assert.deepEqual(none.state(), { phase: 'current' })
 
-    const page = 'https://github.com/Fei2411/DS-Bot/releases/tag/v0.1.9'
+    const page = 'https://github.com/rml4791lol-lang/DS-Bot/releases/tag/v0.1.9'
     const found = watchReleases({
       current: '0.1.7', arch: 'arm64', fetch: async () => releaseResponse([release('0.1.9', { page })]), log: quietLog(),
     })

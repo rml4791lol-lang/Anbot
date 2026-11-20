@@ -3,7 +3,7 @@
 //   effect: run the golden row's `checks` — mechanical, no model.
 //   pair:   show a judge two answers to the same task in both orders; a disagreement is a tie.
 // Usage:
-//   node dev/eval/judge.mjs --checks
+//   node dev/eval/judge.mjs --checks                                     (effect layer; CI gate, exit 1 on a failed check)
 //   node dev/eval/judge.mjs --pair-dir answers/candidate --answer-dir answers/base --ids g01,g02
 //   node dev/eval/judge.mjs --ids g01 --runs 1 --out /tmp/judge.json     (single-answer rubric, for triage)
 //   node dev/eval/judge.mjs --ids g01 --runs 3 --no-cache                 (measure run-to-run variance)
@@ -34,13 +34,15 @@ if (has('--checks')) {
   const results = SELECTED.map(row => runChecks(row, { cwd: process.cwd(), answers: answerDir }))
   const withChecks = results.filter(r => r.total > 0)
   const passed = withChecks.filter(r => r.passed)
+  const failed = withChecks.filter(r => !r.passed)
   for (const r of results) {
     const label = r.total === 0 ? 'no checks (skipped)' : r.passed ? 'pass' : `fail — ${r.results.find(x => !x.ok)?.detail}`
     console.log(`${r.id} ${label}`)
   }
-  console.log(`effect: ${passed.length}/${withChecks.length} tasks, ${results.length - withChecks.length} without checks`)
+  const failedList = failed.length ? `, failed: ${failed.map(r => r.id).join(', ')}` : ''
+  console.log(`effect: ${passed.length}/${withChecks.length} tasks, ${results.length - withChecks.length} without checks, ${results.length} rows${failedList}`)
   if (outFile) fs.writeFileSync(outFile, JSON.stringify(results, null, 2))
-  process.exit(0)
+  process.exit(failed.length ? 1 : 0)
 }
 
 const RUBRIC = `You are grading one answer from a team of software agents.

@@ -3,9 +3,13 @@
 // start/text.mjs.
 
 const CHECK_EVERY_MS = 4 * 60 * 60_000
-export const RELEASES_URL = 'https://api.github.com/repos/Fei2411/DS-Bot/releases?per_page=20'
+// This fork carries its own build points, so it must never install an upstream package over them.
+export const UPDATE_REPOSITORY = 'rml4791lol-lang/DS-Bot'
+export const RELEASES_URL = `https://api.github.com/repos/${UPDATE_REPOSITORY}/releases?per_page=20`
+// The Atom feed has no API rate limit and still carries every release page.
+export const RELEASE_FEED = `https://github.com/${UPDATE_REPOSITORY}/releases.atom`
 // Where a user downloads the newest version by hand.
-export const RELEASE_PAGE = 'https://github.com/Fei2411/DS-Bot/releases/latest'
+export const RELEASE_PAGE = `https://github.com/${UPDATE_REPOSITORY}/releases/latest`
 const MB = 1024 * 1024
 
 function parseVersion(version) {
@@ -80,6 +84,31 @@ function stateHolder(log) {
 
 // `asset` names the release asset of this install (default: the macOS zip); a release without
 // it does not count.
+function atomReleaseEntries(text, assetName) {
+  return [...String(text).matchAll(/<entry\b[\s\S]*?<\/entry>/giu)].flatMap((match) => {
+    const entry = match[0]
+    const href = entry.match(/<link\b[^>]*\brel=["']alternate["'][^>]*\bhref=["']([^"']+)/iu)?.[1]
+    const rawTitle = entry.match(/<title>([\s\S]*?)<\/title>/iu)?.[1]
+    if (href === undefined || rawTitle === undefined) return []
+    const title = rawTitle.replace(/&amp;/gu, '&').replace(/&lt;/gu, '<').replace(/&gt;/gu, '>').trim()
+    const version = title.match(/^v?(\d+(?:[.-][0-9A-Za-z.-]+)*)/u)?.[1]
+    if (version === undefined) return []
+    try {
+      const page = new URL(href.replace(/&amp;/gu, '&'))
+      if (page.protocol !== 'https:') return []
+      return [{
+        tag_name: `v${version}`,
+        html_url: page.href,
+        draft: false,
+        prerelease: version.includes('-'),
+        assets: [{ name: assetName(version) }],
+      }]
+    } catch {
+      return []
+    }
+  })
+}
+
 export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, open, feed = RELEASES_URL, log = console, asset }) {
   const assetName = asset ?? (version => `DS-Bot-${version}-mac-${arch}.zip`)
   let asked
@@ -92,12 +121,26 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
         const response = await fetch(feed, {
           headers: { accept: 'application/vnd.github+json', 'user-agent': `DS-Bot/${current}` },
         })
+        let releases
         if (!response.ok) {
-          log.error(`DS Bot: update check failed: HTTP ${String(response.status)}`)
-          holder.set({ phase: 'failed' })
-          return null
+          if (response.status === 403) {
+            const fallback = await fetch(RELEASE_FEED, {
+              headers: { accept: 'application/atom+xml', 'user-agent': `DS-Bot/${current}` },
+            })
+            if (!fallback.ok) {
+              log.error(`DS Bot: update check failed: GitHub API HTTP 403, Atom feed HTTP ${String(fallback.status)}`)
+              holder.set({ phase: 'failed' })
+              return null
+            }
+            releases = atomReleaseEntries(await fallback.text(), assetName)
+          } else {
+            log.error(`DS Bot: update check failed: HTTP ${String(response.status)}`)
+            holder.set({ phase: 'failed' })
+            return null
+          }
+        } else {
+          releases = await response.json()
         }
-        const releases = await response.json()
         if (!Array.isArray(releases)) {
           log.error('DS Bot: update check failed: releases response is not an array')
           holder.set({ phase: 'failed' })

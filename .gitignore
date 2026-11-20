@@ -12,6 +12,9 @@ node_modules/
 # A DeepSeek Harness checkout for the tests and the test bench.
 /deepseek-harness/
 
+# The judge cache of dev/eval/judge.mjs (claude CLI answers, local only).
+/ds-bot/dev/eval/.judge-cache/
+
 # Test bench, local DSH data and the screenshots of dev/check.sh.
 .dsh-test*/
 .dsh-home/

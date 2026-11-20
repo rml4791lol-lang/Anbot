@@ -8,6 +8,8 @@ const MCP_CLIENT = '@deepseek-ai/dsh-mcp-client'
 const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 const SECRET_REFERENCE = /\$DSH_SECRET_([A-Z][A-Z0-9_]*)/g
 const ENSURE_TIMEOUT_MS = 15_000
+const CATALOG_READ_ATTEMPTS = 5
+const CATALOG_READ_RETRY_MS = 25
 const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/
 
 // DSH injects a directly invoked skill's body from its own `agent/pre-step`
@@ -91,6 +93,10 @@ export function install(rt) {
   let masking = 0
   let skillChangePending = false
   let catalogCache = []
+  // Every mask registers skill entries in the Agent scope, which invalidates
+  // the global skill catalog revision. Two Agents doing that at once would make
+  // a strict snapshot permanently look incomplete during startup.
+  let maskChain = Promise.resolve()
 
   const library = () => state.capabilities.items
   const ensureLibrary = () => {
@@ -147,7 +153,14 @@ export function install(rt) {
     const options = { cwd, ...(agent === undefined ? {} : { scope: agent }) }
     try {
       if (typeof service.snapshot === 'function') {
-        const snapshot = await service.snapshot(options)
+        let snapshot
+        for (let attempt = 0; attempt < CATALOG_READ_ATTEMPTS; attempt += 1) {
+          snapshot = await service.snapshot(options)
+          if (!strict || snapshot?.complete === true) break
+          if (attempt + 1 < CATALOG_READ_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, CATALOG_READ_RETRY_MS * (2 ** attempt)))
+          }
+        }
         if (strict && snapshot?.complete !== true) throw new Error('The skill catalog is incomplete.')
         if (Array.isArray(snapshot?.skills)) return snapshot.skills
       }
@@ -289,7 +302,7 @@ export function install(rt) {
   // Hide every profile skill this Bot did not choose. Registration goes through a
   // plugin mounted in the Agent's own context, so the mask lands in the Agent layer
   // and outranks the global profile entry; copied SKILL.md text would not.
-  async function applySkillMasks(agent, bot, mountedSkills = new Set()) {
+  async function applySkillMasksNow(agent, bot, mountedSkills = new Set()) {
     if (!agent?.ctx) return
     const current = skillMasks.get(agent)
     const hide = new Map()
@@ -353,6 +366,13 @@ export function install(rt) {
         catalogChanged()
       }
     }
+  }
+  // The catalog revision is global even though each mask is Agent-scoped. Apply
+  // masks one at a time so every strict read sees the previous registrations settled.
+  const applySkillMasks = (...args) => {
+    const next = maskChain.then(() => applySkillMasksNow(...args))
+    maskChain = next.catch(() => {})
+    return next
   }
   rt.applySkillMasks = applySkillMasks
   // If a strict scoped snapshot cannot be applied, do not leave the DSH
@@ -733,8 +753,11 @@ export function install(rt) {
       setSkillUnavailable(agent, false)
     } catch (error) {
       if (bot?.skillShortlist === undefined) throw error
+      const firstFailure = !skillMaskUnavailable.has(agent)
       setSkillUnavailable(agent, true)
-      rt.warn('ds-bot: skill mask for %s is unavailable; the skill loader is disabled: %s', sessionId, error)
+      if (firstFailure) {
+        rt.warn('ds-bot: skill mask for %s is unavailable; the skill loader is disabled: %s', sessionId, error)
+      }
     }
   }
   const botOfSession = sessionId => (rt.isBotSession(sessionId) ? rt.botOf(rt.selfOf(sessionId)) : undefined)

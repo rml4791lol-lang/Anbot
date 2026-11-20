@@ -37,7 +37,8 @@
 - 效果层是**二元**的：全部 checks 通过算 1，否则 0。不做部分分。
 - 危险操作（写、删、跑网络）默认不执行；`exit_zero` 只允许列在 `dev/eval/checks.allow` 里的命令。
 - 效果层的改动（新增 check）要先跑"旧回答对旧 check"，确认现在确实是 0 分，否则这个 check 没有区分力。
-- 2026-11-15 覆盖：24 条里 12 条有 checks（11 条 `1.1`、1 条 `1.2` 之后全部按需 bump）；当前 `node dev/eval/judge.mjs --checks` = **10/12**（未过：g05 上下文压缩回答缺失、g12 调研缺样本偏差论证，均为答案问题）。分母按 §10 取 12。
+- 2026-11-15 覆盖：24 条里 12 条有 checks（11 条 `1.1`、1 条 `1.2` 之后全部按需 bump）；分母按 §10 取 12。
+- 2026-11-20 修正基线答案：g05 改用同一会话 turn 78 的压缩/技能回答（原文件误抽到 turn 79），g12 补上样本选择偏差；当前 `node dev/eval/judge.mjs --checks` = **12/12**。
 - 2026-11-15 更正 g04：旧 check 用 `记住|记忆` 对不上它的 expect（三条都不要求这个词），改为 `state\.json|指令` + `三类|拍板|卡住|交付物`，答案实际满足。这是判据写错，不是把红改绿。
 
 ## 3. 质量层：配对比较，不判绝对分
@@ -140,3 +141,30 @@ Bot 每轮能做什么，由这一轮**给了什么上下文、开着哪些工�
 - 质量层：分母是"两次判定一致的非 tie 样本数"。
 - 纠正率：分母是"有用户后续消息的轮数"，不是全部轮数。
 - 所有报表必须同时打印分母；分母为 0 时输出 `n/a`，不许输出 0%。
+
+## 11. 失败归类：过程失败先于内容失败（2026-11-20）
+
+§2 的效果层只能看到「磁盘上留下了什么」，§4 的 ledger 记了 `outcome` 但不归因。两者之间缺一层：**这个失败是 harness 没让它做完，还是它做完了但做错**。前者改 harness，后者才可能值得训权重。
+
+运行：`node dev/eval/failures.mjs --answers dev/eval/answers/base [--judge <judge.mjs --out 文件>]`，实现在 `dev/eval/failures.mjs`，单测 `test/eval-failures.test.js`。
+
+判定口径（按顺序命中第一条）：
+
+| class | kind | 触发 |
+|---|---|---|
+| `repeat-call` | process | 同一调用重复、检测到循环 |
+| `tool-blocked` | process | permission denied、不在 `checks.allow`、工具被禁用 |
+| `step-limit` | process | 达到步数上限 |
+| `context-limit` | process | 上下文窗口、截断 |
+| `turn-crash` | process | 回合失败、模型错误、流中断、超时 |
+| `no-delivery` | process | 没有交付，且认不出原因 |
+| `wrong-delivery` | content | 交付了，且没命中上面任何一条 |
+
+规则：
+
+- 「交付了」由裁判判定；没有裁判结果时退化为「答案文件非空」。
+- 通过了 checks 的任务不算失败，不归类。没有 checks 的 12 条，在裁判结果出来之前一律落到 `content/wrong-delivery`，报表里要注明这是保守值。
+- **过程失败未清零之前，不做任何 SFT / LoRA / RL。**
+- 连着两轮只有 `content/wrong-delivery`，才说明是能力上限，才进入 §5 的提议队列去讨论训练或改 prompt。
+
+2026-11-20 首次基线：`failures: 14/24, process 0, content 14`。过程失败为 0 不代表 harness 没有过程失败——静态答案档案里根本看不到一轮卡死的回合。要看到它，得让 §4 的 ledger 每轮多记一个终止原因（`delivered | max-steps | blocked-tool | context-full | repeat-call | error`），并把 ledger 日文件作为 `failures.mjs` 的输入源，取代对答案文本的正则匹配。这是下一张工单，未做。
