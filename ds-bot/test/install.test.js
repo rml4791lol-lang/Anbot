@@ -398,10 +398,10 @@ test('the team board config comes from the Bot home and falls back to defaults',
     const response = await routes.get('/api/bot/team-board.config.json').fetch(new Request('http://localhost/api/bot/team-board.config.json'))
     return response.json()
   }
-  const defaults = { defaultOpen: true, sort: 'section', density: 'two', showHistory: true }
+  const defaults = { defaultOpen: false, sort: 'section', density: 'two', showHistory: true }
   assert.deepEqual(await read(), defaults)
-  writeFileSync(join(rt.home, 'team-board.config.json'), JSON.stringify({ defaultOpen: false, sort: 'role' }))
-  assert.deepEqual(await read(), { ...defaults, defaultOpen: false, sort: 'role' })
+  writeFileSync(join(rt.home, 'team-board.config.json'), JSON.stringify({ defaultOpen: true, sort: 'role' }))
+  assert.deepEqual(await read(), { ...defaults, defaultOpen: true, sort: 'role' })
   // A broken file is not a broken board.
   writeFileSync(join(rt.home, 'team-board.config.json'), '{oops')
   assert.deepEqual(await read(), defaults)

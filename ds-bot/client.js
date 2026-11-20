@@ -47946,10 +47946,10 @@ function TeamOverviewTab({ useUi, useSurface, actions }) {
   );
 }
 var TEAM_OVERVIEW_CSS = `
-.bt-teamov-tab{position:fixed;z-index:29;right:0;top:44%;display:flex;flex-direction:column;align-items:center;gap:6px;width:30px;min-height:104px;padding:9px 0;border:.5px solid var(--bt-line-2);border-right:0;border-radius:10px 0 0 10px;background:var(--bt-glass-bg);color:var(--bt-ink-3);box-shadow:var(--bt-glass-shadow);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);font-family:var(--bt-font);cursor:pointer;transition:width .16s ease,color .12s ease,background-color .12s ease}
+.bt-teamov-tab{position:fixed;z-index:29;right:0;top:calc(50% - 80px);display:flex;flex-direction:column;align-items:center;gap:6px;width:30px;min-height:104px;padding:9px 0;border:.5px solid var(--bt-line-2);border-right:0;border-radius:10px 0 0 10px;background:var(--bt-glass-bg);color:var(--bt-ink-3);box-shadow:var(--bt-glass-shadow);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);font-family:var(--bt-font);cursor:pointer;transition:width .16s ease,color .12s ease,background-color .12s ease;-webkit-app-region:no-drag;app-region:no-drag}
 .bt-teamov-tab:hover{width:34px;color:var(--bt-ink);background:var(--bt-card)}
-body:has(.tbh) .bt-teamov-tab{right:calc(min(380px,100vw - 204px) + 8px)}
-body:has(.tbh-toggle) .bt-teamov-tab{right:42px}
+body:has(.tbh) .bt-teamov-tab{right:calc(min(380px,100vw - 204px) + 8px);top:50%}
+body:has(.tbh-toggle) .bt-teamov-tab{right:0;top:calc(50% - 80px)}
 .bt-teamov-tab svg{flex:none;width:14px;height:14px}
 .bt-teamov-tab span{writing-mode:vertical-rl;font-size:9px;line-height:14px;letter-spacing:.08em}
 .bt-teamov-tab:focus-visible{outline:2px solid var(--bt-accent);outline-offset:-2px}
@@ -50129,7 +50129,7 @@ function serveBrowserReads({ browsers, post, clientId = globalThis.crypto.random
 
 // src/client/team-board.js
 var import_react75 = require("react");
-var DEFAULT_CONFIG = Object.freeze({ defaultOpen: true, sort: "section", density: "two", showHistory: true });
+var DEFAULT_CONFIG = Object.freeze({ defaultOpen: false, sort: "section", density: "two", showHistory: true });
 var CONFIG_URL = "./team-board.config.json";
 var SORTS = /* @__PURE__ */ new Set(["section", "role"]);
 var DENSITIES = /* @__PURE__ */ new Set(["two", "one", "compact"]);
@@ -50392,14 +50392,14 @@ function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now = Date.n
 }
 var TEAM_BOARD_CSS = `
 .tb-board{display:flex;flex-direction:column;min-height:0;height:100%;color:var(--bt-ink);background:var(--bt-sidebar);font-size:12px;container-type:inline-size}
-.tb-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 12px 10px;border-bottom:.5px solid var(--bt-line)}
+.tb-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 12px 10px;border-bottom:.5px solid var(--bt-line);position:relative;z-index:2;-webkit-app-region:no-drag;app-region:no-drag}
 .tb-counts{display:flex;align-items:baseline;gap:6px;font-size:11.5px;color:var(--bt-ink-2)}
 .tb-count b{margin-right:3px;font-size:15px;font-weight:600;color:var(--bt-ink);font-variant-numeric:tabular-nums}
 .tb-count[data-kind=running] b{color:var(--bt-accent)}
 .tb-count[data-kind=waiting] b{color:var(--bt-danger)}
 .tb-sep{color:var(--bt-ink-3)}
 .tb-stamp{margin-left:auto;font-size:11px;color:var(--bt-ink-3);font-variant-numeric:tabular-nums}
-.tb-close{width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--bt-ink-2);font-size:16px;line-height:1;cursor:pointer}
+.tb-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border:0;border-radius:8px;background:none;color:var(--bt-ink-2);font-size:18px;line-height:1;cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;app-region:no-drag}
 .tb-close:hover{background:color-mix(in srgb,var(--bt-ink) 8%,transparent);color:var(--bt-ink)}
 .tb-groups{flex:1;min-height:0;overflow:auto;padding:8px 10px 12px}
 .tb-group+.tb-group{margin-top:10px}
@@ -50445,8 +50445,8 @@ var TEAM_BOARD_CONFIG_URL = "/api/bot/team-board.config.json";
 var TEAM_BOARD_HOST_CSS = `
 /* At 521px and up the panel keeps a 204px column of the page beside it (100vw - 204px);
    the sheet below owns 520px and under, so the two rules meet at a deliberate 1px boundary. */
-.tbh{position:fixed;top:8px;right:8px;bottom:8px;width:min(380px,calc(100vw - 204px));display:flex;flex-direction:column;min-height:0;z-index:45;border:1px solid var(--bt-line);border-radius:12px;background:var(--bt-card);color:var(--bt-ink);box-shadow:0 8px 32px rgba(0,0,0,.12),var(--bt-glass-shadow);overflow:hidden}
-.tbh-toggle{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:45;writing-mode:vertical-rl;border:1px solid var(--bt-line);border-right:none;border-radius:10px 0 0 10px;background:var(--bt-card);color:var(--bt-ink);padding:12px 6px;font:inherit;font-size:12px;cursor:pointer}
+.tbh{position:fixed;top:8px;right:8px;bottom:8px;width:min(380px,calc(100vw - 204px));display:flex;flex-direction:column;min-height:0;z-index:45;border:1px solid var(--bt-line);border-radius:12px;background:var(--bt-card);color:var(--bt-ink);box-shadow:0 8px 32px rgba(0,0,0,.12),var(--bt-glass-shadow);overflow:hidden;pointer-events:auto;isolation:isolate;-webkit-app-region:no-drag;app-region:no-drag}
+.tbh-toggle{position:fixed;top:calc(50% + 34px);right:0;z-index:45;writing-mode:vertical-rl;border:1px solid var(--bt-line);border-right:none;border-radius:10px 0 0 10px;background:var(--bt-card);color:var(--bt-ink);padding:12px 6px;font:inherit;font-size:12px;cursor:pointer;-webkit-app-region:no-drag;app-region:no-drag}
 /* Below 520px a floating card leaves the page beside it too narrow to read: the board
    takes the full width as a sheet across the top instead. */
 @media (max-width:520px){
@@ -50457,7 +50457,7 @@ var TEAM_BOARD_HOST_CSS = `
 function TeamBoardHost({ useRoster, useWork }) {
   const roster = useRoster((value) => value);
   const work = useWork((value) => value);
-  const [open, setOpen] = (0, import_react76.useState)(true);
+  const [open, setOpen] = (0, import_react76.useState)(false);
   (0, import_react76.useEffect)(() => {
     let live = true;
     readBoardConfig(TEAM_BOARD_CONFIG_URL).then((config) => {

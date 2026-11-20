@@ -20,7 +20,7 @@ const STAGED_MS = 30 * 60_000
 
 // The team board's settings: a file in the Bot home, so the board can change
 // without a rebuild. A missing or unreadable file means the shipped defaults.
-const TEAM_BOARD_DEFAULTS = Object.freeze({ defaultOpen: true, sort: 'section', density: 'two', showHistory: true })
+const TEAM_BOARD_DEFAULTS = Object.freeze({ defaultOpen: false, sort: 'section', density: 'two', showHistory: true })
 const teamBoardConfig = (home) => {
   try {
     const raw = JSON.parse(readFileSync(join(home, 'team-board.config.json'), 'utf8'))

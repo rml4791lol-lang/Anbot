@@ -64,3 +64,12 @@ test('the team board stays out of DSH\'s single right seat', () => {
   assert.equal(source.includes("shadow('rightbar'"), false, 'the rightbar seat belongs to the shell')
   assert.equal(source.includes("shadow('shell.overlay', { id: 'bot-team-board'"), true, 'the board renders in the overlay list')
 })
+
+test('the team board starts closed and its close control is clickable in a draggable app', () => {
+  const board = readFileSync(new URL('../src/client/team-board.js', import.meta.url), 'utf8')
+  const host = readFileSync(new URL('../src/client/team-board-host.js', import.meta.url), 'utf8')
+  assert.match(board, /DEFAULT_CONFIG\s*=\s*Object\.freeze\(\{[^}]*defaultOpen: false/)
+  assert.match(board, /\.tb-close\{[^}]*app-region:no-drag/)
+  assert.match(host, /\.tbh-toggle\{[^}]*app-region:no-drag/)
+  assert.match(host, /\.tbh\{[^}]*app-region:no-drag/)
+})

@@ -8,7 +8,7 @@ import { workPhrase } from './cells.js'
 import { currentPart } from './text.js'
 import { reducedMotion } from './motion.js'
 
-export const DEFAULT_CONFIG = Object.freeze({ defaultOpen: true, sort: 'section', density: 'two', showHistory: true })
+export const DEFAULT_CONFIG = Object.freeze({ defaultOpen: false, sort: 'section', density: 'two', showHistory: true })
 
 const CONFIG_URL = './team-board.config.json'
 const SORTS = new Set(['section', 'role'])
@@ -277,14 +277,14 @@ export function TeamBoard({ roster, work, onClose, configUrl = CONFIG_URL, now =
 
 export const TEAM_BOARD_CSS = `
 .tb-board{display:flex;flex-direction:column;min-height:0;height:100%;color:var(--bt-ink);background:var(--bt-sidebar);font-size:12px;container-type:inline-size}
-.tb-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 12px 10px;border-bottom:.5px solid var(--bt-line)}
+.tb-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 12px 10px;border-bottom:.5px solid var(--bt-line);position:relative;z-index:2;-webkit-app-region:no-drag;app-region:no-drag}
 .tb-counts{display:flex;align-items:baseline;gap:6px;font-size:11.5px;color:var(--bt-ink-2)}
 .tb-count b{margin-right:3px;font-size:15px;font-weight:600;color:var(--bt-ink);font-variant-numeric:tabular-nums}
 .tb-count[data-kind=running] b{color:var(--bt-accent)}
 .tb-count[data-kind=waiting] b{color:var(--bt-danger)}
 .tb-sep{color:var(--bt-ink-3)}
 .tb-stamp{margin-left:auto;font-size:11px;color:var(--bt-ink-3);font-variant-numeric:tabular-nums}
-.tb-close{width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--bt-ink-2);font-size:16px;line-height:1;cursor:pointer}
+.tb-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border:0;border-radius:8px;background:none;color:var(--bt-ink-2);font-size:18px;line-height:1;cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;app-region:no-drag}
 .tb-close:hover{background:color-mix(in srgb,var(--bt-ink) 8%,transparent);color:var(--bt-ink)}
 .tb-groups{flex:1;min-height:0;overflow:auto;padding:8px 10px 12px}
 .tb-group+.tb-group{margin-top:10px}

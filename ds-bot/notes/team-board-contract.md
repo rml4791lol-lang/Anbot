@@ -31,7 +31,7 @@ TeamBoard({
 - 路径：`./team-board.config.json`（DSH Web 源根，工程师侧负责静态提供；404 时组件用默认值，不报错）。
 - 键：
   ```json
-  { "defaultOpen": true, "sort": "section", "density": "two", "showHistory": true }
+  { "defaultOpen": false, "sort": "section", "density": "two", "showHistory": true }
   ```
   - `defaultOpen`：`true|false`（挂载层决定初始开合，组件不强制）
   - `sort`：`"section"`（按名册分组）| `"role"`（按角色字母序）
