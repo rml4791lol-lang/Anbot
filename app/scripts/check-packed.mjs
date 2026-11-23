@@ -20,11 +20,11 @@ const executable = given || packedExecutable()
 
 function packedExecutable() {
   const out = join(root, 'dist-pack')
-  if (process.platform === 'win32') return join(out, 'win-unpacked', 'DS Bot.exe')
+  if (process.platform === 'win32') return join(out, 'win-unpacked', 'Anbot.exe')
   // executableName in electron-builder.yml.
-  if (process.platform === 'linux') return join(out, 'linux-unpacked', 'dsbot')
+  if (process.platform === 'linux') return join(out, 'linux-unpacked', 'anbot')
   const dir = ['mac-arm64', 'mac'].find(name => existsSync(join(out, name))) ?? 'mac'
-  return join(out, dir, 'DS Bot.app', 'Contents', 'MacOS', 'DS Bot')
+  return join(out, dir, 'Anbot.app', 'Contents', 'MacOS', 'Anbot')
 }
 
 if (!existsSync(executable)) {
@@ -607,7 +607,7 @@ try {
   // A terminal inside an Electron-based editor may set ELECTRON_RUN_AS_NODE, which turns the app into plain Node.
   const { ELECTRON_RUN_AS_NODE: _runAsNode, ...env } = process.env
   Object.assign(env, {
-    DS_BOT_HOME: join(work, 'home'), DS_BOT_SHELL_DATA: join(work, 'shell'),
+    ANBOT_HOME: join(work, 'home'), ANBOT_SHELL_DATA: join(work, 'shell'),
     DEEPSEEK_BASE_URL: modelUrl, DEEPSEEK_API_KEY: 'mock-key',
   })
   const app = spawn(packedApp, [`--remote-debugging-port=${String(port)}`, `--inspect=127.0.0.1:${String(mainPort)}`], { stdio: 'inherit', env })

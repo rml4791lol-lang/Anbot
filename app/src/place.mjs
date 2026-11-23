@@ -9,8 +9,19 @@ const { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statfsSync, statS
 
 export const DATA_DIR = 'data'
 export const WORKSPACE_DIR = 'workspace'
+export const DEFAULT_DATA_HOME = '.anbot'
+export const DEFAULT_WORKSPACE = 'Anbot'
+export const LEGACY_DATA_HOME = '.ds-bot'
+export const LEGACY_WORKSPACE = 'DS Bot'
 // The layer the app adds inside a drive or a folder that is someone else's.
-export const LAYER = 'DS Bot'
+export const LAYER = 'Anbot'
+
+/** The first-start places, retaining an earlier default installation that is still on disk. */
+export function defaultPlaces({ home = homedir(), exists = existsSync } = {}) {
+  const current = { dataDir: join(home, DEFAULT_DATA_HOME), workspace: join(home, DEFAULT_WORKSPACE) }
+  const legacy = { dataDir: join(home, LEGACY_DATA_HOME), workspace: join(home, LEGACY_WORKSPACE) }
+  return !exists(current.dataDir) && (exists(legacy.dataDir) || exists(legacy.workspace)) ? legacy : current
+}
 
 /** Free bytes on the volume that holds `path`, measured at its nearest existing ancestor. */
 export function freeSpace(path) {
@@ -119,7 +130,7 @@ const sameFolder = (a, b) => within(a, b) && within(b, a)
 
 /**
  * The root R that a picked folder gives (windows-onboarding §3, 一个位置): the folder itself
- * when it is new, empty, or an empty root of the app's own; otherwise `DS Bot` inside it,
+ * when it is new, empty, or an empty root of the app's own; otherwise `Anbot` inside it,
  * as inside a drive. The data goes to R\data and the Bots' files to R\workspace.
  * @param {string} picked
  * @param {{ dshHome?: string, program?: string, env?: NodeJS.ProcessEnv, probe?: boolean, current?: { dataDir: string, workspace?: string } }} where

@@ -7,7 +7,7 @@ import { dist, gatewayFailure } from '../scripts/dist.mjs'
 const ELECTRON_BUILDER_504 = [
   '  • downloaded      label=electron progress=100%',
   '  ⨯ Response code 504 (Gateway Time-out)  failedTask=build stackTrace=HTTPError: Response code 504 (Gateway Time-out)',
-  '    at Request._onResponseBase (/home/runner/work/DS-Bot/DS-Bot/app/node_modules/app-builder-lib/node_modules/got/dist/source/core/index.js:913:31)',
+  '    at Request._onResponseBase (/home/runner/work/Anbot/Anbot/app/node_modules/app-builder-lib/node_modules/got/dist/source/core/index.js:913:31)',
 ].join('\n')
 const APPIMAGE_504 = '  ⨯ failed to build AppImage  error=Response code 504 (Gateway Time-out)'
 const RUNTIME_504 = '  ⨯ primary runtime download: 504 https://github.com/astral-sh/python-build-standalone/releases/download/20260901/cpython-3.12.14%2B20260901-x86_64-apple-darwin-install_only_stripped.tar.gz  failed'
@@ -24,7 +24,7 @@ test('a build that fails on its own is not retried', () => {
   assert.equal(gatewayFailure('  ⨯ primary runtime download: 404 https://example.invalid/a.tar.gz'), undefined)
   assert.equal(gatewayFailure('This Node runs on arm64, so npm installed arm64 native modules, and an x64 app with them would not start.'), undefined)
   // A path or a size that contains 504 is not an answer.
-  assert.equal(gatewayFailure('  • building        target=zip arch=x64 file=dist-pack/DS-Bot-0.3.504-mac-x64.zip'), undefined)
+  assert.equal(gatewayFailure('  • building        target=zip arch=x64 file=dist-pack/Anbot-0.3.504-mac-x64.zip'), undefined)
 })
 
 test('only the error that ended the build counts, not an attempt retried before it', () => {

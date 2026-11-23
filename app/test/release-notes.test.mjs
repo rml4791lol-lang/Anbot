@@ -7,30 +7,32 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import YAML from 'yaml'
-import { checksums, copyName, downloadBlock, formatSize, missingPackages, PACKAGES, packageName, withDownloads } from '../scripts/release-notes.mjs'
+import {
+  checksums, copyName, downloadBlock, formatSize, missingPackages, PACKAGES, packageName, releaseRepository, REPO, withDownloads,
+} from '../scripts/release-notes.mjs'
 
 const script = fileURLToPath(new URL('../scripts/release-notes.mjs', import.meta.url))
 const read = file => readFileSync(new URL(file, import.meta.url), 'utf8')
 const names = version => PACKAGES.map(entry => packageName(version, entry))
 const MB = 1024 ** 2
 
-test('the packages carry the names electron-builder gives them, and copies drop the version', () => {
-  assert.match(read('../electron-builder.yml'), /^artifactName: DS-Bot-\$\{version\}-\$\{os\}-\$\{arch\}\.\$\{ext\}$/mu)
+test('the desktop packages carry Anbot names, and copies drop the version', () => {
+  assert.match(read('../electron-builder.yml'), /^artifactName: Anbot-\$\{version\}-\$\{os\}-\$\{arch\}\.\$\{ext\}$/mu)
   assert.deepEqual(names('0.2.3'), [
-    'DS-Bot-0.2.3-win-x64.exe',
-    'DS-Bot-0.2.3-mac-arm64.zip',
-    'DS-Bot-0.2.3-mac-x64.zip',
-    'DS-Bot-0.2.3-linux-x86_64.AppImage',
-    'DS-Bot-0.2.3-linux-amd64.deb',
-    'DS-Bot-0.2.3-android.apk',
+    'Anbot-0.2.3-win-x64.exe',
+    'Anbot-0.2.3-mac-arm64.zip',
+    'Anbot-0.2.3-mac-x64.zip',
+    'Anbot-0.2.3-linux-x86_64.AppImage',
+    'Anbot-0.2.3-linux-amd64.deb',
+    'Anbot-0.2.3-android.apk',
   ])
   assert.deepEqual(PACKAGES.map(copyName), [
-    'DS-Bot-win-x64.exe',
-    'DS-Bot-mac-arm64.zip',
-    'DS-Bot-mac-x64.zip',
-    'DS-Bot-linux-x86_64.AppImage',
-    'DS-Bot-linux-amd64.deb',
-    'DS-Bot-android.apk',
+    'Anbot-win-x64.exe',
+    'Anbot-mac-arm64.zip',
+    'Anbot-mac-x64.zip',
+    'Anbot-linux-x86_64.AppImage',
+    'Anbot-linux-amd64.deb',
+    'Anbot-android.apk',
   ])
 })
 
@@ -39,45 +41,54 @@ test('sizes are whole megabytes, as GitHub shows them', () => {
   assert.equal(formatSize(10), '1 MB')
 })
 
-test('the table lists Windows first, then macOS, Linux and Android, and says which files are not for download', () => {
+test('the independent repository is the only accepted release identity', () => {
+  assert.equal(REPO, 'rml4791lol-lang/Anbot')
+  assert.equal(releaseRepository(REPO), REPO)
+  assert.equal(releaseRepository(''), REPO)
+  assert.equal(releaseRepository(undefined), REPO)
+  assert.throws(() => releaseRepository('Fei2411/DS-Bot'), /rml4791lol-lang\/Anbot/u)
+})
+
+test('the table lists the desktop and phone packages', () => {
   const sizes = Object.fromEntries(names('0.2.3').map((name, index) => [name, (index + 1) * 100 * MB]))
   const block = downloadBlock({ version: '0.2.3', sizes })
   const rows = block.split('\n').filter(line => line.startsWith('| ') && !line.startsWith('| System'))
   assert.equal(rows.length, 6)
-  assert.match(rows[0], /^\| \*\*Windows 10\/11 \(64-bit \/ 64 位\)\*\*<br>Double-click to install \/ 双击安装 \| \[DS-Bot-0\.2\.3-win-x64\.exe\]\(https:\/\/github\.com\/Fei2411\/DS-Bot\/releases\/download\/v0\.2\.3\/DS-Bot-0\.2\.3-win-x64\.exe\) \| 100 MB \|$/u)
+  assert.match(rows[0], /^\| \*\*Windows 10\/11 \(64-bit \/ 64 位\)\*\*<br>Double-click to install \/ 双击安装 \| \[Anbot-0\.2\.3-win-x64\.exe\]\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/download\/v0\.2\.3\/Anbot-0\.2\.3-win-x64\.exe\) \| 100 MB \|$/u)
   assert.match(rows[1], /^\| macOS, Apple chip .*mac-arm64\.zip.*\| 200 MB \|$/u)
   assert.match(rows[2], /^\| macOS, Intel .*mac-x64\.zip.*\| 300 MB \|$/u)
   assert.match(rows[3], /^\| Linux, AppImage .*linux-x86_64\.AppImage.*\| 400 MB \|$/u)
   assert.match(rows[4], /^\| Linux, deb .*linux-amd64\.deb.*\| 500 MB \|$/u)
-  assert.match(rows[5], /^\| Android \(phone app \/ 手机 App\) .*android\.apk.*\| 600 MB \|$/u)
   assert.match(block, /^## Download \/ 下载$/mu)
-  assert.match(block, /The `\.blockmap`, `latest\*\.yml` and `ds-bot-\*\.tgz` files and the source code archives are for updates and the plugin/u)
-  assert.match(block, /\[SHA256SUMS\.txt\]\(https:\/\/github\.com\/Fei2411\/DS-Bot\/releases\/download\/v0\.2\.3\/SHA256SUMS\.txt\)/u)
+  assert.match(block, /The `\.blockmap`, `latest\*\.yml` and source code archives are for updates and the repository/u)
+  assert.match(block, /Android.*Anbot-0\.2\.3-android\.apk/u)
+  assert.doesNotMatch(block, /DS-Bot-|Fei2411/u)
+  assert.match(block, /\[SHA256SUMS\.txt\]\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/download\/v0\.2\.3\/SHA256SUMS\.txt\)/u)
   assert.doesNotMatch(block, /Mirror/u)
 })
 
-test('a mirror comes before GitHub, and a fork links to its own releases', () => {
+test('a mirror adds a second link to the same Anbot release asset', () => {
   const sizes = Object.fromEntries(names('0.2.3').map(name => [name, MB]))
-  const block = downloadBlock({ version: '0.2.3', sizes, repo: 'someone/DS-Bot', mirror: 'https://mirror.example/ds-bot/v0.2.3/' })
-  assert.match(block, /\| DS-Bot-0\.2\.3-win-x64\.exe: \[Mirror \/ 国内镜像\]\(https:\/\/mirror\.example\/ds-bot\/v0\.2\.3\/DS-Bot-0\.2\.3-win-x64\.exe\) · \[GitHub\]\(https:\/\/github\.com\/someone\/DS-Bot\/releases\/download\/v0\.2\.3\/DS-Bot-0\.2\.3-win-x64\.exe\) \|/u)
-  assert.doesNotMatch(block, /Fei2411/u)
+  const block = downloadBlock({ version: '0.2.3', sizes, mirror: 'https://mirror.example/anbot/v0.2.3/' })
+  assert.match(block, /\| Anbot-0\.2\.3-win-x64\.exe: \[Mirror \/ 国内镜像\]\(https:\/\/mirror\.example\/anbot\/v0\.2\.3\/Anbot-0\.2\.3-win-x64\.exe\) · \[GitHub\]\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/download\/v0\.2\.3\/Anbot-0\.2\.3-win-x64\.exe\) \|/u)
+  assert.doesNotMatch(block, /someone\/DS-Bot/u)
 })
 
-test('SHA256SUMS.txt lists each package under both of its names, in the format sha256sum checks', () => {
+test('SHA256SUMS.txt lists each desktop package under both of its names', () => {
   const hashes = Object.fromEntries(names('0.2.3').map((name, index) => [name, String(index).repeat(64)]))
   const lines = checksums('0.2.3', hashes).split('\n')
   assert.equal(lines.pop(), '')
   assert.equal(lines.length, 12)
-  assert.equal(lines[0], `${'0'.repeat(64)}  DS-Bot-0.2.3-win-x64.exe`)
-  assert.equal(lines[1], `${'0'.repeat(64)}  DS-Bot-win-x64.exe`)
-  assert.equal(lines[9], `${'4'.repeat(64)}  DS-Bot-linux-amd64.deb`)
-  assert.equal(lines[11], `${'5'.repeat(64)}  DS-Bot-android.apk`)
+  assert.equal(lines[0], `${'0'.repeat(64)}  Anbot-0.2.3-win-x64.exe`)
+  assert.equal(lines[1], `${'0'.repeat(64)}  Anbot-win-x64.exe`)
+  assert.equal(lines[8], `${'4'.repeat(64)}  Anbot-0.2.3-linux-amd64.deb`)
+  assert.equal(lines[9], `${'4'.repeat(64)}  Anbot-linux-amd64.deb`)
 })
 
-test('a missing package is named; other files in the folder do not count', () => {
-  const present = ['DS-Bot-0.2.3-win-x64.exe', 'DS-Bot-0.2.3-win-x64.exe.blockmap', 'DS-Bot-mac-arm64.zip', 'DS-Bot-0.2.2-mac-x64.zip',
-    'DS-Bot-0.2.3-linux-x86_64.AppImage', 'DS-Bot-0.2.3-linux-amd64.deb', 'latest.yml']
-  assert.deepEqual(missingPackages('0.2.3', present), ['DS-Bot-0.2.3-mac-arm64.zip', 'DS-Bot-0.2.3-mac-x64.zip', 'DS-Bot-0.2.3-android.apk'])
+test('a missing desktop package is named; other files do not count', () => {
+  const present = ['Anbot-0.2.3-win-x64.exe', 'Anbot-0.2.3-win-x64.exe.blockmap', 'Anbot-mac-arm64.zip', 'Anbot-0.2.2-mac-x64.zip',
+    'Anbot-0.2.3-linux-x86_64.AppImage', 'Anbot-0.2.3-linux-amd64.deb', 'Anbot-0.2.3-android.apk', 'latest.yml']
+  assert.deepEqual(missingPackages('0.2.3', present), ['Anbot-0.2.3-mac-arm64.zip', 'Anbot-0.2.3-mac-x64.zip'])
   assert.deepEqual(missingPackages('0.2.3', names('0.2.3')), [])
 })
 
@@ -94,21 +105,21 @@ test('the table goes on top of the notes, and a second run replaces it', () => {
   assert.equal(withDownloads('', block), `${block}\n`)
 })
 
-test('the script hashes and copies the packages and prints the notes', (t) => {
-  const work = mkdtempSync(join(tmpdir(), 'ds-bot-release-notes-'))
+test('the script hashes and copies the desktop packages and prints the notes', (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'anbot-release-notes-'))
   t.after(() => { rmSync(work, { recursive: true, force: true }) })
   const from = join(work, 'packages')
   const to = join(work, 'attach')
   mkdirSync(from)
   for (const name of names('0.2.3')) writeFileSync(join(from, name), `package ${name}`)
-  writeFileSync(join(from, 'DS-Bot-0.2.3-win-x64.exe.blockmap'), 'map')
+  writeFileSync(join(from, 'Anbot-0.2.3-win-x64.exe.blockmap'), 'map')
   writeFileSync(join(work, 'notes.md'), '- Fixed it\n')
-  const env = { ...process.env, GITHUB_REPOSITORY: '', MIRROR_BASE: '' }
+  const env = { ...process.env, GITHUB_REPOSITORY: REPO, MIRROR_BASE: '' }
   const run = spawnSync(process.execPath, [script, '0.2.3', from, to, join(work, 'notes.md')], { encoding: 'utf8', env })
   assert.equal(run.status, 0, run.stderr)
   assert.ok(run.stdout.startsWith('<!-- downloads -->\n## Download / 下载\n'))
   assert.ok(run.stdout.endsWith('<!-- /downloads -->\n\n- Fixed it\n'))
-  assert.match(run.stdout, /\/Fei2411\/DS-Bot\/releases\/download\/v0\.2\.3\/DS-Bot-0\.2\.3-win-x64\.exe/u)
+  assert.match(run.stdout, /\/rml4791lol-lang\/Anbot\/releases\/download\/v0\.2\.3\/Anbot-0\.2\.3-win-x64\.exe/u)
   assert.deepEqual(readdirSync(to).sort(), [...PACKAGES.map(copyName), 'SHA256SUMS.txt'].sort())
   const sums = readFileSync(join(to, 'SHA256SUMS.txt'), 'utf8')
   for (const entry of PACKAGES) {
@@ -119,17 +130,37 @@ test('the script hashes and copies the packages and prints the notes', (t) => {
   }
 })
 
-test('the script stops when a package is missing, so the release is not marked Latest', (t) => {
-  const work = mkdtempSync(join(tmpdir(), 'ds-bot-release-notes-'))
+test('the script stops when a package or the repository identity is wrong', (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'anbot-release-notes-'))
   t.after(() => { rmSync(work, { recursive: true, force: true }) })
   for (const name of names('0.2.3').slice(1)) writeFileSync(join(work, name), name)
-  const run = spawnSync(process.execPath, [script, '0.2.3', work, join(work, 'attach')], { encoding: 'utf8' })
-  assert.equal(run.status, 1)
-  assert.match(run.stderr, /has no DS-Bot-0\.2\.3-win-x64\.exe$/mu)
+  const missing = spawnSync(process.execPath, [script, '0.2.3', work, join(work, 'attach')], { encoding: 'utf8', env: { ...process.env, GITHUB_REPOSITORY: REPO } })
+  assert.equal(missing.status, 1)
+  assert.match(missing.stderr, /has no Anbot-0\.2\.3-win-x64\.exe$/mu)
+
+  for (const name of names('0.2.3')) writeFileSync(join(work, name), name)
+  const wrongRepo = spawnSync(process.execPath, [script, '0.2.3', work, join(work, 'attach')], {
+    encoding: 'utf8', env: { ...process.env, GITHUB_REPOSITORY: 'Fei2411/DS-Bot' },
+  })
+  assert.equal(wrongRepo.status, 1)
+  assert.match(wrongRepo.stderr, /rml4791lol-lang\/Anbot/u)
 })
 
-// A releases/latest link must never reach a release whose files are still being attached.
-test('the release becomes Latest last, after every job that attaches files', () => {
+test('the Anbot workflow attaches its own packages and cannot publish to upstream npm', () => {
+  const text = read('../../.github/workflows/release.yml')
+  const workflow = YAML.parse(text)
+  assert.equal(workflow.permissions.contents, 'write')
+  assert.equal(workflow.permissions['id-token'], undefined)
+  assert.doesNotMatch(text, /npm\s+publish|id-token|npmjs\.com|Trusted Publishing/u)
+  assert.doesNotMatch(text, /legacy-release-assets|DeepSeek-Bot|DS-Bot-/u)
+  assert.match(text, /rml4791lol-lang\/Anbot/u)
+  assert.match(text, /APP_REPOSITORY: rml4791lol-lang\/Anbot/u)
+  assert.match(text, /name: Anbot-win-x64/u)
+  assert.match(text, /name: Anbot-mac-\$\{\{ matrix\.arch \}\}/u)
+  assert.match(text, /name: Anbot-linux-x64/u)
+})
+
+test('the release becomes Latest last, after all package uploaders', () => {
   const workflow = YAML.parse(read('../../.github/workflows/release.yml'))
   const runs = job => (job.steps ?? []).map(step => step.run ?? '').join('\n')
   const latest = Object.entries(workflow.jobs).filter(([, job]) => /gh release edit "\$TAG" --latest/u.test(runs(job)))
@@ -140,16 +171,14 @@ test('the release becomes Latest last, after every job that attaches files', () 
     return seen
   }
   const uploaders = Object.keys(workflow.jobs).filter(other => other !== name && /gh release upload/u.test(runs(workflow.jobs[other])))
-  assert.ok(uploaders.length >= 4)
+  assert.deepEqual(uploaders.sort(), ['app-android', 'app-linux', 'app-macos', 'app-windows', 'checks'])
   for (const uploader of uploaders) assert.ok(before(name).has(uploader), `${name} must come after ${uploader}`)
   assert.match(job.steps.at(-1).run, /^gh release edit "\$TAG" --latest$/u)
   assert.match(runs(job), /node scripts\/release-notes\.mjs /u)
 })
 
-test('both READMEs link the latest release and do not hard-code release version numbers', () => {
-  for (const file of ['../../README.md', '../../README.zh.md']) {
-    const text = read(file)
-    assert.match(text, /\(https:\/\/github\.com\/Fei2411\/DS-Bot\/releases\/latest\)/u, file)
-    assert.doesNotMatch(text, /ds-bot-\d+\.\d+\.\d+\.tgz|DS-Bot#v\d/u, file)
-  }
+test('the desktop README links only the Anbot release', () => {
+  const text = read('../README.md')
+  assert.match(text, /\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/latest\)/u)
+  assert.doesNotMatch(text, /Fei2411\/DS-Bot\/releases|DS-Bot#v\d/u)
 })

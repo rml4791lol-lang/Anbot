@@ -1,16 +1,14 @@
-// Writes what a release offers for download: the "Download / 下载" table at the top of its notes,
-// SHA256SUMS.txt, and a copy of each package without the version in its name, which a fixed
-// releases/latest/download/ link can name.
+// Writes what an Anbot release offers for download: the "Download / 下载" table at the top of its
+// notes, SHA256SUMS.txt, and a copy of each application package without the version in its name.
 // Usage: node scripts/release-notes.mjs <version> <folder with the packages> <folder for the files to attach> [<current notes>]
-// It prints the notes with the table on top. MIRROR_BASE, when set, is a URL that holds the
-// packages under the same names; GITHUB_REPOSITORY names the repository (default Fei2411/DS-Bot).
+// GITHUB_REPOSITORY must name rml4791lol-lang/Anbot when set. MIRROR_BASE, when set, is a URL
+// that holds the same release assets under the same names.
 import { createHash } from 'node:crypto'
 import { copyFileSync, createReadStream, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const REPO = 'Fei2411/DS-Bot'
-// The order of the table: Windows first, where most downloads are; the phone app last.
+export const REPO = 'rml4791lol-lang/Anbot'
 export const PACKAGES = [
   { file: 'win-x64.exe', system: '**Windows 10/11 (64-bit / 64 位)**', note: 'Double-click to install / 双击安装' },
   { file: 'mac-arm64.zip', system: 'macOS, Apple chip / Apple 芯片' },
@@ -20,12 +18,18 @@ export const PACKAGES = [
   { file: 'android.apk', system: 'Android (phone app / 手机 App)' },
 ]
 export const SUMS = 'SHA256SUMS.txt'
-// The table sits between these, so a second run replaces it instead of adding another.
 const START = '<!-- downloads -->'
 const END = '<!-- /downloads -->'
 
-export const packageName = (version, entry) => `DS-Bot-${version}-${entry.file}`
-export const copyName = entry => `DS-Bot-${entry.file}`
+export function releaseRepository(value = process.env.GITHUB_REPOSITORY) {
+  if (value !== undefined && value !== '' && value !== REPO) {
+    throw new Error(`release-notes only publishes ${REPO}; ${value} is a different repository`)
+  }
+  return REPO
+}
+
+export const packageName = (version, entry) => `Anbot-${version}-${entry.file}`
+export const copyName = entry => `Anbot-${entry.file}`
 
 /** @returns {string[]} the packages of `version` that are not among `names` */
 export function missingPackages(version, names) {
@@ -37,8 +41,8 @@ export function formatSize(bytes) {
   return `${String(Math.max(1, Math.round(bytes / 1024 ** 2)))} MB`
 }
 
-export function releaseUrl({ repo = REPO, version, name }) {
-  return `https://github.com/${repo}/releases/download/v${version}/${encodeURIComponent(name)}`
+export function releaseUrl({ version, name }) {
+  return `https://github.com/${REPO}/releases/download/v${version}/${encodeURIComponent(name)}`
 }
 
 function mirrorUrl(mirror, name) {
@@ -46,9 +50,9 @@ function mirrorUrl(mirror, name) {
 }
 
 /** `sizes`: bytes by package name. Without `mirror` each package has its GitHub link only. */
-export function downloadBlock({ version, sizes, repo = REPO, mirror }) {
+export function downloadBlock({ version, sizes, mirror }) {
   const links = (name) => {
-    const github = releaseUrl({ repo, version, name })
+    const github = releaseUrl({ version, name })
     return mirror ? `${name}: [Mirror / 国内镜像](${mirrorUrl(mirror, name)}) · [GitHub](${github})` : `[${name}](${github})`
   }
   const rows = PACKAGES.map((entry) => {
@@ -56,7 +60,7 @@ export function downloadBlock({ version, sizes, repo = REPO, mirror }) {
     const system = entry.note === undefined ? entry.system : `${entry.system}<br>${entry.note}`
     return `| ${system} | ${links(name)} | ${formatSize(sizes[name])} |`
   })
-  const sums = releaseUrl({ repo, version, name: SUMS })
+  const sums = releaseUrl({ version, name: SUMS })
   return [
     START,
     '## Download / 下载',
@@ -65,9 +69,9 @@ export function downloadBlock({ version, sizes, repo = REPO, mirror }) {
     '|---|---|---|',
     ...rows,
     '',
-    'The `.blockmap`, `latest*.yml` and `ds-bot-*.tgz` files and the source code archives are for updates and the plugin: you do not need to download them.',
+    'The `.blockmap`, `latest*.yml` and source code archives are for updates and the repository: you do not need to download them.',
     '',
-    '`.blockmap`、`latest*.yml`、`ds-bot-*.tgz` 和源代码是给自动更新和插件用的，不用下载。',
+    '`.blockmap`、`latest*.yml` 和源代码是给自动更新和仓库用的，不用下载。',
     '',
     `To check a download, compare its SHA-256 with [${SUMS}](${sums}). / 下载后可以用 [${SUMS}](${sums}) 核对 SHA-256。`,
     END,
@@ -103,6 +107,7 @@ async function main([version, from, to, notesFile]) {
     console.error('release-notes: usage: node scripts/release-notes.mjs <version> <folder with the packages> <folder for the files to attach> [<current notes>]')
     process.exit(2)
   }
+  releaseRepository()
   const missing = missingPackages(version, readdirSync(from))
   if (missing.length > 0) {
     console.error(`release-notes: ${from} has no ${missing.join(', ')}`)
@@ -118,8 +123,13 @@ async function main([version, from, to, notesFile]) {
     copyFileSync(join(from, name), join(to, copyName(entry)))
   }
   writeFileSync(join(to, SUMS), checksums(version, hashes))
-  const block = downloadBlock({ version, sizes, repo: process.env.GITHUB_REPOSITORY || REPO, mirror: process.env.MIRROR_BASE || undefined })
+  const block = downloadBlock({ version, sizes, mirror: process.env.MIRROR_BASE || undefined })
   process.stdout.write(withDownloads(notesFile === undefined ? '' : readFileSync(notesFile, 'utf8'), block))
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main(process.argv.slice(2))
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await main(process.argv.slice(2)).catch((error) => {
+    console.error(`release-notes: ${error instanceof Error ? error.message : String(error)}`)
+    process.exitCode = 1
+  })
+}

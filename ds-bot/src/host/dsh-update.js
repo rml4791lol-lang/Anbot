@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path'
 
 import {
   CHECK_TTL_MS, cleanVersion, encodeName, fetchJson, installSpecOf,
-  newer, registryPlan, repoSlug, sourceOf,
+  newer, ownUpdateSource, registryPlan, repoSlug, sourceOf,
 } from './update.js'
 
 const PKG = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
@@ -78,6 +78,7 @@ export function install(rt) {
   // itself updates from: its registry, or the public repo's latest release.
   async function releasedDeclaration(source) {
     if (source.kind === 'registry') {
+      if (!ownUpdateSource(source, config)) return null
       for (const registry of await registryPlan(config, ctx.get?.('pluginManager'))) {
         try {
           const manifest = await fetchJson(`${registry}${encodeName(PKG.name)}/latest`)

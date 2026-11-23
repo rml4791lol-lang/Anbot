@@ -1,5 +1,5 @@
 // A read-only team activity surface: the task rows and activity records already owned
-// by DS Bot, with no second task state and no client-side completion rules.
+// by Anbot, with no second task state and no client-side completion rules.
 import { createElement as h, useEffect, useRef, useState } from 'react'
 import { call as apiCall } from './api.js'
 import { hostText, localText, t } from './i18n.js'
@@ -423,7 +423,7 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
     'data-source': item.source,
     'data-kind': item.kind,
   },
-  h('b', null, item.botName || 'DS Bot'),
+  h('b', null, item.botName || 'Anbot'),
   h('span', null, `${sourceLabel(item.source, copy)}${item.kind ? ` · ${item.kind}` : ''} · ${item.text}`),
   h('time', null, when(item.at))))
   const taskMessage = noMatch ? copy.noMatch : noCurrentTasks ? copy.noCurrentTasks : ''

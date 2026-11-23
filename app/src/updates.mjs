@@ -3,10 +3,15 @@
 // start/text.mjs.
 
 const CHECK_EVERY_MS = 4 * 60 * 60_000
-export const RELEASES_URL = 'https://api.github.com/repos/Fei2411/DS-Bot/releases?per_page=20'
+export const PRODUCT_NAME = 'Anbot'
+export const RELEASES_REPOSITORY = 'rml4791lol-lang/Anbot'
+export const RELEASES_URL = `https://api.github.com/repos/${RELEASES_REPOSITORY}/releases?per_page=20`
 // Where a user downloads the newest version by hand.
-export const RELEASE_PAGE = 'https://github.com/Fei2411/DS-Bot/releases/latest'
+export const RELEASE_PAGE = `https://github.com/${RELEASES_REPOSITORY}/releases/latest`
 const MB = 1024 * 1024
+
+/** The public update override. The DS_BOT name remains for existing installations and scripts. */
+export const updateFeedFromEnv = (env = process.env) => env.ANBOT_UPDATE_URL || env.DS_BOT_UPDATE_URL || undefined
 
 function parseVersion(version) {
   if (typeof version !== 'string') return null
@@ -68,7 +73,7 @@ function stateHolder(log) {
     set: (next) => {
       state = next
       for (const listener of [...listeners]) {
-        try { listener(next) } catch (error) { log.error(`DS Bot: an update state listener failed: ${error instanceof Error ? error.message : String(error)}`) }
+        try { listener(next) } catch (error) { log.error(`${PRODUCT_NAME}: an update state listener failed: ${error instanceof Error ? error.message : String(error)}`) }
       }
     },
     subscribe: (listener) => {
@@ -81,7 +86,7 @@ function stateHolder(log) {
 // `asset` names the release asset of this install (default: the macOS zip); a release without
 // it does not count.
 export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, open, feed = RELEASES_URL, log = console, asset }) {
-  const assetName = asset ?? (version => `DS-Bot-${version}-mac-${arch}.zip`)
+  const assetName = asset ?? (version => `${PRODUCT_NAME}-${version}-mac-${arch}.zip`)
   let asked
   let latest = Promise.resolve(null)
   const holder = stateHolder(log)
@@ -90,17 +95,22 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
     latest = (async () => {
       try {
         const response = await fetch(feed, {
-          headers: { accept: 'application/vnd.github+json', 'user-agent': `DS-Bot/${current}` },
+          headers: { accept: 'application/vnd.github+json', 'user-agent': `${PRODUCT_NAME}/${current}` },
         })
         if (!response.ok) {
-          log.error(`DS Bot: update check failed: HTTP ${String(response.status)}`)
-          holder.set({ phase: 'failed' })
+          const privateChannel = feed === RELEASES_URL && [401, 403, 404].includes(response.status)
+          const error = privateChannel
+            ? `private release channel requires an explicit feed (HTTP ${String(response.status)})`
+            : `HTTP ${String(response.status)}`
+          log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
+          holder.set({ phase: 'failed', error })
           return null
         }
         const releases = await response.json()
         if (!Array.isArray(releases)) {
-          log.error('DS Bot: update check failed: releases response is not an array')
-          holder.set({ phase: 'failed' })
+          const error = 'releases response is not an array'
+          log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
+          holder.set({ phase: 'failed', error })
           return null
         }
         const currentVersion = parseVersion(current)
@@ -113,7 +123,7 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
           if (!isNewer(version, current)) continue
           if (!Array.isArray(release.assets) || !release.assets.some(entry => entry?.name === assetName(version))) continue
           if (!isHttpsPage(release.html_url)) {
-            log.error('DS Bot: update check failed: release page URL is not HTTPS')
+            log.error(`${PRODUCT_NAME}: update check failed: release page URL is not HTTPS`)
             continue
           }
           if (found === undefined || isNewer(version, found.version)) found = { version, page: release.html_url }
@@ -122,18 +132,19 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
           holder.set({ phase: 'current' })
           return null
         }
-        log.info(`DS Bot: update ${found.version} available`)
+        log.info(`${PRODUCT_NAME}: update ${found.version} available`)
         if (ask !== undefined && asked !== found.version) {
           asked = found.version
           void Promise.resolve().then(() => ask(found.version))
             .then(yes => (yes ? open(found.page) : undefined))
-            .catch((error) => { log.error(`DS Bot: update ${found.version} not opened: ${error instanceof Error ? error.message : String(error)}`) })
+            .catch((error) => { log.error(`${PRODUCT_NAME}: update ${found.version} not opened: ${error instanceof Error ? error.message : String(error)}`) })
         }
         holder.set({ phase: 'available', version: found.version, page: found.page })
         return found
       } catch (error) {
-        log.error(`DS Bot: update check failed: ${error instanceof Error ? error.message : String(error)}`)
-        holder.set({ phase: 'failed' })
+        const message = error instanceof Error ? error.message : String(error)
+        log.error(`${PRODUCT_NAME}: update check failed: ${message}`)
+        holder.set({ phase: 'failed', error: message })
         return null
       }
     })()
@@ -189,17 +200,18 @@ export function watchUpdates({ updater, beforeInstall, ask, feed, log = console 
     holder.set({ ...current, percent, received: Math.round(Number(progress.transferred) / MB) || 0, total: Math.round(Number(progress.total) / MB) || 0 })
   })
   updater.on('update-downloaded', ({ version }) => {
-    log.info(`DS Bot: update ${version} downloaded`)
+    log.info(`${PRODUCT_NAME}: update ${version} downloaded`)
     holder.set({ phase: 'downloaded', version })
     if (ask === undefined || asked === version) return
     asked = version
     void ask(version).then(now => (now ? install() : undefined))
-      .catch((error) => { log.error(`DS Bot: update ${version} not installed: ${error instanceof Error ? error.message : String(error)}`) })
+      .catch((error) => { log.error(`${PRODUCT_NAME}: update ${version} not installed: ${error instanceof Error ? error.message : String(error)}`) })
   })
   // A downloaded update stays ready: a later failed check does not hide it.
   updater.on('error', (error) => {
-    log.error(`DS Bot: update failed: ${error instanceof Error ? error.message : String(error)}`)
-    if (holder.state().phase !== 'downloaded') holder.set({ phase: 'failed' })
+    const message = error instanceof Error ? error.message : String(error)
+    log.error(`${PRODUCT_NAME}: update failed: ${message}`)
+    if (holder.state().phase !== 'downloaded') holder.set({ phase: 'failed', error: message })
   })
   let latest = Promise.resolve(null)
   // A failed check or download also comes as an 'error' event.

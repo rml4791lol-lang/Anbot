@@ -1,7 +1,7 @@
-appId: io.github.fei2411.dsbot
-productName: DS Bot
-copyright: Copyright 2026 Fei2411 and the DS Bot contributors
-artifactName: DS-Bot-${version}-${os}-${arch}.${ext}
+appId: io.github.rml4791lol-lang.anbot
+productName: Anbot
+copyright: Copyright 2026 rml4791lol-lang and the Anbot contributors
+artifactName: Anbot-${version}-${os}-${arch}.${ext}
 directories:
   output: dist-pack
 files:
@@ -61,7 +61,7 @@ win:
       arch: [x64]
   icon: assets/icon.ico
 nsis:
-  # Preserve the GUID derived from the legacy appId so installed copies upgrade in place.
+  # Preserve the installed DS Bot / DeepSeek Bot GUID so an Anbot installer replaces either in place.
   guid: 32c46dfc-ed78-5d41-85a4-a3c7f083f2e0
   oneClick: false
   perMachine: false
@@ -84,7 +84,7 @@ mac:
   # Without this key macOS registers no Local Network entry for the app and
   # blocks LAN connections from tool processes outright ("No route to host").
   extendInfo:
-    NSLocalNetworkUsageDescription: DS Bot runs commands that connect to devices on your local network.
+    NSLocalNetworkUsageDescription: Anbot runs commands that connect to devices on your local network.
 linux:
   # The Linux Host uses the payload's plain Node, which cannot read asar archives.
   asar: false
@@ -95,22 +95,21 @@ linux:
       arch: [x64]
     - target: deb
       arch: [x64]
-  # The binary and the deb's menu entry take this name; productName has a space, which a
-  # terminal command should not have.
-  executableName: dsbot
+  # The binary and the deb's menu entry take this name.
+  executableName: anbot
   # A deb needs a maintainer; package.json's author has no email, so it goes here.
-  maintainer: Fei2411 <https://github.com/Fei2411>
+  maintainer: rml4791lol-lang <https://github.com/rml4791lol-lang>
   # Links the running window to the menu entry (WM_CLASS = app id).
   syncDesktopName: true
   icon: assets/icon.png
   category: Utility
-# Let apt replace the legacy deb instead of leaving two installed applications.
+# Let apt replace either upstream deb instead of leaving duplicate applications.
 deb:
-  fpm: ['--replaces', 'deepseek-bot', '--conflicts', 'deepseek-bot'] # legacy package
+  fpm: ['--replaces', 'deepseek-bot', '--replaces', 'dsbot', '--conflicts', 'deepseek-bot', '--conflicts', 'dsbot']
 # Where the installed app looks for updates (app-update.yml in the package). The build writes
 # latest.yml beside the installer; the release workflow attaches both to the GitHub release,
 # so the build itself never publishes (--publish never).
 publish:
   provider: github
-  owner: Fei2411
-  repo: DS-Bot
+  owner: rml4791lol-lang
+  repo: Anbot

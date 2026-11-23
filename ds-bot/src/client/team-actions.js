@@ -72,7 +72,7 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     openMemoryFromOverview: id => { ui.set(state => ({ ...state, teamOverview: false, memory: id, menu: null, palette: null })) },
     openTeamActivity: () => { ui.set(state => ({ ...state, teamActivity: true, teamOverview: false, menu: null, palette: null, newChat: null })) },
     closeTeamActivity: () => { ui.set(state => state.teamActivity ? { ...state, teamActivity: false } : state) },
-    // DS Bot's own Models page: the providers DSH serves, their keys and models.
+    // Anbot's own Models page: the providers DSH serves, their keys and models.
     openModels: () => openSettings('models'),
     closeSettings: () => { ui.set(state => (state.settings ? { ...state, settings: null } : state)) },
     openMemory: (id) => { ui.set(state => ({ ...state, memory: id, menu: null, palette: null })) },

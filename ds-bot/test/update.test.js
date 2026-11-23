@@ -66,39 +66,47 @@ test('the install source decides where a newer version is looked for', () => {
   assert.deepEqual(sourceOf(undefined), { kind: 'unknown' })
 })
 
-test('a registry install finds the newest version on the next registry and installs it from there', async () => {
+test('an unconfigured registry or legacy GitHub source cannot replace Anbot', async () => {
+  for (const source of ['ds-bot@latest', 'github:Fei2411/DS-Bot#v0.1.0&path:/ds-bot']) {
+    const { rt, fetched, installs } = start({ source })
+    const view = await rt.updateCheck()
+    assert.deepEqual(fetched, [])
+    assert.deepEqual(installs, [])
+    assert.equal(view.available, false)
+  }
+})
+
+test('an explicit Anbot registry offers and installs its release', async () => {
+  const registry = 'https://npm.example/'
   const { rt, fetched, installs } = start({
     source: `${PKG.name}@^${PKG.version}`,
-    answers: {
-      [`https://registry.npmjs.org/${PKG.name}/latest`]: new Error('offline'),
-      [`https://registry.npmmirror.com/${PKG.name}/latest`]: { version: '9.0.0' },
-    },
+    config: { updateRegistry: registry },
+    answers: { [`${registry}${PKG.name}/latest`]: { version: '9.0.0' } },
     result: { application: 'restart-required', version: '9.0.0' },
   })
   const view = await rt.updateCheck()
-  assert.deepEqual(fetched, [`https://registry.npmjs.org/${PKG.name}/latest`, `https://registry.npmmirror.com/${PKG.name}/latest`])
+  assert.deepEqual(fetched, [`${registry}${PKG.name}/latest`])
   assert.equal(view.available, true)
   assert.equal(view.latest, '9.0.0')
   assert.equal(view.current, PKG.version)
   assert.equal(view.source, 'registry')
-  assert.equal(view.notesUrl, 'https://github.com/Fei2411/DS-Bot/releases')
+  assert.equal(view.notesUrl, 'https://github.com/rml4791lol-lang/Anbot/releases')
   assert.equal(rt.updateStart().phase, 'installing')
   await flush()
-  assert.deepEqual(installs, [[`${PKG.name}@9.0.0`, { registry: 'https://registry.npmmirror.com/' }]])
+  assert.deepEqual(installs, [[`${PKG.name}@9.0.0`, { registry }]])
   const done = await rt.updateCheck()
   assert.equal(done.phase, 'installed')
   assert.equal(done.installed, '9.0.0')
   assert.equal(done.available, false)
 })
 
-test('a private registry of pnpm\'s own is asked alone, and an answer stands for a while', async () => {
+test('an explicit registry answer stands for a while', async () => {
   const { rt, fetched } = start({
     source: `${PKG.name}@^${PKG.version}`,
-    registries: { registry: null, fallbackRegistries: ['https://registry.npmmirror.com/'], resolved: 'https://npm.corp.example/' },
+    config: { updateRegistry: 'https://npm.corp.example/' },
     answers: { [`https://npm.corp.example/${PKG.name}/latest`]: { version: PKG.version } },
   })
-  const view = await rt.updateCheck()
-  assert.equal(view.available, false)
+  assert.equal((await rt.updateCheck()).available, false)
   assert.deepEqual(fetched, [`https://npm.corp.example/${PKG.name}/latest`])
   await rt.updateCheck()
   assert.equal(fetched.length, 1)
@@ -106,35 +114,31 @@ test('a private registry of pnpm\'s own is asked alone, and an answer stands for
   assert.equal(fetched.length, 2)
 })
 
-test('a versioned GitHub install follows the latest release tag and keeps its path', async () => {
+test('a versioned Anbot GitHub install follows its release and keeps its path', async () => {
   const { rt, installs } = start({
-    source: 'github:Fei2411/DS-Bot#v0.1.0&path:/ds-bot',
-    answers: { 'https://api.github.com/repos/Fei2411/DS-Bot/releases/latest': { tag_name: 'v9.1.0' } },
+    source: 'github:rml4791lol-lang/Anbot#v0.1.0&path:/ds-bot',
+    answers: { 'https://api.github.com/repos/rml4791lol-lang/Anbot/releases/latest': { tag_name: 'v9.1.0' } },
   })
   const view = await rt.updateCheck()
   assert.equal(view.available, true)
   assert.equal(view.latest, '9.1.0')
   rt.updateStart()
   await flush()
-  assert.deepEqual(installs, [['github:Fei2411/DS-Bot#v9.1.0&path:/ds-bot', {}]])
+  assert.deepEqual(installs, [['github:rml4791lol-lang/Anbot#v9.1.0&path:/ds-bot', {}]])
 })
 
-test('a versioned GitHub install follows the release to the repository\'s current address', async () => {
+test('a redirected release cannot move an Anbot install to another repository', async () => {
   const { rt, installs } = start({
-    source: 'github:old-owner/retired-dsbot#v0.1.0&path:/ds-bot',
+    source: 'github:rml4791lol-lang/Anbot#v0.1.0&path:/ds-bot',
     answers: {
-      'https://api.github.com/repos/old-owner/retired-dsbot/releases/latest': {
+      'https://api.github.com/repos/rml4791lol-lang/Anbot/releases/latest': {
         tag_name: 'v9.1.0',
-        html_url: 'https://github.com/Fei2411/DS-Bot/releases/tag/v9.1.0',
+        html_url: 'https://github.com/other/repo/releases/tag/v9.1.0',
       },
     },
   })
-  const view = await rt.updateCheck()
-  assert.equal(view.available, true)
-  assert.equal(view.latest, '9.1.0')
-  rt.updateStart()
-  await flush()
-  assert.deepEqual(installs, [['github:Fei2411/DS-Bot#v9.1.0&path:/ds-bot', {}]])
+  assert.equal((await rt.updateCheck()).available, false)
+  assert.deepEqual(installs, [])
 })
 
 test('a linked checkout, an unversioned git install, or a disabled check never asks the network', async () => {
@@ -153,7 +157,7 @@ test('a linked checkout, an unversioned git install, or a disabled check never a
 test('in the desktop app, which updates as a whole, it never asks the network and offers nothing', async (t) => {
   process.env.DS_BOT_APP = '1'
   t.after(() => { delete process.env.DS_BOT_APP })
-  const { rt, fetched } = start({ source: `${PKG.name}@^${PKG.version}`, answers: { [`https://registry.npmjs.org/${PKG.name}/latest`]: { version: '9.0.0' } } })
+  const { rt, fetched } = start({ source: `${PKG.name}@^${PKG.version}`, answers: { [`https://npm.example/${PKG.name}/latest`]: { version: '9.0.0' } } })
   const view = await rt.updateCheck({ fresh: true })
   assert.equal(view.source, 'app')
   assert.equal(view.available, false)
@@ -162,10 +166,10 @@ test('in the desktop app, which updates as a whole, it never asks the network an
 })
 
 test('the star count comes from the repository, is kept for an hour, and survives a failed answer', async () => {
-  const repo = 'https://api.github.com/repos/Fei2411/DS-Bot'
+  const repo = 'https://api.github.com/repos/rml4791lol-lang/Anbot'
   const answers = { [repo]: new Error('offline') }
   const { rt, fetched } = start({ source: `${PKG.name}@^${PKG.version}`, answers })
-  assert.equal(rt.updateView().repoUrl, 'https://github.com/Fei2411/DS-Bot')
+  assert.equal(rt.updateView().repoUrl, 'https://github.com/rml4791lol-lang/Anbot')
   assert.equal(await rt.repoStars(), null)
   answers[repo] = { stargazers_count: 42 }
   assert.equal(await rt.repoStars(), 42)
@@ -179,7 +183,8 @@ test('without a source from the plugin manager, the profile\'s own dependency en
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { [PKG.name]: `^${PKG.version}` } }))
   const { rt } = start({
     profileDir: dir,
-    answers: { [`https://registry.npmjs.org/${PKG.name}/latest`]: { version: '9.0.0' } },
+    config: { updateRegistry: 'https://npm.example/' },
+    answers: { [`https://npm.example/${PKG.name}/latest`]: { version: '9.0.0' } },
   })
   const view = await rt.updateCheck()
   assert.equal(view.source, 'registry')
@@ -193,9 +198,9 @@ test('a check that finds nothing clears the version a check before it found', as
   const dir = mkdtempSync(join(tmpdir(), 'ds-bot-update-'))
   const setSource = source => writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { [PKG.name]: source } }))
   setSource(`^${PKG.version}`)
-  const latest = `https://registry.npmjs.org/${PKG.name}/latest`
+  const latest = `https://npm.example/${PKG.name}/latest`
   const answers = { [latest]: { version: '9.0.0' } }
-  const { rt } = start({ profileDir: dir, answers })
+  const { rt } = start({ profileDir: dir, answers, config: { updateRegistry: 'https://npm.example/' } })
   const offered = await rt.updateCheck()
   assert.equal(offered.available, true)
   assert.equal(offered.latest, '9.0.0')
@@ -361,8 +366,9 @@ test('a newer release is offered in the run that reported the last update', asyn
   writeFileSync(join(home, 'update.json'), JSON.stringify({ from: '0.2.0', to: PKG.version, spec: `${PKG.name}@${PKG.version}`, startedAt: new Date().toISOString() }))
   const { rt } = start({
     home,
+    config: { updateRegistry: 'https://npm.example/' },
     source: `${PKG.name}@^${PKG.version}`,
-    answers: { [`https://registry.npmjs.org/${PKG.name}/latest`]: { version: '9.0.0' } },
+    answers: { [`https://npm.example/${PKG.name}/latest`]: { version: '9.0.0' } },
   })
   assert.equal(rt.updateView().phase, 'updated')
   const view = await rt.updateCheck({ fresh: true })

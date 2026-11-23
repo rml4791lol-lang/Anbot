@@ -10,7 +10,7 @@ const QUIET = 4
 function statusText(phone) {
   if (phone.error) return phone.error
   if (!phone.on) return t('Off. Phones cannot reach this computer.')
-  if (phone.status === 'online') return t('On. Paired phones can use DS Bot here.')
+  if (phone.status === 'online') return t('On. Paired phones can use Anbot here.')
   if (phone.status === 'offline') return t('Cannot reach the Server. Trying again…')
   return t('Connecting…')
 }
@@ -34,10 +34,10 @@ function minutesLeft(until) {
   return Math.max(0, Math.ceil((until - Date.now()) / 60_000))
 }
 
-// The phone app ships with each DS Bot release, as the release's Android APK.
-const APP_DOWNLOAD = 'https://github.com/Fei2411/DS-Bot/releases/latest'
+// The phone app ships with each Anbot release, as the release's Android APK.
+const APP_DOWNLOAD = 'https://github.com/rml4791lol-lang/Anbot/releases/latest'
 
-// Settings → Phone: the DS Bot phone app reaches this computer through a Relay Server.
+// Settings → Phone: the Anbot phone app reaches this computer through a Relay Server.
 export function PhonePage({ roster, actions, Section, Row }) {
   const phone = roster.phone ?? OFF
   const [server, setServer] = useState(phone.server)
@@ -76,7 +76,7 @@ export function PhonePage({ roster, actions, Section, Row }) {
       ? h('div', { className: 'bt-phone-pair' },
         h(QrCode, { text: phone.pairing.uri }),
         h('div', { className: 'bt-phone-pair-copy' },
-          h('span', null, t('Scan this code with the DS Bot app on your phone.')),
+          h('span', null, t('Scan this code with the Anbot app on your phone.')),
           h('span', { className: 'bt-set-hint' }, t('The code works once. It stops working in {count} min.', { count: minutesLeft(phone.pairing.expiresAt) })),
           h('div', null, h('button', { type: 'button', className: 'bt-soft bt-soft-sm', disabled: busy, onClick: () => void run(actions.phonePairCancel()) }, t('Cancel')))))
       : h(Row, { label: t('Show a QR code'), hint: online ? t('Your phone scans it once. After that it connects by itself.') : t('Turn on phone access first') },

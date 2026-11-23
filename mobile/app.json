@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DS Bot",
+    "name": "Anbot",
     "slug": "dsbot",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "DS Bot uses the camera to scan the pairing code that your computer shows.",
+          "cameraPermission": "Anbot uses the camera to scan the pairing code that your computer shows.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

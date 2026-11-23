@@ -62,7 +62,7 @@ export function Bubbles({ texts, roster, selfId, actions, streaming, sessionId, 
     Number.isFinite(time) ? h('div', { className: 'bt-utime', title: clockLabel(time) }, messageClock(time)) : null)
 }
 
-// A folded message's last code block shows only its start; DS Bot draws its own
+// A folded message's last code block shows only its start; Anbot draws its own
 // copy control for it, bound to the whole block. DSH's and the app's copy
 // buttons live in the block's banner and their markup differs, so none of
 // theirs is intercepted or cloned.
@@ -86,7 +86,7 @@ function FoldCodeCopy({ code, actions }) {
 
 // A folded message's last code block shows only its start. The start is not
 // given to the host's Markdown — its block would carry a copy bound to the
-// part shown — so DS Bot draws the part itself, with a copy bound to the
+// part shown — so Anbot draws the part itself, with a copy bound to the
 // whole block. `body` renders the markdown before the block.
 const foldArea = (body, code, codeHead, actions) => (code === undefined ? body
   : h('div', { className: 'bt-fold-code' },
@@ -409,7 +409,7 @@ export function claimLines(claims) {
     lines.push({
       kind: 'inProgress',
       text: t('No background work detected'),
-      detail: t('DS Bot has no recorded tool call or active background task for this reply.'),
+      detail: t('Anbot has no recorded tool call or active background task for this reply.'),
     })
   }
   for (const path of claims.missingFiles ?? []) lines.push({ kind: 'file', text: t('File not found: {path}', { path }) })

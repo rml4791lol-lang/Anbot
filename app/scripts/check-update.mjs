@@ -18,8 +18,8 @@ const manifest = process.platform === 'linux' ? 'latest-linux.yml' : 'latest.yml
 // The asset the fake release lists: what this install's update check waits for. The deb's file
 // name uses the Debian architecture (x64 → amd64).
 const asset = mac
-  ? version => `DS-Bot-${version}-mac-${process.arch}.zip`
-  : version => `DS-Bot-${version}-linux-${{ x64: 'amd64' }[process.arch] ?? process.arch}.deb`
+  ? version => `Anbot-${version}-mac-${process.arch}.zip`
+  : version => `Anbot-${version}-linux-${{ x64: 'amd64' }[process.arch] ?? process.arch}.deb`
 if (!executable || !source || !existsSync(executable)
   || (releasePage ? mode !== undefined : !existsSync(join(source, manifest)))) {
   console.error(`check-update: usage: ${releasePage
@@ -39,7 +39,7 @@ const server = createServer((request, response) => {
     served.push(pathname)
     response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify([{
       tag_name: `v${version}`,
-      html_url: `https://github.com/Fei2411/DS-Bot/releases/tag/v${version}`,
+      html_url: `https://github.com/rml4791lol-lang/Anbot/releases/tag/v${version}`,
       draft: false,
       prerelease: false,
       assets: [{ name: asset(version) }],
@@ -119,7 +119,7 @@ let app
 try {
   // A terminal inside an Electron-based editor may set ELECTRON_RUN_AS_NODE, which turns the app into plain Node.
   const { ELECTRON_RUN_AS_NODE: _runAsNode, ...env } = process.env
-  Object.assign(env, { DS_BOT_HOME: join(work, 'home'), DS_BOT_SHELL_DATA: join(work, 'shell'), DS_BOT_UPDATE_URL: feed })
+  Object.assign(env, { ANBOT_HOME: join(work, 'home'), ANBOT_SHELL_DATA: join(work, 'shell'), ANBOT_UPDATE_URL: feed })
   const port = 9300 + Math.floor(Math.random() * 600)
   app = spawn(resolve(executable), [`--remote-debugging-port=${String(port)}`], { env, stdio: ['ignore', 'pipe', 'pipe'] })
   const exited = new Promise((done) => { app.once('exit', (code) => { done(code) }) })
@@ -128,10 +128,10 @@ try {
     stream.setEncoding('utf8')
     stream.on('data', (chunk) => { output += chunk; process.stdout.write(chunk) })
   }
-  const updateLine = `DS Bot: update ${String(version)} ${releasePage ? 'available' : 'downloaded'}`
+  const updateLine = `Anbot: update ${String(version)} ${releasePage ? 'available' : 'downloaded'}`
   const end = Date.now() + (releasePage ? 3 : 5) * 60_000
   while (!output.includes(updateLine)) {
-    if (releasePage ? /DS Bot: update check failed/u.test(output) : /DS Bot: update failed/u.test(output)) {
+    if (releasePage ? /Anbot: update check failed/u.test(output) : /Anbot: update failed/u.test(output)) {
       throw new Error('the app reported a failed update')
     }
     if (app.exitCode !== null) {

@@ -1,10 +1,10 @@
-# DS Bot Harness Implementation Plan
+# Anbot Harness Implementation Plan
 
 > **For agentic workers:** Use superpowers:subagent-driven-development or superpowers:executing-plans. Work from the frozen integration base, own only the assigned files, and attach verification evidence to every handoff.
 
 **Goal:** Deliver a DSH-native Personal Agent that can carry a real engineering project from intent to a verified result, keep working across interruptions, and let the user understand and take over the work.
 
-**Architecture:** DSH owns native Agent Presets, Sessions, Turns and execution. DS Bot owns the user's goals, project decisions, team roles, task dependencies, handoffs, approvals and evidence. Existing local Agent adapters execute work in scoped workspaces. A specialized Bot and a team project use the same task identity and lifecycle.
+**Architecture:** DSH/Cordis owns native Presets, Sessions, Turns and execution. Anbot owns project intent, task identity, approvals, evidence and operator control. The target protected kernel exposes five typed contracts. Bot Forge and Anbot Self-Builder use those contracts, as do optional extensions. The default chat is concise, with an on-demand X-Ray workspace for plans, execution, evidence and control.
 
 **Tech Stack:** Existing Node ESM DS Bot plugin, DSH, React client and Electron app. The product uses its existing local state and Markdown memory.
 
@@ -18,58 +18,56 @@
 - Each product slice shows actual availability, authorization, execution and verification. Store plans and evidence with their existing owners. Reuse native DSH rather than adding a runtime or an independent policy engine.
 - Scope includes engineering, design and orchestration first, with the same assembly model usable for maintenance, research, documentation, QA and operations. Preserve user-configured intent, project objectives, operating constraints and delegation rights across roles, sessions and devices.
 
-## 1. Establish a reproducible integration base
+## Phase 0 · Brand and distribution
 
-**Files:** `app/package.json`, `app/src/profile.mjs`, `ds-bot/dev/harness/package.json`, `docs/plans/2026-11-16-ai-os-reality-harness.md` and tests associated with the imported changes.
+- [x] Switch visible identity, metadata, downloads, feedback, release workflow and update source to `rml4791lol-lang/Anbot`. Retain historical attribution and compatibility identifiers where needed. Verify the private release channel and configuration overrides with no embedded credential.
+- [x] Verify existing shells, project/data locations and legacy environment keys, including isolated runs. Rebuild the client and app, run lint and unit tests, and smoke the real pinned DSH host and desktop where supported. Capture evidence and commit separately.
+- [x] Seed [architecture](../../architecture.md), [extensions](../../capabilities-and-extensions.md) and [development](../../development-and-runbook.md) from verified paths. This plan is the sole phase and progress ledger.
 
-- [ ] Record current fork, DSH pin, preset branch and Reality Harness worktree identity. Extract only reviewed changes with explicit dependency commits and run each slice independently.
-- [ ] Establish baseline unit, client freshness and lint checks. Record pre-existing failures and select one real, benign regression with a reproducible check.
-- [ ] Verify native Agent Preset creation, missing preset behavior, private/group/relay/fresh-part routing and rollback in an isolated profile. Keep the native chooser and human-readable labels.
+## Phase 1A · Protected kernel, two-layer UI and one real bug
 
-## 2. Build professional Bot configuration and single-Bot delivery
+- [ ] Freeze narrow TypeScript contracts and integration tests before assigning disjoint file scopes. Define configuration/security (nested merge, protected provider fields, workspace sandbox and dangerous-command confirmation); context (append-only history and separate projection); state/memory/checkpoints (one writer and paired conversation/workspace revision); execution/worktree (structured provider facts, cancellation and reconciliation); extensions/view (mount, availability, unmount and evidence).
+- [ ] Reuse native DSH preset registration, Session and tool policy. Connect a bounded native Workflow with actual start, terminal and cancellation events. Display observed installed/signed-in, skill/plugin load, and worktree created/session ready/turn started states. Expose blocked reason, explicit model retry, bounded resume, and supported cost/cache counters.
+- [ ] Assemble Bots dynamically from preset, instructions, skills, execution route, workspace policy and validation. Built-in development, UI and coordination combinations use the same format as custom Bots.
+- [ ] Keep the default chat concise: fold intermediate work, show inline diffs, jump between question and latest reply, preserve file references on copy, guard an active task on close, and allow asynchronous questions without stopping independent tasks. X-Ray shows editable Spec and checklist, actual executor, probes, context budget, checkpoints, evidence and controls. Take over and return the same worktree after execution has stopped.
+- [ ] Compare a general Bot and a debugging preset on the same real defect. Verify reproducing, fixing, regression testing, and human edits before return in isolated data and worktrees. Inspect actual Electron at desktop and narrow viewports, with screenshots and keyboard interaction. Commit Phase 1A only after this gate.
 
-**Files:** `ds-bot/src/client/create-bot.js`, `bot-draft.js`, `bot-settings.js`, `capability-settings.js`; `ds-bot/src/host/roster.js`, `capabilities.js`, `skill-shortlist.js`, `local-agents/` and existing capability/preset tests. Paths without a prefix in this section are relative to their stated host or client directory.
+## Phase 1B · Bot Forge and Anbot Self-Builder
 
-- [ ] Express a professional profile as a versioned composition of existing role instructions, native preset, execution mode, supported skills/MCP, permission requirements, expected output and verification. Show declared versus effective capabilities, missing dependency, authorization and source. Apply the same validation when the Main Bot creates a Bot.
-- [ ] Resolve defaults across user or team, project, and Bot scope. Users set long-term objectives, project priorities, model or cost limits, delegation limits and when to ask for intervention. A project or Bot can tighten applicable constraints. Record which setting won, and route any permission expansion through its existing approval path.
-- [ ] Ship original baseline templates for engineering/debug and review. Make UI and orchestration profiles first-class candidates and validate them by a complete domain task. Keep capacity for research, QA, documentation, operations and custom roles in the existing creation/configuration path. Project and user overrides survive template upgrades.
-- [ ] Optional trusted development suites under evaluation: the full Superpowers set and selected Matt Pocock skills. A suite provides discoverable skills, while the per-turn shortlist remains small. Resolve installed skill names against the actual runtime. An external CLI must demonstrably load the selected skills or report the limitation.
-- [ ] Run the selected real regression with single engineering Bot and compare with general Bot under the same model/project/permission baseline. Collect reproducibility, patch, regression test, review and independent evidence. Check at least one missing-skill and unsupported-CLI path.
+- [ ] Ship the two meta engines as declarative presets with actual scoped Cordis tools. Bot Forge inventories runtime facts, composes a preset, registers an authorized lightweight Skill or Hook, validates it in an isolated trial and iterates from an imported trace.
+- [ ] Self-Builder reads this repository, architecture/extensions docs, the live Cordis tree and sanitized diagnostics. Require a shadow worktree, Spec, build/test/Playwright evidence and isolated preview. Provide explicit integration and rollback, with stronger validation for kernel changes. Add creation mode with conversation, configuration diff, probe and trial panels, plus routing from a failed chat.
+- [ ] Run a Forge create/trial/refine cycle and a real Self-Builder improvement through preview and rollback. Capture evidence and commit. Phase 1A must already have passed.
 
-## 3. Connect DSH execution, local agents and human takeover
+## Phase 2 · Context, memory, Repo Wiki and LSP
 
-**Files:** `ds-bot/src/host/{goals,handoffs,requests,resume,tools,task-detail,task-trace,task-verification}.js`, `local-agents/`, `app/src/profile.mjs`, existing Goal and local-agent integration tests.
+- [ ] Keep DSH history immutable, protect stable prefix semantics, and verify the separate context projection, token budget, compaction and cross-segment handoff after restart. Keep authority for active project decisions and in-flight task facts in the existing records.
+- [ ] Evaluate `billion-context` against the pinned runtime and shutdown/uninstall behavior. Use native mounting only when the frozen seam and permission boundaries hold. If the dependency is unavailable or incompatible, implement the smallest native equivalent at the seam. Record why, the substitution tests and a future adapter entry in the extension ledger. Use the same decision rule for other tools. Qoder CLI is outside integration scope.
+- [ ] Implement incremental Git-backed Repo Wiki and on-demand LSP lookup. Verify scoped, source-linked project memory, separate personal preferences, correction and undo, and explicit handling of memories created after a restored conversation/workspace checkpoint.
+- [ ] Run pressure, prefix integrity, restart/segment continuation, and plugin removal verification against real runtime. Commit the passing phase.
 
-- [ ] Bind task, plan revision, dispatch attempt, DSH Session, CLI execution id, worktree and source revision. Exercise parallel tasks with independent workspaces. A launch with unconfirmed status must be reconciled before a retry.
-- [ ] Reuse DSH Forge/worktree where compatible. Check actual working directory, write scope, cancellation and handoff after restart. Preserve per-Bot and group folder behavior.
-- [ ] Verify take over and return on the same worktree. Confirm the worker has stopped before switching write ownership. Revalidate stale evidence against the user's actual modifications on return.
-- [ ] Verify DSH Workflow in one specifically allowed bounded node, using native start, events, result and cancellation. Keep project dependencies and restart state in the DS Bot task path. Run real native workflow and at least two distinct configured local Agent executions.
+## Phase 3 · Multi-Bot coordination and scheduling
 
-## 4. Make decisions, state and control visible
+- [ ] Reuse native local SDKs and Orca's applicable dispatch, reconciliation and workspace patterns. Bind task and attempt to checked-out revision, worktree, DSH Session and local execution. Enforce deduplication and conflicting writer control. Supply allowed parent skills/plugins only when actual child availability is proved.
+- [ ] Expose dependencies, approvals, task nodes and direct navigation to individual execution. Support staged Goals, an idle local queue and thin state/approval/reply integration ports. Preview unmerged changes before cleanup.
+- [ ] Use at least two real local Agents on a real project and demonstrate conflicting dispatch refusal, stop, user takeover/return, restart and final independently verified evidence. Commit the passing phase.
 
-**Files:** `ds-bot/src/client/{team-overview,team-overview-model,goal,handoff-card,approval-notices,create-bot,bot-settings}.js` and client tests. Follow `docs/design/ui-standard.md`.
+## Phase 4 · Code, evidence and documentation audit
 
-- [ ] Show the authoritative goal and constraints, plan revision, owners, dependency edges, progress, relevant approvals, worktrees and verified evidence. Expose the difference between provider facts, Bot report and verified output. Read those states from existing records.
-- [ ] Show a portfolio view of project goals, current priorities, competing commitments, open decisions and evidence-backed progress. Preserve the link from a user's correction to each affected running task. A resumed project must retain its owner, next action and escalation rule even if its original Bot is unavailable.
-- [ ] Show individual Bot delivery and team workflow through the same task detail. Allow meaningful controls in place or via the existing approval and session surfaces. Show pending vs confirmed stop, and affected work on plan changes.
-- [ ] Adopt a product design workflow for the UI Bot: user context, flow audit with screenshots, alternatives, prototype, implementation handoff, visual and keyboard QA. Verify actual Electron, keyboard access and representative narrow view. Record screenshots or demo per project rules.
+- [ ] Review the full diff, prune only task-owned dead code, temporary processes and worktrees, verify generated files and durable compatibility. Check each documentation path and command, and verify the Self-Builder reads the committed versions.
+- [ ] Run applicable full build, lint, unit, integration, native runtime, desktop and E2E checks. Record phase hashes, exact commands and evidence artifacts here, and deliver on a clean local branch. Remote writes, Release publication and external system changes require confirmation.
 
-## 5. Preserve continuity and user control over time
+## Integration rules
 
-**Files:** `ds-bot/src/host/{parts,steward,prompt,memory,memory-search,memory-entries,project-records}.js`, existing memory and compaction tests, Reality Gate scenarios.
-
-- [ ] Keep durable project/Goal facts distinct from prompt history and long-term memory. Restore objective, acceptance, plan revision, open tasks and evidence anchors after context changes. Preserve recent corrections and project constraints across a handoff to a replacement Bot.
-- [ ] Check that each runtime has one active compaction path. Validate steward and CLI continuation. Test billion-context as an optional compatibility path under the actual pin before exposing it.
-- [ ] Keep the existing journal-backed memory writer. Validate scope-first retrieval, provenance, recency of decisions, correction, undo and private scope. Compare a read-only retrieval candidate with existing search on Chinese project scenarios before choosing a default.
-- [ ] Verify a week-later scenario with new Session, changed instruction and interrupted execution. The responsible Bot should report the current project objective, priority, open decisions and reasons and continue only outstanding work.
-
-## 6. Own plugin lifecycle and architecture documentation
-
-- [ ] Preserve three release routes: application default, bundled optional, and catalog install. Reuse native DSH plugin management and show version, actual availability, conflict, authorization, restart requirement and rollback. Re-run compatibility with the prior profile, existing Bot sessions and workspaces.
-- [ ] Keep the architecture guide anchored in source and tests. Record how state and permissions flow, how skill packs are verified, and how to debug and recover. Update affected accepted design and ADR entries with their code changes.
-- [ ] Consult upstream implementations by capability and record source, version and license. Superpowers `22f0b463e7a5e579904dd6211a520321035526f7` and Matt Pocock skills `abeeaf95660ba9e8b7c753eb38f441ca707a8823` are MIT reference snapshots. Product Design informs our own UI Bot workflow. Orca `v1.4.272` informs local worker dispatch, ownership, recovery and decision gates. Verify compatibility, dependencies and file-level licensing before bundling and update NOTICE on code reuse.
-- [ ] Independently verify real single-Bot and team delivery, native Workflow cancellation, restart recovery, context transition, scoped memory, actual UI and plugin rollback. Run scoped tests plus applicable full suites, client freshness, lint and host smoke. Record command outcomes, exact integrated commit and artifact references.
+- Preserve accepted and verified commits. Do not combine product changes with Phase 0. Commit using Conventional Commits after independent review and checks.
+- Dispatch `deepseek-v4.1-flash` at `max` only. Include exact write boundaries, contract context and verification commands. Keep existing parallel worktrees separate and independently verify a change before reuse.
+- Real DSH, local CLI and desktop runs are required for core acceptance. Deterministic fixture checks complement them. Use native substitutes for unavailable nonessential integrations and record evidence, without claiming that the external tool itself ran.
+- Record reference source, pinned revision, license and integration decision for code reuse. Engineering candidates include Superpowers and Matt Pocock, UX patterns from Product Design, and local worker behavior from Orca. Continue the remaining phases locally unless an external credential is necessary or an authorized remote action is the next step.
 
 ## Progress record
 
 - 2026-11-24: Opened the maintainer goal, isolated the integration branch, and routed three baseline investigations to DeepSeek V4.1 Flash max. Parallel preset and Reality Harness work has its own worktree. It must be reviewed and integrated by change set.
+
+- 2026-11-24: Pre-brand baseline at `5471b4d3`: 2,763 tests passed, 3 skipped; client bundle freshness and lint passed. Phase 0 edits are in the integration worktree. The independent Anbot repository already exists and is private. Phase 0 verification is in progress. No phase implementation commit has been accepted yet.
+
+- 2026-11-24 · Phase 0 local gate: client build and freshness check, plugin lint, and 2,765 plugin tests passed (3 skipped). App suite: 478 passed (3 skipped), including legacy shell/data defaults and the release contract. The real pinned DSH Web host passed all 52 bench steps with a fixture model, and its processes stopped. With Node 24, the macOS arm64 package built and checked out-of-tree with the rebuilt client. The real Electron app sent and received a chat, hid and reopened its window, and quit cleanly. Anbot branding verified in `/tmp/dsbot-maintainer-checks.2Tpi2B/anbot-phase0-chat.png`. Platform-specific signing and the private GitHub release remain remote gates. The in-repo release and updater point to Anbot; an authenticated manual download or explicit feed is required for its private repository.
+- The publishing worker's DeepSeek V4.1 Flash provider returned HTTP 502. Implementation was reviewed, corrected and verified locally by the maintainer.

@@ -3,12 +3,14 @@
 // DSH. The answers are kept in the app's own data.
 import { app } from 'electron'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { findTeam, userDshHome } from './import.mjs'
+import { homeFromEnv, workspaceFromEnv } from './legacy.mjs'
 import { installFolder } from './move-data.mjs'
-import { freeSpace } from './place.mjs'
+import { defaultPlaces, freeSpace } from './place.mjs'
 import { langOf, t } from './start/text.mjs'
+
+export { defaultPlaces }
 
 // The app's picker and the cards in the team window speak the language of the start page
 // (main.mjs gives it the same locale).
@@ -55,9 +57,6 @@ export async function pickRoot(from, signal, ui) {
     throw error
   }
 }
-
-/** The places a first start offers. */
-export const defaultPlaces = () => ({ dataDir: join(homedir(), '.ds-bot'), workspace: join(homedir(), 'DS Bot') })
 
 /** The Bot team in a data folder, if it has one. */
 export function teamIn(dataDir) {
@@ -129,7 +128,8 @@ function readSaved(file) {
  * @returns {{ dataDir: string, workspace?: string, freeAtStart?: number, offer?: NonNullable<ReturnType<typeof findTeam>> }}
  */
 export function chooseLocations() {
-  if (process.env.DS_BOT_HOME) return { dataDir: process.env.DS_BOT_HOME, workspace: process.env.DS_BOT_WORKSPACE || undefined }
+  const home = homeFromEnv()
+  if (home) return { dataDir: home, workspace: workspaceFromEnv() }
   const file = locationsFile()
   if (existsSync(file)) {
     const saved = JSON.parse(readFileSync(file, 'utf8'))

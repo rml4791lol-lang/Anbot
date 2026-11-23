@@ -1,4 +1,4 @@
-// Mounts the team board as a panel of DS Bot's own, not in DSH's right column: that
+// Mounts the team board as a panel of Anbot's own, not in DSH's right column: that
 // column is a single seat the shell already holds (its session panel), and claiming it
 // would either throw or unseat that panel — and a throw while mounting takes the whole
 // shell group down with it. This panel lives in the overlay list instead, so it can

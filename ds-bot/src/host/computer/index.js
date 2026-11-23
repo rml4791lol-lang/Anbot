@@ -41,10 +41,11 @@ const WINDOWS_INPUT_NOTES = [
 ]
 const LEVEL_LABEL = { view: 'view only', background: 'background control', foreground: 'foreground control' }
 
-// Apps no Bot may touch: DS Bot and DSH themselves (a Bot must not click its own
+// Apps no Bot may touch: Anbot and DSH themselves (a Bot must not click its own
 // approval cards or grant itself powers), the helper that owns the system
 // permissions, and the places macOS/Windows keep credentials and system settings.
 const PROTECTED_IDS = new Set([
+  'io.github.rml4791lol-lang.anbot',
   'io.github.fei2411.dsbot',
   'com.deepseek.harness.computer-use',
   'com.deepseek.harness.computer-use.dev',
@@ -53,8 +54,8 @@ const PROTECTED_IDS = new Set([
   'com.apple.keychainaccess',
   'com.apple.passwords',
 ])
-const PROTECTED_NAMES = new Set(['ds bot', 'deepseek harness', 'dsh', 'dsh desktop', 'dsh computer use', 'dsh computer use dev', 'system settings', 'settings', 'keychain access', 'passwords', 'credential manager', 'control panel', LEGACY_NAME])
-const PROTECTED_EXES = new Set(['dsbot', 'dsh', 'dsh-desktop', 'dsh-cua-native', 'dsh computer use', 'systemsettings', 'keychain access', 'passwords', 'credentialmanager', 'credwiz', 'control', ...LEGACY_EXECUTABLES])
+const PROTECTED_NAMES = new Set(['anbot', 'ds bot', 'deepseek harness', 'dsh', 'dsh desktop', 'dsh computer use', 'dsh computer use dev', 'system settings', 'settings', 'keychain access', 'passwords', 'credential manager', 'control panel', LEGACY_NAME])
+const PROTECTED_EXES = new Set(['anbot', 'dsbot', 'dsh', 'dsh-desktop', 'dsh-cua-native', 'dsh computer use', 'systemsettings', 'keychain access', 'passwords', 'credentialmanager', 'credwiz', 'control', ...LEGACY_EXECUTABLES])
 
 export function isProtectedApp(app) {
   if (app === undefined || app === null) return false
