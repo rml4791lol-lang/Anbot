@@ -664,25 +664,31 @@ test('attaching or detaching a skill capability keeps the shortlist in sync', as
   assert.deepEqual(bot.skillShortlist, [])
 })
 
-test('attaching a sixth skill is rejected without a partial attachment', async t => {
+test('attaching a sixth skill trims the oldest profile entry and keeps the capability', async t => {
   const env = await setup()
   t.after(() => env.dispose())
-  const { rt } = env
+  const { rt, ctx } = env
+  const warnings = []
+  ctx.logger.warn = (...args) => warnings.push(args.join(' '))
   for (let index = 0; index < 6; index += 1) {
     await rt.capabilitySave({ name: `guide-${index}`, kind: 'skill', description: `Guide ${index}`, content: `Do ${index}.` }, { botId: 'chief' })
   }
   const bot = rt.state.bots.chief
   bot.capabilities = ['guide-0']
-  bot.skillShortlist = [0, 1, 2, 3, 4].map(index => ({ name: `guide-${index}`, purpose: `Use guide ${index}` }))
+  // guide-0 is a capability skill, so it keeps its slot even though it is the oldest.
+  bot.skillShortlist = [
+    { name: 'guide-0', purpose: 'Use guide 0' },
+    { name: 'oldest-profile', purpose: 'the oldest profile skill' },
+    { name: 'profile-b', purpose: 'a profile skill' },
+    { name: 'profile-c', purpose: 'another profile skill' },
+    { name: 'profile-d', purpose: 'the newest profile skill' },
+  ]
   await rt.save()
-  const capabilities = [...bot.capabilities]
-  const shortlist = structuredClone(bot.skillShortlist)
-  await assert.rejects(
-    rt.capabilityEndpoint('bot-capability', { botId: 'chief', name: 'guide-5', attached: true }),
-    /at most 5 skills/,
-  )
-  assert.deepEqual(bot.capabilities, capabilities)
-  assert.deepEqual(bot.skillShortlist, shortlist)
+  await rt.capabilityEndpoint('bot-capability', { botId: 'chief', name: 'guide-5', attached: true })
+  assert.deepEqual(bot.capabilities, ['guide-0', 'guide-5'])
+  assert.deepEqual(bot.skillShortlist.map(skill => skill.name), ['guide-0', 'profile-b', 'profile-c', 'profile-d', 'guide-5'])
+  assert.equal(bot.skillShortlist.length, 5)
+  assert.equal(warnings.filter(line => line.includes('dropped oldest-profile')).length, 1)
 })
 
 test('the skill catalog keeps same-named entries separate for each Bot', async t => {

@@ -52,7 +52,7 @@ const AVATAR_PARAM = {
 }
 // The shortlist names the skills a Bot should reach for, with one line each saying when.
 const SKILLS_PARAM = {
-  description: 'At most 5 skills this Bot should reach for, each as { name, purpose }. The prompt shows the names and those lines only; an empty list hides all skills, and null returns to inheriting the profile catalog.',
+  description: 'At most 5 skills this Bot should reach for, each as { name, purpose }. A longer list is trimmed, not refused: DS-Bot skill capabilities keep their slots, then the most recently added. The prompt shows the names and those lines only; an empty list hides all skills, and null returns to inheriting the profile catalog.',
   oneOf: [
     {
       type: 'array',

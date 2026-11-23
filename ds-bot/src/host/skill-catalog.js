@@ -39,8 +39,9 @@ export function catalogEntries(profile = [], capabilities = [], { includeMasked 
 
 export function validateShortlistAgainstCatalog(list, catalog) {
   if (list === undefined) return undefined
-  // One gate for the saved shape (at most five, no duplicate, a usable name and
-  // purpose) and for the live names, so a sixth entry is never silently dropped.
+  // One gate for the saved shape (a usable name and purpose, one entry per name) and
+  // for the live names. The host fits the count to five first, with the same catalog,
+  // so a sixth entry is trimmed and logged instead of refused.
   const checked = readSkillShortlist(list)
   const names = new Set(catalog.map(skill => skill.name))
   for (const skill of checked) {

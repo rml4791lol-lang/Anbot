@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { encodeUrlComponent } from './secrets.js'
 import { own } from './store.js'
 import { catalogEntries, catalogSignature, validateShortlistAgainstCatalog } from './skill-catalog.js'
-import { readSkillShortlist, SKILL_PURPOSE_MAX } from './skill-shortlist.js'
+import { fitSkillShortlist, readSkillShortlist, SKILL_PURPOSE_MAX, SKILL_SHORTLIST_MAX } from './skill-shortlist.js'
 
 const MCP_CLIENT = '@deepseek-ai/dsh-mcp-client'
 const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
@@ -297,7 +297,17 @@ export function install(rt) {
       }
       catalog = [...byName.values()]
     }
-    return validateShortlistAgainstCatalog(list, catalog)
+    // A sixth selection is fitted, not refused: the capability skills in this catalog
+    // keep their slots, and the remaining ones go to the most recently added. The
+    // caller gets the list it can save, and the Bot's diagnostics say what went.
+    const capability = new Set(catalog.filter(skill => skill.source === 'capability').map(skill => skill.name))
+    const { list: fitted, dropped } = fitSkillShortlist(list, { capability })
+    // Checked before the log, so a name that fails here leaves no "trimmed" note behind.
+    const checked = validateShortlistAgainstCatalog(fitted, catalog)
+    if (dropped.length > 0) {
+      rt.warn('ds-bot: skill shortlist for %s trimmed to %d; dropped %s', options.label ?? options.botId ?? 'a Bot', SKILL_SHORTLIST_MAX, dropped.join(', '))
+    }
+    return checked
   }
   // Hide every profile skill this Bot did not choose. Registration goes through a
   // plugin mounted in the Agent's own context, so the mask lands in the Agent layer
@@ -526,9 +536,15 @@ export function install(rt) {
         shortlistChanged = true
       }
       // Capabilities are another editing surface for the same five-item
-      // shortlist. Validate before assigning or saving, so a sixth attach is
-      // rejected without leaving a half-applied attachment.
+      // shortlist. A sixth attach is fitted in, not refused: every capability
+      // skill keeps a slot, and the rest go to the most recently added.
       shortlist = readSkillShortlist(shortlist)
+      const skillCapabilities = new Set(Object.values(library()).filter(entry => entry.kind === 'skill').map(entry => entry.name))
+      const { list: fitted, dropped } = fitSkillShortlist(shortlist, { capability: skillCapabilities })
+      if (dropped.length > 0) {
+        rt.warn('ds-bot: skill shortlist for %s trimmed to %d; dropped %s', bot.name, SKILL_SHORTLIST_MAX, dropped.join(', '))
+      }
+      shortlist = fitted
     }
     bot.capabilities = capabilities
     if (shortlist !== undefined) bot.skillShortlist = shortlist

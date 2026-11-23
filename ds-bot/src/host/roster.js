@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import { MAX_AVATAR_IMAGE, ROOM_MAX_MEMBERS, ROOM_MODES, ROOM_NAME_MAX, ROOM_NOTICE_MAX, ROOM_TODO_MAX, ROOM_TODO_TEXT_MAX, SECTION_COLORS, SECTION_NAME_MAX } from './constants.js'
 import { currentColor, isColor, normalize, unquote } from './text.js'
-import { readSkillShortlist } from './skill-shortlist.js'
+import { fitSkillShortlist, readSkillShortlist, SKILL_SHORTLIST_MAX } from './skill-shortlist.js'
 import { nameProblem } from '../shared/mentions.js'
 
 const BROWSER_GRANT_KINDS = new Set(['post', 'upload', 'download', 'delete', '*'])
@@ -13,6 +13,18 @@ const HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:
 
 const OWN_RULES = 'Where your instructions say otherwise, follow them.'
 const writeIn = language => `Write in ${language ?? 'the user\'s language if known; otherwise Chinese'}.`
+// A shortlist longer than five is fitted in, not refused. `rt.validateSkillShortlist`
+// builds the live catalog and knows which names are capability skills; a host without
+// that layer still keeps the five slots, newest first.
+async function settleSkillShortlist(rt, list, options) {
+  const checked = await rt.validateSkillShortlist?.(list, options)
+  if (checked !== undefined) return checked
+  const { list: fitted, dropped } = fitSkillShortlist(list)
+  if (dropped.length > 0) {
+    rt.warn?.('ds-bot: skill shortlist for %s trimmed to %d; dropped %s', options.label ?? 'a Bot', SKILL_SHORTLIST_MAX, dropped.join(', '))
+  }
+  return fitted
+}
 // The first Main Bot's greeting when the user wrote before it had a model that works.
 const AFTER_USER = 'You were just set up as the user\'s Main Bot. The user wrote to you before your model could answer; their message above has no answer yet. Answer it now, and say in one short sentence that you run their Bot team.'
 
@@ -192,8 +204,8 @@ export function install(rt) {
 
   async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, section, sectionId, skillShortlist }) {
     const cleanAvatarValue = cleanAvatar(avatar)
-    // Read before the Session exists, so a shortlist that does not pass leaves no half-made Bot.
-    const skills = skillShortlist === null ? undefined : readSkillShortlist(skillShortlist)
+    // Read before the Session exists, so a malformed shortlist leaves no half-made Bot.
+    let skills = skillShortlist === null ? undefined : readSkillShortlist(skillShortlist)
     // The model is fixed at creation, so a later change of the DSH default leaves it alone.
     const modelRef = model ? await rt.resolveModel(model) : pickModel ? undefined : await rt.defaultBotModel()
     // A thinking level needs a model to resolve against; with none it would be dropped
@@ -208,8 +220,9 @@ export function install(rt) {
     const clash = dir === undefined ? undefined : await rt.privateClash(dir)
     if (clash) throw new Error(`${dir} is in or around the folder of ${clash.name}, a private Bot, so ${cleanName} cannot work there`)
     // The picker and the host validate against the same live catalog; a name that is
-    // not there is refused instead of being saved as a dead entry.
-    if (skills !== undefined) await rt.validateSkillShortlist?.(skills, { cwd: dir })
+    // not there is refused instead of being saved as a dead entry. A list longer than
+    // five is fitted in instead of refused; the Bot's diagnostics name what went.
+    if (skills !== undefined) skills = await settleSkillShortlist(rt, skills, { cwd: dir, label: cleanName })
     if (!main && (section !== undefined || sectionId !== undefined)) resolveSectionInput({ section, sectionId }, { allowCreate: false })
     const id = await createSession(cleanName, { dir })
     try {
@@ -386,10 +399,10 @@ export function install(rt) {
       resolveSectionInput({ section: patch.section, sectionId: patch.sectionId }, { allowCreate: false })
     }
     const browserGrants = patch.browserGrants === undefined ? undefined : cleanBrowserGrants(patch.browserGrants)
-    // Read before anything is written, so a shortlist that does not pass leaves the Bot as it was.
+    // Read before anything is written, so a malformed shortlist leaves the Bot as it was.
     // `null` explicitly returns to inherit-all, while an omitted field leaves
     // the current shortlist alone and an array replaces it.
-    const skillShortlist = patch.skillShortlist === null ? null : readSkillShortlist(patch.skillShortlist)
+    let skillShortlist = patch.skillShortlist === null ? null : readSkillShortlist(patch.skillShortlist)
     // Checked first, so a folder, model or level that does not pass leaves the rest
     // unchanged too.
     const moving = patch.workDir !== undefined
@@ -397,7 +410,7 @@ export function install(rt) {
     const flag = patch.private === undefined ? undefined : patch.private === true
     await rt.checkPrivacyChange(bot, { flag, moving, workDir })
     if (skillShortlist !== undefined && skillShortlist !== null) {
-      await rt.validateSkillShortlist?.(skillShortlist, { botId: id, cwd: workDir ?? bot.workDir })
+      skillShortlist = await settleSkillShortlist(rt, skillShortlist, { botId: id, cwd: workDir ?? bot.workDir, label: bot.name })
     }
     const modelRef = patch.model === undefined ? undefined
       : patch.model === null || patch.model === '' ? null

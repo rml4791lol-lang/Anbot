@@ -8,16 +8,15 @@ const NAME = /^[a-z][a-z0-9]*(?:[-_.][a-z0-9]+)*$/
 const NAME_MAX = 64
 
 // Reads the shortlist a caller asked to save. `undefined` leaves it untouched; an
-// empty list clears it. Anything that would make the prompt unclear is rejected
-// instead of trimmed, so a sixth skill never disappears silently.
+// empty list clears it. The shape is checked here and a repeated name is one skill;
+// the count is fitted to five by fitSkillShortlist, which knows which names are
+// capability skills.
 export function readSkillShortlist(value) {
   if (value === undefined) return undefined
   if (!Array.isArray(value)) throw new Error('skills must be a list of { name, purpose }')
-  if (value.length > SKILL_SHORTLIST_MAX) {
-    throw new Error(`a Bot can keep at most ${SKILL_SHORTLIST_MAX} skills in its shortlist, not ${value.length}`)
-  }
   const seen = new Set()
-  return value.map((entry, index) => {
+  const list = []
+  for (const [index, entry] of value.entries()) {
     if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
       throw new Error(`skills[${index}] must be an object with name and purpose`)
     }
@@ -25,15 +24,33 @@ export function readSkillShortlist(value) {
     if (name.length > NAME_MAX || !NAME.test(name)) {
       throw new Error(`skills[${index}].name must be a skill name such as "test-driven-development"`)
     }
-    if (seen.has(name)) throw new Error(`the shortlist lists ${name} twice`)
-    seen.add(name)
     const purpose = String(entry.purpose ?? '').replace(/\s+/g, ' ').trim()
     if (purpose === '') throw new Error(`skills[${index}].purpose is the one line that says when to use ${name}`)
     if (purpose.length > SKILL_PURPOSE_MAX) {
       throw new Error(`skills[${index}].purpose must be at most ${SKILL_PURPOSE_MAX} characters`)
     }
-    return { name, purpose }
-  })
+    if (seen.has(name)) continue
+    seen.add(name)
+    list.push({ name, purpose })
+  }
+  return list
+}
+
+// Fits a checked shortlist into its five slots instead of refusing the whole write.
+// A DS-Bot capability skill keeps its slot ahead of a profile skill; the rest are kept
+// newest first, because both the picker and a capability attach add at the end of the
+// list. The kept entries stay in the caller's order, and `dropped` names what went so
+// the host can log it.
+export function fitSkillShortlist(list, { capability = new Set(), max = SKILL_SHORTLIST_MAX } = {}) {
+  if (!Array.isArray(list) || list.length <= max) return { list: list ?? [], dropped: [] }
+  const ranked = list
+    .map((skill, index) => ({ index, capability: capability.has(skill.name) }))
+    .sort((a, b) => (Number(b.capability) - Number(a.capability)) || (b.index - a.index))
+  const kept = new Set(ranked.slice(0, max).map(entry => entry.index))
+  return {
+    list: list.filter((_, index) => kept.has(index)),
+    dropped: list.filter((_, index) => !kept.has(index)).map(skill => skill.name),
+  }
 }
 
 export const SKILL_SHORTLIST_FALLBACK = 'If no skill in the shortlist matches the task, do the work the ordinary way; do not guess at a skill.'

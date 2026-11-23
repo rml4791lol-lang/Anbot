@@ -1425,8 +1425,8 @@ test('a model-less create-bot starts the Bot on the saved team default model', a
   assert.equal(plain.model, 'deepseek/deepseek-v4-flash')
 })
 
-test('a Bot keeps a skill shortlist of at most five, and a sixth is refused', async (t) => {
-  const { call, stop } = start(undefined, { models: ['deepseek-v4-flash'] })
+test('a Bot keeps a skill shortlist of at most five, and a sixth is trimmed', async (t) => {
+  const { call, stop, warnings } = start(undefined, { models: ['deepseek-v4-flash'] })
   t.after(stop)
   const team = (await call('state', {})).value
   const chief = team.mainBotId
@@ -1441,10 +1441,12 @@ test('a Bot keeps a skill shortlist of at most five, and a sixth is refused', as
   // the live app uses (this is the regression that rejected every DSH skill).
   assert.match(await create({ name: 'Reviewer', role: 'Reviewer', instructions: 'Review.', skills: [{ name: 'code-review-and-quality', purpose: 'review a change' }] }), /^Created Reviewer/)
 
-  // A sixth is refused with a reason, and no Bot is half-made.
+  // A sixth is trimmed to the five most recent, and the host says which one went.
   const six = [...five, { name: 'doubt-driven-development', purpose: 'challenge a decision' }]
-  assert.match(await create({ name: 'Six', role: 'Six', instructions: 'Six.', skills: six }), /at most 5 skills/)
-  assert.equal((await call('state', {})).value.bots.some(bot => bot.name === 'Six'), false)
+  assert.match(await create({ name: 'Six', role: 'Six', instructions: 'Six.', skills: six }), /^Created Six/)
+  const sixBot = (await call('state', {})).value.bots.find(bot => bot.name === 'Six')
+  assert.deepEqual(sixBot.skillShortlist.map(skill => skill.name), ['code-review-and-quality', 'test-driven-development', 'ppt-studio', 'zh-tdd', 'doubt-driven-development'])
+  assert.equal(warnings.filter(line => line.includes('dropped a11y-audit')).length, 1)
 
   // The shared tool schema permits null as the explicit inherit-all value.
   assert.match(await create({ name: 'Inherit', role: 'Inherit', instructions: 'Inherit.', skills: null }), /^Created Inherit/)
@@ -1453,7 +1455,7 @@ test('a Bot keeps a skill shortlist of at most five, and a sixth is refused', as
 })
 
 test('update_bot replaces and clears a skill shortlist, and leaves it alone when unmentioned', async (t) => {
-  const { stop } = start({ version: 1, mainBotIds: ['chief'], bots: { chief: { id: 'chief', name: 'Chief', capabilities: [], skillShortlist: [{ name: 'zh-tdd', purpose: 'write the failing test first' }] } } }, { models: ['deepseek-v4-flash'] })
+  const { stop, warnings } = start({ version: 1, mainBotIds: ['chief'], bots: { chief: { id: 'chief', name: 'Chief', capabilities: [], skillShortlist: [{ name: 'zh-tdd', purpose: 'write the failing test first' }] } } }, { models: ['deepseek-v4-flash'] })
   t.after(stop)
   const update = args => rt.teamTools.find(tool => tool.name === 'update_bot').execute(args, { agent: { id: 'chief' } })
 
@@ -1464,13 +1466,37 @@ test('update_bot replaces and clears a skill shortlist, and leaves it alone when
   assert.equal(await update({ bot: 'Chief', skills: [{ name: 'ppt-studio', purpose: 'build a deck' }, { name: 'zh-tdd', purpose: 'write the failing test first' }] }), 'Updated Chief.')
   assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['ppt-studio', 'zh-tdd'])
 
-  assert.match(await update({ bot: 'Chief', skills: ['x', 'y', 'z', 'w', 'v', 'u'].map(name => ({ name, purpose: 'use it' })) }), /at most 5 skills/)
-  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['ppt-studio', 'zh-tdd'])
+  // Six names keep the five most recent and log the one that went.
+  const six = ['a11y-audit', 'code-review-and-quality', 'test-driven-development', 'ppt-studio', 'zh-tdd', 'doubt-driven-development'].map(name => ({ name, purpose: `use ${name}` }))
+  assert.equal(await update({ bot: 'Chief', skills: six }), 'Updated Chief.')
+  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['code-review-and-quality', 'test-driven-development', 'ppt-studio', 'zh-tdd', 'doubt-driven-development'])
+  assert.equal(warnings.filter(line => line.includes('dropped a11y-audit')).length, 1)
 
   assert.equal(await update({ bot: 'Chief', skills: [] }), 'Updated Chief.')
   assert.deepEqual(rt.state.bots.chief.skillShortlist, [])
   assert.equal(await update({ bot: 'Chief', skills: null }), 'Updated Chief.')
   assert.equal(rt.state.bots.chief.skillShortlist, undefined)
+})
+
+test('a five-skill shortlist plus a capability skill keeps the capability and trims the rest', async (t) => {
+  const { stop, warnings } = start({ version: 1, mainBotIds: ['chief'], bots: { chief: { id: 'chief', name: 'Chief', capabilities: [], skillShortlist: [] } } }, { models: ['deepseek-v4-flash'] })
+  t.after(stop)
+  // A DS-Bot skill capability is one row in the same catalog the picker shows, so a
+  // sixth selection arrives as six entries, with the capability possibly first.
+  await rt.capabilitySave({ name: 'team-guide', kind: 'skill', description: 'Team guide', content: 'Do it.' }, { botId: 'chief' })
+  const update = args => rt.teamTools.find(tool => tool.name === 'update_bot').execute({ bot: 'Chief', ...args }, { agent: { id: 'chief' } })
+  const six = [
+    { name: 'team-guide', purpose: 'use the team guide' },
+    { name: 'a11y-audit', purpose: 'audit accessibility' },
+    { name: 'code-review-and-quality', purpose: 'review a change' },
+    { name: 'test-driven-development', purpose: 'write the failing test' },
+    { name: 'ppt-studio', purpose: 'build a deck' },
+    { name: 'zh-tdd', purpose: 'write the failing test in Chinese' },
+  ]
+  assert.equal(await update({ skills: six }), 'Updated Chief.')
+  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['team-guide', 'code-review-and-quality', 'test-driven-development', 'ppt-studio', 'zh-tdd'])
+  assert.equal(rt.state.bots.chief.skillShortlist.length, 5)
+  assert.equal(warnings.filter(line => line.includes('dropped a11y-audit')).length, 1)
 })
 
 test('a shortlisted DS-Bot skill capability stays effective without a manual attachment', async (t) => {

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { install } from '../src/host/prompt.js'
 import { catalogEntries, catalogSignature, validateShortlistAgainstCatalog } from '../src/host/skill-catalog.js'
-import { SKILL_SHORTLIST_FALLBACK, SKILL_SHORTLIST_MAX, readSkillShortlist, skillShortlistSection } from '../src/host/skill-shortlist.js'
+import { fitSkillShortlist, SKILL_SHORTLIST_FALLBACK, SKILL_SHORTLIST_MAX, readSkillShortlist, skillShortlistSection } from '../src/host/skill-shortlist.js'
 import { fakeContext } from './fake-ctx.js'
 
 const entry = (name, purpose = `use ${name}`) => ({ name, purpose })
@@ -18,13 +18,29 @@ test('a shortlist takes up to five skills and clears with an empty list', () => 
   assert.equal(readSkillShortlist(five).length, SKILL_SHORTLIST_MAX)
 })
 
-test('a sixth skill is rejected instead of dropped silently', () => {
+test('a list longer than five is trimmed, a capability skill first and then the newest', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map(name => entry(name))
-  assert.throws(() => readSkillShortlist(six), /at most 5 skills/)
+  // The shape reader keeps every well-formed entry; the caller fits the list to the
+  // five slots once it knows which names are capability skills.
+  assert.equal(readSkillShortlist(six).length, 6)
+
+  // No capability skill: the first entry is the oldest, so it goes.
+  const plain = fitSkillShortlist(six)
+  assert.deepEqual(plain.list.map(skill => skill.name), ['b', 'c', 'd', 'e', 'f'])
+  assert.deepEqual(plain.dropped, ['a'])
+
+  // Capability skills keep their slot even when they were added first.
+  const fitted = fitSkillShortlist(six, { capability: new Set(['a']) })
+  assert.deepEqual(fitted.list.map(skill => skill.name), ['a', 'c', 'd', 'e', 'f'])
+  assert.deepEqual(fitted.dropped, ['b'])
+
+  // Five or fewer pass through untouched.
+  assert.deepEqual(fitSkillShortlist(six.slice(0, 5)).dropped, [])
 })
 
 test('an entry must name a skill once and say when to use it', () => {
-  assert.throws(() => readSkillShortlist([entry('a'), entry('a')]), /lists a twice/)
+  // A repeated name is one skill: the first entry wins and the repeat is dropped.
+  assert.deepEqual(readSkillShortlist([entry('a'), entry('a', 'other')]).map(skill => skill.name), ['a'])
   assert.throws(() => readSkillShortlist([entry('Not A Skill')]), /must be a skill name/)
   assert.throws(() => readSkillShortlist([{ name: 'a', purpose: '   ' }]), /says when to use a/)
   assert.deepEqual(readSkillShortlist([{ name: 'a', purpose: 'first\n  second' }])[0].purpose, 'first second')
@@ -93,11 +109,13 @@ test('validation enforces the shape and the live names in one place', () => {
     { name: 'systematic-debugging', description: 'debug' },
     { name: 'code-review-and-quality', description: 'review' },
     { name: 'ppt-studio', description: 'deck' },
+    { name: 'verification-before-completion', description: 'verify' },
     { name: 'zh-tdd', description: 'tdd in Chinese' },
   ])
   const five = ['test-driven-development', 'systematic-debugging', 'code-review-and-quality', 'ppt-studio', 'zh-tdd'].map(name => entry(name))
   assert.deepEqual(validateShortlistAgainstCatalog(five, catalog).map(skill => skill.name), five.map(skill => skill.name))
-  assert.throws(() => validateShortlistAgainstCatalog([...five, entry('a11y-audit')], catalog), /at most 5 skills/)
+  // Shape and live names only: the host fits the list to five with the catalog it has.
+  assert.equal(validateShortlistAgainstCatalog([...five, entry('verification-before-completion')], catalog).length, 6)
   assert.throws(() => validateShortlistAgainstCatalog([entry('not-installed')], catalog), /No skill named not-installed/)
   assert.equal(validateShortlistAgainstCatalog([], catalog).length, 0)
 })
