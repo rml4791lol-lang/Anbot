@@ -19,6 +19,10 @@ import { canSetGoal, goalView, hasGoalAdmin } from './goal.js'
 import { PermissionPicker, presetDanger, presetName } from './permission-picker.js'
 import { BotConnectors } from './connectors.js'
 import { ComputerView } from './computer.js'
+import { BotXRay } from './bot-xray.js'
+import { BotSpecEditor } from './bot-spec-editor.js'
+import { BotWorktree } from './bot-worktree.js'
+import { BotRuntime } from './bot-runtime.js'
 import { t } from './i18n.js'
 
 function transcriptOf(list, id, name, hiddenTurns = []) {
@@ -33,7 +37,7 @@ function transcriptOf(list, id, name, hiddenTurns = []) {
   return lines.join('\n\n')
 }
 
-const TAB_LABELS = { details: 'Details', browser: 'Browser', computer: 'Computer' }
+const TAB_LABELS = { details: 'Details', xray: 'X-Ray', browser: 'Browser', computer: 'Computer' }
 
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, '') } catch { return '' } }
 const shortUrl = url => String(url ?? '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '')
@@ -56,13 +60,13 @@ export function RunStats({ bot, part, running, actions }) {
   useEffect(() => {
     if (!actions.runStats) return undefined
     let current = true
-    actions.runStats(bot.id).then(
+    actions.runStats(bot.id, part).then(
       (values) => { if (current) setRead({ scope, values }) },
       // The line stays as it was until the next read works.
       () => {},
     )
     return () => { current = false }
-  }, [scope, bot.id, running, actions])
+  }, [scope, bot.id, part, running, actions])
   const shown = runStatsOf(read?.scope === scope ? read.values : null)
   if (shown.length === 0) return null
   return h('div', { className: 'bt-run-stats' },
@@ -332,8 +336,7 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
     if (room) await run(actions.updateRoom(room.id, { name: next }))
   }
   const subtitle = bot ? undefined : roomSubtitle(room, roster)
-  // Tab sets: a 1:1 Bot has Details and Browser; a group has only Details, so no tab row.
-  const tabs = bot ? (roster.computer?.enabled === true ? ['details', 'browser', 'computer'] : ['details', 'browser']) : ['details']
+  const tabs = bot ? ['details', 'xray', 'browser', ...(roster.computer?.enabled === true ? ['computer'] : [])] : ['details']
   return [h(Fragment, { key: 'top' }, top),
     h('div', { key: 'id', className: 'bt-drawer-id', 'data-move': side },
       bot ? h(BotAvatar, { bot, size: 64, state: botState(running, doing, roster.questions?.[part] !== undefined), main: isMainBot, badge: false, gaze: true, pokeable: true })
@@ -358,6 +361,13 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
       errorLine,
       room && tab === 'details' ? h(GroupOverview, { room, roster, actions, usage, useWork, openSettings: () => setView('settings') }) : null,
       bot && tab === 'computer' ? h(ComputerView, { bot, actions, hooks: { useComputer } }) : null,
+      bot && tab === 'xray' ? h(Fragment, null,
+        h(RunStats, { bot, part, running, actions }),
+        h(BotRuntime, { key: `runtime:${part}`, botId: bot.id, sessionId: part, running, readOnly: Boolean(roster.readOnly) }),
+        h(BotWorktree, { key: `worktree:${part}`, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly), openSession: actions.openAgentSession,
+          followRestore: () => actions.landOn(bot.id, { botId: bot.id, sessionId: part }) }),
+        h(BotSpecEditor, { key: part, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly) }),
+        h(BotXRay, { key: bot.id, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly) })) : null,
       bot && tab === 'details' ? [
         h(RunStats, { key: 'stats', bot, part, running, actions }),
         h('div', { key: 'model', className: 'bt-drawer-model' },

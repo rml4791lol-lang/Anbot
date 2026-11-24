@@ -533,6 +533,40 @@ test('memory-history reads a private Bot\'s own log beside the shared one', asyn
   assert.equal(existsSync(join(home, 'memory', 'bots', 'b2', 'journal.jsonl')), true)
 })
 
+test('checkpoint memory review follows the source Session and undoes only a selected later write', async (t) => {
+  const { tool, call, stop } = start()
+  t.after(stop)
+  await tool('remember', { text: 'Use the stable sorting order.' }, 'b2')
+  const record = { sessionId: 'b2', memoryCursors: await rt.memoryCheckpointCursors('b2') }
+  const original = (await call('memory-history', { botId: 'b2' })).value.rows[0]
+  await tool('remember', { text: 'Another Bot uses a different sort.' }, 'b4')
+  assert.deepEqual(await rt.checkpointMemoryReview('b2', record), { status: 'observed', changed: false, changes: [] })
+  await call('memory-add', { botId: 'b2', text: 'Human review is required for this work.' })
+  const manual = (await call('memory-history', { botId: 'b2' })).value.rows[0]
+  await tool('remember', { text: 'Try sorting by file size.' }, 'b2')
+  const review = await rt.checkpointMemoryReview('b2', record)
+  assert.equal(review.changed, true)
+  assert.deepEqual(review.changes.map(row => row.text), ['Try sorting by file size.'])
+  await assert.rejects(rt.checkpointMemoryUndo('b2', record, original.id), /not written.*after capture/)
+  await assert.rejects(rt.checkpointMemoryUndo('b2', record, manual.id), /not written.*after capture/)
+  await rt.checkpointMemoryUndo('b2', record, review.changes[0].id)
+  assert.deepEqual((await rt.checkpointMemoryReview('b2', record)).changes, [])
+  const memory = (await call('memory-view', { botId: 'b2' })).value
+  assert.deepEqual(memory.entries.filter(row => row.scope === 'own').map(row => row.text), ['Use the stable sorting order.', 'Human review is required for this work.'])
+})
+
+test('checkpoint cursors detect team memory writes for a private Bot', async (t) => {
+  const { tool, stop, home } = start()
+  t.after(stop)
+  const team = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8'))
+  team.bots.b2.private = true
+  writeFileSync(join(home, 'state.json'), JSON.stringify(team))
+  await tool('remember', { text: 'Keep this fact private.' }, 'b2')
+  const record = { sessionId: 'b2', memoryCursors: await rt.memoryCheckpointCursors('b2') }
+  await tool('remember', { text: 'Use the common checkout checklist.', scope: 'team', always: true }, 'm1')
+  assert.deepEqual(await rt.checkpointMemoryReview('b2', record), { status: 'observed', changed: true, changes: [] })
+})
+
 test('memory-history lists a group\'s changes and marks rows already undone', async (t) => {
   const { tool, call, journal, stop } = start()
   t.after(() => stop())

@@ -16,12 +16,12 @@
 
 ### Agent 预设
 
-- 只有一个 Bot 预设：DS Bot 的 Bot 内核加 DSH 的标准 harness（`standard`），不改造。
-- 这个预设归 DS Bot 所有：新建的 Bot 会话、群会话和对话分段都显式用 `standard`，**不跟随**用户在 DSH 里设的「新任务默认」。DSH 里没有可用的 `standard` 时，才交给 DSH 决定。
+- 默认使用 DSH 的 `standard` 预设。显式选择原生预设时，支持注册的 DSH 会为 Bot 挂载独立的预设 ID。私聊、群成员会话、后续分段沿用该 ID，复制 Bot 时生成新 ID。Bot 记录保留基础预设 ID 与声明摘要，重启通过 DSH 读取原声明，校验后重新挂载。基础声明漂移时需恢复原声明，才能重新打开原绑定。旧 DSH 只有列表接口时直接绑定所选 ID。
+- 群中转会话与未显式选择预设的旧 Bot 继续优先用 `standard`。没有可用的 `standard` 时交给 DSH 决定。显式指定的预设不可用时，创建会话会报错，原 Bot 记录保留。
 - Bot 的工具只挂在 Bot 的作用域里，不出现在普通 DSH 会话中。
 - Bot 的私聊和群会话里拿掉三类 DSH 工具，以及 DSH 为它们写进系统提示的用法说明：提问工具 `ask_user_question`（Bot 用自己的 `ask_user`）；goal 工具（Bot 不跑 goal）；委派工具（`subagent`、`subagent_fork`、`workflow` 等）、子代理控制工具（`send_message`、`interrupt_agent`、`list_agents`）和 Agent Teams 的队友工具（`spawn_teammate`、`wait_agent`、`team_task_*`，连同它的 `team:policy` 说明）。DSH 注册在 Agent 自身作用域里的工具（`subagent` 和 Agent Teams 的工具）拿不掉：DSH 0.2.2 起仍会出现在工具列表里，只靠拒绝挡住调用。万一仍有调用进来，会被拒绝，并提示 Bot 自己做，或把活交给别的 Bot。不是 Bot 的 DSH 会话照旧。
 - 要并行，就让几个 Bot 同时干：`message_bot` 派活，群里 `@` 点名（见 [Bot 之间派活](2026-10-16-bot-handoffs.md)、[群聊](2026-10-07-group-chat.md)）。Bot 不派 DSH 子代理：子代理跑起来用户看不到、停不到，换段时会被连带取消，结论丢失（#463、#788）。
-- 以前在 PTC 预设下建的群会话只能调用 `run_code`，DS Bot 为它们单独处理群的接力；新的群会话都用标准预设（#37、#168）。
+- 以前在 PTC 预设下建的群中转会话只能调用 `run_code`，DS Bot 为它们单独处理群的接力。新建群中转会话沿用默认规则（#37、#168）。
 
 ### 模型
 
@@ -57,6 +57,8 @@
 - 工作文件夹被外部删除或改名时：总工作区不在了会自动重建；Bot 或群自己的文件夹不在了，在组装提示词前先切到回退文件夹，再换到那里的新一段，不会吞掉消息（#209）。
 
 ### 能力
+
+- 创建 Bot 时可以填写长期说明。使用 Anbot 模型时，还可以从默认工作区的 DSH 技能目录选出至多 5 项。技能选择随 Bot 保存，交给同一套 Host 校验和运行时遮蔽机制。使用本地 CLI 创建时仍可填写说明，技能由 CLI 自己的环境提供。
 
 - 设置 → Capabilities 是团队共享的列表，有三种：MCP 服务、技能、能力包（若干 MCP 和技能的组合）。
 - 能力只能**做加法**：加工具、技能、MCP、提示词段。只能有一个取值的设置（工具的呈现方式、persona、压缩引擎）不放进能力包，它们属于 Bot 级设置。

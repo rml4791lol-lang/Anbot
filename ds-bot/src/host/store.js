@@ -281,6 +281,7 @@ export function install(rt) {
     claimLock()
     if (holder !== undefined) warn('ds-bot: %s', readOnly())
     const { migrated, stale } = adopt(readFileState())
+    if (Object.values(state.bots).some(bot => bot.presetBinding !== undefined)) await rt.restoreBotPresets?.()
     if (holder !== undefined) return
     if (migrated && stuck === undefined) {
       // A failed write must not poison `loaded`: the migrated state stays in
@@ -590,6 +591,7 @@ export function install(rt) {
 
   Object.assign(rt, {
     state, load, save, refresh, readOnly, own, onSaved, closeCard,
+    indexSessionsAfterRollback: indexSessions,
     botOf, roomOf, isMain, chatOf, sessionOfRoom, selfOf, isBotSession,
     chatOwners, groupOwners, roomOwners, pastOwners,
     groupSessionsOf, dropGroupSession, retireGroupSession, findBot, findRooms, isAdminOf,

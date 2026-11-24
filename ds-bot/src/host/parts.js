@@ -21,6 +21,7 @@ import { HANDOFF_ACK, HISTORY_TIMEOUT_MS, REPLY_KIND, SOURCE_KIND } from './cons
 import { assembleLlmStream } from './models.js'
 import { parseReplies, relayRange, stackReplies } from '../shared/group-replies.js'
 import { CHECKPOINT_PROMPT, STEWARD_SYSTEM, checkpointCount, checkpointTail, checkpointTailNote, checkpointText, linesFor, parseDecision, stewardRequest } from './steward.js'
+import { observeContextBudget } from './bot-context-view.js'
 import { RESUME_DELAY_MS } from './resume.js'
 import { clip, createClock, escapeRegExp, estimateTokens, splitRef, textOf } from './text.js'
 import { viaOf } from '../shared/im-platforms.js'
@@ -257,9 +258,17 @@ export function install(rt) {
   async function contextLines(session) {
     const route = session.requestHeader()?.config
     if (!route?.provider || !route?.model) return undefined
-    const info = await ctx.llm.resolveModelInfo(route.provider, route.model)
-    return linesFor({ window: info.context?.contextWindow, reserve: route.maxTokens ?? info.defaultMaxTokens, checkRatio: config.checkRatio, checkTokens: config.checkTokens })
+    return linesForRoute(route)
   }
+
+  async function linesForRoute(route, requireDeclaredWindow = false) {
+    const info = await ctx.llm.resolveModelInfo(route.provider, route.model)
+    const window = info.context?.contextWindow
+    if (requireDeclaredWindow && !(Number.isInteger(window) && window > 0)) return undefined
+    return linesFor({ window, reserve: route.maxTokens ?? info.defaultMaxTokens, checkRatio: config.checkRatio, checkTokens: config.checkTokens })
+  }
+
+  const contextBudgetOf = session => observeContextBudget(session, { measure: measureOf, limits: route => linesForRoute(route, true) })
 
   // The backend's own entry points leave Bot Sessions alone, earlier parts and group
   // records included: automatic pressure and overflow compaction do nothing, and
@@ -1150,7 +1159,9 @@ export function install(rt) {
     if (signal.aborted) throw signal.reason
     const dir = rt.workDirOf(job)
     const intended = dir !== undefined && await rt.isFolder(dir) ? dir : rt.teamFolder()
-    const freshId = await rt.createSession(room === undefined ? name : bot === undefined ? room.name : `${name} · ${room.name}`, { dir })
+    const freshId = await rt.createSession(room === undefined ? name : bot === undefined ? room.name : `${name} · ${room.name}`, {
+      dir, agentPreset: bot?.agentPreset, presetBinding: bot?.presetBinding,
+    })
     const picked = await freshRoute(bot, session)
     if (picked !== undefined && !await selectRoute({ name }, freshId, picked) && job.engine) engineRetry.set(freshId, Date.now() + FOLDER_RETRY_MS)
     if (bot !== undefined) await rt.applyPermission(bot, freshId, room)
@@ -1174,7 +1185,7 @@ export function install(rt) {
       ;(room.segments[bot.id] ??= []).push(segment)
       room.sessions[bot.id] = freshId
     } else {
-      ;(bot.segments ??= []).push(segment)
+      ;(bot.segments ??= []).push({ ...segment, directWorkDir: bot.directWorkDir })
       bot.sessionId = freshId
       // The card's call stays in the old part: the fresh part raises it in the
       // composer dock while pending, and closing it records at the part that asked it.
@@ -1252,6 +1263,7 @@ export function install(rt) {
   ctx.on('agent/pre-step', async function placeStep(payload, next) {
     await rt.load()
     const { agent } = payload
+    if (await rt.workspaceHold?.heldFor(agent.session)) return { kind: 'reject' }
     const past = rt.pastOwners.get(agent.id)
     if (past !== undefined && !rt.isBotSession(agent.id)) {
       await forward(past, payload.messages).catch(error => rt.warn('ds-bot: input for %s was not handed on: %s', agent.id, error))
@@ -1828,6 +1840,7 @@ export function install(rt) {
   // "New session" in a Bot's chat: a manual move to a fresh part with the
   // deterministic handoff package, no model call.
   async function newPart(sessionId) {
+    rt.workspaceHold?.assertUnheld(sessionId)
     await rt.load()
     const agent = await rt.resolveAgent(sessionId)
     const place = placeOf(sessionId)
@@ -1840,6 +1853,7 @@ export function install(rt) {
   // Opening an earlier part again: it becomes the current one and the part that
   // was current joins the earlier ones where it sat.
   async function switchPart(botId, partId) {
+    rt.workspaceHold?.assertUnheld(rt.chatOf(botId))
     await rt.load()
     const bot = rt.botOf(botId)
     if (bot === undefined) throw Object.assign(new Error('Unknown Bot'), { code: 'bot/not-found' })
@@ -1853,8 +1867,10 @@ export function install(rt) {
     // DSH turns away every step of an archived Session and every task aimed at it, so
     // the part leaves the archive before it becomes current.
     await ctx.workspaceRegistry.unarchiveSession(partId)
-    segments.splice(at, 1)
-    segments.splice(at, 0, { sessionId: current, endedAt: Date.now() })
+    const [picked] = segments.splice(at, 1)
+    segments.splice(at, 0, { sessionId: current, endedAt: Date.now(), directWorkDir: bot.directWorkDir })
+    if (picked.directWorkDir === undefined) delete bot.directWorkDir
+    else bot.directWorkDir = picked.directWorkDir
     bot.sessionId = partId
     rt.chatOwners.delete(current)
     rt.chatOwners.set(partId, botId)
@@ -1879,5 +1895,5 @@ export function install(rt) {
     return true
   }
 
-  Object.assign(rt, { clock, partsOf, historyEntry, partLines, noteText, earlierPage, chatPage, displayItems, applySteps, followFolder, followEngine, heldBack, newPart, switchPart, sessionTokens: session => tokensOf(session), switchJobs: () => switches.values() })
+  Object.assign(rt, { clock, partsOf, historyEntry, partLines, noteText, earlierPage, chatPage, displayItems, applySteps, followFolder, followEngine, heldBack, newPart, switchPart, contextBudgetOf, sessionTokens: session => tokensOf(session), switchJobs: () => switches.values() })
 }

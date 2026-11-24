@@ -5,6 +5,7 @@ import { mkdir } from 'node:fs/promises'
 import { MAX_AVATAR_IMAGE, ROOM_MAX_MEMBERS, ROOM_MODES, ROOM_NAME_MAX, ROOM_NOTICE_MAX, ROOM_TODO_MAX, ROOM_TODO_TEXT_MAX, SECTION_COLORS, SECTION_NAME_MAX } from './constants.js'
 import { currentColor, isColor, normalize, unquote } from './text.js'
 import { readSkillShortlist } from './skill-shortlist.js'
+import { ownedPresetId } from './bot-presets.js'
 import { nameProblem } from '../shared/mentions.js'
 
 const BROWSER_GRANT_KINDS = new Set(['post', 'upload', 'download', 'delete', '*'])
@@ -74,28 +75,45 @@ export function install(rt) {
   // Under the PTC preset (DSH Desktop's default) a model may call only run_code, which
   // turns down the group_relay call that a group chat's Session is given. A Session
   // keeps the preset it is made with.
-  async function botPreset() {
+  async function agentPresetChoices() {
     const presets = ctx.get?.('agentPresets')
-    if (presets === undefined) return {}
-    const standard = (await presets.list()).some(preset => preset.id === 'standard' && preset.broken === undefined)
-    return standard ? { agentPreset: 'standard' } : {}
+    if (presets === undefined) return []
+    return (await presets.list()).filter(preset => preset.broken === undefined && !ownedPresetId(preset.id))
+      .map(({ id, name }) => ({ id, name: name ?? id }))
+  }
+
+  async function botPreset(requested) {
+    if (requested !== undefined && (typeof requested !== 'string' || requested === '')) throw new Error('Choose a DSH Agent preset')
+    const choices = await agentPresetChoices()
+    if (requested !== undefined && !choices.some(preset => preset.id === requested)) {
+      throw new Error(`The DSH Agent preset ${requested} is unavailable`)
+    }
+    const agentPreset = requested ?? choices.find(preset => preset.id === 'standard')?.id
+    return agentPreset === undefined ? {} : { agentPreset }
   }
 
   // `dir` is a working folder outside the team workspace. Such a Session is made by cwd
   // alone, so it joins no DSH workspace and the user's own project lists stay as they are —
   // unless the folder is already registered as a workspace, which it then joins (#710).
-  async function createSession(title, { dir } = {}) {
+  async function createSession(title, { dir, agentPreset, presetBinding } = {}) {
     // A Bot's tools run here too; while another dsh holds the team, a new Session would
     // belong to no saved Bot.
     const readOnly = rt.readOnly()
     if (readOnly !== undefined) throw new Error(readOnly)
+    const preset = presetBinding === undefined ? await botPreset(agentPreset) : { agentPreset: await rt.ensureBotPreset(presetBinding) }
     const usable = dir !== undefined && await rt.isFolder(dir)
     if (dir !== undefined && !usable) rt.warn('ds-bot: the working folder %s is gone; %s starts in the team workspace', dir, title)
     const known = usable ? await ctx.workspaceRegistry.resolveByPath(dir) : undefined
     const place = known !== undefined ? { workspaceId: known.id } : usable ? { cwd: dir } : { workspaceId: await ensureWorkspace() }
-    const { sessionId } = await ctx.sessionController.create({ ...place, ...await botPreset() })
-    const agent = await rt.resolveAgent(sessionId)
-    await ctx.sessionTitle.rename(agent.session, title)
+    const { sessionId } = await ctx.sessionController.create({ ...place, ...preset })
+    try {
+      const agent = await rt.resolveAgent(sessionId)
+      await ctx.sessionTitle.rename(agent.session, title)
+    } catch (error) {
+      await ctx.workspaceRegistry.archiveSession(sessionId)
+        .catch(archiveError => rt.warn('ds-bot: archiving the Session for %s failed: %s', title, archiveError))
+      throw error
+    }
     return sessionId
   }
 
@@ -189,7 +207,7 @@ export function install(rt) {
     return holdName('bot', cleanName, () => buildBot(cleanName, options))
   }
 
-  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, section, sectionId, skillShortlist }) {
+  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, section, sectionId, skillShortlist, agentPreset }) {
     const cleanAvatarValue = cleanAvatar(avatar)
     // Read before the Session exists, so a shortlist that does not pass leaves no half-made Bot.
     const skills = skillShortlist === null ? undefined : readSkillShortlist(skillShortlist)
@@ -210,8 +228,12 @@ export function install(rt) {
     // not there is refused instead of being saved as a dead entry.
     if (skills !== undefined) await rt.validateSkillShortlist?.(skills, { cwd: dir })
     if (!main && (section !== undefined || sectionId !== undefined)) resolveSectionInput({ section, sectionId }, { allowCreate: false })
-    const id = await createSession(cleanName, { dir })
+    if (agentPreset !== undefined) await botPreset(agentPreset)
+    const original = rt.botOf(copyOf)
+    const presetBinding = agentPreset === undefined ? undefined : await rt.createBotPreset(agentPreset, original?.presetBinding)
+    let id
     try {
+      id = await createSession(cleanName, { dir, agentPreset, presetBinding })
       const resolvedSecId = !main ? resolveSectionInput({ section, sectionId }) : undefined
       state.bots[id] = {
         id,
@@ -228,11 +250,12 @@ export function install(rt) {
         createdAt: Date.now(),
         createdBy: createdBy ?? null,
         capabilities: [],
+        ...(agentPreset === undefined ? {} : { agentPreset }),
+        ...(presetBinding === undefined ? {} : { presetBinding }),
         ...(skills === undefined ? {} : { skillShortlist: skills }),
       }
       if (main) state.mainBotIds.push(id)
       const creator = rt.botOf(createdBy)
-      const original = rt.botOf(copyOf)
       const language = rt.uiLanguage?.()
       // The kickoff arrives as a user message, so it outranks the Bot's instructions
       // unless it gives way to them, and it names no tool those instructions may rule out.
@@ -267,6 +290,9 @@ export function install(rt) {
         .then(() => sendKickoff(bot, greeting))
       return bot
     } catch (error) {
+      await rt.dropBotPreset(presetBinding)
+        .catch(cleanup => rt.warn('ds-bot: preset cleanup for %s failed: %s', cleanName, cleanup.message))
+      if (id === undefined) throw error
       // The Bot's Session was already made: archive it instead of leaving an orphan.
       delete state.bots[id]
       state.mainBotIds = state.mainBotIds.filter(other => other !== id)
@@ -362,6 +388,7 @@ export function install(rt) {
       // explicit Default pick); else the create would inherit the profile level.
       effort: served ? (bot.effort ?? null) : undefined,
       workDir,
+      agentPreset: bot.agentPreset,
       sectionId: bot.sectionId,
       copyOf: bot.id,
     })
@@ -370,6 +397,7 @@ export function install(rt) {
   async function updateBot(id, patch, actorId, fromSessionId) {
     const bot = liveBot(id)
     if (bot === undefined) throw new Error('Unknown Bot')
+    if (patch.workDir !== undefined || patch.model !== undefined) rt.workspaceHold?.assertUnheld(rt.chatOf(id))
     if (patch.browserGrants !== undefined && actorId !== undefined) {
       throw new Error(`Only the user can set what ${bot.name} may do in the browser`)
     }
@@ -472,8 +500,9 @@ export function install(rt) {
       if (nextSecId === null || nextSecId === undefined) delete bot.sectionId
       else bot.sectionId = nextSecId
     }
-    const moved = moving && workDir !== bot.workDir
+    const moved = moving && (workDir !== bot.workDir || bot.directWorkDir !== undefined)
     if (moving) {
+      delete bot.directWorkDir
       if (workDir === undefined) delete bot.workDir
       else bot.workDir = workDir
     }
@@ -945,8 +974,11 @@ export function install(rt) {
 
   async function deleteBot(id) {
     const bot = liveBot(id)
+    rt.workspaceHold?.assertUnheld(rt.chatOf(id))
     if (bot === undefined) throw new Error('Unknown Bot')
+    if (bot.checkpointRestore !== undefined) throw new Error('Resolve the interrupted checkpoint restore before deleting this Bot.')
     if (rt.isMain(id)) throw new Error('A Main Bot cannot be deleted; remove its Main Bot role first')
+    rt.workspaceHold?.assertCanDelete(bot)
     deleting.add(id)
     try {
       // Before the Bot and its group Sessions leave the state, which the archive reads.
@@ -1001,6 +1033,7 @@ export function install(rt) {
           .catch(error => rt.warn('ds-bot: Bot %s not archived: %s', bot.name, error))
       }
       if (failed !== undefined) throw failed
+      await rt.dropBotPreset(bot.presetBinding)
     } finally {
       deleting.delete(id)
     }
@@ -1032,10 +1065,10 @@ export function install(rt) {
   }
 
   Object.assign(rt, {
-    ensureWorkspace, keepTeamFolder, createSession, createBot, duplicateBot, updateBot, setFlags,
+    ensureWorkspace, keepTeamFolder, createSession, createBot, duplicateBot, updateBot, setFlags, agentPresetChoices,
     saveSection, reorderSections, deleteSection,
     roomBusy, autoRoomName, retitleRoom, createRoom, updateRoom, deleteRoom,
     addRoomTodo, setRoomTodoDone, removeRoomTodo, clearDoneRoomTodos,
-    setMain, deleteBot, bootstrap, releaseKickoff, greetingOut, holdKickoffAgain, userWrote, userAnswered,
+    setMain, deleteBot, botDeleting: id => deleting.has(id), bootstrap, releaseKickoff, greetingOut, holdKickoffAgain, userWrote, userAnswered,
   })
 }

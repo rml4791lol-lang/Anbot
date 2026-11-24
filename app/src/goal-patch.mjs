@@ -16,6 +16,7 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
 import { dump } from 'js-yaml'
+import { composeOwnedRow } from './profile-overlay.mjs'
 
 export const GOAL_PATCH_NAME = 'goal.patch.yml'
 
@@ -43,7 +44,8 @@ export function goalPatch(profile) {
   const entries = composeEntries([...profile.layers.map(layer => layer.patches), profile.patches])
   const rows = entries
     .filter(entry => entry.name === PRESET && Array.isArray(entry.config?.plugins) && hasGoalRow(entry.config.plugins))
-    .map(entry => ({ id: entry.id, name: entry.name, config: { ...entry.config, plugins: stripGoalRows(entry.config.plugins) } }))
+    .map(entry => composeOwnedRow(entry, { id: entry.id, name: entry.name, config: { plugins: stripGoalRows(entry.config.plugins) } }))
+    .filter(Boolean)
   return rows.length === 0 ? undefined : rows
 }
 

@@ -110,3 +110,56 @@ test('on Local agent, Create waits for a CLI', () => {
   button('Anbot model').props.onClick()
   assert.equal(button('Create').props.disabled, false)
 })
+
+test('creation sends editable instructions and only the explicitly selected profile skills', async () => {
+  render({ models: MODELS, skillCatalog: [
+    { name: 'review', description: 'Review source changes' },
+    { name: 'private-skill', description: 'Private', bots: ['existing'] },
+  ] })
+  let payload
+  props.actions.createBot = async value => { payload = value; return { id: 'new' } }
+  const input = collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Instructions')[0]
+  assert.ok(input)
+  input.props.onChange({ target: { value: 'Verify changes against their tests.' } })
+  const selected = collect(node => node.type === 'input' && node.props.value === 'review')[0]
+  assert.ok(selected)
+  assert.equal(collect(node => node.type === 'input' && node.props.value === 'private-skill').length, 0)
+  selected.props.onChange({ target: { checked: true } })
+  button('Create').props.onClick()
+  await Promise.resolve()
+  assert.equal(payload?.instructions, 'Verify changes against their tests.')
+  assert.equal(JSON.stringify(payload?.skills), JSON.stringify([{ name: 'review', purpose: 'Review source changes' }]))
+})
+
+test('a native preset recommendation fills editable fields and preserves an existing skill', async () => {
+  render({ models: MODELS, skillCatalog: [
+    { name: 'anbot-debugging', description: 'Reproduce a defect' },
+    { name: 'test-suite', description: 'Run focused tests' },
+  ] })
+  let payload
+  props.actions.createBot = async value => { payload = value; return { id: 'new' } }
+  const field = () => collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Instructions')[0]
+  field().props.onChange({ target: { value: 'Keep my constraints.' } })
+  collect(node => node.type === 'input' && node.props.value === 'test-suite')[0].props.onChange({ target: { checked: true } })
+  assert.equal(button('Code review'), undefined)
+  button('Debugging').props.onClick()
+  button('Debugging').props.onClick()
+  assert.match(field().props.value, /^Keep my constraints\.\n\nHandle software defects/u)
+  field().props.onChange({ target: { value: 'Use my edited brief.' } })
+  button('Create').props.onClick()
+  await Promise.resolve()
+  assert.equal(payload?.instructions, 'Use my edited brief.')
+  assert.equal(payload?.skills.map(skill => skill.name).join(','), 'test-suite,anbot-debugging')
+  assert.equal(payload?.role, undefined)
+})
+
+test('UI and coordination recommendations follow their live Skill availability', () => {
+  const ui = { name: 'anbot-ui-review', description: 'Review a running interface' }
+  const coordination = { name: 'anbot-coordination', description: 'Hand off work to team Bots' }
+  render({ models: MODELS, skillCatalog: [ui] })
+  assert.ok(button('UI review'))
+  assert.equal(button('Local coordination'), undefined)
+  render({ models: MODELS, skillCatalog: [coordination] })
+  assert.ok(button('Local coordination'))
+  assert.equal(button('UI review'), undefined)
+})

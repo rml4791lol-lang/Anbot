@@ -201,6 +201,7 @@ export function install(rt) {
   // Bot's request keeps its exchange; anything else is a nudge in the Bot's own chat.
   const retryTurn = (id, info, note, text) => {
     const keeps = info !== undefined && (info.role === 'room' || expectsReply(info))
+    const { taskId, attemptId } = info ?? {}
     return rt.deliver({
       ...(keeps && info.senderSessionId ? { fromId: info.senderSessionId } : {}),
       toId: rt.selfOf(id),
@@ -209,6 +210,7 @@ export function install(rt) {
       ...(keeps && info.roomId ? { roomId: info.roomId } : {}),
       ...(keeps && info.exchangeId ? { exchangeId: info.exchangeId } : {}),
       ...(info?.work ? { work: info.work } : {}),
+      ...(typeof taskId === 'string' && taskId && typeof attemptId === 'string' && attemptId ? { taskId, attemptId } : {}),
       ...(keeps && info.audience ? { audience: info.audience } : {}),
       ...(keeps && info.askedBy ? { askedBy: info.askedBy } : {}),
       ...(keeps && info.senderRoomId ? { fromRoomId: info.senderRoomId } : {}),

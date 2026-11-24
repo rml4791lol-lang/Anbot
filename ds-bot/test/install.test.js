@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import * as dshSession from '@deepseek-ai/dsh-session'
 import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
 
@@ -45,12 +46,14 @@ test('apply registers listeners and effects in a fixed order', (t) => {
   assert.deepEqual(ctx.calls, [
     'effect ds-bot: diagnostics log',
     'effect ds-bot: state lock',
+    'effect ds-bot: owned Agent presets',
     'effect ds-bot: ledger',
     'on llm/adapters-updated',
     'on credentials/reference-updated',
     'on credentials/record-updated',
     'on settings/document-updated',
     'effect ds-bot: auxiliary llm retry',
+    ...(typeof dshSession.appendPluginRecord === 'function' ? ['on agent/created', 'on session/event'] : []),
     'effect ds-bot: no-op turn backfill',
     'on subagent/start',
     'on subagent/end',
@@ -119,6 +122,7 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: learning',
     'on tools/pre-execute',
     'on tools/execute',
+    'on tools/pre-execute',
     'on agent/created',
     'on agent/disposed',
     'on user-questions/request (prepend)',
@@ -142,6 +146,7 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: live feed',
     'on session/event',
     'effect ds-bot: im',
+    'effect ds-bot: Bot workflows',
     'effect ds-bot: phone link',
     'effect ds-bot: team board config',
     'route GET /api/bot/team-board.config.json',

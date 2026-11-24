@@ -140,6 +140,7 @@ let downloadsBound = false
 // Quitting during the first run's import (its card or its copy) or a data move waits for it to
 // stop at a safe point, so that it leaves no half team and no temporary copy.
 let copying
+let quittingAfterWorkCheck = false
 const copyAbort = new AbortController()
 let browserGuests
 let botViews
@@ -244,15 +245,36 @@ if (canonical !== undefined) {
       void copying.finally(() => { copying = undefined; app.quit() })
       return
     }
-    // The app is on its way out: the window may close for good.
-    shell.beginQuit()
-    if (stopped || host === undefined) return
+    if (stopped || host === undefined) { shell.beginQuit(); return }
     event.preventDefault()
+    if (quittingAfterWorkCheck) return
     // The Host is already stopping: the quit follows it.
     if (stopping) { void (hostStop ?? Promise.resolve()).then(() => { app.quit() }); return }
-    void stopHost().then(() => { app.quit() })
+    quittingAfterWorkCheck = true
+    void confirmQuit(host).then(confirmed => {
+      quittingAfterWorkCheck = false
+      if (!confirmed) { shell.cancelQuit(); return }
+      shell.beginQuit()
+      void stopHost().then(() => { app.quit() })
+    }, error => {
+      quittingAfterWorkCheck = false
+      shell.cancelQuit()
+      console.error('Anbot: quit confirmation failed:', error)
+    })
   })
   app.whenReady().then(async () => { shell.install(); await start() }).catch(fail)
+}
+
+async function confirmQuit(current) {
+  if (!hostReady || shell.isQuitting() || shell.isSessionEnding()) return true
+  const activity = await current.workActivity()
+  if (current !== host) return false
+  if (activity === 'idle' || shell.isQuitting() || shell.isSessionEnding()) return true
+  const t = shellText()
+  const message = activity === 'active' ? t.quitActive : t.quitUnknown
+  const buttons = [{ label: t.quit }, { label: t.cancel, primary: true }]
+  const answer = await askInWindow({ message, buttons, cancel: 1 }, { front: true })
+  return answer === 0 && current === host
 }
 
 function stopHost() {
@@ -771,7 +793,7 @@ function handleIpc() {
     if (!fromWindow(event)) return
     void computerCursor.update(entry)
   })
-  app.on('before-quit', () => { computerIndicator.dispose(); computerCursor.dispose() })
+  app.once('will-quit', () => { computerIndicator.dispose(); computerCursor.dispose() })
   ipcMain.on(IPC.ready, (event, report) => { if (fromWindow(event)) startWindow.ready(report) })
   // It has drawn the whale the start window hands over: the windows cross-fade.
   ipcMain.on(IPC.handoffReady, (event) => { if (fromWindow(event)) startWindow.teamReady() })

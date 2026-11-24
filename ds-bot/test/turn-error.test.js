@@ -136,6 +136,20 @@ function cell({ code, message = '', turn = 3, blocked, model = models[0].ref, la
 }
 const labels = list => list.filter(entry => !entry.node.props.className?.includes('bt-fail-copy')).map(entry => entry.label)
 
+test('an explicit retry submits the failed Session, turn, model and thinking level', async () => {
+  const side = cell({ code: 'SERVER', catalog: [models[0], { ...models[1], reasoning: { efforts: [{ id: 'max', name: 'Max' }] } }] })
+  side.roster.retryWithModel = true
+  side.actions.retryWithModel = payload => side.calls.push({ ...payload })
+  side.buttons(side.render()).find(button => button.label === 'Retry with another model').node.props.onClick()
+  const find = (type) => walk(side.render(), node => node.type === type)
+  assert.match(textOf(find('option')[1]), /Router · Flash/)
+  find('select')[0].props.onChange({ target: { value: models[1].ref } })
+  find('select')[1].props.onChange({ target: { value: 'max' } })
+  find('form')[0].props.onSubmit({ preventDefault() {} })
+  await tick()
+  assert.deepEqual(side.calls, [{ botId: 'chief', sessionId: 'chief-part', turn: 3, model: models[1].ref, effort: 'max' }])
+})
+
 test('a missing key offers the key first, the sign-in and another model, but no retry while the host holds it', () => {
   const side = cell({ code: 'MISSING_CREDENTIAL', message: 'llm-deepseek: no API key for provider route', blocked: { code: 'MISSING_CREDENTIAL', provider: 'deepseek-official', at: 1 } })
   const tree = side.render()

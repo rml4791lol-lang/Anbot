@@ -151,7 +151,8 @@ export function install(rt) {
     const work = works()[id]
     if (work === undefined) return undefined
     delete works()[id]
-    logTask({ kind: 'close', id, from: work.from, to: work.to, parent: work.parent, room: work.room, outcome: extra.abandoned === true ? 'abandoned' : 'answered', chars: text.length })
+    logTask({ kind: 'close', id, from: work.from, to: work.to, parent: work.parent, room: work.room, outcome: extra.abandoned === true ? 'abandoned' : 'answered', chars: text.length,
+      attemptId: work.attempt?.id, sessionId: work.attempt?.sessionId })
     // What it still waits for comes back to it alone.
     for (const child of Object.values(works())) if (child.parent === id) delete child.parent
     const above = works()[work.parent]

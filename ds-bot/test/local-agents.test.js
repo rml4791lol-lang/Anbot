@@ -22,6 +22,149 @@ import { fakeContext } from './fake-ctx.js'
 const FIXTURE = name => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))
 const FIXTURES = { acp: FIXTURE('fake-acp.mjs'), codex: FIXTURE('fake-codex.mjs'), claude: FIXTURE('fake-claude.mjs') }
 
+test('Codex defers interrupt until the start reply identifies the turn, then waits for its matching terminal event', async () => {
+  const engine = new CodexEngine('local-codex-cli', { name: 'Codex' }, {})
+  const thread = engine.threadFor('dsh-session')
+  thread.threadId = 'native-thread'
+  const start = Promise.withResolvers()
+  const called = Promise.withResolvers()
+  const interrupted = Promise.withResolvers()
+  engine.peer = { request(method, params) {
+    if (method === 'turn/start') { called.resolve(); return start.promise }
+    assert.equal(method, 'turn/interrupt')
+    interrupted.resolve(params)
+    return Promise.resolve({})
+  } }
+  const controller = new AbortController()
+  const prompt = engine.prompt(thread, [{ type: 'text', text: 'test' }], { signal: controller.signal })
+  await called.promise
+  controller.abort()
+  const stopped = engine.cancel(thread)
+  assert.ok(stopped instanceof Promise)
+  assert.equal(engine.cancel(thread), stopped)
+  start.resolve({ turn: { id: 't2' } })
+  assert.deepEqual(await interrupted.promise, { threadId: 'native-thread', turnId: 't2' })
+  const emit = (threadId, id, status) => engine.onNotice('turn/completed', { threadId, turn: { id, status } })
+  emit('native-thread', 't1', 'interrupted')
+  emit('another-thread', 't2', 'interrupted')
+  emit('native-thread', 't2', 'inProgress')
+  assert.equal(await Promise.race([stopped, Promise.resolve('pending')]), 'pending')
+  emit('native-thread', 't2', 'interrupted')
+  assert.equal(await stopped, true)
+  assert.equal(await prompt, true)
+})
+
+test('Codex accepts a matching terminal notification that precedes the start reply', async () => {
+  const engine = new CodexEngine('local-codex-cli', { name: 'Codex' }, {})
+  const thread = engine.threadFor('dsh-session')
+  thread.threadId = 'native-thread'
+  const start = Promise.withResolvers()
+  const called = Promise.withResolvers()
+  engine.peer = { request: () => { called.resolve(); return start.promise } }
+  const prompt = engine.prompt(thread, [], {})
+  await called.promise
+  engine.onNotice('turn/completed', { threadId: 'native-thread', turn: { id: 't1', status: 'completed' } })
+  start.resolve({ turn: { id: 't1' } })
+  assert.equal(await prompt, true)
+  assert.deepEqual(await thread.next(), { type: 'done', reason: 'stop' })
+})
+
+test('discarding a Codex thread before its terminal notification leaves the stop unconfirmed', async () => {
+  const engine = new CodexEngine('local-codex-cli', { name: 'Codex' }, {})
+  const thread = engine.threadFor('dsh-session')
+  thread.threadId = 'native-thread'
+  const interrupt = Promise.withResolvers()
+  const started = Promise.withResolvers()
+  engine.peer = { request(method) {
+    if (method === 'turn/start') { started.resolve(); return Promise.resolve({ turn: { id: 't1' } }) }
+    assert.equal(method, 'turn/interrupt')
+    interrupt.resolve()
+    return Promise.resolve({})
+  } }
+  const prompt = engine.prompt(thread, [], {})
+  await started.promise
+  const stopped = engine.cancel(thread)
+  await interrupt.promise
+  engine.forget('dsh-session')
+  assert.equal(await stopped, false)
+  assert.equal(await prompt, false)
+})
+
+test('Claude waits for the current Session result after interrupt and ignores an unrelated result', async (t) => {
+  const engine = new ClaudeEngine('local-claude-code', {
+    name: 'Claude Code', command: process.execPath, args: ['-e', 'process.stdin.resume()', '--'],
+  }, { findExecutable: path => path })
+  const session = await engine.open('s-cancel', { cwd: tmpdir() })
+  t.after(() => engine.close())
+  // Drive protocol messages directly so exit, acknowledgement and completion
+  // are tested independently of the speed of the child process.
+  const writes = []
+  session.write = message => { writes.push(message); return true }
+  const emit = event => session.onLine(JSON.stringify(event))
+  emit({ type: 'system', subtype: 'init', session_id: 'native-claude' })
+  const prompt = engine.prompt(session, [{ type: 'text', text: 'work' }], {})
+  const stopped = engine.cancel(session)
+  assert.ok(stopped instanceof Promise)
+  assert.equal(engine.cancel(session), stopped)
+  assert.equal(writes.filter(message => message.request?.subtype === 'interrupt').length, 1)
+  assert.equal(typeof writes.at(-1).request_id, 'string')
+  emit({ type: 'control_response', response: { subtype: 'success', request_id: writes.at(-1).request_id } })
+  emit({ type: 'result', subtype: 'success', session_id: 'foreign-claude' })
+  assert.equal(await Promise.race([stopped, Promise.resolve('pending')]), 'pending')
+  emit({ type: 'result', subtype: 'error_during_execution', is_error: true, session_id: 'native-claude' })
+  assert.equal(await stopped, true)
+  assert.equal(await prompt, true)
+  assert.deepEqual(session.events, [])
+})
+
+test('ACP abort waits for the original prompt reply as stop evidence', async () => {
+  const engine = new AcpEngine('local-fixture', { name: 'Fixture' }, {})
+  const native = Promise.withResolvers()
+  const notifications = []
+  const events = []
+  engine.peer = {
+    request(method, _params, options) {
+      assert.equal(method, 'session/prompt')
+      assert.equal(options.signal, undefined)
+      return native.promise
+    },
+    notify: (method, params) => notifications.push([method, params.sessionId]),
+  }
+  const session = { acpSessionId: 'real-request-id', push: value => events.push(value) }
+  const controller = new AbortController()
+  const prompt = engine.prompt(session, [], { signal: controller.signal })
+  await Promise.resolve()
+  controller.abort()
+  const stopped = engine.cancel(session)
+  assert.ok(stopped instanceof Promise)
+  assert.equal(engine.cancel(session), stopped)
+  assert.deepEqual(notifications, [['session/cancel', 'real-request-id']])
+  let confirmed = false
+  void stopped.then(value => { confirmed = value })
+  await Promise.resolve()
+  assert.equal(confirmed, false)
+  native.resolve({ stopReason: 'cancelled' })
+  assert.equal(await stopped, true)
+  await prompt
+  assert.equal(session.activePrompt, undefined)
+  assert.deepEqual(events, [])
+})
+
+test('ACP errors and malformed prompt replies do not prove the CLI stopped', async () => {
+  const engine = new AcpEngine('local-fixture', { name: 'Fixture' }, {})
+  const session = { acpSessionId: 'cancel-proof', push: () => {} }
+  for (const settle of [native => native.reject(Error('connection closed')), native => native.resolve({ stopReason: 'unknown' })]) {
+    const native = Promise.withResolvers()
+    engine.peer = { request: () => native.promise, notify: () => {} }
+    const prompt = engine.prompt(session, [], {})
+    await Promise.resolve()
+    const confirmation = engine.cancel(session)
+    settle(native)
+    assert.equal(await confirmation, false)
+    await prompt
+  }
+})
+
 const user = (id, text) => ({ id, role: 'user', content: [{ type: 'text', text }], source: { kind: 'user' } })
 const system = (id, text) => ({ id, role: 'system', content: [{ type: 'text', text }], source: { kind: 'system-prompt' } })
 const toolResult = (id, callId, text, isError = false) => ({ id, role: 'tool', content: [{ type: 'text', text }], toolCallId: callId, isError, source: { kind: 'tool', callId } })

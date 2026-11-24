@@ -2,7 +2,7 @@
 // login-shell PATH plus the usual install folders, and an environment that
 // keeps their own sign-in but leaks nothing of ours.
 import { execFile, spawn } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { delimiter, join, win32 } from 'node:path'
 
@@ -12,12 +12,13 @@ const DROP_EXACT = new Set([
   'ACP_BACKEND', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL',
   'CLAUDE_CODE_OAUTH_TOKEN', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'XAI_API_KEY', 'ELECTRON_RUN_AS_NODE',
 ])
-const DROP_PREFIX = ['DS_BOT_', 'DSH_']
+const DROP_PREFIX = ['ANBOT_', 'DS_BOT_', 'DSH_']
 
 export function cleanEnv(extra = {}) {
   const env = {}
   for (const [key, value] of Object.entries(process.env)) {
-    if (DROP_EXACT.has(key) || DROP_PREFIX.some(prefix => key.startsWith(prefix))) continue
+    const upper = key.toUpperCase()
+    if (DROP_EXACT.has(upper) || DROP_PREFIX.some(prefix => upper.startsWith(prefix))) continue
     env[key] = value
   }
   // A CLI found outside our sparse PATH (a script with `#!/usr/bin/env node`)
@@ -76,17 +77,26 @@ function searchDirs() {
   return dirs
 }
 
-// The executable's full path, or undefined when the CLI is not installed. Only
-// file checks: the folders from refreshSearchDirs() join once it has run.
+function canExecute(path) {
+  try {
+    if (!statSync(path).isFile()) return false
+    accessSync(path, process.platform === 'win32' ? constants.R_OK : constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// File checks only; the folders from refreshSearchDirs() join once it has run.
 export function findExecutable(name) {
   if (name.includes('/') || name.includes('\\')) {
     const path = name.startsWith('~') ? join(homedir(), name.slice(1)) : name
-    return existsSync(path) ? path : undefined
+    return canExecute(path) ? path : undefined
   }
   for (const dir of searchDirs()) {
     for (const file of candidates(name)) {
       const path = join(dir, file)
-      if (existsSync(path)) return path
+      if (canExecute(path)) return path
     }
   }
   return undefined
@@ -160,7 +170,17 @@ export function probeSignIn(executable, check, { home = homedir() } = {}) {
       // Ten seconds, like probeVersion: a CLI that is signing in can be slow, and three was short
       // enough that a loaded machine killed the call and the check answered "unknown" for a CLI
       // that was in fact signed in (test/run-mode.test.js caught it as an intermittent failure).
-      execFile(launch.file, launch.args, { encoding: 'utf8', timeout: 10_000, env: cleanEnv(), windowsHide: true, ...launch.options }, (_error, stdout, stderr) => {
+      execFile(launch.file, launch.args, { encoding: 'utf8', timeout: 10_000, env: cleanEnv(), windowsHide: true, ...launch.options }, (error, stdout, stderr) => {
+        if (check.format === 'claude-auth-json') {
+          try {
+            const state = JSON.parse(stdout)
+            if (state?.loggedIn === true && error === null) return resolve(true)
+            if (state?.loggedIn === false && (error === null || error.code === 1)) return resolve(false)
+          } catch {
+            // Older clients may not implement auth status. Keep that result unknown.
+          }
+          return resolve(null)
+        }
         const text = `${stdout ?? ''}${stderr ?? ''}`
         resolve(/not (?:logged|signed) in/iu.test(text) ? false : /(?:logged|signed) in/iu.test(text) ? true : null)
       })

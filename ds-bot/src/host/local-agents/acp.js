@@ -8,6 +8,7 @@ import { acpMode } from './engines.js'
 const CLIENT = { name: 'ds-bot', version: '1' }
 // DS Bot's loopback MCP server, which carries the Bot's team tools.
 const MCP_SERVER = 'dsbot'
+const STOP_REASONS = new Set(['end_turn', 'max_tokens', 'max_turn_requests', 'refusal', 'cancelled'])
 
 // Events a driver reports, normalized for the adapter:
 // {type:'text'|'thought',text} | {type:'activity',text} (one compact line of the
@@ -82,7 +83,7 @@ export class AcpEngine {
     if (method !== 'session/update') return
     const update = params?.update ?? {}
     const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
-    if (session === undefined) return
+    if (session === undefined || session.activePrompt?.cancelled) return
     switch (update.sessionUpdate) {
       case 'agent_message_chunk': session.push({ type: 'text', text: textOf(update.content) }); break
       case 'agent_thought_chunk': session.push({ type: 'thought', text: textOf(update.content) }); break
@@ -114,6 +115,7 @@ export class AcpEngine {
     if (method === 'session/request_permission') {
       const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
       if (session === undefined) return Promise.reject({ code: -32603, message: 'unknown session' })
+      if (session.activePrompt?.cancelled) return Promise.resolve({ outcome: { outcome: 'cancelled' } })
       const options = (params?.options ?? []).map(option => ({ optionId: option.optionId, name: option.name, kind: option.kind }))
       const call = callOf(session, params?.toolCall)
       // Cursor and Devin ask before every MCP tool call. A call to DS Bot's own server
@@ -190,16 +192,33 @@ export class AcpEngine {
 
   async prompt(session, blocks, { signal }) {
     const peer = await this.ensure()
-    const reply = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: blocks }, { signal, timeout: 0 })
-    reply.then(
-      result => session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn' }),
-      error => session.push({ type: 'error', error }),
-    )
-    return reply
+    if (signal?.aborted) return true
+    if (session.activePrompt !== undefined) throw new Error('The previous local Agent turn is still stopping')
+    // ACP acknowledges cancellation by answering the original request. Keep that RPC
+    // alive when DSH aborts its stream, so an aborted signal cannot impersonate the reply.
+    const active = { cancelled: false }
+    session.activePrompt = active
+    active.done = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: blocks }, { timeout: 0 }).then(
+      result => {
+        if (!active.cancelled) session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn' })
+        return STOP_REASONS.has(result?.stopReason)
+      },
+      error => {
+        if (!active.cancelled) session.push({ type: 'error', error })
+        return false
+      },
+    ).finally(() => { if (session.activePrompt === active) delete session.activePrompt })
+    return active.done
   }
 
   cancel(session) {
-    this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+    const active = session.activePrompt
+    if (active === undefined) return undefined
+    if (!active.cancelled) {
+      active.cancelled = true
+      this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+    }
+    return active.done
   }
 
   // The adapter stopped reading this session: a later open starts a new queue, or

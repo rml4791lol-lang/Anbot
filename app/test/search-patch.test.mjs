@@ -41,6 +41,12 @@ describe('searchSelectorPatch', () => {
     assert.equal(searchSelectorPatch(track()), undefined)
   })
 
+  test('keeps the effective web options when restoring only the search selector', () => {
+    const settings = { searchProvider: 'auto', fetchProvider: 'custom', tuning: { timeoutMs: 9000 } }
+    const [row] = searchSelectorPatch(track([disabledAuto, { id: 'web', config: settings }]))
+    assert.deepEqual(row.config, { ...settings, searchProvider: 'deepseek-official' })
+  })
+
   test('does nothing when the profile already names another provider', () => {
     assert.equal(searchSelectorPatch(track([disabledAuto, { id: 'web', config: { searchProvider: 'custom-one', fetchProvider: 'http' } }])), undefined)
   })

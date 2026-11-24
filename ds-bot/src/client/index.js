@@ -209,6 +209,8 @@ export function apply(ctx) {
     const live = {}
     if (value.connectors !== undefined && JSON.stringify(value.connectors) !== JSON.stringify(current.connectors ?? [])) live.connectors = value.connectors
     if (value.capabilityStatuses !== undefined && JSON.stringify(value.capabilityStatuses) !== JSON.stringify(current.capabilityStatuses ?? {})) live.capabilityStatuses = value.capabilityStatuses
+    if (value.skillCatalog !== undefined && JSON.stringify(value.skillCatalog) !== JSON.stringify(current.skillCatalog ?? [])) live.skillCatalog = value.skillCatalog
+    if (value.newBotSkillCatalog !== undefined && JSON.stringify(value.newBotSkillCatalog) !== JSON.stringify(current.newBotSkillCatalog ?? [])) live.newBotSkillCatalog = value.newBotSkillCatalog
     if (value.phone !== undefined && JSON.stringify(value.phone) !== JSON.stringify(current.phone ?? null)) live.phone = value.phone
     if (value.learning !== undefined && JSON.stringify(value.learning) !== JSON.stringify(current.learning ?? {})) live.learning = value.learning
     if (value.learningSettled !== undefined && JSON.stringify(value.learningSettled) !== JSON.stringify(current.learningSettled ?? {})) live.learningSettled = value.learningSettled

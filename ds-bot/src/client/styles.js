@@ -371,6 +371,11 @@ button.bt-q-opt:active{background:var(--bt-active)}
 .bt-create-title{font-size:14px;line-height:20px;font-weight:500}
 .bt-create-body{flex:1;overflow-y:auto;padding:28px 16px 32px;display:flex;justify-content:center}
 .bt-create-card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:18px;animation:bt-q-in ${SPRING_SHAPE.duration}ms ${SPRING_SHAPE.easing} both,bt-veil-in .22s ease-out both}
+.bt-create-card details>summary{cursor:pointer;margin-bottom:8px;color:var(--bt-ink-2)}
+.bt-create-card details details{margin-top:8px}
+.bt-create-skill-list{max-height:180px;overflow-y:auto;margin-top:6px}
+.bt-create-skill{display:flex;align-items:center;gap:8px;min-height:28px}
+.bt-create-skill input{accent-color:var(--bt-accent)}
 .bt-create-preview{display:flex;flex-direction:column;align-items:center;gap:10px}
 .bt-create-pop{display:inline-flex;animation:bt-create-pop ${SPRING_POP.duration}ms ${SPRING_POP.easing} both}
 @keyframes bt-create-pop{from{transform:scale(.72);opacity:.4}}
@@ -1209,6 +1214,10 @@ html[data-platform=darwin] header[class*="_header"]:has(.bt-head) :is(a,button,i
    Details, where the same numbers have a label and a stable home. Keep the clock. */
 [data-turn-tail] [class*="_endInfo"]>:not([class*="_timeEnd"]){display:none!important}
 [class*="_flowItem"][data-chat-flow-kind="turn-tail"]:not(:has([data-slot="conversation.chat.turnTail"]:not(:empty))){display:none!important}
+.bt-question-link{position:sticky;top:56px;z-index:2;display:flex;justify-content:center;margin-bottom:6px;pointer-events:none}
+.bt-question-link[hidden]{display:none}
+.bt-question-link button{display:flex;align-items:center;gap:6px;max-width:85%;pointer-events:auto;background:var(--bt-card);box-shadow:inset 0 0 0 1px var(--bt-line)}
+.bt-question-link button span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Every team Session belongs to a Bot or a group, so a blank one is an empty chat, not
    the shell's new-session hero: no headline, no workspace or mode picker, and the
    composer stays docked at the bottom. */

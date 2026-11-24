@@ -1002,6 +1002,23 @@ test('a tool call written as text gets one more turn on the same round slot', as
   assert.equal(host.agentOf('gb').calls.length, 2)
 })
 
+for (const complete of [true, false]) test(complete ? 'an automatic follow-through keeps both task identifiers' : 'an automatic follow-through omits an incomplete task identity', async (t) => {
+  const home = freshHome(t)
+  const host = await start(home)
+  const taskId = 'goal:g1:s1:t1'
+  const attemptId = 't1:a1'
+  run(host, 'gb', 1, {
+    content: [{ type: 'text', text: '[Group chat "Ops"]\nFix the failing test' }],
+    source: { kind: 'bot', form: 'relay', role: 'room', exchangeId: 'room-task', roomId: 'r1', senderName: 'Ops', senderSessionId: 'r1', taskId, ...(complete ? { attemptId } : {}) },
+  })
+  host.emit('gb', 'assistant/message', { message: { content: [{ type: 'text', text: "I'll fix the failing test now." }] } })
+  host.emit('gb', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+  await settle(() => host.agentOf('gb').calls.length === 1)
+
+  const retry = host.agentOf('gb').calls[0]
+  assert.deepEqual([retry.source.taskId, retry.source.attemptId], complete ? [taskId, attemptId] : [undefined, undefined])
+})
+
 test('a group member that leaves only the call tags gets the same retry, and never posts the tags', async (t) => {
   const home = freshHome(t)
   const host = await start(home)

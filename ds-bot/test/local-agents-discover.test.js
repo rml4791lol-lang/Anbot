@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { findExecutable, launchOf, refreshSearchDirs, spawnAgent } from '../src/host/local-agents/discover.js'
+import { cleanEnv, findExecutable, launchOf, refreshSearchDirs, spawnAgent } from '../src/host/local-agents/discover.js'
 
 // npm-*.cmd are what npm 11's cmd-shim writes for a Node script and for an .exe;
 // pnpm-node.cmd follows pnpm 11's shim template with a NODE_PATH.
@@ -13,6 +13,26 @@ const onWindows = (name, { exists = () => false, find = () => undefined } = {}) 
   platform: 'win32', readFile: () => shim(name), exists, find,
 })
 const SYSTEM = 'Line one.\nSay "hi" & 100% done | <ok>'
+
+test('a directory or a non-executable file does not count as an installed CLI', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'dsb-availability-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  assert.equal(findExecutable(root), undefined)
+  assert.ok(findExecutable(process.execPath))
+  if (process.platform !== 'win32') {
+    const file = join(root, 'not-executable')
+    writeFileSync(file, '#!/bin/sh\n', { mode: 0o600 })
+    assert.equal(findExecutable(file), undefined)
+  }
+})
+
+test('Anbot launch configuration is private to the desktop shell', (t) => {
+  const key = 'ANBOT_UPDATE_URL'
+  const previous = process.env[key]
+  t.after(() => { if (previous === undefined) delete process.env[key]; else process.env[key] = previous })
+  process.env[key] = 'https://updates.example.invalid'
+  assert.equal(cleanEnv()[key], undefined)
+})
 
 test('on Windows an npm shim starts its Node script with the arguments intact (spawn EINVAL)', () => {
   const exe = 'C:\\Users\\me\\AppData\\Roaming\\npm\\opencode.cmd'

@@ -2,6 +2,7 @@
 // record, so the prefix stays byte-stable across turns and roster changes.
 
 import { skillShortlistSection } from './skill-shortlist.js'
+import { botSpecPrompt } from './bot-spec.js'
 
 // Every rule belongs to one of eight sections, read in this order: identity,
 // work loop, evidence, stopping, delivery, collaboration, memory, failure. A
@@ -120,6 +121,7 @@ export function install(rt) {
     if (bot !== undefined) {
       // A Bot that keeps no shortlist reads exactly as before: no empty heading.
       const shortlist = skillShortlistSection(bot.skillShortlist)
+      const spec = rt.chatOf?.(self) === id ? botSpecPrompt(bot.taskSpec) : ''
       return [
         '# Your identity',
         `You are ${bot.name}, a Bot on the user's team in DS Bot.${bot.role ? ` Your role: ${bot.role}.` : ''}`,
@@ -127,6 +129,7 @@ export function install(rt) {
         '',
         rulesFor(rt.isMain(self)),
         ...(shortlist === '' ? [] : ['', shortlist]),
+        ...(spec === '' ? [] : ['', spec]),
       ].join('\n')
     }
     const room = rt.roomOf(id)

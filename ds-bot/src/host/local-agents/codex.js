@@ -6,6 +6,7 @@ import { cleanEnv, spawnAgent } from './discover.js'
 
 // The name the loopback MCP server is registered under in each thread's config.
 const MCP_SERVER = 'dsbot'
+const TERMINAL_STATES = new Set(['completed', 'failed', 'interrupted'])
 
 export class CodexEngine {
   constructor(route, engine, { findExecutable }) {
@@ -49,6 +50,7 @@ export class CodexEngine {
       this.peer = undefined
       for (const thread of this.threads.values()) {
         thread.dead = true
+        thread.activeTurn?.settled.resolve(false)
         thread.push({ type: 'error', error })
       }
     }
@@ -69,17 +71,19 @@ export class CodexEngine {
       case 'item/started':
       case 'item/completed': {
         const item = params?.item ?? {}
-        if (thread === undefined) break
+        if (thread === undefined || thread.activeTurn?.cancelled) break
+        if (params?.turnId && thread.activeTurn?.id && params.turnId !== thread.activeTurn.id) break
         if (item.type === 'agentMessage' || item.type === 'agent_message') thread.push({ type: 'text', text: item.text ?? '' })
         else if (item.type === 'reasoning') thread.push({ type: 'thought', text: (item.content ?? []).join('') || item.text || '' })
         else if (method === 'item/started' && item.type !== undefined) thread.push({ type: 'activity', text: `▸ ${activityOf(item)}` })
         break
       }
       case 'turn/completed': {
-        if (thread === undefined) break
-        const turn = params?.turn ?? {}
-        if (turn.status === 'failed') thread.push({ type: 'error', error: new Error(turn.error?.message ?? 'the turn failed') })
-        else thread.push({ type: 'done', reason: 'stop' })
+        const active = thread?.activeTurn
+        const turn = params?.turn
+        if (active === undefined || typeof turn?.id !== 'string' || !TERMINAL_STATES.has(turn.status)) break
+        if (active.id === undefined && active.early.size < 16) active.early.set(turn.id, turn)
+        else if (active.id === turn.id) this.finishTurn(thread, active, turn)
         break
       }
       case 'thread/tokenUsage/updated': {
@@ -96,10 +100,11 @@ export class CodexEngine {
   onRequest(method, params) {
     if (method === 'item/commandExecution/requestApproval' || method === 'item/fileChange/requestApproval' || method === 'execCommandApproval' || method === 'patchApproval') {
       const thread = [...this.threads.values()].find(entry => entry.threadId === params?.threadId)
+      if (thread === undefined || thread.activeTurn?.cancelled) return Promise.resolve({ decision: 'decline' })
       const options = (params?.availableDecisions ?? params?.decisions ?? ['accept', 'decline']).map(decision => ({ optionId: decision, kind: decision === 'accept' || decision === 'acceptForSession' ? 'allow_once' : 'reject_once', name: decision }))
       return new Promise((resolve) => {
         const reply = (decision) => resolve({ decision: decision ?? 'decline' })
-        thread?.push({
+        thread.push({
           type: 'permission', id: `perm-${Math.random().toString(36).slice(2)}`, reply,
           action: params?.reason ?? params?.command ?? 'The agent asks to run an action',
           changes: true,
@@ -113,6 +118,8 @@ export class CodexEngine {
     // here: toolsFor() already narrowed what the Bot may call. Other servers and
     // real form elicitations keep the refusal; they are not DS Bot's to approve.
     if (method === 'mcpServer/elicitation/request' && params?.serverName === MCP_SERVER && params?._meta?.codex_approval_kind === 'mcp_tool_call') {
+      const thread = [...this.threads.values()].find(entry => entry.threadId === params?.threadId)
+      if (thread?.activeTurn?.cancelled) return Promise.resolve({ action: 'decline', content: null, _meta: null })
       return Promise.resolve({ action: 'accept', content: null, _meta: null })
     }
     return Promise.reject({ code: -32601, message: `method not found: ${method}` })
@@ -156,14 +163,45 @@ export class CodexEngine {
 
   async prompt(thread, blocks, { signal, effort }) {
     const peer = await this.ensure()
-    const reply = await peer.request('turn/start', {
+    if (signal?.aborted) return true
+    if (thread.activeTurn !== undefined) throw new Error('The previous Codex turn is still stopping')
+    const active = { settled: Promise.withResolvers(), early: new Map(), id: undefined, cancelled: false, interruptSent: false, peer }
+    thread.activeTurn = active
+    void peer.request('turn/start', {
       threadId: thread.threadId,
       input: blocks.map(block => block.type === 'image' ? { type: 'image', url: block.url ?? block.data } : { type: 'text', text: block.text ?? '' }),
       // The app-server takes the level per turn and keeps it for the next ones.
       ...(effort === undefined ? {} : { effort }),
-    }, { signal, timeout: 0 })
-    thread.turnId = reply?.turn?.id ?? reply?.id
-    return thread.turnId
+    }, { timeout: 60_000 }).then(reply => {
+      if (thread.activeTurn !== active) return
+      const id = reply?.turn?.id ?? reply?.id
+      if (typeof id !== 'string' || id === '') throw new Error('Codex did not identify the started turn')
+      active.id = id
+      const terminal = active.early.get(id)
+      active.early.clear()
+      if (terminal !== undefined) this.finishTurn(thread, active, terminal)
+      else if (active.cancelled) this.interruptTurn(thread, active)
+    }).catch(error => {
+      if (thread.activeTurn !== active) return
+      if (!active.cancelled) thread.push({ type: 'error', error })
+      active.settled.resolve(false)
+    })
+    try { return await active.settled.promise } finally { if (thread.activeTurn === active) delete thread.activeTurn }
+  }
+
+  finishTurn(thread, active, turn) {
+    delete thread.activeTurn
+    active.settled.resolve(true)
+    if (active.cancelled) return
+    if (turn.status === 'failed') thread.push({ type: 'error', error: new Error(turn.error?.message ?? 'the turn failed') })
+    else thread.push({ type: 'done', reason: 'stop' })
+  }
+
+  interruptTurn(thread, active) {
+    if (active.id === undefined || active.interruptSent) return
+    active.interruptSent = true
+    void active.peer.request('turn/interrupt', { threadId: thread.threadId, turnId: active.id }, { timeout: 15_000 })
+      .catch(() => { active.interruptSent = false })
   }
 
   async steer(thread, text) {
@@ -171,12 +209,17 @@ export class CodexEngine {
   }
 
   cancel(thread) {
-    this.peer?.request('turn/interrupt', { threadId: thread.threadId, turnId: thread.turnId }, { timeout: 15_000 }).catch(() => {})
+    const active = thread.activeTurn
+    if (active === undefined) return undefined
+    active.cancelled = true
+    this.interruptTurn(thread, active)
+    return active.settled.promise
   }
 
   // The adapter stopped reading this thread: a later open starts a new queue, or
   // the pump that waits on this one would swallow its first event.
   forget(dshSessionId) {
+    this.threads.get(dshSessionId)?.activeTurn?.settled.resolve(false)
     this.threads.delete(dshSessionId)
   }
 
@@ -206,6 +249,7 @@ export class CodexEngine {
     const child = this.child
     this.child = undefined
     this.peer = undefined
+    for (const thread of this.threads.values()) thread.activeTurn?.settled.resolve(false)
     if (child !== undefined) {
       child.kill('SIGTERM')
       setTimeout(() => { try { child.kill('SIGKILL') } catch {} }, 5_000).unref?.()

@@ -9,7 +9,9 @@ import { dirname, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { Config as SkillOfficeConfig } from '@deepseek-ai/dsh-skill-office'
-import { stringify } from 'yaml'
+import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { dump } from 'js-yaml'
+import { composeOwnedRow } from './profile-overlay.mjs'
 
 export const OFFICE_PATCH_NAME = 'office.patch.yml'
 
@@ -61,10 +63,15 @@ export function reconcileOfficeRuntime(profile, runtimeDir = process.env.DS_BOT_
         : { assetRoot: join(runtimeDir, 'office-skills'), node: runtime.node, cli: officeCli() },
     },
   ]
-  const existing = new Set(composeEntries([...profile.layers.map(layer => layer.patches), profile.patches]).map(entry => entry.id))
+  const existing = new Map(composeEntries([...profile.layers.map(layer => layer.patches), profile.patches]).map(entry => [entry.id, entry]))
   const inserted = desired.filter(entry => !existing.has(entry.id))
-  const overridden = desired.filter(entry => existing.has(entry.id)).map(entry => ({ ...entry, disabled: false }))
+  const overridden = desired.filter(entry => existing.has(entry.id))
+    .map(entry => composeOwnedRow(existing.get(entry.id), { ...entry, disabled: false })).filter(Boolean)
   const patches = [...(inserted.length > 0 ? [{ insert: inserted }] : []), ...overridden]
-  writeFileSync(file, stringify(patches), 'utf8')
+  if (patches.length === 0) {
+    rmSync(file, { force: true })
+    return { patchFiles: [], node: runtime.node }
+  }
+  writeFileSync(file, dump(patches, { schema: entryListSchema }), 'utf8')
   return { patchFiles: [file], node: runtime.node }
 }

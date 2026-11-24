@@ -49,6 +49,10 @@ function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, c
     skills: {
       list: async () => currentCatalog(),
       snapshot: async () => ({ skills: currentCatalog(), complete }),
+      get: async name => {
+        const skill = currentCatalog().find(entry => entry.name === name)
+        return skill && { ...skill, invocation: skill.invocation ?? { modelInvocable: true, userInvocable: true }, content: skill.content ?? `Body for ${name}.` }
+      },
     },
     plugin(plugin, config) {
       const record = { plugin, config, sessionId: id, disposed: false }
@@ -57,7 +61,10 @@ function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, c
         const c = {
           skills: {
             list: async () => catalog,
-            register(skill) { skills.set(skill.name, skill); return () => skills.delete(skill.name) },
+            register(skill) {
+              skills.set(skill.name, { ...skill, invocation: skill.invocation ?? { modelInvocable: true, userInvocable: true } })
+              return () => skills.delete(skill.name)
+            },
           },
           effect: execute => { record.cleanup = execute() },
         }
@@ -436,6 +443,149 @@ test('unset capability statuses are omitted from the view and tool listing', asy
   assert.doesNotMatch(listed, /attached to you \(connecting\)/)
 })
 
+test('session observations require a scoped skill and an admitted loader; incomplete catalogs cannot prove absence', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { rt, ctx, mounts, skills } = env
+  const bot = rt.state.bots.chief
+  bot.skillShortlist = [{ name: 'visible' }, { name: 'masked' }, { name: 'missing' }]
+  const catalog = ['visible', 'masked'].map(name => ({ name, invocation: { modelInvocable: name === 'visible' } }))
+  const agent = testAgent('chief', mounts, skills, { catalog })
+  const getSkill = agent.ctx.skills.get
+  let bodyReads = []
+  agent.ctx.skills.get = async name => {
+    bodyReads.push(name)
+    return getSkill(name)
+  }
+  let admit = true
+  let disposed = 0
+  ctx.tools.resolve = async ({ agent: owner }) => ({
+    view(scope) {
+      assert.equal(scope, owner)
+      return new Map(admit ? [['skill', {}]] : [])
+    },
+    dispose: () => { disposed += 1 },
+  })
+  const selection = { provider: 'native', model: 'model' }
+  const observe = value => rt.observeSessionCapabilities(bot, value, selection)
+  const statuses = async value => (await observe(value)).skills.map(item => item.status)
+  const first = await observe(agent)
+  assert.deepEqual(first.skills.map(item => item.status), ['ready', 'unavailable', 'unavailable'])
+  assert.deepEqual({
+    cataloged: first.skills[0].observations.cataloged.value,
+    loaderAdmitted: first.skills[0].observations.loaderAdmitted.value,
+    bodyLoadable: first.skills[0].observations.bodyLoadable.value,
+    initialConnected: first.skills[0].observations.initialConnected.status,
+    liveness: first.skills[0].observations.liveness.status,
+    authorization: first.skills[0].observations.authorization.value,
+  }, {
+    cataloged: true,
+    loaderAdmitted: true,
+    bodyLoadable: true,
+    initialConnected: 'unavailable',
+    liveness: 'unavailable',
+    authorization: 'not-required',
+  })
+  assert.equal(first.skills[1].observations.bodyLoadable.status, 'unavailable')
+  assert.deepEqual(bodyReads, ['visible'])
+  admit = false
+  bodyReads = []
+  const denied = await observe(agent)
+  assert.deepEqual(denied.skills.map(item => item.status), ['unavailable', 'unavailable', 'unavailable'])
+  assert.equal(denied.skills[0].observations.loaderAdmitted.value, false)
+  assert.deepEqual(bodyReads, [])
+  admit = true
+  assert.deepEqual(await statuses(testAgent('chief', mounts, skills, { catalog, complete: false })), ['ready', 'unavailable', 'unobserved'])
+  assert.equal(disposed, 3)
+  const resolve = ctx.tools.resolve
+  ctx.tools.definitions = () => [{ name: 'skill' }]
+  ctx.tools.resolve = undefined
+  assert.deepEqual(await statuses(testAgent('chief', mounts, skills, { catalog })), ['unobserved', 'unavailable', 'unavailable'])
+  ctx.tools.resolve = resolve
+})
+
+test('a cataloged and admitted Skill with no loadable body is unavailable', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { rt, ctx, mounts, skills } = env
+  const bot = rt.state.bots.chief
+  bot.skillShortlist = [{ name: 'broken' }]
+  const agent = testAgent('chief', mounts, skills, {
+    catalog: [{ name: 'broken', invocation: { modelInvocable: true } }],
+  })
+  agent.ctx.skills.get = async () => undefined
+  ctx.tools.resolve = async () => ({
+    view: () => new Map([['skill', {}]]),
+    dispose: () => {},
+  })
+  const skill = (await rt.observeSessionCapabilities(bot, agent, { provider: 'native', model: 'model' })).skills[0]
+  assert.equal(skill.status, 'unavailable')
+  assert.equal(skill.observations.cataloged.value, true)
+  assert.equal(skill.observations.loaderAdmitted.value, true)
+  assert.equal(skill.observations.bodyLoadable.value, false)
+})
+
+test('MCP observations keep initial connection, liveness and authorization separate', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { ctx, rt, mounts, skills } = env
+  await rt.capabilitySave({ ...mcp('echo'), transport: 'streamable-http', url: 'https://example.test/mcp' }, { botId: 'chief' })
+  await rt.capabilitySave(mcp('blocked'), { botId: 'chief' })
+  rt.state.bots.chief.capabilities = ['echo', 'blocked']
+  const agent = testAgent('chief', mounts, skills)
+  await created(env)({ agent, source: 'startup' })
+  // Pinned DSH may retain tool definitions after transport loss. Their presence
+  // therefore cannot upgrade MCP liveness from its initial unobserved state.
+  ctx.tools.resolve = async () => ({
+    view: () => new Map([['skill', {}], ['mcp__echo__still-registered', {}]]),
+    dispose: () => {},
+  })
+  const result = await rt.observeSessionCapabilities(rt.state.bots.chief, agent, { provider: 'native', model: 'model' })
+  const echo = result.mcp.find(item => item.name === 'echo')
+  const blocked = result.mcp.find(item => item.name === 'blocked')
+  assert.equal(echo.status, 'unobserved')
+  assert.equal(echo.observations.loaderAdmitted.value, true)
+  assert.equal(echo.observations.bodyLoadable.value, true)
+  assert.equal(echo.observations.initialConnected.value, true)
+  assert.equal(echo.observations.liveness.status, 'unavailable')
+  assert.equal(echo.observations.authorization.status, 'unavailable')
+  assert.equal(blocked.status, 'needs-approval')
+  assert.equal(blocked.observations.initialConnected.status, 'unavailable')
+  assert.equal(blocked.observations.liveness.status, 'unavailable')
+  assert.equal(blocked.observations.authorization.value, 'approval-required')
+  ctx.tools.resolve = async () => ({ view: () => new Map([['skill', {}]]), dispose: () => {} })
+  const afterToolsDisappear = await rt.observeSessionCapabilities(rt.state.bots.chief, agent, { provider: 'native', model: 'model' })
+  const echoAfter = afterToolsDisappear.mcp.find(item => item.name === 'echo')
+  assert.equal(echoAfter.observations.initialConnected.value, true)
+  assert.equal(echoAfter.observations.liveness.status, 'unavailable')
+  assert.equal(echoAfter.status, 'unobserved')
+})
+
+test('an explicit MCP connection failure is reported as failed liveness', async t => {
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { ctx, rt, mounts, skills } = env
+  await rt.capabilitySave({ ...mcp('echo'), transport: 'streamable-http', url: 'https://example.test/mcp' }, { botId: 'chief' })
+  rt.state.bots.chief.capabilities = ['echo']
+  const agent = testAgent('chief', mounts, skills, {
+    awaitMount: async record => {
+      if (record.config.serverName === 'echo') throw new Error('transport refused')
+    },
+  })
+  await created(env)({ agent, source: 'startup' })
+  ctx.tools.resolve = async () => ({
+    view: () => new Map([['mcp__echo__stale-definition', {}]]),
+    dispose: () => {},
+  })
+  const result = await rt.observeSessionCapabilities(rt.state.bots.chief, agent, { provider: 'native', model: 'model' })
+  const echo = result.mcp[0]
+  assert.equal(echo.status, 'error')
+  assert.equal(echo.observations.bodyLoadable.value, true)
+  assert.equal(echo.observations.initialConnected.value, false)
+  assert.equal(echo.observations.liveness.value, 'failed')
+  assert.equal(echo.observations.liveness.reason, 'transport refused')
+})
+
 test('a Bot shortlist masks the other profile skills in its Agent scope', async t => {
   const env = await setup()
   t.after(() => env.dispose())
@@ -644,6 +794,7 @@ test('the skill catalog keeps same-named entries separate for each Bot', async t
   t.after(() => env.dispose())
   const { ctx, rt } = env
   rt.workDirOf = ({ botId }) => `/work/${botId}`
+  rt.teamFolder = () => '/work/default'
   const get = ctx.get
   ctx.get = name => name === 'skills' ? {
     snapshot: async ({ cwd }) => ({
@@ -654,6 +805,7 @@ test('the skill catalog keeps same-named entries separate for each Bot', async t
   await rt.refreshSkillCatalog({ publish: false })
   assert.equal(rt.skillCatalogView('chief').find(skill => skill.name === 'deploy').description, 'Deploy from /work/chief')
   assert.equal(rt.skillCatalogView('worker').find(skill => skill.name === 'deploy').description, 'Deploy from /work/worker')
+  assert.equal(rt.newBotSkillCatalogView().find(skill => skill.name === 'deploy').description, 'Deploy from /work/default')
 })
 
 test('mounts agent-only MCP and skills, remounts changed config, resolves scoped secrets and reports missing secrets', async t => {

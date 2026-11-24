@@ -74,6 +74,10 @@ and model changes all work the same way.
   per agent, and the custom agents with add, edit, and remove. A custom agent
   has a name, a command, and arguments; the command must be a bare name, an
   absolute path, or `~/…`, and no shell is used.
+- Discovery checks for an executable file. A saved custom command that cannot
+  be found stays editable in Settings, and the Bot picker disables it. Claude
+  Code sign-in comes from its CLI's status response. An unsupported or
+  unreadable response leaves the status unknown.
 - Each engine has an original badge shown small beside the Bot's name in the
   sidebar, the chat header, and its details. A new abot's avatar defaults to
   its badge; the user can still pick a character.

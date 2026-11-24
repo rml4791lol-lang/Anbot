@@ -61,7 +61,7 @@ win:
       arch: [x64]
   icon: assets/icon.ico
 nsis:
-  # Preserve the installed DS Bot / DeepSeek Bot GUID so an Anbot installer replaces either in place.
+  # Preserve the installed legacy DS Bot / DeepSeek Bot GUID so an Anbot installer replaces either in place.
   guid: 32c46dfc-ed78-5d41-85a4-a3c7f083f2e0
   oneClick: false
   perMachine: false
@@ -105,7 +105,7 @@ linux:
   category: Utility
 # Let apt replace either upstream deb instead of leaving duplicate applications.
 deb:
-  fpm: ['--replaces', 'deepseek-bot', '--replaces', 'dsbot', '--conflicts', 'deepseek-bot', '--conflicts', 'dsbot']
+  fpm: ['--replaces', 'deepseek-bot', '--replaces', 'dsbot', '--conflicts', 'deepseek-bot', '--conflicts', 'dsbot']  # legacy upstream package names
 # Where the installed app looks for updates (app-update.yml in the package). The build writes
 # latest.yml beside the installer; the release workflow attaches both to the GitHub release,
 # so the build itself never publishes (--publish never).

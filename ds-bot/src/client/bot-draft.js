@@ -18,15 +18,25 @@ export function startModel(roster) {
 }
 
 // A chosen model is always sent: the host fixes it on the Bot at creation.
-export function createPayload({ name, look, image, model, effort, brief, ownLook = false, sectionId }) {
+export function createPayload({ name, look, image, model, effort, brief, instructions, skills, agentPreset, ownLook = false, sectionId }) {
   // An abot with no character of its own starts with its engine's badge.
   const badge = !image && !ownLook && isLocalRoute(model) ? agentAvatar(String(model).split('/')[0]) : undefined
   const payload = { name, color: look.color, avatar: image ? { shape: look.shape, image } : badge !== undefined ? { shape: look.shape, image: badge.image } : { shape: look.shape } }
   if (model) payload.model = model
   if (effort !== undefined) payload.effort = effort
   if (brief) payload.brief = brief
+  if (instructions?.trim()) payload.instructions = instructions.trim()
+  if (skills?.length > 0) payload.skills = skills
+  if (agentPreset) payload.agentPreset = agentPreset
   if (sectionId) payload.sectionId = sectionId
   return payload
+}
+
+export const SKILL_SHORTLIST_MAX = 5
+
+export function skillPurpose(skill) {
+  const text = String(skill.description || '').replace(/\s+/g, ' ').trim() || skill.name
+  return text.length <= 160 ? text : `${text.slice(0, 157)}...`
 }
 
 // A Bot that wears its old CLI's logo changes it along; a picture of its own stays.

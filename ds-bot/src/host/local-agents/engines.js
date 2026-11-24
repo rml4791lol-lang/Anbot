@@ -3,6 +3,7 @@
 // Client Protocol over stdio), 'codex' (the Codex app-server JSON-RPC), or
 // 'claude' (Claude Code's stream-json).
 export const KINDS = ['acp', 'codex', 'claude']
+export const confirmsPromptStop = kind => KINDS.includes(kind)
 
 // `args` run verbatim (no shell). `env` merges over the sanitized environment.
 // `signedIn` says how to tell whether the CLI is signed in: a command that prints
@@ -25,7 +26,7 @@ const CAPABILITIES = {
 
 const CLIS = {
   'devin-cli': { name: 'Devin CLI', kind: 'acp', command: 'devin', args: ['acp'], version: ['--version'], signedIn: { args: ['auth', 'status'] } },
-  'claude-code': { name: 'Claude Code', kind: 'claude', command: 'claude', args: [], version: ['--version'], signedIn: { file: ['.claude', '.credentials.json'] } },
+  'claude-code': { name: 'Claude Code', kind: 'claude', command: 'claude', args: [], version: ['--version'], signedIn: { args: ['auth', 'status'], format: 'claude-auth-json' } },
   'codex-cli': { name: 'Codex CLI', kind: 'codex', command: 'codex', args: ['app-server', '--listen', 'stdio://'], version: ['--version'], signedIn: { args: ['login', 'status'] } },
   'opencode': { name: 'OpenCode', kind: 'acp', command: 'opencode', args: ['acp'], version: ['--version'] },
   'cursor-cli': { name: 'Cursor CLI', kind: 'acp', command: 'cursor-agent', args: ['acp'], version: ['--version'], signedIn: { args: ['status'] } },

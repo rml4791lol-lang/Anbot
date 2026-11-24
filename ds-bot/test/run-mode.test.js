@@ -429,6 +429,16 @@ test('a route a Bot runs on stays registered when its CLI is gone', async (t) =>
   assert.ok((await env.rt.catalog({ fresh: true })).some(entry => entry.ref === 'local-devin-cli/default'))
 })
 
+test('the custom agent inventory distinguishes a saved command from an available executable', async (t) => {
+  const saved = team()
+  saved.localAgents.custom.push({ id: 'missing', name: 'Missing', command: join(tmpdir(), 'anbot-absent-agent', 'bin'), args: [] })
+  const env = await start(t, { saved })
+  const { value } = await env.call('local-agents')
+  assert.equal(value.custom.find(agent => agent.id === 'fake')?.installed, true)
+  assert.equal(value.custom.find(agent => agent.id === 'missing')?.installed, false)
+  assert.equal(env.startCount(), 0)
+})
+
 test('a Bot created by a Bot on a CLI does not take that CLI', async (t) => {
   const env = await start(t, { saved: { ...team(), bots: { ...team().bots, a: { ...team().bots.a, model: CLI, appliedModel: CLI } } } })
   await env.tool('create_bot', { name: 'Fresh', role: 'New', instructions: 'Help.' }, 'a')

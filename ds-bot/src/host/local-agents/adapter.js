@@ -6,7 +6,7 @@
 import { createHash } from 'node:crypto'
 import { LlmAdapter, LlmError } from '@deepseek-ai/dsh-llm'
 import { textOf } from '../text.js'
-import { engineOf, cliMode } from './engines.js'
+import { cliMode, confirmsPromptStop, engineOf } from './engines.js'
 import { LoopbackMcp } from './mcp.js'
 
 export const DEFAULT_CONTEXT_WINDOW = 200_000
@@ -60,6 +60,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     this.deps = deps
     this.engines = new Map()   // route -> engine driver
     this.live = new Map()      // sessionId -> live session
+    this.nativePrompts = new Map() // sessionId -> native prompt terminal evidence
     this.modelCache = new Map()
     this.probes = new Map()    // route -> the probe under way
     this.disposed = false
@@ -177,7 +178,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       // 'idle': no CLI turn. 'running': a prompt is in flight. 'suspended': the
       // turn waits on a bridged tool call or a permission answer.
       state: 'idle',
-      // Prompts queued while a turn runs (ACP speaks one prompt at a time);
+      // Prompts queued while an ACP or Claude turn runs;
       // the drain sends the next one when the turn ends.
       queue: [],
       idle: undefined,
@@ -193,7 +194,6 @@ export class LocalAgentAdapter extends LlmAdapter {
       if (waiter !== undefined) waiter(event)
       else live.events.push(event)
     }
-    live.next = () => (live.events.length > 0 ? Promise.resolve(live.events.shift()) : new Promise(resolve => live.waiters.push(resolve)))
     this.live.set(sessionId, live)
     return live
   }
@@ -224,6 +224,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     live.mcp?.failAll(new Error(reason))
     for (const pending of live.pending.values()) pending.resolve({ text: reason, isError: true })
     live.pending.clear()
+    for (const event of live.events.splice(0)) if (event.type === 'permission') event.reply(null)
   }
 
   // The Session left this CLI: its part moved on. Its process leaves; the CLI session
@@ -233,6 +234,20 @@ export class LocalAgentAdapter extends LlmAdapter {
     if (live === undefined) return
     this.stopTurn(live, reason)
     await this.closeLive(live, { idle: true })
+  }
+
+  stopForTakeover(sessionId) {
+    const key = String(sessionId)
+    const live = this.live.get(key)
+    if (live !== undefined && !confirmsPromptStop(live.spec.kind)) return false
+    if (live !== undefined) this.stopTurn(live, 'the user took over the worktree')
+    return this.nativePrompts.get(key) ?? true
+  }
+
+  hasUnsettledPrompt(sessionId) {
+    const key = String(sessionId)
+    const live = this.live.get(key)
+    return this.nativePrompts.has(key) || (live !== undefined && live.state !== 'idle')
   }
 
   // A Claude CLI that died before `system/init` never read the prompt it was
@@ -378,7 +393,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       if (reportedId !== undefined) live.cliSessionId = reportedId
       live.started = true
       // The session's events feed this Session's queue: a call from any engine
-      // kind reaches drain() through live.next().
+      // kind reaches drain() through the live queue.
       const session = live.engineSession
       const token = live.pumpToken = {}
       void (async () => {
@@ -456,14 +471,13 @@ export class LocalAgentAdapter extends LlmAdapter {
   }
 
   // Input for the CLI: a fresh prompt while it is idle; while a turn runs or
-  // waits on a bridged call, steering for Codex and Claude, or a queued prompt
-  // for ACP (it speaks one prompt at a time; the drain sends it when the turn
-  // ends, inside the same stream). The prompt request itself stays open for
-  // the whole turn (ACP session/prompt ends when the agent's turn does), so it
-  // is sent but not awaited; a send failure lands in the queue as an error.
+  // waits on a bridged call, steering for Codex or a queued prompt
+  // for ACP and Claude (the drain sends it when the turn
+  // ends). Drivers with native terminal evidence return it separately from the
+  // streamed events so a DSH abort cannot settle the native prompt by itself.
   sendInput(live, text, signal, effort) {
     if (live.state !== 'idle') {
-      if (live.spec.kind === 'acp') { live.queue.push(text); return }
+      if (live.spec.kind !== 'codex') { live.queue.push(text); return }
       try {
         Promise.resolve(live.engine.steer?.(live.engineSession, text))
           .catch(error => live.push({ type: 'error', error }))
@@ -474,8 +488,15 @@ export class LocalAgentAdapter extends LlmAdapter {
     }
     live.state = 'running'
     try {
-      Promise.resolve(live.engine.prompt(live.engineSession, [{ type: 'text', text }], { signal, effort }))
-        .catch(error => live.push({ type: 'error', error }))
+      const prompt = Promise.resolve(live.engine.prompt(live.engineSession, [{ type: 'text', text }], { signal, effort }))
+      if (confirmsPromptStop(live.spec.kind)) {
+        const proof = prompt.then(terminal => terminal === true, () => false)
+        this.nativePrompts.set(live.sessionId, proof)
+        void proof.then(terminal => {
+          if (terminal && this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
+        })
+      }
+      void prompt.catch(error => live.push({ type: 'error', error }))
     } catch (error) {
       live.push({ type: 'error', error })
     }
@@ -515,8 +536,12 @@ export class LocalAgentAdapter extends LlmAdapter {
     else options.signal?.addEventListener('abort', onAbort)
     try {
     for (;;) {
-      const event = await Promise.race([live.next(), abortPromise]).catch(error => ({ type: 'abort', error }))
+      const next = live.events.length === 0 ? Promise.withResolvers() : undefined
+      if (next !== undefined) live.waiters.push(next.resolve)
+      const event = await Promise.race([next?.promise ?? live.events.shift(), abortPromise]).catch(error => ({ type: 'abort', error }))
       if (event.type === 'abort') {
+        const waiting = next === undefined ? -1 : live.waiters.indexOf(next.resolve)
+        if (waiting !== -1) live.waiters.splice(waiting, 1)
         this.stopTurn(live, 'the turn was stopped')
         yield { type: 'finish', reason: { kind: 'aborted', failure: { code: 'ABORTED', message: 'the turn was stopped' } } }
         return
@@ -574,7 +599,7 @@ export class LocalAgentAdapter extends LlmAdapter {
           if (event.usage !== undefined) yield { type: 'usage', usage: event.usage }
           live.state = 'idle'
           // Input queued while this turn ran goes out as the next prompt
-          // inside the same drain (ACP takes one prompt at a time).
+          // inside the same drain, one prompt at a time.
           const next = live.queue.shift()
           if (next !== undefined) {
             this.sendInput(live, next, options.signal, options.reasoningEffort)

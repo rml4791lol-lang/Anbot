@@ -52,8 +52,8 @@ test('openModels opens DS Bot settings on the Models page and closes the menus',
 
 test('the details status line asks the host for one Bot\'s current part', async () => {
   const { actions, sent, pulls } = bench()
-  await actions.runStats('chief')
-  assert.deepEqual(sent, [['run-stats', { botId: 'chief' }]])
+  await actions.runStats('chief', 'part-2')
+  assert.deepEqual(sent, [['run-stats', { botId: 'chief', sessionId: 'part-2' }]])
   // A read: it does not pull the whole team again.
   assert.equal(pulls(), 0)
 })

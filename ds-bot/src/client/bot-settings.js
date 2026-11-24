@@ -12,6 +12,7 @@ import { BotCapabilitiesCard } from './capability-settings.js'
 import { BotComputerCard } from './computer.js'
 import { AvatarLibraryPanel, avatarImage } from './avatar-library.js'
 import { useMemoryCount } from './memory-panel.js'
+import { SKILL_SHORTLIST_MAX, skillPurpose } from './bot-draft.js'
 import { SPRING_SHAPE, SPRING_TAP, spring, useGlide, useLinger } from './motion.js'
 import { t } from './i18n.js'
 
@@ -194,13 +195,6 @@ function MemoryCard({ bot, actions }) {
     h('button', { type: 'button', className: 'bt-set-row bt-bs-row', 'aria-label': t("Manage {name}'s memory", { name: bot.name }), onClick: () => actions.openMemory(bot.id) },
       h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, label)),
       h('span', { className: 'bt-mem-row-go' }, t('Manage'), h(ChevronRightIcon))))
-}
-
-const SKILL_SHORTLIST_MAX = 5
-const SKILL_PURPOSE_MAX = 160
-const skillPurpose = skill => {
-  const text = String(skill.description || skill.name).replace(/\s+/g, ' ').trim()
-  return text.length <= SKILL_PURPOSE_MAX ? text : `${text.slice(0, SKILL_PURPOSE_MAX - 3)}...`
 }
 
 // The prompt shows only these names and one line each; the skill bodies stay in the

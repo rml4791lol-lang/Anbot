@@ -84,8 +84,8 @@ describe('reconcileOfficeRuntime', () => {
         patchPaths: [],
         patches: [{
           insert: [
-            { id: 'workspace-dependencies', name: '@deepseek-ai/dsh-tool-workspace-dependencies', disabled: true, config: { source: '' } },
-            { id: 'skill-office', name: '@deepseek-ai/dsh-skill-office', config: { pythonEnvironment: 'user' } },
+            { id: 'workspace-dependencies', name: '@deepseek-ai/dsh-tool-workspace-dependencies', disabled: true, config: { source: '', runtimeOptions: { keep: ['custom'] } } },
+            { id: 'skill-office', name: '@deepseek-ai/dsh-skill-office', config: { pythonEnvironment: 'user', extra: { value: 1 } } },
           ],
         }],
       }],
@@ -98,13 +98,13 @@ describe('reconcileOfficeRuntime', () => {
       id: 'workspace-dependencies',
       name: '@deepseek-ai/dsh-tool-workspace-dependencies',
       disabled: false,
-      config: { source: join(runtimeDir, 'primary-runtime') },
+      config: { source: join(runtimeDir, 'primary-runtime'), runtimeOptions: { keep: ['custom'] } },
     })
     assert.deepEqual(rows[1], {
       id: 'skill-office',
       name: '@deepseek-ai/dsh-skill-office',
       disabled: false,
-      config: { assetRoot: join(runtimeDir, 'office-skills'), pythonEnvironment: 'workspace-dependencies' },
+      config: { assetRoot: join(runtimeDir, 'office-skills'), pythonEnvironment: 'workspace-dependencies', extra: { value: 1 } },
     })
   })
 

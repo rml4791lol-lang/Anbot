@@ -10,7 +10,9 @@
 import { dirname, join } from 'node:path'
 import { rmSync, writeFileSync } from 'node:fs'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
-import { stringify } from 'yaml'
+import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { dump } from 'js-yaml'
+import { composeOwnedRow } from './profile-overlay.mjs'
 
 export const SEARCH_PATCH_NAME = 'search-selector.patch.yml'
 
@@ -30,7 +32,8 @@ export function searchSelectorPatch(profile) {
   const base = layers.filter(({ packageName }) => packageName !== 'ds-bot')
   const original = composeEntries(base.map(layer => layer.patches)).find(entry => entry.id === 'web')
   if (original?.config?.searchProvider === undefined || original.config.searchProvider === 'auto') return undefined
-  return [{ id: 'web', name: original.name, config: original.config }]
+  const row = composeOwnedRow(web, { id: 'web', name: original.name, config: { searchProvider: original.config.searchProvider } })
+  return row === undefined ? undefined : [row]
 }
 
 /**
@@ -46,6 +49,6 @@ export function reconcileSearchSelector(profile) {
     rmSync(file, { force: true })
     return []
   }
-  writeFileSync(file, stringify(rows), 'utf8')
+  writeFileSync(file, dump(rows, { schema: entryListSchema }), 'utf8')
   return [file]
 }

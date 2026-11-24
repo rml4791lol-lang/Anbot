@@ -6,6 +6,19 @@ import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { build } from 'esbuild'
 import { ENGINES } from '../src/host/local-agents/engines.js'
+import { probeSignIn } from '../src/host/local-agents/discover.js'
+
+test('Claude Code authentication status comes from its supported status command', async () => {
+  const check = ENGINES['local-claude-code'].signedIn
+  assert.deepEqual(check.args, ['auth', 'status'])
+  const status = (text, exit = 0) => probeSignIn(process.execPath, {
+    ...check, args: ['-e', `process.stdout.write(${JSON.stringify(text)}); process.exitCode = ${exit}`],
+  })
+  assert.equal(await status('{"loggedIn":true,"authMethod":"claude.ai"}'), true)
+  assert.equal(await status('{"loggedIn":false,"authMethod":"none"}', 1), false)
+  assert.equal(await status('error: unknown command auth', 1), null)
+  assert.equal(await status('{"loggedIn":true}', 1), null)
+})
 
 // jsdom comes from the harness that test/harness-resolve.mjs found, like the dsh packages.
 const PLUGIN = dirname(dirname(fileURLToPath(import.meta.url)))

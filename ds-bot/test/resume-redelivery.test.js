@@ -154,7 +154,57 @@ test('a restart keeps the task and attempt identity while resuming once', async 
   assert.equal(second.agentOf('b').calls[0].source.taskId, 'handoff:w1')
   assert.equal(second.agentOf('b').calls[0].source.attemptId, 'handoff:w1:a1')
   assert.equal(second.agentOf('b').calls[0].source.resumed, true)
+  run(second, 'b', 2, second.agentOf('b').calls[0])
+  await settle(() => notes(home).turns.b?.resumed === true)
   await second.stop()
+
+  const third = await start(home)
+  await delay(3300)
+  assert.equal(third.agentOf('b').calls.length, 0)
+  assert.equal(third.rt.interruptedTurnState('b'), 'limit-reached')
+  assert.equal(notes(home).turns.b.paused, 'limit-reached')
+  assert.equal(await third.rt.continueInterrupted('b'), true)
+  assert.equal(third.agentOf('b').calls.length, 1)
+  assert.equal(third.agentOf('b').calls[0].source.attemptId, 'handoff:w1:a1')
+})
+
+test('a same-session turn before the startup scan keeps the interrupted TaskRef', async (t) => {
+  const home = freshHome(t)
+  writeFileSync(join(home, 'inflight.json'), JSON.stringify({ turns: {
+    b: { botId: 'b', since: 1, trigger: { role: 'resume', exchangeId: 'old', taskId: 'handoff:w1', attemptId: 'w1:a1' } },
+  }, queued: {} }))
+
+  const host = await start(home)
+  // A turn of the same Session starts and finishes while startup recovery still waits.
+  host.emit('b', 'turn/start', { turn: 2 })
+  host.emit('b', 'turn/end', { turn: 2, reason: { kind: 'completed' } })
+  await delay(3300)
+
+  assert.equal(host.agentOf('b').calls.length, 1)
+  assert.equal(host.agentOf('b').calls[0].source.taskId, 'handoff:w1')
+  assert.equal(host.agentOf('b').calls[0].source.attemptId, 'w1:a1')
+  assert.equal(host.agentOf('b').calls[0].source.resumed, true)
+})
+
+test('a held worktree parks recovery without erasing a new turn that starts before the startup scan', async t => {
+  const home = freshHome(t)
+  writeFileSync(join(home, 'inflight.json'), JSON.stringify({ turns: {
+    b: { botId: 'b', since: 1, trigger: { role: 'resume', taskId: 'work:b', attemptId: 'work:b:a1' } },
+  }, queued: {} }))
+  const host = await start(home)
+  let held = true
+  host.rt.workspaceHold.heldFor = async session => session.id === 'b' && held
+  host.emit('c', 'turn/start', { turn: 1 })
+  await settle(() => notes(home).turns.c !== undefined)
+  assert.equal(notes(home).turns.b?.botId, 'b')
+  await delay(3300)
+  assert.equal(host.rt.interruptedTurnState('b'), 'worktree-held')
+  assert.equal(notes(home).turns.c.botId, 'c')
+  assert.equal(host.agentOf('b').calls.length, 0)
+  await assert.rejects(host.rt.continueInterrupted('b'), { code: 'bot/busy' })
+  held = false
+  assert.equal(await host.rt.continueInterrupted('b'), true)
+  assert.equal(host.agentOf('b').calls[0].source.attemptId, 'work:b:a1')
 })
 
 test('a resumed handoff keeps its attempt and records the restart on the work', async (t) => {
