@@ -99,9 +99,11 @@ cd ds-bot
 ```sh
 cd ..
 git clone https://github.com/deepseek-ai/deepseek-harness.git
-git -C deepseek-harness checkout dsh-v0.2.2-rc.1
-(cd deepseek-harness && pnpm install)
+git -C deepseek-harness checkout dsh-v0.2.2-rc.5
+(cd deepseek-harness && pnpm install --frozen-lockfile && pnpm run build:artifacts)
 ```
+
+用 `app/package.json` 钉住的 DSH 版本，测试台才和桌面应用跑同一个运行时。`build:artifacts` 会生成 `dsh web` 要加载的前端包；没有这一步，测试台启动时会因为缺少 `lib/client.js` 而失败。
 
 如果 DeepSeek Harness 源码放在别处，把 `DSH_HARNESS` 设为它的路径。`DSH_HARNESS` 也会代替 `dev/harness/`，供单元测试和 lint 使用。
 

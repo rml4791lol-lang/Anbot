@@ -4,7 +4,7 @@ Use Node.js 24 for development and packages, as the [test workflow](../.github/w
 
 Run `npm ci`, `npm test` and `npm run build` in `app/`. Run `npm run pack` to build a local package and `npm run check-packed` to start and exercise that package in throwaway directories. The [release checklist](dev/release-checklist.md) covers platform verification. Start release notes from the [bilingual template](../.github/release-notes-template.md).
 
-The smoke test needs a DeepSeek Harness checkout with its dependencies installed. `dev/bench.sh` looks for `deepseek-harness` beside the checkout and beside the main worktree. From a linked worktree elsewhere, set `DSH_HARNESS` to the checkout.
+The smoke test needs a DeepSeek Harness checkout at the DSH version `app/package.json` pins, with its dependencies installed and `pnpm run build:artifacts` run once ([CONTRIBUTING](../CONTRIBUTING.md) has the commands). `dev/bench.sh` looks for `deepseek-harness` beside the checkout and beside the main worktree. From a linked worktree elsewhere, set `DSH_HARNESS` to the checkout.
 
 ## Updating the installed macOS app from a local build
 

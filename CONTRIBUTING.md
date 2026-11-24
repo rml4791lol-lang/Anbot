@@ -99,9 +99,11 @@ For the test bench, add the DeepSeek Harness checkout next to the plugin folder 
 ```sh
 cd ..
 git clone https://github.com/deepseek-ai/deepseek-harness.git
-git -C deepseek-harness checkout dsh-v0.2.2-rc.1
-(cd deepseek-harness && pnpm install)
+git -C deepseek-harness checkout dsh-v0.2.2-rc.5
+(cd deepseek-harness && pnpm install --frozen-lockfile && pnpm run build:artifacts)
 ```
+
+Use the DSH version that `app/package.json` pins, so the bench runs the same runtime as the desktop app. `build:artifacts` writes the client bundles that `dsh web` loads; without them the bench stops at startup with a missing `lib/client.js`.
 
 If your DeepSeek Harness checkout is somewhere else, set `DSH_HARNESS` to its path. `DSH_HARNESS` also takes the place of `dev/harness/` for the unit tests and the linter.
 
