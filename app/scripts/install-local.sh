@@ -87,8 +87,19 @@ if ! wait_exit 50; then
   rm -rf "$new_stage" && rmdir "$stage"
   exit 3
 fi
-/usr/bin/rsync -a --exclude '/archive/' "$profile/" "$backup/profile-snapshot/"
-/usr/bin/rsync -a "$shell_data/" "$backup/electron-support/"
+# APFS clones share blocks with the originals until either side changes, so a backup of a
+# large data folder costs almost no space. cp skips sockets, which the app recreates.
+clone_into() {
+  local from=$1 into=$2 skip=${3:-} entry
+  shopt -s dotglob nullglob
+  for entry in "$from"/*; do
+    [[ -n "$skip" && "$entry" == "$from/$skip" ]] && continue
+    cp -cR "$entry" "$into/"
+  done
+  shopt -u dotglob nullglob
+}
+clone_into "$profile" "$backup/profile-snapshot" archive
+clone_into "$shell_data" "$backup/electron-support"
 test -f "$backup/profile-snapshot/bot/state.json"
 test -f "$backup/electron-support/locations.json"
 port=$(node -e "const s=require('node:net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")
