@@ -237,18 +237,22 @@ function GroupOverview({ room, roster, actions, usage, useWork, openSettings }) 
 // CLI. A running part opened from here is read-only until its turn ends: two sessions
 // running at once means two model calls.
 function BotSessions({ bot, part, run, useSessions, actions, running }) {
+  const [showEarlier, setShowEarlier] = useState(false)
+  useEffect(() => { setShowEarlier(false) }, [bot.id])
   const runningOf = id => running?.[id] === true
   const open = (bot.openParts ?? []).map(entry => ({ id: entry.sessionId, open: true, running: runningOf(entry.sessionId) }))
   // Two sessions running at once means two model calls: shown only while a background
   // part really runs, above the list rather than as a quiet footnote.
   const backgroundRunning = open.some(entry => entry.running)
-  const entries = [
+  const allEntries = [
     { id: part, current: true, running: runningOf(part) },
     ...open,
     ...(bot.parts ?? []).filter(id => id !== part).slice().reverse().map(id => ({ id, earlier: true })),
   ]
+  const earlier = allEntries.filter(entry => entry.earlier)
+  const entries = showEarlier ? allEntries : allEntries.filter(entry => !entry.earlier)
   const rows = useSessions(list => entries.map(entry => list.byId?.[entry.id]), rowsEqual)
-  const total = entries.length
+  const total = allEntries.length
   const openPart = (entry) => {
     if (entry.current) return undefined
     if (entry.open && actions.openPart !== undefined) return () => run(actions.openPart(bot.id, entry.id, entry.running))
@@ -278,7 +282,11 @@ function BotSessions({ bot, part, run, useSessions, actions, running }) {
           entry.running ? h('span', { className: 'bt-agent-session-run', role: 'status' }, t('Running'))
             : entry.current ? t('Current')
               : when ? new Date(when).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''))
-    })))
+    })),
+    earlier.length > 0
+      ? h('button', { type: 'button', className: 'bt-agent-sessions-more', 'aria-expanded': showEarlier, onClick: () => setShowEarlier(value => !value) },
+          showEarlier ? t('Hide earlier sessions') : t('Earlier sessions ({count})', { count: earlier.length }))
+      : null)
 }
 const rowsEqual = (a, b) => a.length === b.length && a.every((row, index) => row?.title === b[index]?.title && row?.updatedAt === b[index]?.updatedAt)
 
@@ -390,8 +398,8 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
           h(ModelMenu, { bot, roster, actions, run, wide: true, inline: true }),
           modelOf(bot, roster) ? null : h('div', { className: 'bt-note' }, t('Pick a model and {name} can start.', { name: bot.name })),
         ),
-        h(BotSessions, { key: 'sessions', bot, part, run, useSessions, actions, running: roster.partsRunning }),
         h(PermissionRow, { key: 'permission', bot, roster, actions, run }),
+        h(BotSessions, { key: 'sessions', bot, part, run, useSessions, actions, running: roster.partsRunning }),
         h(BotConnectors, { key: 'connectors', bot, roster, actions, run }),
         h('div', { key: 'folder', className: 'bt-drawer-model' },
           h('div', { className: 'bt-section-title' }, t('Working folder')),

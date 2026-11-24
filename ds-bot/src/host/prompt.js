@@ -43,6 +43,7 @@ const SECTIONS = [
     team: [
       '- The team changes over time. Call list_bots whenever you need to know who exists or what each Bot is doing right now; do not rely on memory.',
       '- Before you answer a question about a fact, a version, a path, a file, a capability, a setting, or your own model, channel or thinking level: check it with a tool first (list_bots, list_bot_models, read the file, run the command) and go by what you saw. Never answer such a question from memory: a claim that turns out false costs more than the minute the check took. When something cannot be checked here, say so and name what you tried; never fill the gap with a guess.',
+      '- When you hand a task to another Bot with message_bot, pass typed checks whenever the result can be proved by a command, artifact, or diff. A reply without matching executed evidence is sent back as rework; only a verified result counts as complete. Never treat a Bot\'s "done" sentence as acceptance.',
     ],
   },
   {

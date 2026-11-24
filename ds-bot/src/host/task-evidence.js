@@ -19,6 +19,68 @@ const stable = (value) => {
 
 export const canonicalDigest = value => digest(JSON.stringify(stable(value)))
 
+const CHECK_KINDS = new Set(['command', 'artifact', 'diff'])
+const CHECKS_MAX = 12
+const CHECK_ID_MAX = 80
+const CHECK_LABEL_MAX = 300
+const CHECK_COMMAND_MAX = 1000
+const CHECK_PATH_MAX = 500
+const CHECK_DIGEST_MAX = 200
+
+// Acceptance checks are deliberately small and executable. A prose claim is not a
+// check: command evidence needs an exit code (0 by default), and artifact or diff
+// evidence needs a path and a non-empty digest before it can satisfy the check.
+export function normalizeAcceptanceChecks(list, { field = 'checks' } = {}) {
+  if (list === undefined) return { checks: [] }
+  if (!Array.isArray(list)) return { error: `${field} must be an array of typed checks.` }
+  if (list.length > CHECKS_MAX) return { error: `At most ${CHECKS_MAX} ${field} are allowed.` }
+  const checks = []
+  for (const [index, item] of list.entries()) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return { error: `A check in ${field} must be an object.` }
+    }
+    const kind = text(item.kind).trim()
+    if (!CHECK_KINDS.has(kind)) return { error: `A check in ${field} needs kind command, artifact, or diff.` }
+    const id = text(item.id ?? `c${index + 1}`).trim()
+    if (id === '' || id.length > CHECK_ID_MAX) return { error: `A check in ${field} has an invalid id.` }
+    const command = text(item.command).trim()
+    const path = text(item.path).trim()
+    if (kind === 'command' && command === '') return { error: `A command check in ${field} needs command.` }
+    if (kind === 'command' && command.length > CHECK_COMMAND_MAX) return { error: `A command check in ${field} is too long.` }
+    if ((kind === 'artifact' || kind === 'diff') && path === '') return { error: `An ${kind} check in ${field} needs path.` }
+    if (path.length > CHECK_PATH_MAX) return { error: `A check path in ${field} is too long.` }
+    const label = text(item.label ?? (command || path || id)).trim()
+    if (label === '' || label.length > CHECK_LABEL_MAX) return { error: `A check label in ${field} is invalid.` }
+    const expect = item.expect && typeof item.expect === 'object' && !Array.isArray(item.expect) ? item.expect : {}
+    let expected = {}
+    if (kind === 'command') {
+      const exitCode = expect.exitCode === undefined ? 0 : expect.exitCode
+      if (!Number.isInteger(exitCode)) return { error: `A command check in ${field} needs an integer expect.exitCode.` }
+      expected = { exitCode }
+    } else if (expect.digest !== undefined) {
+      if (typeof expect.digest !== 'string' || expect.digest.trim() === '' || expect.digest.length > CHECK_DIGEST_MAX) {
+        return { error: `An ${kind} check in ${field} has an invalid expect.digest.` }
+      }
+      expected = { digest: expect.digest.trim() }
+    }
+    checks.push({
+      id,
+      kind,
+      label,
+      required: item.required !== false,
+      ...(command === '' ? {} : { command }),
+      ...(path === '' ? {} : { path }),
+      expect: expected,
+    })
+  }
+  const ids = new Set()
+  for (const check of checks) {
+    if (ids.has(check.id)) return { error: `Check id ${check.id} is repeated in ${field}.` }
+    ids.add(check.id)
+  }
+  return { checks }
+}
+
 export const diffDigest = diffs => canonicalDigest((Array.isArray(diffs) ? diffs : []).map(item => ({
   path: text(item?.path),
   oldText: text(item?.oldText),

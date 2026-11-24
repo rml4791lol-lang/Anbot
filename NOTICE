@@ -76,6 +76,15 @@ MIT License, Copyright (c) 2026 DeepSeek
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 
+dsh-genui (https://github.com/omdsh-dev/dsh-genui)
+MIT License, Copyright (c) 2026 dsh-external
+
+  - app/ installs @changfenhuang/dsh-genui 0.17.0 from npm and mounts it as the
+    profile's inline dsh-ui renderer. Its source is not modified. The package's
+    own THIRD_PARTY_NOTICES.md carries the notices for its bundled assets.
+
+  MIT license text: see the DeepSeek Harness section above.
+
 Simple Icons (https://simpleicons.org)
 CC0 1.0 Universal, the Simple Icons contributors
 

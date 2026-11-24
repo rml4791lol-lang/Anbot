@@ -126,7 +126,11 @@ const detailData = {
   attempt: { id: 't1:a1', number: 1, status: 'working', startedAt: 5, updatedAt: 12, sessionId: 'room-s1', exchangeId: 'review-1', turn: 7 },
   handoff: { id: 'w1', parentId: 'w0', name: 'Review the repair', status: 'active', from: { id: 'chief', name: 'Chief' }, to: { id: 'forge', name: 'Forge' }, open: 0, results: 0 },
   recovery: { state: 'recovered', records: [{ id: 't1:a1:resumed:review-1', at: 9, attemptId: 't1:a1', kind: 'resumed', summary: 'Same attempt resumed after restart.' }] },
-  verification: { status: 'verified', reason: 'All declared acceptance checks matched.' },
+  rework: { count: 1, max: 2, records: [{ at: 8, attemptId: 't1:a2', previousAttemptId: 't1:a1', missing: ['tests'], feedback: 'Run the test suite again.' }] },
+  verification: {
+    status: 'verified', reason: 'All declared acceptance checks matched.',
+    checks: [{ id: 'tests', kind: 'command', label: 'Test suite', command: 'npm test', status: 'verified' }],
+  },
   trace: {
     status: 'ready', sourceTaskId: 'goal:g1:s1:t1', sourceId: 'goal:g1:s1:t1', sessionIds: ['room-s1'], truncated: false,
     relationships: [{ from: 'goal:g1:s1:t1', to: 'room-s1', kind: 'task-session', labelKey: 'trace.session' }],
@@ -249,6 +253,11 @@ test('TeamActivityView renders the selected task operating detail, evidence ladd
   assert.match(text(view), /Recovery/)
   assert.match(text(view), /Same attempt resumed after restart/)
   assert.match(text(view), /Run the acceptance checks/)
+  assert.match(text(view), /Rework/)
+  assert.match(text(view), /Run the test suite again/)
+  assert.match(text(view), /Acceptance checks/)
+  assert.match(text(view), /Test suite/)
+  assert.match(text(view), /npm test/)
   assert.match(text(view), /Blockers/)
   assert.match(text(view), /Waiting for w2 to return/)
   assert.match(text(view), /Reported/)

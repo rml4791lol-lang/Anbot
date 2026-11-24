@@ -11,7 +11,9 @@ import { BotSchedules } from './schedules.js'
 import { BotCapabilitiesCard } from './capability-settings.js'
 import { BotComputerCard } from './computer.js'
 import { AvatarLibraryPanel, avatarImage } from './avatar-library.js'
+import { PermissionPicker } from './permission-picker.js'
 import { useMemoryCount } from './memory-panel.js'
+import { IconAgentPresetOutlineMedium } from './dsh-primitives.js'
 import { SPRING_SHAPE, SPRING_TAP, spring, useGlide, useLinger } from './motion.js'
 import { t } from './i18n.js'
 
@@ -91,6 +93,24 @@ function modelHint(bot, roster) {
   if (!shown.served && (roster.models ?? []).length > 0) return t('This model is not available now. Pick another one.')
   if (bot.appliedModel && bot.appliedModel === bot.model) return t('Every message of this Bot runs on it.')
   return t('Applies from the next message.')
+}
+
+// The same presets appear in the details drawer, but Settings is where users look for
+// a permission control. Keep the full choice here so Full access is one visible pick.
+function PermissionCard({ bot, roster, actions, run }) {
+  const catalog = roster.permissions
+  if (!catalog?.options?.length) return null
+  return h(Card, { title: t('Permissions') },
+    h('div', { className: 'bt-set-row bt-bs-row bt-bs-stack' },
+      h('span', { className: 'bt-set-copy' },
+        h('span', { className: 'bt-bs-label' }, t('Permissions')),
+        h('span', { className: 'bt-set-hint' }, t('Full access lets this Bot run tools without asking.'))),
+      h(PermissionPicker, {
+        catalog,
+        saved: bot.permission ?? catalog.defaultPreset,
+        repick: bot.permission === undefined,
+        onPick: permission => run(actions.updateBot(bot.id, { permission })),
+      })))
 }
 
 // The selection ring of a picker cell follows the shape: a 1px line 3px outside it.
@@ -309,9 +329,47 @@ function BotSkillShortlistCard({ bot, roster, actions, run, Card, SwitchRow }) {
     }))
 }
 
+// The chosen DSH preset is copied into the Bot's own registration when the Bot is made.
+// This card names that fixed choice; the preset itself is composed in DSH, not here.
+export function BotAgentPresetCard({ bot, actions }) {
+  const [preset, setPreset] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let live = true
+    setLoading(true)
+    setError('')
+    void Promise.resolve(actions.botPreset?.(bot.id))
+      .then((value) => {
+        if (!live) return
+        setPreset(value ?? null)
+      })
+      .catch((failure) => { if (live) setError(failure?.message ?? String(failure)) })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
+  }, [actions, bot.id])
+  const hint = loading
+    ? t('Loading…')
+    : preset?.available === false
+      ? t('This DSH does not expose Agent presets.')
+      : preset?.broken
+        ? t('Preset unavailable: {reason}', { reason: preset.broken })
+        : t('Owned by this Bot')
+  const name = loading ? t('Loading…') : preset?.available === false ? t('None') : preset?.name ?? t('Agent preset')
+  return h(Card, { title: t('Agent preset') },
+    h('div', { className: 'bt-set-row bt-bs-row bt-bs-preset-owned' },
+      h('span', { className: 'bt-bs-preset-mark', 'aria-hidden': true }, h(IconAgentPresetOutlineMedium, { size: 18 })),
+      h('span', { className: 'bt-set-copy' },
+        h('span', { className: 'bt-bs-label' }, name),
+        h('span', { className: 'bt-set-hint' }, hint)),
+      h('span', { className: 'bt-tag' }, 'DSH')),
+    h('div', { className: 'bt-set-row' }, h('span', { className: 'bt-set-hint' }, t('Future Sessions use this preset. Open chats keep the preset they started with.'))),
+    error ? h('div', { className: 'bt-error', role: 'alert', style: { padding: '0 12px 12px' } }, error) : null)
+}
+
 // A Bot's settings as grouped cards: who it is (avatar, name, label), what it runs on
-// (model), what it does (instructions), its memory and tasks, its Main Bot role, its
-// sidebar place, and copies.
+// (model and its own Agent preset), what it does (instructions), its memory and tasks,
+// its Main Bot role, its sidebar place, and copies.
 export function BotSettingsForm({ bot, roster, actions, run }) {
   const [editing, setEditing] = useState(false)
   const [editorShown, editorLeaving] = useLinger(editing, 120)
@@ -347,10 +405,12 @@ export function BotSettingsForm({ bot, roster, actions, run }) {
       h(Row, { label: t('Name') }, h(InlineText, { label: t('Name'), value: bot.name, placeholder: 'Bob', required: true, maxLength: 40, onSave: name => save({ name }) })),
       h(Row, { label: t('Label'), hint: t('Optional. Shown under the name.') }, h(InlineText, { label: t('Label'), value: bot.role, placeholder: t('Research, admin…'), maxLength: 24, onSave: role => save({ role }) }))),
     h(RunModeCard, { bot, roster, actions, run, Card }),
+    h(BotAgentPresetCard, { bot, actions }),
     h(Card, { title: t('Model') },
       h('div', { className: 'bt-set-row bt-bs-row' },
         h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, t('Model')), h('span', { className: 'bt-set-hint' }, modelHint(bot, roster))),
         h(ModelMenu, { bot, roster, actions, run }))),
+    h(PermissionCard, { bot, roster, actions, run }),
     h(Card, { title: t('Working folder') },
       h('div', { className: 'bt-set-row bt-bs-row' },
         h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, t('Folder'))),
@@ -422,6 +482,8 @@ label.bt-bs-row{cursor:text}
 .bt-bs-danger .bt-bs-label{color:var(--bt-danger)}
 .bt-bs-danger[data-confirm]{background:color-mix(in srgb,var(--bt-danger) 8%,transparent)}
 .bt-bs-danger[data-confirm]:hover{background:color-mix(in srgb,var(--bt-danger) 12%,transparent)}
+.bt-bs-preset-owned{gap:12px}
+.bt-bs-preset-mark{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;border-radius:10px;background:var(--bt-hover);color:var(--bt-ink-2)}
 .bt-switch{position:relative;flex:none;width:36px;height:20px;padding:0;border:0;border-radius:999px;background:var(--bt-line-2);cursor:pointer;transition:background-color .2s ease}
 .bt-switch[aria-checked=true]{background:var(--bt-accent)}
 .bt-switch:disabled{opacity:.45;cursor:default}

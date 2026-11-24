@@ -1,4 +1,4 @@
-import { createElement as h, useEffect, useRef, useState } from 'react'
+import { createElement as h, Fragment, useEffect, useRef, useState } from 'react'
 import { BotMark } from './mark.js'
 import { CharacterGrid } from './bot-settings.js'
 import { AvatarLibraryPanel, avatarImage } from './avatar-library.js'
@@ -7,6 +7,8 @@ import { ChevronLeftIcon, CloseIcon } from './icons.js'
 import { useEscape } from './overlay-hooks.js'
 import { createPayload, freshBotName, startModel } from './bot-draft.js'
 import { ModelMenu, useAgentModels } from './model-menu.js'
+import { BotPresetMenu, defaultPresetBase } from './agent-preset-menu.js'
+import { presetLoadState } from './agent-preset-bases.js'
 import { CliList, ReadingModels, RunModeSwitch, useLocalAgents } from './agent-cards.js'
 import { agentAvatar, modelsFor, routeOf } from './agent-routes.js'
 import { hostText, t } from './i18n.js'
@@ -31,6 +33,12 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const [agentModel, setAgentModel] = useState('')
   const [ownLook, setOwnLook] = useState(false)
   const [effort, setEffort] = useState(undefined)
+  const [agentPresetBase, setAgentPresetBase] = useState('')
+  const [presetState, setPresetState] = useState(() => ({
+    status: typeof actions.nativeAgentPresets === 'function' ? 'loading' : 'unavailable',
+    presets: [],
+    error: '',
+  }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef(null)
@@ -39,6 +47,22 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const [reading, readModels] = useAgentModels(actions)
   const local = mode === 'local'
   const chosen = local ? agentModel : model
+  useEffect(() => {
+    let live = true
+    if (typeof actions.nativeAgentPresets !== 'function') {
+      setPresetState({ status: 'unavailable', presets: [], error: '' })
+      return undefined
+    }
+    void Promise.resolve(actions.nativeAgentPresets()).then((result) => {
+      if (!live) return
+      const state = presetLoadState(result)
+      setPresetState({ ...state, error: '' })
+      setAgentPresetBase(current => state.presets.some(preset => preset.id === current) ? current : defaultPresetBase(state.presets))
+    }, (failure) => {
+      if (live) setPresetState({ status: 'error', presets: [], error: failure?.message ?? String(failure) })
+    })
+    return () => { live = false }
+  }, [actions.nativeAgentPresets])
   useEscape(onBack)
   // Inside Settings the form opens below other sections, so it scrolls itself into view.
   useEffect(() => { if (inline) frame.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }, [])
@@ -46,13 +70,17 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const finalName = name.trim() || fallbackName
   const clash = roster.bots.some(bot => bot.name.toLowerCase() === finalName.toLowerCase())
   const problem = nameProblem(finalName)
-  const blocked = busy || clash || Boolean(problem) || (local && chosen === '')
+  const presetBlocked = presetState.status === 'loading'
+    || presetState.status === 'error'
+    || (presetState.status === 'ready' && presetState.presets.length === 0)
+    || (presetState.status === 'ready' && presetState.presets.length > 0 && agentPresetBase === '')
+  const blocked = busy || clash || Boolean(problem) || (local && chosen === '') || presetBlocked
   const create = async () => {
     if (blocked) return
     setError('')
     setBusy(true)
     try {
-      const bot = await actions.createBot(createPayload({ name: finalName, look, image, model: chosen, effort: local ? undefined : effort, brief, ownLook, sectionId: start?.sectionId }))
+      const bot = await actions.createBot(createPayload({ name: finalName, look, image, model: chosen, effort: local ? undefined : effort, brief, ownLook, agentPresetBase, sectionId: start?.sectionId }))
       onCreated(bot)
     } catch (failure) {
       setError(failure?.message ?? String(failure))
@@ -72,6 +100,22 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const previewLook = image ? { ...look, image } : worn ? { ...look, image: worn } : look
   const card = h('div', { className: 'bt-create-card' },
     h(RunModeSwitch, { mode, setMode }),
+    h('div', { className: 'bt-field' },
+      h('span', { className: 'bt-field-label' }, t('Agent preset')),
+      h(BotPresetMenu, {
+        value: agentPresetBase, presets: presetState.presets, loading: presetState.status === 'loading',
+        disabled: presetState.status === 'error', onPick: setAgentPresetBase,
+      }),
+      h('span', { className: 'bt-note' }, presetState.status === 'loading'
+        ? t('Loading…')
+        : presetState.status === 'error'
+          ? hostText(presetState.error)
+          : presetState.presets.length === 0
+            ? t('This DSH does not expose Agent presets.')
+            : h(Fragment, null,
+                t('Each Bot gets its own copy of this DSH preset.'),
+                h('br'),
+                t('Create more presets in DSH Creator mode.')))),
     h('div', { className: 'bt-create-preview' },
       // The key remounts the mark, so every new pick plays the pop.
       h('span', { key: `${look.shape}:${look.color}:${previewLook.image ? 'photo' : ''}`, className: 'bt-create-pop' },

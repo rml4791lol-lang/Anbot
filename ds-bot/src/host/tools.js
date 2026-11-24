@@ -11,6 +11,7 @@ import { missingFileRefs } from './claims.js'
 import { absoluteLinks } from './links.js'
 import { NAME_MAX } from './requests.js'
 import { unquote } from './text.js'
+import { normalizeAcceptanceChecks } from './task-evidence.js'
 import { isOpenPart, ownChatSessions } from './threads.js'
 import { mentionSpans } from '../shared/mentions.js'
 import { plainToolSchema } from './tool-schema.js'
@@ -208,6 +209,21 @@ export function install(rt) {
   }
   const tooLong = text => `Not sent: the message has ${text.length} characters, more than ${MESSAGE_INLINE_MAX}, and this DeepSeek Harness cannot send it as a file. Write it to a file in your working folder and send its path instead.`
 
+  const acceptanceBlock = (checks, acceptance) => {
+    if ((!Array.isArray(checks) || checks.length === 0) && acceptance === '') return ''
+    const lines = ['', '', '[Acceptance]']
+    if (acceptance !== '') lines.push(acceptance)
+    if (Array.isArray(checks) && checks.length > 0) {
+      lines.push('Run every required check in this work and leave executed evidence. A reply without matching evidence is sent back as rework.')
+      for (const check of checks) {
+        if (check.kind === 'command') lines.push(`- ${check.id} command: ${check.command} (exit ${check.expect?.exitCode ?? 0})`)
+        else if (check.kind === 'artifact') lines.push(`- ${check.id} artifact: ${check.path}${check.expect?.digest ? ` (digest ${check.expect.digest})` : ''}`)
+        else if (check.kind === 'diff') lines.push(`- ${check.id} diff: ${check.path}${check.expect?.digest ? ` (digest ${check.expect.digest})` : ''}`)
+      }
+    }
+    return lines.join('\n')
+  }
+
   // Work for a group stays in it: from a group Session, message_bot calls a member there
   // exactly as an "@Name" line would, and never reaches a Bot outside the group.
   const groupRefusal = (room, sender, target) => {
@@ -270,7 +286,7 @@ export function install(rt) {
 
   rt.teamTools.push(defineTool({
     name: 'message_bot',
-    description: 'Send a message to another Bot on the team. If that Bot is working, it reads your message at its next step and can change course, then answers once that work is done; if it is idle, it starts on it right away. Its reply arrives later as a new message to you; with reply_to "user" it answers the user in its own chat instead. Do not message a Bot that is waiting for the result of the work you are doing (the Bot that asked you for it, or one above that): your answer reaches it by itself once you end your turn and everything you handed on is back. In a group chat it reaches only members of that group, as writing "@Name" there does. With request_id you name the request yourself: a repeat of that name with the same message is not sent again, but gives the receipt of the first call back.',
+    description: 'Send a message to another Bot on the team. If that Bot is working, it reads your message at its next step and can change course, then answers once that work is done; if it is idle, it starts on it right away. Its reply arrives later as a new message to you; with reply_to "user" it answers the user in its own chat instead. When you hand over a task that can be checked, include typed checks: the receiver must leave matching command, artifact, or diff evidence, and a failed check sends the work back to it as rework instead of accepting a prose claim. Do not message a Bot that is waiting for the result of the work you are doing (the Bot that asked you for it, or one above that): your answer reaches it by itself once you end your turn and everything you handed on is back. In a group chat it reaches only members of that group, as writing "@Name" there does, and typed checks belong to group_goal instead. With request_id you name the request yourself: a repeat of that name with the same message is not sent again, but gives the receipt of the first call back.',
     parameters: {
       to: { type: 'string', required: true, description: 'Exact Bot name from list_bots' },
       message: { type: 'string', required: true, description: 'Self-contained message; the other Bot cannot see this conversation' },
@@ -288,6 +304,34 @@ export function install(rt) {
         type: 'string',
         description: `Your own name for this request, up to ${NAME_MAX} characters, so that a repeat of it is not sent twice. Send the same request_id with the same message when you repeat a call: the receipt of the first call comes back and nothing is sent again. A request_id names one request: with other content it is refused.`,
       },
+      acceptance: {
+        type: 'string',
+        description: 'Optional human-readable done-when, sent to the receiver with the request. Typed checks are what the host enforces.',
+      },
+      checks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            id: { type: 'string', description: 'Stable id for this check, e.g. tests or screenshot' },
+            kind: { type: 'string', enum: ['command', 'artifact', 'diff'] },
+            label: { type: 'string', description: 'Short human label for the check' },
+            required: { type: 'boolean', description: 'Defaults to true' },
+            command: { type: 'string', description: 'command checks: exact command the receiver must execute' },
+            path: { type: 'string', description: 'artifact or diff checks: file path to match' },
+            expect: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                exitCode: { type: 'integer', description: 'command checks: required exit code; defaults to 0' },
+                digest: { type: 'string', description: 'artifact or diff checks: optional pinned sha256 digest' },
+              },
+            },
+          },
+        },
+        description: 'Typed acceptance checks. Each required check must bind to fresh executed tool or deliverable evidence; failed checks trigger bounded rework.',
+      },
     },
     output,
     async execute(args, exec) {
@@ -302,6 +346,19 @@ export function install(rt) {
       if (name.length > NAME_MAX) return `The request_id is ${name.length} characters long; a request name is at most ${NAME_MAX}.`
       const text = absoluteLinks(String(args.message), rt.sessionFolder?.(exec.agent?.session ?? exec.agent))
       const room = rt.roomOf(rt.groupOwners.get(exec.agent?.id)?.roomId)
+      const acceptance = typeof args.acceptance === 'string' ? args.acceptance.trim() : ''
+      if (acceptance.length > 2000) return 'The acceptance description is too long: at most 2000 characters.'
+      const checked = normalizeAcceptanceChecks(args.checks, { field: 'acceptance checks' })
+      if (checked.error !== undefined) return checked.error
+      if (checked.checks.length > 0 && !checked.checks.some(check => check.required !== false)) {
+        return 'At least one acceptance check must be required.'
+      }
+      if (args.reply_to === 'user' && checked.checks.length > 0) {
+        return 'Typed acceptance checks need reply_to "me"; a reply directly to the user has no work record to verify.'
+      }
+      if (room !== undefined && checked.checks.length > 0) {
+        return 'Typed acceptance checks for group work belong to group_goal, not message_bot.'
+      }
       // The request the caller named: it is admitted once, and a repeat of it is not sent again.
       const request = name === '' ? undefined : rt.requestIdentity({
         caller: sender.id,
@@ -312,6 +369,8 @@ export function install(rt) {
           message: String(args.message ?? '').replace(/\r\n?/g, '\n').trim(),
           reply_to: args.reply_to === 'user' ? 'user' : 'me',
           when: args.when === 'queue' ? 'queue' : 'now',
+          ...(acceptance === '' ? {} : { acceptance }),
+          ...(checked.checks.length === 0 ? {} : { checks: checked.checks }),
         },
       })
       // What the caller gets for a request that was admitted before.
@@ -360,7 +419,8 @@ export function install(rt) {
         const joinable = earlier !== undefined
           && (toUser || ((earlier.message.source.senderPart ?? undefined) === fromPart && rt.sameWork(earlier.message.source.exchangeId, work)))
         const before = joinable ? bodyOf(earlier.message) : undefined
-        let long = await rt.attachLong(before ? `${before.text}\n\n${text}` : text, `Message from ${sender.name}.txt`)
+        const asked = toUser ? text : `${text}${acceptanceBlock(checked.checks, acceptance)}`
+        let long = await rt.attachLong(before ? `${before.text}\n\n${asked}` : asked, `Message from ${sender.name}.txt`)
         // Nothing went out, so a named request must not take this as a delivered
         // receipt: admitRequest drops the pending record instead, and a retry can send.
         if (long === undefined) { if (request !== undefined) request.unsent = true; return tooLong(text) }
@@ -369,8 +429,11 @@ export function install(rt) {
         const working = rt.live.get(chat)?.turn !== undefined
         const steer = (args.when !== 'queue' && !toUser) || (joins && earlier.steered)
         const exchangeId = joins ? earlier.message.source.exchangeId : randomUUID()
+        if (joins && !toUser && (checked.checks.length > 0 || acceptance !== '')) {
+          await rt.setWorkAcceptance?.(exchangeId, checked.checks, acceptance)
+        }
         if (joins) rt.forgetDelivery?.(exchangeId)
-        else if (!toUser) await rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask, ...(fromPart ? { fromPart } : {}) })
+        else if (!toUser) await rt.openWork(exchangeId, { from: sender.id, to: target.id, parent: work, goalTask, checks: checked.checks, acceptance, ...(fromPart ? { fromPart } : {}) })
         const binding = toUser ? undefined : rt.workBinding?.(exchangeId)
         try {
           await rt.deliver({ fromId: sender.id, toId: target.id, ...(fromPart ? { fromPart } : {}), text: long.text, files: [...long.files, ...(joins ? before.files : [])], length: long.length, role: 'request', steer, queue: args.when === 'queue', exchangeId, ...(joins ? { merged: true } : {}), ...(toUser ? { audience: 'user' } : {}), ...binding, ...goalTask })
@@ -398,7 +461,8 @@ export function install(rt) {
           status === 'idle' ? '' : `${target.name} now: ${status}.`,
           asker ? `When you have handed on everything, end your turn: each reply brings you back to this work, and your answer goes to ${asker} once all of it is back.` : '',
         ].filter(Boolean)
-        const out = [sent, ...notes].join(' ')
+        const acceptanceNote = checked.checks.length === 0 ? '' : ` Acceptance is enforced by ${checked.checks.length} typed check${checked.checks.length === 1 ? '' : 's'}; a failed check comes back to ${target.name} as rework.`
+        const out = [sent + acceptanceNote, ...notes].join(' ')
         // A message reaches the part of the Bot's own chat it is delivered to only; work
         // going on elsewhere (a group, or another live part of its own chat) goes on
         // without it.

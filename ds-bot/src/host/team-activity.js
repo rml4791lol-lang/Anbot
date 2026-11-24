@@ -168,6 +168,12 @@ function handoffTasksFor({ works, rooms, bots, mainIds, botName, botRole }) {
     const arrow = fromName && ownerName ? `${fromName} → ${ownerName}` : fromName || ownerName || text(id)
     const raw = { id, work }
     const projected = projectTaskVerification(raw, evidenceForRecord(raw, `handoff:${text(id)}`))
+    const acceptance = text(work.acceptance) || (Array.isArray(work.checks) ? work.checks.map((check) => {
+      if (check?.kind === 'command') return `${check.id}: ${check.command} (exit ${check.expect?.exitCode ?? 0})`
+      if (check?.kind === 'artifact') return `${check.id}: artifact ${check.path}`
+      if (check?.kind === 'diff') return `${check.id}: diff ${check.path}`
+      return text(check?.id)
+    }).filter(Boolean).join(' · ') : '')
     tasks.push({
       id: `handoff:${text(id)}`, sourceId: `handoff:${text(id)}`, source: 'handoff', kind: 'handoff',
       title: text(work.name) || arrow, subtitle: '', stageTitle: '', stageId: null,
@@ -186,8 +192,12 @@ function handoffTasksFor({ works, rooms, bots, mainIds, botName, botRole }) {
       statusSource: 'work.open',
       evidenceState: projected.evidenceState,
       verification: projected.verification,
-      acceptance: '', evidence: null, note: text(work.held) || null,
-      updatedAt: latestTimestamp([work.at, work.attempt?.updatedAt, work.checkpoint?.at, ...(Array.isArray(work.evidence) ? work.evidence.map(item => item?.at) : [])]) ?? null,
+      acceptance, evidence: null, note: text(work.held) || null,
+      updatedAt: latestTimestamp([
+        work.at, work.attempt?.updatedAt, work.checkpoint?.at,
+        ...(Array.isArray(work.rework) ? work.rework.map(item => item?.at) : []),
+        ...(Array.isArray(work.evidence) ? work.evidence.map(item => item?.at) : []),
+      ]) ?? null,
       warnings: ownerId && bots[ownerId] === undefined ? [`missing owner ${ownerId}`] : !ownerId && !roomName ? ['missing owner or group'] : [],
     })
   }

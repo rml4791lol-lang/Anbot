@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "restart-team",
+  "title": "Team state survives a bench restart",
+  "modes": ["mock"],
+  "dataMode": "mock",
+  "timeoutMs": 120000,
+  "workspace": { "kind": "scratch", "path": "workspace" },
+  "steps": [
+    { "id": "before", "kind": "capture", "endpoint": "state", "payload": {}, "path": "before.json" },
+    { "id": "restart", "kind": "restart" },
+    { "id": "after", "kind": "capture", "endpoint": "state", "payload": {}, "path": "after.json" }
+  ],
+  "acceptance": [
+    { "id": "bots", "kind": "json", "path": "after.json", "pointer": "/bots", "minLength": 1 }
+  ]
+}

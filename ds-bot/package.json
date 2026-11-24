@@ -52,10 +52,14 @@
     "setup": "sh ../scripts/setup.sh",
     "check": "sh dev/check.sh",
     "eval:golden": "node dev/eval/judge.mjs --checks",
-    "test:acceptance": "node --import ./test/harness-resolve.mjs --import ./test/drain.mjs --test --test-timeout=180000 \"test/acceptance/*.test.js\""
+    "test:acceptance": "node --import ./test/harness-resolve.mjs --import ./test/drain.mjs --test --test-timeout=180000 \"test/acceptance/*.test.js\"",
+    "aios:manifest": "node dev/ai-os/cli.mjs --manifest dev/ai-os/scenarios/restart-team.json --mode mock",
+    "aios:mock": "node dev/ai-os/cli.mjs --manifest dev/ai-os/scenarios/restart-team.json --mode mock",
+    "aios:attached": "node dev/ai-os/cli.mjs --manifest dev/ai-os/scenarios/attached-repository-check.json --mode attached"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/cordis-plugin-include": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-scope": "*",
     "@deepseek-ai/dsh-tools": "*",
@@ -81,6 +85,7 @@
     "@modelcontextprotocol/server": "2.4.0",
     "deep-view": "0.1.2",
     "imapflow": "2.9.1",
+    "js-yaml": "4.3.2",
     "jpeg-js": "0.4.4",
     "mailparser": "3.12.4",
     "nodemailer": "10.2.1",

@@ -39,9 +39,11 @@ import { ConnectorDock, MailDock, CONNECTOR_CSS } from './connectors.js'
 import { CONNECTORS_PAGE_CSS } from './connectors-page.js'
 import { LearningDock, LearningTurnTail, LEARNING_CSS } from './learning-card.js'
 import { MODEL_CSS, ModelChoiceDock, DeepSeekSignIn } from './model-menu.js'
+import { AGENT_PRESET_MENU_CSS } from './agent-preset-menu.js'
 import { ReadOnlyDock, READ_ONLY_CSS } from './read-only-dock.js'
 import { BOT_SETTINGS_CSS } from './bot-settings.js'
 import { BOT_MODELS_CSS } from './bot-models-page.js'
+import { PLUGIN_PACKS_CSS } from './plugin-packs-page.js'
 import { AGENT_CARDS_CSS } from './agent-cards.js'
 import { AVATAR_LIBRARY_CSS } from './avatar-library.js'
 import { GROUP_SETTINGS_CSS } from './group-settings.js'
@@ -94,7 +96,7 @@ export function apply(ctx) {
   let seenAt = seenStore.read()
   // `details` is the panel's subject (a Session id); `view` picks details or the
   // subject Bot's browser inside it.
-  const ui = createSource({ details: null, view: 'details', readOnlyPart: null, renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, paste: {}, pendingOpen: null, settings: null, memory: null, teamOverview: false, teamActivity: false, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {}, panelYield: false, leftDrawer: false, bootFailed: false, goalCompose: null, goalOpen: null })
+  const ui = createSource({ details: null, view: 'details', readOnlyPart: null, renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, paste: {}, pendingOpen: null, settings: null, memory: null, teamOverview: false, teamActivity: false, teamBoardOpen: false, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {}, panelYield: false, leftDrawer: false, bootFailed: false, goalCompose: null, goalOpen: null })
   // The left column's kept preference, and the frame geometry the layout rules
   // in frame-layout.js read: the window and the shell's collapsed track come from
   // installFrameWatch, the open column's width is the user's own.
@@ -224,6 +226,7 @@ export function apply(ctx) {
     if (value.secrets !== undefined && JSON.stringify(value.secrets) !== JSON.stringify(current.secrets ?? [])) live.secrets = value.secrets
     if (value.connectors !== undefined && JSON.stringify(value.connectors) !== JSON.stringify(current.connectors ?? [])) live.connectors = value.connectors
     if (value.capabilityStatuses !== undefined && JSON.stringify(value.capabilityStatuses) !== JSON.stringify(current.capabilityStatuses ?? {})) live.capabilityStatuses = value.capabilityStatuses
+    if (value.pluginPacks !== undefined && JSON.stringify(value.pluginPacks) !== JSON.stringify(current.pluginPacks ?? null)) live.pluginPacks = value.pluginPacks
     if (value.phone !== undefined && JSON.stringify(value.phone) !== JSON.stringify(current.phone ?? null)) live.phone = value.phone
     if (value.learning !== undefined && JSON.stringify(value.learning) !== JSON.stringify(current.learning ?? {})) live.learning = value.learning
     if (value.learningSettled !== undefined && JSON.stringify(value.learningSettled) !== JSON.stringify(current.learningSettled ?? {})) live.learningSettled = value.learningSettled
@@ -813,6 +816,36 @@ export function apply(ctx) {
       } : null,
     })
   }
+  // The Create Bot picker reads DSH's own roster. A missing remote is a valid older
+  // deployment: the Bot is still created, but the form says no native presets are served.
+  actions.nativeAgentPresets = async () => {
+    const remote = ctx.get('remote.agentPresets')
+    if (typeof remote?.list !== 'function') return { available: false, presets: [] }
+    const result = await remote.list()
+    if (result.ok) {
+      const copy = ctx.get('locale')?.bind?.('settings.agentPreset')
+      const builtIn = {
+        standard: ['presetStandardName', 'presetStandardDescription'],
+        ptc: ['presetPtcName', 'presetPtcDescription'],
+        minimal: ['presetMinimalName', 'presetMinimalDescription'],
+        cordis: ['presetCordisName', 'presetCordisDescription'],
+      }
+      const presets = result.value.presets.map((preset) => {
+        const keys = preset.name === undefined ? builtIn[preset.id] : undefined
+        return keys === undefined || copy === undefined ? preset : {
+          ...preset,
+          name: copy(keys[0]),
+          description: copy(keys[1]),
+        }
+      }).filter((preset) => {
+        const codingTools = ctx.get('configForms')?.developerTools?.enabled?.getSnapshot?.()
+        return codingTools !== false || !['ptc', 'minimal'].includes(preset.id)
+      })
+      return { available: true, presets }
+    }
+    if (result.error?.code === 'gateway/invocation-unavailable') return { available: false, presets: [] }
+    throw new Error(result.error?.message ?? 'The DSH Agent preset list could not be read')
+  }
   // Whether AccountLauncher holds the shell's settings seat; FooterAccount steps aside if so.
   actions.signInEntry = () => ctx.slots.entries?.('settings.models.sign-in')?.[0] ?? null
   actions.canSignIn = () => Boolean(actions.signInEntry())
@@ -1179,8 +1212,9 @@ export function apply(ctx) {
     [SHELL_CSS, 'shell'],
     [SIDEBAR_CSS, 'sidebar'],
     [SECRET_CSS + CONNECTOR_CSS + CONNECTORS_PAGE_CSS, 'secrets'],
+    [PLUGIN_PACKS_CSS, 'plugin-packs'],
     [LEARNING_CSS, 'learning'],
-    [MODEL_CSS + FOLDER_CSS + BOT_SETTINGS_CSS + BOT_MODELS_CSS + AGENT_CARDS_CSS + GROUP_SETTINGS_CSS + AVATAR_LIBRARY_CSS, 'models'],
+    [MODEL_CSS + AGENT_PRESET_MENU_CSS + FOLDER_CSS + BOT_SETTINGS_CSS + BOT_MODELS_CSS + AGENT_CARDS_CSS + GROUP_SETTINGS_CSS + AVATAR_LIBRARY_CSS, 'models'],
     [USAGE_CSS, 'usage'],
     [SCHEDULE_CSS, 'schedules'],
     [FEEDBACK_CSS, 'feedback'],

@@ -3,7 +3,7 @@
 // would either throw or unseat that panel — and a throw while mounting takes the whole
 // shell group down with it. This panel lives in the overlay list instead, so it can
 // never collide with a seat.
-import { createElement as h, useEffect, useState } from 'react'
+import { createElement as h, useEffect, useRef } from 'react'
 import { TeamBoard, readBoardConfig } from './team-board.js'
 
 // Served by src/host/channel.js so the config can change without a rebuild.
@@ -24,20 +24,26 @@ export const TEAM_BOARD_HOST_CSS = `
 
 // Slot injection flattens the injected `hooks` face into one `useXxx` prop per
 // source, so the board reads them as ordinary snapshot hooks (like TeamSidebar).
-export function TeamBoardHost({ useRoster, useWork }) {
+const noUi = select => select({})
+
+export function TeamBoardHost({ useRoster, useWork, useUi = noUi, actions = {} }) {
   const roster = useRoster(value => value)
   const work = useWork(value => value)
+  const ui = useUi(value => value)
+  const uiNow = useRef(ui)
+  uiNow.current = ui
   // The board is a deliberate tool, not a permanent side panel: start closed so it
   // does not take the conversation's width on every app entry. A config may opt in.
-  const [open, setOpen] = useState(false)
   useEffect(() => {
     let live = true
-    readBoardConfig(TEAM_BOARD_CONFIG_URL).then((config) => { if (live) setOpen(config.defaultOpen) })
+    readBoardConfig(TEAM_BOARD_CONFIG_URL).then((config) => {
+      if (live && config.defaultOpen && uiNow.current.details === null && uiNow.current.settings === null) actions.openTeamBoard?.()
+    })
     return () => { live = false }
   }, [])
-  if (!open) {
-    return h('button', { className: 'tbh-toggle', type: 'button', title: 'Team board', onClick: () => setOpen(true) }, '团队看板')
+  if (ui.teamBoardOpen !== true) {
+    return h('button', { className: 'tbh-toggle', type: 'button', title: 'Team board', onClick: () => actions.openTeamBoard?.() }, '团队看板')
   }
   return h('aside', { className: 'tbh', 'aria-label': 'Team board' },
-    h(TeamBoard, { roster, work, onClose: () => setOpen(false), configUrl: TEAM_BOARD_CONFIG_URL }))
+    h(TeamBoard, { roster, work, onClose: () => actions.closeTeamBoard?.(), configUrl: TEAM_BOARD_CONFIG_URL }))
 }

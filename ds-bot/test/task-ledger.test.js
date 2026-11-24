@@ -61,6 +61,19 @@ test('a close with no outcome is counted apart, never as answered', () => {
   assert.equal(summary.completion, '0/1 (0.0%)')
 })
 
+test('verified and reworked closes stay separate from answered completions', () => {
+  const summary = summarizeTasks([
+    { kind: 'open', id: 'verified', time: 10 },
+    { kind: 'close', id: 'verified', outcome: 'answered', verified: true, reworks: 1, time: 20 },
+    { kind: 'open', id: 'review', time: 10 },
+    { kind: 'close', id: 'review', outcome: 'answered', needsReview: true, reworks: 2, time: 30 },
+  ])
+  assert.deepEqual(
+    [summary.answered, summary.verified, summary.needsReview, summary.reworked, summary.verification],
+    [2, 1, 1, 2, '1/2 (50.0%)'],
+  )
+})
+
 test('a later valid close replaces an unreadable earlier close', () => {
   const summary = summarizeTasks([
     { kind: 'open', id: 'a', time: 10 },

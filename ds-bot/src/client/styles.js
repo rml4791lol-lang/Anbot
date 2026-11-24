@@ -556,6 +556,7 @@ html[data-windows-titlebar]:not([data-fullscreen]) :is(.bt-pane,.bt-panel)::befo
 .bt-drawer-model{display:flex;flex-direction:column}
 .bt-drawer-model .bt-note{margin-top:6px}
 .bt-drawer-permission{display:flex;flex-direction:column}
+.bt-agent-sessions-more{align-self:flex-start;margin:6px 0 0;padding:2px 0;border:0;background:none;color:var(--bt-ink-2);font:inherit;font-size:12px;line-height:18px;cursor:pointer}.bt-agent-sessions-more:hover{color:var(--bt-ink)}
 .bt-seg button.bt-perm-danger,.bt-seg button.bt-perm-danger[aria-pressed=true],.bt-kv span.bt-perm-danger{color:var(--bt-danger)}
 
 /* Settings dialog: a 198px page list beside the page. */

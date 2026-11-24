@@ -28,10 +28,43 @@ const TEAM = {
   questions: {},
 }
 
+function fakeAgentPresets(presets) {
+  const base = (presets ?? []).map(preset => ({
+    ...preset,
+    content: preset.content ?? '- id: base-plugin\n  name: dsh-test-plugin\n',
+  }))
+  const registered = new Map()
+  const disposed = []
+  return {
+    registered,
+    disposed,
+    async list() {
+      return [
+        ...base.map(({ content: _content, ...row }) => row),
+        ...[...registered.values()].map(definition => ({ id: definition.id, name: definition.name, broken: definition.broken })),
+      ]
+    },
+    async readDocument(id) {
+      const found = base.find(row => row.id === id)
+      if (found === undefined) throw new Error(`Unknown agent preset: ${id}`)
+      return { agentPreset: id, content: found.content, name: found.name ?? id }
+    },
+    async register(definition) {
+      if (registered.has(definition.id) || base.some(row => row.id === definition.id)) throw new Error(`Duplicate agent preset: ${definition.id}`)
+      registered.set(definition.id, definition)
+      return async () => {
+        registered.delete(definition.id)
+        disposed.push(definition.id)
+      }
+    },
+  }
+}
+
 function start({ presets } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-agent-preset-'))
   writeFileSync(join(home, 'state.json'), JSON.stringify(TEAM))
-  const services = presets === undefined ? {} : { agentPresets: { list: async () => presets } }
+  const registry = presets === undefined ? undefined : fakeAgentPresets(presets)
+  const services = registry === undefined ? {} : { agentPresets: registry }
   const ctx = fakeContext({ services })
   const created = []
   Object.assign(ctx, {
@@ -59,7 +92,7 @@ function start({ presets } = {}) {
     await ctx.dispose()
     rmSync(home, { recursive: true, force: true, maxRetries: 5 })
   }
-  return { rt, created, relay, warnings, stop }
+  return { rt, created, relay, warnings, registry, stop }
 }
 
 async function drain(stream) {
@@ -78,21 +111,33 @@ const relayCall = async (relay, tools) => {
   return chunks.find(chunk => chunk.type === 'block-end').block
 }
 
-test('a new Bot Session is made with the standard preset when DSH serves it', async (t) => {
-  const { rt, created, stop } = start({ presets: [{ id: 'ptc' }, { id: 'standard' }] })
+test('a new Bot owns its preset and its first Session uses that preset', async (t) => {
+  const { rt, created, registry, stop } = start({ presets: [{ id: 'ptc' }, { id: 'standard' }] })
   t.after(stop)
   await rt.load()
-  await rt.createSession('Chief')
-  assert.deepEqual(created, [{ workspaceId: 'w1', agentPreset: 'standard' }])
+  const bot = await rt.createBot({ name: 'Writer', pickModel: true })
+  assert.match(bot.agentPreset, /^dsbot-bot-[0-9a-f-]{36}$/)
+  assert.equal(created.at(-1).agentPreset, bot.agentPreset)
+  assert.ok(registry.registered.has(bot.agentPreset))
 })
 
-test('without a usable standard preset a Bot Session keeps DSH\'s default', async (t) => {
-  for (const presets of [undefined, [{ id: 'ptc' }], [{ id: 'standard', broken: 'failed to start' }]]) {
-    const { rt, created, stop } = start({ presets })
+test('without any Agent preset service a Bot still starts and keeps DSH\'s default', async (t) => {
+  const { rt, created, stop } = start()
+  t.after(stop)
+  await rt.load()
+  await rt.createBot({ name: 'Writer', pickModel: true })
+  assert.equal('agentPreset' in created.at(-1), false)
+})
+
+test('a usable PTC preset is copied when standard is unavailable or broken', async (t) => {
+  for (const presets of [[{ id: 'ptc' }], [{ id: 'standard', broken: 'failed to start' }, { id: 'ptc' }]]) {
+    const { rt, registry, stop } = start({ presets })
     t.after(stop)
     await rt.load()
-    await rt.createSession('Chief')
-    assert.deepEqual(created, [{ workspaceId: 'w1' }])
+    const bot = await rt.createBot({ name: 'Writer', pickModel: true })
+    const definition = registry.registered.get(bot.agentPreset)
+    const yaml = (await import('js-yaml')).dump(definition)
+    assert.match(yaml, /ptc|base-plugin|dsh-test-plugin/)
   }
 })
 

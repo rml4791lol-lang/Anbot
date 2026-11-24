@@ -11,6 +11,8 @@ import { fakeContext } from './fake-ctx.js'
 import { SOURCE_KIND } from '../src/host/constants.js'
 import { install as installHandoffs } from '../src/host/handoffs.js'
 import { readTaskLedger } from '../src/host/task-ledger.js'
+import { buildTeamActivity } from '../src/host/team-activity.js'
+import { buildTaskDetail } from '../src/host/task-detail.js'
 import { scopeTarget } from '@deepseek-ai/dsh-scope'
 
 let rt
@@ -226,6 +228,149 @@ test('an open hand-off keeps its attempt, checkpoint, and executed evidence', as
   const diff = work.evidence.find(item => item.diff !== undefined)
   assert.deepEqual(diff.diff.paths, ['src/app.js'])
   assert.match(diff.diff.digest, /^sha256:[a-f0-9]{64}$/)
+})
+
+test('typed hand-off checks accept only fresh executed evidence and record verification', async (t) => {
+  const { home, start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer run the tests')
+  const receipt = await first.tool('message_bot', {
+    to: 'Writer',
+    message: 'run the test suite',
+    acceptance: 'The test suite must pass.',
+    checks: [{ id: 'tests', kind: 'command', label: 'test suite', command: 'npm test' }],
+  }, 'a')
+  assert.match(receipt, /Acceptance is enforced by 1 typed check/)
+  turns.end('a', 'asked Writer')
+  const [workId, work] = Object.entries(await worksIn(first)).find(([, item]) => item.to === 'b')
+  assert.equal(work.checks[0].expect.exitCode, 0)
+  assert.match(textOf(first.agentOf('b').calls[0][1].content), /\[Acceptance\][\s\S]*npm test \(exit 0\)/)
+
+  turns.take('b')
+  first.emit('b', 'tool/call', { callId: 'tests', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
+  first.emit('b', 'tool/result', { callId: 'tests', message: { ok: true, content: textBlock('green') } })
+  turns.end('b', 'The suite is green.')
+  await settled(() => callsOf(first.agents, 'a').length === 1)
+
+  const answer = textOf(callsOf(first.agents, 'a')[0][1].content)
+  assert.match(answer, /\[Acceptance verified: 1\/1 checks\]/)
+  assert.deepEqual(await worksIn(first), {})
+  const { rows } = readTaskLedger(join(home, 'ledger'), 0, Number.MAX_SAFE_INTEGER)
+  const close = rows.find(row => row.kind === 'close' && row.id === workId)
+  assert.deepEqual([close.verified, close.needsReview, close.checks], [true, undefined, { total: 1, verified: 1 }])
+})
+
+test('message_bot refuses prose acceptance and malformed typed checks before opening work', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  await assert.rejects(first.tool('message_bot', {
+    to: 'Writer', message: 'run the tests', checks: [{ id: 'done', kind: 'manual' }],
+  }, 'a'), error => error?.code === 'INVALID_ARGS')
+  await assert.rejects(first.tool('message_bot', {
+    to: 'Writer', message: 'run the tests', checks: [{ id: 'tests', kind: 'command', command: 'npm test', expect: { exitCode: 'zero' } }],
+  }, 'a'), error => error?.code === 'INVALID_ARGS')
+  assert.deepEqual(await worksIn(first), {})
+})
+
+test('a failed worker turn reports needs-review without spending an automatic rework', async (t) => {
+  const { home, start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer run the tests')
+  await first.tool('message_bot', {
+    to: 'Writer', message: 'run the test suite',
+    checks: [{ id: 'tests', kind: 'command', command: 'npm test' }],
+  }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId] = Object.entries(await worksIn(first)).find(([, item]) => item.to === 'b')
+  turns.take('b')
+  first.emit('b', 'turn/end', { turn: 1, reason: { kind: 'error', error: { code: 'SERVER', status: 503, message: 'upstream busy' } } })
+  await settled(() => callsOf(first.agents, 'a').length === 1)
+  assert.equal(callsOf(first.agents, 'b').length, 1)
+  const answer = textOf(callsOf(first.agents, 'a')[0][1].content)
+  assert.match(answer, /\[Acceptance not verified\]/)
+  assert.match(answer, /worker turn failed/i)
+  const { rows } = readTaskLedger(join(home, 'ledger'), 0, Number.MAX_SAFE_INTEGER)
+  const close = rows.find(row => row.kind === 'close' && row.id === workId)
+  assert.deepEqual([close.verified, close.needsReview, close.reworks], [undefined, true, undefined])
+})
+
+test('joining a work can replace its acceptance declaration before the receiver starts', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  await rt.openWork('joined-work', { from: 'a', to: 'b', name: 'Run the test suite' })
+  await rt.setWorkAcceptance('joined-work', [{ id: 'tests', kind: 'command', command: 'npm test' }], 'Tests pass.')
+  const work = (await worksIn(first))['joined-work']
+  assert.equal(work.checks[0].command, 'npm test')
+  assert.equal(work.acceptance, 'Tests pass.')
+  assert.equal(work.verification.status, 'pending')
+})
+
+test('a failed hand-off check starts a new attempt and preserves the first attempt evidence', async (t) => {
+  const { start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer run the tests')
+  await first.tool('message_bot', {
+    to: 'Writer', message: 'run the test suite',
+    checks: [{ id: 'tests', kind: 'command', command: 'npm test' }],
+  }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId, before] = Object.entries(await worksIn(first)).find(([, item]) => item.to === 'b')
+
+  turns.take('b')
+  first.emit('b', 'tool/call', { callId: 'lint-a1', name: 'pwsh', arguments: JSON.stringify({ command: 'npm run lint' }) })
+  first.emit('b', 'tool/result', { callId: 'lint-a1', message: { ok: true, content: textBlock('lint green') } })
+  turns.end('b', 'I ran it and it passed.')
+  await settled(() => callsOf(first.agents, 'b').length === 2)
+  const reworked = (await worksIn(first))[workId]
+  assert.deepEqual([reworked.attempt.n, reworked.reworkCount, reworked.evidence.filter(item => item.state === 'executed').length], [2, 1, 1])
+  assert.equal(reworked.evidence.find(item => item.state === 'executed').attemptId, `${workId}:a1`)
+  assert.match(reworked.checkpoint.summary, /Acceptance check failed/)
+  assert.equal(reworked.verification.status, 'pending')
+  assert.match(textOf(first.agentOf('b').calls[1][1].content), /\[Acceptance check failed · attempt 2 of 3\]/)
+  const activity = buildTeamActivity({ state: rt.state, now: Date.now(), timeZone: 'Asia/Shanghai' })
+  const detail = buildTaskDetail({ state: rt.state, activity, taskId: `handoff:${workId}`, now: Date.now() })
+  assert.equal(detail.task.acceptance, 'tests: npm test (exit 0)')
+  assert.deepEqual([detail.rework.count, detail.rework.max], [1, 2])
+  assert.equal(detail.verification.checks[0].status, 'pending')
+
+  turns.take('b')
+  first.emit('b', 'tool/call', { callId: 'tests-a2', name: 'pwsh', arguments: JSON.stringify({ command: 'npm test' }) })
+  first.emit('b', 'tool/result', { callId: 'tests-a2', message: { ok: true, content: textBlock('green') } })
+  turns.end('b', 'The suite is green now.')
+  await settled(() => callsOf(first.agents, 'a').length === 1)
+  const answer = textOf(callsOf(first.agents, 'a')[0][1].content)
+  assert.match(answer, /\[Acceptance verified: 1\/1 checks; 1 rework\]/)
+  assert.equal((await worksIn(first))[workId], undefined)
+  assert.equal(before.attempt.id, `${workId}:a1`)
+})
+
+test('a hand-off stops after two reworks and reports unverified acceptance', async (t) => {
+  const { home, start } = bench(t)
+  const first = await start(seed())
+  const turns = turnTaker(first.agents, first.emit)
+  turns.userTurn('a', 'have Writer run the tests')
+  await first.tool('message_bot', {
+    to: 'Writer', message: 'run the test suite',
+    checks: [{ id: 'tests', kind: 'command', command: 'npm test' }],
+  }, 'a')
+  turns.end('a', 'asked Writer')
+  const [workId] = Object.entries(await worksIn(first)).find(([, item]) => item.to === 'b')
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    turns.take('b')
+    turns.end('b', `attempt ${attempt} says done`)
+    if (attempt < 3) await settled(() => callsOf(first.agents, 'b').length === attempt + 1)
+  }
+  await settled(() => callsOf(first.agents, 'a').length === 1)
+  const answer = textOf(callsOf(first.agents, 'a')[0][1].content)
+  assert.match(answer, /\[Acceptance not verified\][\s\S]*after 2 reworks/)
+  assert.equal((await worksIn(first))[workId], undefined)
+  const { rows } = readTaskLedger(join(home, 'ledger'), 0, Number.MAX_SAFE_INTEGER)
+  const close = rows.find(row => row.kind === 'close' && row.id === workId)
+  assert.deepEqual([close.verified, close.needsReview, close.reworks], [undefined, true, 2])
 })
 
 test('repeated productive hand-off turns reset the unchanged-turn count', async (t) => {

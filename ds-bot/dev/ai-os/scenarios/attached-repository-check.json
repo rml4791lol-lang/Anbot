@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "attached-repository-check",
+  "title": "Real repository test command",
+  "modes": ["attached"],
+  "dataMode": "live",
+  "baseUrl": "http://127.0.0.1:3080",
+  "timeoutMs": 300000,
+  "workspace": { "kind": "worktree", "path": "." },
+  "steps": [
+    { "id": "state", "kind": "api", "endpoint": "state", "payload": {} },
+    { "id": "tests", "kind": "command", "argv": ["npm", "test"], "cwd": "ds-bot", "timeoutMs": 300000 }
+  ],
+  "acceptance": [
+    { "id": "tests-pass", "kind": "file", "path": "ds-bot/package.json" }
+  ]
+}

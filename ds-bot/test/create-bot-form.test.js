@@ -74,9 +74,9 @@ const collect = (match) => {
   return out
 }
 const button = text => collect(n => n.type === 'button' && flatten(n).join('') === text)[0]
-const render = (roster) => {
+const render = (roster, actions = {}) => {
   slots.length = 0
-  props = { roster: { bots: [], rooms: [], prefs: {}, ...roster }, actions: {}, onBack() {}, onCreated() {} }
+  props = { roster: { bots: [], rooms: [], prefs: {}, ...roster }, actions, onBack() {}, onCreated() {} }
   rerender()
 }
 
@@ -90,6 +90,24 @@ test('the form opens on DS Bot models and can create at once', () => {
   assert.equal(button('DS Bot model').props['aria-pressed'], true)
   assert.equal(button('Local agent').props['aria-pressed'], false)
   assert.equal(button('Create').props.disabled, false)
+})
+
+test('the form chooses a native Agent preset without showing preset code', () => {
+  render({ models: MODELS }, { nativeAgentPresets: async () => ({ available: true, presets: [] }) })
+  assert.ok(collect(node => node.type === 'button' && node.props?.['aria-label'] === 'Agent preset')[0])
+  assert.equal(collect(node => node.type === 'textarea').length, 0)
+  assert.match(flatten(concrete).join(' '), /Loading…/)
+})
+
+test('a form with the native preset service waits for its list before creating', () => {
+  slots.length = 0
+  props = {
+    roster: { bots: [], rooms: [], prefs: {}, models: MODELS },
+    actions: { nativeAgentPresets: async () => ({ available: true, presets: [{ id: 'standard', name: 'Standard', isDefault: true }] }) },
+    onBack() {}, onCreated() {},
+  }
+  rerender()
+  assert.equal(button('Create').props.disabled, true)
 })
 
 test('a name another Bot has blocks Create on both sides', () => {

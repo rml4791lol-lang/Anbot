@@ -525,6 +525,7 @@ export function install(rt) {
 
   async function resumeAll() {
     await rt.load()
+    await rt.ensureBotPresets?.()
     if (rt.readOnly() !== undefined) return
     const { turns: noted, queued: dropped } = interrupted
     interrupted = { turns: {}, queued: {} }
