@@ -1102,11 +1102,17 @@ export function install(rt) {
     try {
       for await (const line of rt.partLines(sessionId, AbortSignal.timeout(settings.readMs), { pages: Infinity })) {
         const text = clip(typeof rt.redactSecrets === 'function' ? rt.redactSecrets(line.text) : line.text, line.who === 'user' ? settings.userLineMax : settings.botLineMax)
+        const key = `session:${sessionId}:${line.seq}`
         if (line.who === 'user') {
-          turns.push({ source: `conversation-turn:${sessionId}:${line.seq}`, user: text, answers: [...answers].reverse() })
+          turns.push({
+            source: `conversation-turn:${sessionId}:${line.seq}`,
+            keys: [key, ...answers.flatMap(answer => answer.keys)],
+            user: { text, key },
+            answers: [...answers].reverse(),
+          })
           answers = []
         } else {
-          answers.push(text)
+          answers.push({ text, keys: [key] })
         }
         if (turns.length >= settings.skillEvidenceMax * 4) break
       }
@@ -1119,16 +1125,16 @@ export function install(rt) {
     let userUsed = 0
     let full = false
     for (const turn of turns) {
-      const complete = clip([turn.user, ...turn.answers].join('\n'), settings.userLineMax + settings.botLineMax * 2)
+      const complete = clip([turn.user.text, ...turn.answers.map(answer => answer.text)].join('\n'), settings.userLineMax + settings.botLineMax * 2)
       if (!full && used + complete.length <= settings.textMax) {
-        selected.push({ id: turn.source, kind: 'conversation-turn', text: complete })
+        selected.push({ id: turn.source, kind: 'conversation-turn', text: complete, keys: turn.keys })
         used += complete.length
         continue
       }
       full = true
-      if (userUsed + turn.user.length <= settings.userTextMax) {
-        selected.push({ id: turn.source, kind: 'conversation-turn', text: turn.user })
-        userUsed += turn.user.length
+      if (userUsed + turn.user.text.length <= settings.userTextMax) {
+        selected.push({ id: turn.source, kind: 'conversation-turn', text: turn.user.text, keys: turn.keys })
+        userUsed += turn.user.text.length
       }
     }
     return selected.reverse()
@@ -1158,6 +1164,7 @@ export function install(rt) {
                 at: 0,
                 texts: [],
                 seen: new Set(),
+                keys: new Set([`task:${taskId}`]),
               }
               const safe = normalizedSkillText(typeof rt.redactSecrets === 'function' ? rt.redactSecrets(raw) : raw)
               if (safe !== '' && !saved.seen.has(safe)) {
@@ -1165,6 +1172,7 @@ export function install(rt) {
                 saved.texts.push(safe)
               }
               saved.at = Math.max(saved.at, Number.isFinite(item?.at) ? item.at : 0)
+              if (textOf(item?.sourceId) !== '') saved.keys.add(textOf(item.sourceId))
               tasks.set(taskId, saved)
             }
           }
@@ -1180,13 +1188,16 @@ export function install(rt) {
 
   async function requestedSkillEvidence(botId, instruction) {
     const sessionId = rt.chatOf(botId)
-    const native = [...taskSkillEvidence(botId), ...await conversationSkillEvidence(sessionId)]
+    const tasks = taskSkillEvidence(botId)
+    const taskSources = new Set(tasks.flatMap(task => [...task.keys]))
+    const turns = (await conversationSkillEvidence(sessionId)).filter(turn => !turn.keys.some(key => taskSources.has(key)))
+    const native = [...tasks, ...turns]
     const explicit = userProvidedSkillExamples(instruction).map((text, index) => ({
       id: `user-example:${index + 1}`,
       kind: 'user-provided-example',
       text: clip(typeof rt.redactSecrets === 'function' ? rt.redactSecrets(text) : text, settings.userLineMax),
     }))
-    return [...native, ...explicit].slice(0, settings.skillEvidenceMax)
+    return [...native.map(({ keys: _keys, ...candidate }) => candidate), ...explicit].slice(0, settings.skillEvidenceMax)
   }
 
   function requestedSkillSystem() {

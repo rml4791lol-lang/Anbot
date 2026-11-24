@@ -712,6 +712,19 @@ test('native repetition candidates stay grouped by task or user turn and user ex
   assert.equal(await taskRuntime.rt.requestSkill('b2', 'create', 'task-derived-skill', 'Use the task evidence.'), null)
   assert.equal(taskRuntime.requests.length, 0, 'three evidence artifacts and one conversation turn still count as only two candidates')
 
+  const overlapSeed = verifiedTaskSeed()
+  overlapSeed.rooms.r1.goal.stages[0].tasks[0].evidence[0].sourceId = 'session:b2:11'
+  const overlapRuntime = await startRuntime({
+    seed: overlapSeed,
+    history: { b2: [...ownChat] },
+    replies: [evidenceCreateReply],
+    config: { learningTimes: { tickMs: 100_000 } },
+  })
+  t.after(() => overlapRuntime.stop())
+  const oneExample = 'Create a release Skill.\nUser-provided examples:\n1. Check the release artifact once before delivery.'
+  assert.equal(await overlapRuntime.rt.requestSkill('b2', 'create', 'overlap-skill', oneExample), null)
+  assert.equal(overlapRuntime.requests.length, 0, 'a task artifact and the turn it came from share one native candidate')
+
   const oneTurn = [
     { event: { seq: 10, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Convert the Monday report.' }] } } },
     { event: { seq: 11, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'Converted the first intermediate report.' }] } } } },
