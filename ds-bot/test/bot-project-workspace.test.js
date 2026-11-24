@@ -173,6 +173,24 @@ test('retry restores a reserved checkout that disappeared after an interrupted s
   assert.equal(git('worktree', 'list', '--porcelain').match(/^worktree /gmu).length, 2)
 })
 
+test('automatic provisioning skips a team folder that the commit does not contain', async t => {
+  const { repositoryRoot, git } = repository(t)
+  writeFileSync(join(repositoryRoot, '.gitignore'), 'ignored/\n')
+  git('add', '.gitignore')
+  git('-c', 'user.name=Anbot test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'ignore')
+  const state = {}
+  const save = async () => { throw new Error('must not save') }
+  for (const folder of [join('ignored', 'team'), 'untracked', 'staged']) {
+    const source = join(repositoryRoot, folder)
+    mkdirSync(source, { recursive: true })
+    writeFileSync(join(source, 'notes.txt'), 'local\n')
+    if (folder === 'staged') git('add', 'staged')
+    assert.equal(await prepareBotProjectWorkspace({ state, save }, { name: 'Ignored Bot', source }), undefined, folder)
+  }
+  assert.deepEqual(state, {})
+  assert.equal(git('worktree', 'list', '--porcelain').match(/^worktree /gmu).length, 1)
+})
+
 test('automatic provisioning is bounded to repositories with a readable commit', async t => {
   const fixture = mkdtempSync(join(tmpdir(), 'anbot-project-workspace-plain-'))
   t.after(() => rmSync(fixture, { recursive: true, force: true }))

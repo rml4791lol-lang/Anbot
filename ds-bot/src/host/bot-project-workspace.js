@@ -35,6 +35,8 @@ const inside = (inner, outer) => {
   return value === '' || (value !== '..' && !value.startsWith(`..${sep}`) && !isAbsolute(value))
 }
 const newSessionId = () => `session-${randomUUID()}`
+const commitHasFolder = async (root, revision, folder) => folder === ''
+  || (await git(root, ['cat-file', '-t', `${revision}:${folder.split(sep).join('/')}`], { allow: [0, 128] })).stdout.trim() === 'tree'
 const pathKey = path => realpath(path).catch(() => resolve(path))
 
 async function preparePool(repositoryRoot) {
@@ -203,6 +205,9 @@ export async function prepareBotProjectWorkspace(rt, { name, source } = {}) {
   if (sourceRelative === '..' || sourceRelative.startsWith(`..${sep}`) || isAbsolute(sourceRelative)) {
     throw new Error(`${source} is outside the Git repository ${repository.value.root}`)
   }
+  // The linked checkout holds only what this commit tracks, so an ignored, untracked or
+  // uncommitted team folder would be missing there; such a Bot keeps the folder itself.
+  if (!(await commitHasFolder(repository.value.root, repository.value.revision, sourceRelative))) return undefined
   const nameKey = normalize(cleanName)
   let record = reservationFor(rt, {
     nameKey, repositoryRoot: repository.value.root, commonDir: repository.value.commonDir, sourceRelative,
