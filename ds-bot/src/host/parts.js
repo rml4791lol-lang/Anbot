@@ -2049,7 +2049,7 @@ export function install(rt) {
   // turn. It keeps its own earlier parts with it (threads.js).
   async function openPartNow(bot, agent) {
     const dir = rt.workDirOf({ botId: bot.id })
-    const freshId = await rt.createSession(bot.name, { dir })
+    const freshId = await rt.createSession(bot.name, { dir, agentPreset: bot.agentPreset, presetBinding: bot.presetBinding })
     const picked = await freshRoute(bot, agent.session)
     if (picked !== undefined) await selectRoute({ name: bot.name }, freshId, picked)
     await rt.applyPermission(bot, freshId, undefined)

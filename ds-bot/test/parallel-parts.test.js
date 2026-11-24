@@ -169,6 +169,25 @@ test('a new part made while the Bot works starts at once and leaves the running 
   assert.equal(rt.chatOwners.get('w5'), 'w1')
 })
 
+// A Session keeps the preset it was created with, so the part opened while the Bot works
+// must be made with the Bot's own preset binding, as the switch and group parts are.
+test('a new part made while the Bot works keeps the Bot preset', async (t) => {
+  const { call, rt } = await team(t)
+  await call('state')
+  const bot = rt.botOf('w1')
+  bot.agentPreset = 'ptc'
+  bot.presetBinding = { id: 'anbot-preset-w1', base: 'ptc', digest: 'd1' }
+  const made = []
+  rt.live.set('w2', { turn: {} })
+  rt.resolveAgent = async () => ({ id: 'w2', status: 'running', session: { requestHeader: () => undefined } })
+  rt.createSession = async (title, options) => { made.push(options); return 'w5' }
+  const result = await call('bot-new-part', { botId: 'w1' })
+  assert.equal(result.ok, true, JSON.stringify(result))
+  assert.equal(made.length, 1)
+  assert.equal(made[0].agentPreset, 'ptc')
+  assert.deepEqual(made[0].presetBinding, bot.presetBinding)
+})
+
 // A model picked while the new part is being made must reach it: at that moment it is
 // not registered as the Bot's yet, so the sync that ran meanwhile did not see it (and
 // recorded the new model as applied), and the route this part was made with is the old
