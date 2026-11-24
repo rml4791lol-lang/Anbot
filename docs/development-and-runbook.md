@@ -6,6 +6,16 @@ Run `npm ci`, `npm test` and `npm run build` in `app/`. Run `npm run pack` to bu
 
 The smoke test needs a DeepSeek Harness checkout at the DSH version `app/package.json` pins, with its dependencies installed and `pnpm run build:artifacts` run once ([CONTRIBUTING](../CONTRIBUTING.md) has the commands). `dev/bench.sh` looks for `deepseek-harness` beside the checkout and beside the main worktree. From a linked worktree elsewhere, set `DSH_HARNESS` to the checkout.
 
+## Comparing Bot setups on the search-overlay repair
+
+Run `node app/scripts/compare-search-repair.mjs prepare` from the repository root to reproduce the search-overlay regression in two detached worktrees in a temporary Git repository. The command prefers the local npm cache, fetches what it lacks, and prints the comparison directory. Its `comparison.json` records the shared repair prompt, test digest and each arm’s instructions and Skill shortlist.
+
+Use `node app/scripts/compare-search-repair.mjs bind <comparison-directory>` to check the worktree and sandbox bindings in a fresh pinned DSH host. It uses a closed loopback endpoint and sends no repair task. Use `node app/scripts/compare-search-repair.mjs run <comparison-directory>` with `ANBOT_REPAIR_BASE_URL`, `ANBOT_REPAIR_MODEL` and the credential expected by the adapter through `ANBOT_REPAIR_API_KEY`. The provider protocol defaults to `openai-responses` and can be set with `ANBOT_REPAIR_PROTOCOL`. Set `ANBOT_REPAIR_EFFORT` to a level the provider accepts on the wire. The driver declares and reads back that exact level before creating the Bots. Both Bots must reply from the configured route before receiving the repair task. The isolated host closes after the run. The run directory’s `bindings.json` records the observed worktree, Session, model route and tool names.
+
+For the local DeepSeek Responses relay, set `ANBOT_REPAIR_BASE_URL=http://127.0.0.1:15721/v1`, `ANBOT_REPAIR_MODEL=deepseek-v4.1-flash` and `ANBOT_REPAIR_EFFORT=max`. Supply the adapter's bearer value in the launch environment. A local relay that authenticates upstream can accept a non-secret placeholder. Keep actual credentials out of the repository and evidence logs. Run `prepare` again to obtain clean worktrees for each new comparison.
+
+Run `node app/scripts/compare-search-repair.mjs verify <comparison-directory>` to check both candidate diffs and rerun the identical acceptance tests. This also runs at the end of `run`. Use `node app/scripts/compare-search-repair.mjs takeover <DSH-run-directory>` with the same provider credential to reopen the successful run. Both Bots must refuse input during the hold and read a temporary human edit in their original Session after return. The driver records the evidence in `takeover.json`, removes its files and reruns the regression checks.
+
 ## Updating the installed macOS app from a local build
 
 Build and check the package first: `npm test`, `node scripts/build-client.mjs --check`, `npm run lint` and the smoke test in `ds-bot/`, then `npm test`, `npm run build`, `npm run pack` and `npm run check-packed` in `app/`. Take the SHA-256 of `dist-pack/mac-arm64/Anbot.app/Contents/Resources/app.asar`, then run from `app/`:

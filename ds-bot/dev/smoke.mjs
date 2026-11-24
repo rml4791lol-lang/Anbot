@@ -201,6 +201,31 @@ await step('a Bot is not offered dsh\'s blocking question tool', () => send(botN
     ?? expect(saidText(calls, /^收到：阻塞提问/), 'expected Writer to answer in its reply')
 })
 
+const writerChat = () => botNamed('Writer').sessionId ?? botNamed('Writer').id
+const pendingQuestion = () => state().questions?.[writerChat()]
+const userChoice = '写初稿'
+let pendingQuestionId
+await step('Writer opens an asynchronous question and ends its turn', () => send(writerChat(), '多选'), (_value, calls) => {
+  const question = pendingQuestion()
+  pendingQuestionId = question?.id
+  return expect(question?.options.some(option => option.label === userChoice) && question.callId, 'Writer did not leave a question card tied to its tool call')
+    ?? expect(calls.some(call => call.out?.some(block => block.type === 'tool_use' && block.name === 'ask_user')), 'the native turn did not call ask_user')
+})
+await step('Chief finishes independent work while Writer waits for an answer', () => send(chief().id, '独立检查问题卡是否阻塞'), (_value, calls) => {
+  return expect(saidText(calls, /^收到：独立检查问题卡是否阻塞/), 'Chief did not finish its independent turn')
+    ?? expect(pendingQuestionId !== undefined && pendingQuestion()?.id === pendingQuestionId, 'Writer lost its question while Chief worked')
+})
+await step('answering the card delivers the selected option to Writer', () => api('answer-question', {
+  sessionId: writerChat(), questionId: pendingQuestionId, answer: { selected: [userChoice] },
+}), async (_value, calls) => {
+  const chat = await api('chat', { botId: botNamed('Writer').id })
+  const answered = chat.items.some(item => item.kind === 'answer' && item.answers?.some(answer =>
+    answer.id === pendingQuestionId && answer.selected?.length === 1 && answer.selected[0] === userChoice))
+  return expect(pendingQuestion() === undefined, 'Writer kept the answered card open')
+    ?? expect(answered, 'Writer’s Session did not record the selected option for the original question')
+    ?? expect(calls.some(call => call.last?.includes('answer_to_pending_question')), 'the answer did not reach the model')
+})
+
 // show_view: an options card waits in state.views. The key is the chat's Session
 // id — the Bot id until its chat first moves to a fresh part (chatOf).
 await step('Writer shows an options view', () => send(botNamed('Writer').id, '视图选项'), () => {
@@ -424,14 +449,19 @@ const sees = `工具 mcp__${echoName}__echo；技能 ${skillName}（${skillDescr
 const seesNothing = '工具 无；技能 无'
 const reportOf = (calls, bot) => calls.flatMap(call => call.out ?? []).find(block => block.type === 'text' && block.text.startsWith(`${bot} 能力：`))?.text
 const attach = (bot, name, attached) => api('bot-capability', { botId: bot.id, name, attached })
+const extensionsOf = async bot => (await api('bot-runtime', { botId: bot.id, sessionId: bot.sessionId ?? bot.id })).extensions
 await api('capability-save', { name: echoName, kind: 'mcp', description: 'Smoke test echo server', transport: 'stdio', command: process.execPath, args: [echoServer], env: {} })
 await api('capability-save', { name: skillName, kind: 'skill', description: skillDescription, content: 'Use this skill when asked about capability smoke checks.' })
 await attach(chief(), echoName, true)
 await attach(chief(), skillName, true)
 
-await step('Chief sees its attached MCP and skill', () => send(chief().id, '查能力 smoke'), (_value, calls) => {
+await step('Chief sees its attached MCP and skill', () => send(chief().id, '查能力 smoke'), async (_value, calls) => {
   const report = reportOf(calls, 'Chief')
+  const echo = (await extensionsOf(chief())).find(item => item.id === echoName && item.kind === 'mcp')
   return expect(report?.endsWith(sees), `Chief reported ${report}`)
+    ?? expect(echo?.observations.authorization.value === 'allowed', 'the runtime did not record the stdio MCP approval')
+    ?? expect(echo?.observations.initialConnected.value === true, 'initial MCP connection was not observed')
+    ?? expect(echo?.observations.liveness.status === 'unavailable', 'the pinned MCP client cannot establish current liveness')
 })
 
 const capabilityRoom = await api('create-room', { name: 'Capability smoke', members: [chief().id, botNamed('Coder').id], admin: chief().id })
@@ -447,9 +477,25 @@ await step('Coder does not inherit Chief capabilities', () => send(botNamed('Cod
 
 await attach(chief(), echoName, false)
 await attach(chief(), skillName, false)
-await step('detached capabilities disappear from Chief', () => send(chief().id, '查能力 smoke'), (_value, calls) => {
+await step('detached capabilities disappear from Chief', () => send(chief().id, '查能力 smoke'), async (_value, calls) => {
   const report = reportOf(calls, 'Chief')
   return expect(report?.endsWith(seesNothing), `Chief reported ${report}`)
+    ?? expect(!(await extensionsOf(chief())).some(item => item.id === echoName), 'the detached MCP still appears in the runtime view')
+})
+
+const brokenName = 'smoke-failed-mcp'
+await api('capability-save', { name: brokenName, kind: 'mcp', transport: 'stdio', command: process.execPath, args: ['-e', 'process.exit(1)'] })
+await attach(chief(), brokenName, true)
+await step('a failed MCP mount reports failure without giving the model its tools', () => send(chief().id, '查能力 smoke'), async (_value, calls) => {
+  const failure = (await extensionsOf(chief())).find(item => item.id === brokenName)
+  return expect(reportOf(calls, 'Chief')?.endsWith(seesNothing), 'failed MCP tools reached the model')
+    ?? expect(failure?.observations.initialConnected.value === false, 'failed initialization was not observed')
+    ?? expect(failure?.observations.liveness.value === 'failed', 'the runtime failed to expose the transport error')
+})
+await api('capability-delete', { name: brokenName })
+await step('uninstalling the failed MCP clears its runtime status', () => send(chief().id, '查能力 smoke'), async (_value, calls) => {
+  return expect(reportOf(calls, 'Chief')?.endsWith(seesNothing), 'uninstalled MCP tools reached the model')
+    ?? expect(!(await extensionsOf(chief())).some(item => item.id === brokenName), 'the uninstalled MCP still appears in the runtime view')
 })
 
 if (outFile) writeFileSync(outFile, `${JSON.stringify(transcript, null, 2)}\n`)
