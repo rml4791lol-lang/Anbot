@@ -30,6 +30,8 @@ export const KO = {
   'What must be true before the work is complete…': "작업 완료에 필요한 조건…",
   'What the Bot should deliver and report…': "Bot이 전달하고 보고할 내용…",
   'Recommended Skills that this profile does not serve: {skills}': "이 프로필에서 사용할 수 없는 권장 스킬: {skills}",
+  'Not added': "추가되지 않음",
+  'The shortlist holds {max} Skills; remove one to add: {skills}': "스킬은 최대 {max}개입니다. 추가하려면 하나를 빼세요: {skills}",
   'The team workspace is used when no folder is chosen.': "폴더를 선택하지 않으면 팀 작업공간을 사용합니다.",
   'X-Ray': 'X-Ray',
   'Failed commands': '실패한 명령',

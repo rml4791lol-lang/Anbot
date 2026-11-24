@@ -717,6 +717,8 @@ const ZH = {
   'What must be true before the work is complete…': '说明完成任务必须满足哪些条件…',
   'What the Bot should deliver and report…': '说明这个 Bot 应交付和汇报什么…',
   'Recommended Skills that this profile does not serve: {skills}': '当前配置未提供这些推荐技能：{skills}',
+  'Not added': "未加入",
+  'The shortlist holds {max} Skills; remove one to add: {skills}': "技能清单最多 {max} 个；先移除一个，才能加入：{skills}",
   'The team workspace is used when no folder is chosen.': '未选目录时使用团队工作区。',
   'Debugging': '调试',
   'Code review': '代码评审',

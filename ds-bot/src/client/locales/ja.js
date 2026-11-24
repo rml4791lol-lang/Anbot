@@ -30,6 +30,8 @@ export const JA = {
   'What must be true before the work is complete…': "作業を完了するために満たす条件…",
   'What the Bot should deliver and report…': "ボットが提出、報告する内容…",
   'Recommended Skills that this profile does not serve: {skills}': "このプロファイルで利用できない推奨スキル：{skills}",
+  'Not added': "追加されていません",
+  'The shortlist holds {max} Skills; remove one to add: {skills}': "スキルは最大 {max} 個です。追加するには 1 つ外してください：{skills}",
   'The team workspace is used when no folder is chosen.': "フォルダーを選ばない場合はチームの作業領域を使用します。",
   'X-Ray': 'X-Ray',
   'Failed commands': '失敗したコマンド',

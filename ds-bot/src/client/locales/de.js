@@ -30,6 +30,8 @@ export const DE = {
   'What must be true before the work is complete…': "Welche Voraussetzungen für den Abschluss erfüllt sein müssen…",
   'What the Bot should deliver and report…': "Was der Bot liefern und berichten soll…",
   'Recommended Skills that this profile does not serve: {skills}': "In diesem Profil nicht verfügbare empfohlene Skills: {skills}",
+  'Not added': "Nicht hinzugefügt",
+  'The shortlist holds {max} Skills; remove one to add: {skills}': "Die Liste fasst {max} Skills; entferne einen, um hinzuzufügen: {skills}",
   'The team workspace is used when no folder is chosen.': "Ohne Ordnerauswahl wird der Arbeitsbereich des Teams verwendet.",
   'X-Ray': 'X-Ray',
   'Failed commands': 'Fehlgeschlagene Befehle',

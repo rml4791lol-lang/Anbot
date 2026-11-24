@@ -185,6 +185,26 @@ test('a partially available recommendation separates applied, advisory and unava
   assert.match(text, /Unavailable\s+·\s+Recommended Skills that this profile does not serve: anbot-code-review/u)
 })
 
+test('a recommendation names the Skills that the five-Skill shortlist had no room for', () => {
+  const own = ['one', 'two', 'three', 'four'].map(name => ({ name, description: `Skill ${name}` }))
+  render({ models: MODELS, skillCatalog: [...own,
+    { name: 'anbot-debugging', description: 'Reproduce a defect' },
+    { name: 'anbot-code-review', description: 'Review changes' },
+  ] })
+  for (const skill of own) collect(node => node.type === 'input' && node.props.value === skill.name)[0].props.onChange({ target: { checked: true } })
+  buttonByLabel('Self-maintenance').props.onClick()
+  const checked = collect(node => node.type === 'input' && node.props.checked).map(node => node.props.value)
+  assert.equal(checked.length, 5)
+  assert.ok(checked.includes('anbot-debugging'))
+  const text = flatten(collect(node => node.props?.['aria-label'] === 'Recommendation status')[0]).join(' ')
+  assert.match(text, /Not added\s+·\s+The shortlist holds 5 Skills; remove one to add: anbot-code-review/u)
+  assert.doesNotMatch(text, /does not serve/u)
+  collect(node => node.type === 'input' && node.props.value === 'one')[0].props.onChange({ target: { checked: false } })
+  collect(node => node.type === 'input' && node.props.value === 'anbot-code-review')[0].props.onChange({ target: { checked: true } })
+  const after = flatten(collect(node => node.props?.['aria-label'] === 'Recommendation status')[0]).join(' ')
+  assert.doesNotMatch(after, /Not added/u)
+})
+
 test('the create payload keeps combined briefs and an explicitly selected working folder', () => {
   const payload = createPayload({
     name: 'Maintainer', look: { shape: 'star', color: 'blue' }, model: 'ds/flash',

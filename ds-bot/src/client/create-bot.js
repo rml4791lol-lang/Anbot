@@ -47,6 +47,7 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [recommendationId, setRecommendationId] = useState('')
+  const [crowdedOut, setCrowdedOut] = useState([])
   const fileRef = useRef(null)
   const frame = useRef(null)
   const localAgents = useLocalAgents(mode === 'local')
@@ -116,14 +117,17 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
     setAcceptance(current => replaceUnchanged(current, previous?.acceptance, item.acceptance))
     setOutput(current => replaceUnchanged(current, previous?.output, item.output))
     const missing = new Set(recommendationSkills(item).unavailable.map(skill => skill.name))
-    setSkills(current => {
-      const next = [...current]
-      for (const skill of item.skills) {
-        if (missing.has(skill.name) || next.some(entry => entry.name === skill.name) || next.length >= SKILL_SHORTLIST_MAX) continue
-        next.push({ name: skill.name, purpose: skill.purpose })
-      }
-      return next
-    })
+    // Worked out from the current list, not inside the updater: the note must name what
+    // this click could not add, and an updater may run more than once.
+    const next = [...skills]
+    const full = []
+    for (const skill of item.skills) {
+      if (missing.has(skill.name) || next.some(entry => entry.name === skill.name)) continue
+      if (next.length >= SKILL_SHORTLIST_MAX) full.push(skill.name)
+      else next.push({ name: skill.name, purpose: skill.purpose })
+    }
+    setSkills(next)
+    setCrowdedOut(full)
     setRecommendationId(item.id)
   }
   const run = value => Promise.resolve(value).catch(failure => {
@@ -131,6 +135,8 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
     return false
   })
   const activeUnavailable = activeRecommendation === undefined ? [] : recommendationSkills(activeRecommendation).unavailable
+  // Once the user makes room and adds one by hand, it is no longer left out.
+  const stillOut = crowdedOut.filter(name => !skills.some(item => item.name === name))
   const recommendationStatus = activeRecommendation === undefined ? null : h('div', {
     className: 'bt-field', role: 'status', 'aria-label': t('Recommendation status'),
   },
@@ -149,6 +155,10 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   local || activeUnavailable.length === 0 ? null : h('p', { className: 'bt-note bt-danger' },
     h('strong', null, t('Unavailable')), ' · ', t('Recommended Skills that this profile does not serve: {skills}', {
       skills: activeUnavailable.map(skill => skill.name).join(', '),
+    })),
+  local || stillOut.length === 0 ? null : h('p', { className: 'bt-note bt-danger' },
+    h('strong', null, t('Not added')), ' · ', t('The shortlist holds {max} Skills; remove one to add: {skills}', {
+      max: SKILL_SHORTLIST_MAX, skills: stillOut.join(', '),
     })))
   const card = h('div', { className: 'bt-create-card' },
     h(RunModeSwitch, { mode, setMode }),

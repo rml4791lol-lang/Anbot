@@ -30,6 +30,8 @@ export const ES = {
   'What must be true before the work is complete…': "Qué requisitos deben cumplirse para completar el trabajo…",
   'What the Bot should deliver and report…': "Qué debe entregar y comunicar el Bot…",
   'Recommended Skills that this profile does not serve: {skills}': "Habilidades recomendadas que este perfil no ofrece: {skills}",
+  'Not added': "No añadido",
+  'The shortlist holds {max} Skills; remove one to add: {skills}': "La lista admite {max} habilidades; quita una para añadir: {skills}",
   'The team workspace is used when no folder is chosen.': "Si no eliges una carpeta, se usa el espacio de trabajo del equipo.",
   'X-Ray': 'X-Ray',
   'Failed commands': 'Comandos fallidos',

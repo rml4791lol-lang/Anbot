@@ -143,6 +143,8 @@ var JA = {
   "What must be true before the work is complete…": "作業を完了するために満たす条件…",
   "What the Bot should deliver and report…": "ボットが提出、報告する内容…",
   "Recommended Skills that this profile does not serve: {skills}": "このプロファイルで利用できない推奨スキル：{skills}",
+  "Not added": "追加されていません",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "スキルは最大 {max} 個です。追加するには 1 つ外してください：{skills}",
   "The team workspace is used when no folder is chosen.": "フォルダーを選ばない場合はチームの作業領域を使用します。",
   "X-Ray": "X-Ray",
   "Failed commands": "失敗したコマンド",
@@ -3051,6 +3053,8 @@ var KO = {
   "What must be true before the work is complete…": "작업 완료에 필요한 조건…",
   "What the Bot should deliver and report…": "Bot이 전달하고 보고할 내용…",
   "Recommended Skills that this profile does not serve: {skills}": "이 프로필에서 사용할 수 없는 권장 스킬: {skills}",
+  "Not added": "추가되지 않음",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "스킬은 최대 {max}개입니다. 추가하려면 하나를 빼세요: {skills}",
   "The team workspace is used when no folder is chosen.": "폴더를 선택하지 않으면 팀 작업공간을 사용합니다.",
   "X-Ray": "X-Ray",
   "Failed commands": "실패한 명령",
@@ -6004,6 +6008,8 @@ var ES = {
   "What must be true before the work is complete…": "Qué requisitos deben cumplirse para completar el trabajo…",
   "What the Bot should deliver and report…": "Qué debe entregar y comunicar el Bot…",
   "Recommended Skills that this profile does not serve: {skills}": "Habilidades recomendadas que este perfil no ofrece: {skills}",
+  "Not added": "No añadido",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "La lista admite {max} habilidades; quita una para añadir: {skills}",
   "The team workspace is used when no folder is chosen.": "Si no eliges una carpeta, se usa el espacio de trabajo del equipo.",
   "X-Ray": "X-Ray",
   "Failed commands": "Comandos fallidos",
@@ -8957,6 +8963,8 @@ var FR = {
   "What must be true before the work is complete…": "Les conditions à remplir pour terminer le travail…",
   "What the Bot should deliver and report…": "Ce que le Bot doit livrer et communiquer…",
   "Recommended Skills that this profile does not serve: {skills}": "Compétences recommandées indisponibles dans ce profil : {skills}",
+  "Not added": "Non ajouté",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "La liste contient au plus {max} compétences ; retirez-en une pour ajouter : {skills}",
   "The team workspace is used when no folder is chosen.": "Sans dossier sélectionné, l’espace de travail de l’équipe est utilisé.",
   "X-Ray": "X-Ray",
   "Failed commands": "Commandes en échec",
@@ -11865,6 +11873,8 @@ var DE = {
   "What must be true before the work is complete…": "Welche Voraussetzungen für den Abschluss erfüllt sein müssen…",
   "What the Bot should deliver and report…": "Was der Bot liefern und berichten soll…",
   "Recommended Skills that this profile does not serve: {skills}": "In diesem Profil nicht verfügbare empfohlene Skills: {skills}",
+  "Not added": "Nicht hinzugefügt",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "Die Liste fasst {max} Skills; entferne einen, um hinzuzufügen: {skills}",
   "The team workspace is used when no folder is chosen.": "Ohne Ordnerauswahl wird der Arbeitsbereich des Teams verwendet.",
   "X-Ray": "X-Ray",
   "Failed commands": "Fehlgeschlagene Befehle",
@@ -15491,6 +15501,8 @@ var ZH = {
   "What must be true before the work is complete…": "说明完成任务必须满足哪些条件…",
   "What the Bot should deliver and report…": "说明这个 Bot 应交付和汇报什么…",
   "Recommended Skills that this profile does not serve: {skills}": "当前配置未提供这些推荐技能：{skills}",
+  "Not added": "未加入",
+  "The shortlist holds {max} Skills; remove one to add: {skills}": "技能清单最多 {max} 个；先移除一个，才能加入：{skills}",
   "The team workspace is used when no folder is chosen.": "未选目录时使用团队工作区。",
   "Debugging": "调试",
   "Code review": "代码评审",
@@ -35078,6 +35090,7 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
   const [busy, setBusy] = (0, import_react40.useState)(false);
   const [error, setError] = (0, import_react40.useState)("");
   const [recommendationId, setRecommendationId] = (0, import_react40.useState)("");
+  const [crowdedOut, setCrowdedOut] = (0, import_react40.useState)([]);
   const fileRef = (0, import_react40.useRef)(null);
   const frame = (0, import_react40.useRef)(null);
   const localAgents = useLocalAgents(mode === "local");
@@ -35161,14 +35174,15 @@ ${next}`;
     setAcceptance((current2) => replaceUnchanged(current2, previous?.acceptance, item.acceptance));
     setOutput((current2) => replaceUnchanged(current2, previous?.output, item.output));
     const missing = new Set(recommendationSkills(item).unavailable.map((skill) => skill.name));
-    setSkills((current2) => {
-      const next = [...current2];
-      for (const skill of item.skills) {
-        if (missing.has(skill.name) || next.some((entry) => entry.name === skill.name) || next.length >= SKILL_SHORTLIST_MAX) continue;
-        next.push({ name: skill.name, purpose: skill.purpose });
-      }
-      return next;
-    });
+    const next = [...skills];
+    const full2 = [];
+    for (const skill of item.skills) {
+      if (missing.has(skill.name) || next.some((entry) => entry.name === skill.name)) continue;
+      if (next.length >= SKILL_SHORTLIST_MAX) full2.push(skill.name);
+      else next.push({ name: skill.name, purpose: skill.purpose });
+    }
+    setSkills(next);
+    setCrowdedOut(full2);
     setRecommendationId(item.id);
   };
   const run2 = (value) => Promise.resolve(value).catch((failure) => {
@@ -35176,6 +35190,7 @@ ${next}`;
     return false;
   });
   const activeUnavailable = activeRecommendation === void 0 ? [] : recommendationSkills(activeRecommendation).unavailable;
+  const stillOut = crowdedOut.filter((name2) => !skills.some((item) => item.name === name2));
   const recommendationStatus = activeRecommendation === void 0 ? null : (0, import_react40.createElement)(
     "div",
     {
@@ -35204,6 +35219,16 @@ ${next}`;
       " · ",
       t("Recommended Skills that this profile does not serve: {skills}", {
         skills: activeUnavailable.map((skill) => skill.name).join(", ")
+      })
+    ),
+    local || stillOut.length === 0 ? null : (0, import_react40.createElement)(
+      "p",
+      { className: "bt-note bt-danger" },
+      (0, import_react40.createElement)("strong", null, t("Not added")),
+      " · ",
+      t("The shortlist holds {max} Skills; remove one to add: {skills}", {
+        max: SKILL_SHORTLIST_MAX,
+        skills: stillOut.join(", ")
       })
     )
   );
