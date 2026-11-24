@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from '../index.js'
-import { agentsAnswer, agentsProblem, agentsRequest, applyEdits, LEARNING, parseJson, skillProblem, withoutReviewedAgentsRecords } from '../src/host/learning.js'
+import { agentsAnswer, agentsProblem, agentsRequest, applyEdits, LEARNING, parseJson, skillEvidenceProblem, skillProblem, withoutReviewedAgentsRecords } from '../src/host/learning.js'
 import { fakeContext } from './fake-ctx.js'
 
 const TEAM = {
@@ -37,6 +37,30 @@ const createReply = JSON.stringify({
 })
 const noneReply = JSON.stringify({ action: 'none', reason: 'This work taught nothing reusable.' })
 
+const requestedCreateInstruction = `Create a release-check Skill.\nUser-provided examples:\n1. Check a release build before delivery.\n2. Repeat the release build check after a fix.\n3. Check the final release artifact again before handoff.`
+
+function requestedCreateReply({ description = 'Use when checking a release.', content = 'Run the release checks before delivery.', why = 'Three release deliveries needed the same check.' } = {}) {
+  return JSON.stringify({
+    action: 'create',
+    description,
+    content,
+    why,
+    evidence: {
+      repetitions: [1, 2, 3].map(index => ({ source: `user-example:${index}`, observation: `Release delivery example ${index} required the same acceptance check.` })),
+      acceptance: ['The release artifact passes its declared checks.'],
+      steps: ['Run the declared release checks.', 'Check the result against the release artifact.', 'Report the fresh result before delivery.'],
+      portability: 'Applies to later release tasks with declared acceptance checks.',
+      trigger: 'Use when preparing or verifying a release artifact.',
+      benefit: 'Future release work can verify the artifact with the same repeatable checks.',
+    },
+  })
+}
+
+function requestCreate(runtime, options = {}) {
+  const name = options.name ?? 'release-checks'
+  return runtime.rt.requestSkill('b2', 'create', name, options.instruction ?? requestedCreateInstruction)
+}
+
 const improvementAgentsReply = JSON.stringify({
   action: 'edit',
   scope: 'agents',
@@ -58,6 +82,18 @@ const improvementReply = JSON.stringify({
   proposedChange: 'Create a learned skill for recording and rerunning acceptance checks.',
   expectedBenefit: 'Later delivery tasks can verify the same evidence instead of trusting a completion report.',
   rollbackPath: 'Remove the learned skill from this Bot if the checks stop matching the team workflow.',
+  evidence: {
+    repetitions: [
+      { source: 'task:goal:g1:s1:t1:verify-41', observation: 'An earlier delivery run needed a fresh acceptance check before completion.' },
+      { source: 'task:goal:g1:s1:t1:verify-42', observation: 'The repeated delivery work again depended on its recorded acceptance command.' },
+      { source: 'task:goal:g1:s1:t1:verify-44', observation: 'The current delivery run passed only after rerunning the release checks.' },
+    ],
+    acceptance: ['The declared test command passes against the release artifact.'],
+    steps: ['Record the acceptance command.', 'Rerun it against the current artifact.', 'Attach the fresh result to the task.'],
+    portability: 'Applies to later release and delivery tasks with declared acceptance commands.',
+    trigger: 'Use whenever a delivery task must prove its acceptance checks are still current.',
+    benefit: 'Future delivery work can reuse a visible verification procedure instead of trusting a completion report.',
+  },
 })
 
 function verifiedTaskSeed() {
@@ -72,6 +108,14 @@ function verifiedTaskSeed() {
         tasks: [{
           id: 't1', botId: 'b2', task: 'Ship the release', status: 'done',
           evidence: [{
+            id: 'verify-41', kind: 'verified', text: 'npm test passed on an earlier delivery attempt',
+            sourceId: 'session:b2:41', at: now - 300,
+            artifact: { path: 'dist/app.zip', digest: 'sha256:verified-41' },
+          }, {
+            id: 'verify-42', kind: 'verified', text: 'The release acceptance check passed again after a fix',
+            sourceId: 'session:b2:42', at: now - 250,
+            artifact: { path: 'dist/app.zip', digest: 'sha256:verified-42' },
+          }, {
             id: 'reported-44', kind: 'reported', text: 'A done status is enough to call the release complete.',
             sourceId: 'session:b2:40', at: now - 200,
           }, {
@@ -80,14 +124,25 @@ function verifiedTaskSeed() {
             artifact: { path: 'dist/app.zip', digest: 'sha256:verified-44' },
           }],
           verification: {
-            status: 'verified', evidenceIds: ['verify-44'], verifiedAt: now - 50,
-            checks: [{ text: 'tests pass', status: 'verified', evidenceId: 'verify-44' }],
+            status: 'verified', evidenceIds: ['verify-41', 'verify-42', 'verify-44'], verifiedAt: now - 50,
+            checks: [
+              { text: 'tests pass', status: 'verified', evidenceId: 'verify-44' },
+              { text: 'tests pass in prior attempts', status: 'verified', evidenceId: 'verify-41' },
+              { text: 'tests pass after rework', status: 'verified', evidenceId: 'verify-42' },
+            ],
           },
         }],
       }],
     },
   }
   return seed
+}
+
+function verifiedAgentsSeed(t) {
+  const folder = projectFolder(t)
+  const seed = verifiedTaskSeed()
+  seed.bots.b2.workDir = folder
+  return { folder, seed }
 }
 
 function start({ replies = [], config = {}, history = {}, seed = TEAM, learningSeed = {} } = {}) {
@@ -194,6 +249,39 @@ function addNextTurn(history) {
   )
 }
 
+function repeatedWorkHistory() {
+  const rows = [
+    ['Convert the Monday report.', 'Converted the Monday report with unchanged calculations.'],
+    ['Convert the Wednesday report.', 'Converted the Wednesday report with unchanged calculations.'],
+    ['Convert the Friday report.', 'Converted the Friday report with unchanged calculations.'],
+  ]
+  return {
+    b2: rows.flatMap(([user, bot], index) => [
+      { event: { seq: 10 + index * 2, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: user }] } } },
+      { event: { seq: 11 + index * 2, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: bot }] } } } },
+    ]),
+  }
+}
+
+const evidenceCreateReply = JSON.stringify({
+  action: 'create',
+  description: 'Use when converting a recurring report without changing its calculations.',
+  content: '## Steps\n1. Compare the report inputs with the prior run.\n2. Convert the format without recalculating values.\n\n## Acceptance\n- The source values match the output values.',
+  why: 'Three separate report conversions needed the same preserve-values procedure.',
+  evidence: {
+    repetitions: [
+      { source: 'conversation-turn:b2:10', observation: 'The Monday conversion preserved the source calculations.' },
+      { source: 'conversation-turn:b2:12', observation: 'The Wednesday conversion used the same comparison step.' },
+      { source: 'conversation-turn:b2:14', observation: 'The Friday conversion again needed unchanged values checked before delivery.' },
+    ],
+    acceptance: ['Source and output values match.'],
+    steps: ['Compare inputs with the prior run.', 'Convert only the format.', 'Check values before delivery.'],
+    portability: 'Applies to later report conversions that must preserve the source calculations.',
+    trigger: 'Use when the user asks to convert an existing structured report format.',
+    benefit: 'Future report conversions can preserve calculations with a repeatable check.',
+  },
+})
+
 function projectFolder(t, { git = true, agents = '# Project\n- Existing rule\n' } = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'ds-bot-project-'))
   if (git) mkdirSync(join(folder, '.git'))
@@ -273,7 +361,7 @@ test('a Git folder with pending work gets one AGENTS proposal and approval write
   const folder = projectFolder(t)
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b2.workDir = folder
-  const runtime = await startRuntime({ seed, history: { b2: [...ownChat] }, replies: [noneReply, agentsEdit], config: { learningTimes: { tickMs: 100_000 } } })
+  const runtime = await startRuntime({ seed, history: { b2: [...ownChat] }, replies: [agentsEdit], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   runtime.rt.partLines = async function* () {
     for (let seq = 30; seq > 0; seq -= 1) yield { seq, time: seq, who: 'bot', text: `Bot: ${'x'.repeat(1_200)}` }
@@ -295,7 +383,7 @@ test('a failed work-folder check keeps an AGENTS proposal open', async t => {
   const folder = projectFolder(t)
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b2.workDir = folder
-  const runtime = await startRuntime({ seed, replies: [noneReply, agentsEdit], config: { learningTimes: { tickMs: 100_000 } } })
+  const runtime = await startRuntime({ seed, replies: [agentsEdit], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   await finishTurn(runtime.ctx)
   await runtime.rt.learningRun()
@@ -314,7 +402,7 @@ test('a Git folder without AGENTS.md can get a new file approved', async t => {
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b2.workDir = folder
   const reply = JSON.stringify({ action: 'edit', edits: [{ op: 'add', after: '', text: '# Project\n- New rule', why: 'The user corrected this repeatedly.' }] })
-  const runtime = await startRuntime({ seed, history: { b2: [...ownChat] }, replies: [noneReply, reply], config: { learningTimes: { tickMs: 100_000 } } })
+  const runtime = await startRuntime({ seed, history: { b2: [...ownChat] }, replies: [reply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   await finishTurn(runtime.ctx)
   await runtime.rt.learningRun()
@@ -331,7 +419,7 @@ test('a folder is reviewed once with the pending work from every Bot that used i
   seed.bots.b3 = { id: 'b3', sessionId: 'b3', name: 'Coder', role: 'Coding', model: 'deepseek/v4', instructions: '', capabilities: [], workDir: folder, createdAt: 3 }
   const runtime = await startRuntime({
     seed,
-    replies: [noneReply, noneReply, agentsEdit],
+    replies: [agentsEdit],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
@@ -341,7 +429,7 @@ test('a folder is reviewed once with the pending work from every Bot that used i
   await finishTurn(runtime.ctx, { id: 'b2' })
   await finishTurn(runtime.ctx, { id: 'b3' })
   await runtime.rt.learningRun()
-  assert.equal(runtime.requests.length, 3)
+  assert.equal(runtime.requests.length, 1)
   assert.match(JSON.stringify(runtime.requests.at(-1)), /Work from b2/)
   assert.match(JSON.stringify(runtime.requests.at(-1)), /Work from b3/)
   assert.equal((await runtime.call('state')).value.learning.b2.length, 1)
@@ -354,7 +442,7 @@ test('work for a folder with an open proposal stays queued until the card is dec
   seed.bots.b3 = { id: 'b3', sessionId: 'b3', name: 'Coder', role: 'Coding', model: 'deepseek/v4', instructions: '', capabilities: [], workDir: folder, createdAt: 3 }
   const runtime = await startRuntime({
     seed,
-    replies: [noneReply, agentsEdit, noneReply, agentsEdit],
+    replies: [agentsEdit, agentsEdit],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
@@ -369,7 +457,7 @@ test('work for a folder with an open proposal stays queued until the card is dec
   await runtime.rt.learningRun()
   const queued = runtime.learningState().agentsPending[await runtime.rt.real(folder)]
   assert.match(queued.records.map(item => item.text).join('\n'), /Work from b3/)
-  assert.equal(runtime.requests.length, 3)
+  assert.equal(runtime.requests.length, 1)
   assert.equal((await runtime.call('state')).value.learning.b2.length, 1)
 
   await runtime.call('learning-answer', { id: proposal.id, approve: false })
@@ -384,7 +472,7 @@ test('a failed AGENTS model call keeps its folder work for the next pass', async
   seed.bots.b2.workDir = folder
   const runtime = await startRuntime({
     seed,
-    replies: [createReply, new Error('AGENTS model failed'), agentsEdit],
+    replies: [new Error('AGENTS model failed'), agentsEdit],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
@@ -395,7 +483,7 @@ test('a failed AGENTS model call keeps its folder work for the next pass', async
   await runtime.rt.learningRun()
   const folderKey = await runtime.rt.real(folder)
   assert.match(runtime.learningState().agentsPending[folderKey].records[0].text, /same folder work/)
-  assert.equal((await runtime.call('state')).value.learning.b2[0].kind, 'skill')
+  assert.equal((await runtime.call('state')).value.learning.b2, undefined)
   const firstRequest = runtime.requests.at(-1).messages[0].content[0].text
 
   await runtime.rt.learningRun()
@@ -412,7 +500,7 @@ test('AGENTS review falls back to another contributor when its Bot is deleted', 
   seed.bots.b3 = { id: 'b3', sessionId: 'b3', name: 'Coder', role: 'Coding', model: 'deepseek/v4', instructions: '', capabilities: [], workDir: folder, createdAt: 3 }
   const runtime = await startRuntime({
     seed,
-    replies: [noneReply, new Error('retry this folder later'), noneReply, new Error('retry after Bot C adds work'), agentsEdit],
+    replies: [new Error('retry this folder later'), new Error('retry after Bot C adds work'), agentsEdit],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
@@ -490,7 +578,7 @@ test('a changed AGENTS proposal stays open, can be declined, and is included in 
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b2.workDir = folder
   const history = { b2: [...ownChat] }
-  const runtime = await startRuntime({ seed, history, replies: [noneReply, agentsEdit, noneReply, noneReply], config: { learningTimes: { tickMs: 100_000 } } })
+  const runtime = await startRuntime({ seed, history, replies: [agentsEdit, noneReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   await finishTurn(runtime.ctx)
   await runtime.rt.learningRun()
@@ -525,35 +613,32 @@ test('folders without a project marker, DSH data folders, and agentsMd:false are
     if (!item.folder) runtime.rt.botOf('b2').workDir = runtime.home
     await finishTurn(runtime.ctx)
     await runtime.rt.learningRun()
-    assert.equal(runtime.requests.length, 1)
+    assert.equal(runtime.requests.length, 0)
     assert.deepEqual((await runtime.call('state')).value.learning ?? {}, {})
   }
 })
 
 test('a disposed learning pass cannot overwrite the next host state with a late model reply', async t => {
-  for (const kind of ['skill', 'agents']) await t.test(kind, async t => {
-    let finishModel
-    const reply = new Promise(resolve => { finishModel = resolve })
-    const folder = kind === 'agents' ? projectFolder(t) : undefined
-    const seed = folder ? { ...TEAM, bots: { ...TEAM.bots, b2: { ...TEAM.bots.b2, workDir: folder } } } : TEAM
-    const runtime = await startRuntime({ seed, replies: kind === 'agents' ? [noneReply, reply] : [reply], config: { learningTimes: { tickMs: 100_000 } } })
-    t.after(() => runtime.stop())
-    await finishTurn(runtime.ctx)
-    await until(() => runtime.learningState().pending?.b2?.includes('b2'))
-    const pass = runtime.rt.learningRun()
-    const calls = kind === 'agents' ? 2 : 1
-    await until(() => runtime.requests.length === calls)
-    await runtime.ctx.dispose()
+  let finishModel
+  const reply = new Promise(resolve => { finishModel = resolve })
+  const folder = projectFolder(t)
+  const seed = { ...TEAM, bots: { ...TEAM.bots, b2: { ...TEAM.bots.b2, workDir: folder } } }
+  const runtime = await startRuntime({ seed, replies: [reply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  await finishTurn(runtime.ctx)
+  await until(() => runtime.learningState().pending?.b2?.includes('b2'))
+  const pass = runtime.rt.learningRun()
+  await until(() => runtime.requests.length === 1)
+  await runtime.ctx.dispose()
 
-    const next = { pending: { m1: ['m1'] }, proposals: { next: { id: 'next', botId: 'm1', name: 'next-host-skill' } } }
-    writeFileSync(runtime.learningPath, JSON.stringify(next))
-    finishModel(kind === 'agents' ? agentsEdit : createReply)
-    await pass
-    assert.deepEqual(runtime.learningState(), next)
-    assert.deepEqual(runtime.rt.learningView(), {})
-    assert.equal(await runtime.rt.learningRun(), 0)
-    assert.equal(runtime.requests.length, calls)
-  })
+  const next = { pending: { m1: ['m1'] }, proposals: { next: { id: 'next', botId: 'm1', kind: 'agents', name: 'next-host-proposal' } } }
+  writeFileSync(runtime.learningPath, JSON.stringify(next))
+  finishModel(agentsEdit)
+  await pass
+  assert.deepEqual(runtime.learningState(), next)
+  assert.deepEqual(runtime.rt.learningView(), {})
+  assert.equal(await runtime.rt.learningRun(), 0)
+  assert.equal(runtime.requests.length, 1)
 })
 
 test('parseJson accepts fenced and unfenced objects and ignores garbage', () => {
@@ -589,6 +674,160 @@ test('skillProblem validates actions, learned-skill limits, and secret-looking c
   assert.match(skillProblem({ ...proposal, description: 'x'.repeat(LEARNING.descriptionMax + 1) }, { skills: {}, learned: [] }), /description/)
 })
 
+test('new Skill evidence needs three distinct sourced repetitions and a complete portable procedure', () => {
+  const evidence = {
+    repetitions: [
+      { source: 'conversation-turn:b2:10', observation: 'The Monday report kept its source calculations.' },
+      { source: 'conversation-turn:b2:12', observation: 'The Wednesday report needed the same conversion check.' },
+      { source: 'task:goal:g1:s1:t1:verify-44', observation: 'The release check passed after the same validation step.' },
+    ],
+    acceptance: ['Source and output values match.'],
+    steps: ['Compare the source values.', 'Convert the format.', 'Check the values before delivery.'],
+    portability: 'Applies to later conversions of the same report class.',
+    trigger: 'Use when a recurring report must be converted between formats.',
+    benefit: 'Future conversions preserve the calculations.',
+  }
+  const sources = evidence.repetitions.map(item => item.source)
+  assert.equal(skillEvidenceProblem(evidence, sources), undefined)
+  assert.match(skillEvidenceProblem({ ...evidence, repetitions: evidence.repetitions.slice(0, 2) }, sources), /3 distinct/)
+  assert.match(skillEvidenceProblem({ ...evidence, repetitions: Array.from({ length: LEARNING.skillEvidenceMax + 1 }, () => evidence.repetitions[0]) }, sources), /at most/)
+  assert.match(skillEvidenceProblem({ ...evidence, repetitions: [evidence.repetitions[0], evidence.repetitions[0], evidence.repetitions[2]] }, sources), /not distinct/)
+  assert.match(skillEvidenceProblem({ ...evidence, repetitions: [evidence.repetitions[0], evidence.repetitions[1], { ...evidence.repetitions[2], source: 'conversation-turn:b2:999' }] }, sources), /not supplied/)
+  assert.match(skillEvidenceProblem({ ...evidence, repetitions: [evidence.repetitions[0], evidence.repetitions[1], { ...evidence.repetitions[2], observation: evidence.repetitions[0].observation }] }, sources), /observations are not distinct/)
+  assert.match(skillEvidenceProblem({ ...evidence, acceptance: [] }, sources), /acceptance/)
+  assert.match(skillEvidenceProblem({ ...evidence, steps: [] }, sources), /steps/)
+  assert.match(skillEvidenceProblem({ ...evidence, portability: '' }, sources), /portability/)
+  assert.match(skillEvidenceProblem({ ...evidence, trigger: '' }, sources), /trigger/)
+  assert.match(skillEvidenceProblem({ ...evidence, benefit: '' }, sources), /benefit/)
+})
+
+test('native repetition candidates stay grouped by task or user turn and user examples dedupe', async t => {
+  const taskRuntime = await startRuntime({
+    seed: verifiedTaskSeed(),
+    history: { b2: [...ownChat] },
+    replies: [evidenceCreateReply],
+    config: { learningTimes: { tickMs: 100_000 } },
+  })
+  t.after(() => taskRuntime.stop())
+  assert.equal(await taskRuntime.rt.requestSkill('b2', 'create', 'task-derived-skill', 'Use the task evidence.'), null)
+  assert.equal(taskRuntime.requests.length, 0, 'three evidence artifacts and one conversation turn still count as only two candidates')
+
+  const oneTurn = [
+    { event: { seq: 10, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Convert the Monday report.' }] } } },
+    { event: { seq: 11, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'Converted the first intermediate report.' }] } } } },
+    { event: { seq: 12, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'Converted the final report.' }] } } } },
+  ]
+  const turnRuntime = await startRuntime({ history: { b2: oneTurn }, replies: [evidenceCreateReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => turnRuntime.stop())
+  assert.equal(await turnRuntime.rt.requestSkill('b2', 'create', 'turn-derived-skill', 'Use the conversation evidence.'), null)
+  assert.equal(turnRuntime.requests.length, 0, 'one user request and its answers count as one candidate')
+
+  const repeatedExample = `Create a report Skill.\nUser-provided examples:\n1. Convert the Monday report without recalculating.\n2. Convert the Wednesday report without recalculating.\n3.  CONVERT THE MONDAY REPORT WITHOUT RECALCULATING. `
+  const exampleRuntime = await startRuntime({ history: { b2: [ownChat[1]] }, replies: [evidenceCreateReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => exampleRuntime.stop())
+  assert.equal(await exampleRuntime.rt.requestSkill('b2', 'create', 'example-derived-skill', repeatedExample), null)
+  assert.equal(exampleRuntime.requests.length, 0, 'normalized duplicate examples do not count as a third example')
+})
+
+test('background opt-in hides legacy automatic Skill cards but keeps AGENTS proposals', async t => {
+  const folder = projectFolder(t)
+  const seed = JSON.parse(JSON.stringify(TEAM))
+  seed.bots.b2.workDir = folder
+  const runtime = await startRuntime({
+    seed,
+    replies: [agentsEdit],
+    learningSeed: {
+      proposals: {
+        automatic: { id: 'automatic', kind: 'skill', botId: 'b2', name: 'old-noise', description: 'Old noise', content: 'Do old noise', at: 1 },
+        'task-built': { id: 'task-built', kind: 'skill', botId: 'b2', name: 'old-task-skill', description: 'Old task Skill', content: 'Do old task work', at: 1, improvement: { taskId: 'goal:old:s:t' } },
+      },
+      settled: {
+        'automatic-old': { id: 'automatic-old', kind: 'skill', botId: 'b2', name: 'older-noise', description: 'Older noise', content: 'Do older noise', sessionId: 'b2', outcome: 'approved', at: 1, settledAt: 2 },
+      },
+    },
+    config: { learningTimes: { tickMs: 100_000 } },
+  })
+  t.after(() => runtime.stop())
+  assert.deepEqual((await runtime.call('state')).value.learning ?? {}, {})
+  assert.deepEqual((await runtime.call('state')).value.learningSettled ?? {}, {})
+  assert.equal((await runtime.call('learning-answer', { id: 'automatic', approve: true })).ok, false)
+  await finishTurn(runtime.ctx)
+  await runtime.rt.learningRun()
+  assert.equal(runtime.requests.length, 1)
+  assert.equal(Object.values(runtime.learningState().proposals).filter(entry => entry.kind === 'agents').length, 1)
+})
+
+test('an explicit Skill create request uses native evidence and current approval flow', async t => {
+  const runtime = await startRuntime({ history: repeatedWorkHistory(), replies: [evidenceCreateReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  const proposal = await runtime.rt.requestSkill('b2', 'create', 'report-conversion', 'Preserve calculations when converting the reports. Keep this skill.')
+  assert.equal(proposal.requested, true)
+  assert.equal(proposal.action, 'create')
+  assert.equal(proposal.evidence.repetitions.length, 3)
+  assert.match(runtime.requests[0].messages[0].content[0].text, /conversation-turn:b2:10/)
+  assert.match(runtime.requests[0].system, /At least three distinct task, turn/)
+  assert.deepEqual((await runtime.call('state')).value.learning.b2.map(item => item.id), [proposal.id])
+  const approved = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(approved.value.applied, true)
+  assert.equal(runtime.teamState().capabilities.items['report-conversion'].content, JSON.parse(evidenceCreateReply).content)
+})
+
+test('explicit user examples can supply recurrence evidence and invalid model drafts stay silent', async t => {
+  const instruction = `Preserve calculations in converted reports.\nUser-provided examples:\n1. Convert the Monday report without recalculating.\n2. Convert the Wednesday report without recalculating.\n3. Convert the Friday report without recalculating.`
+  const reply = JSON.parse(evidenceCreateReply)
+  reply.evidence.repetitions = [1, 2, 3].map(index => ({ source: `user-example:${index}`, observation: `User example ${index} requires preserving the original values.` }))
+  const good = await startRuntime({ history: { b2: [...ownChat] }, replies: [JSON.stringify(reply)], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => good.stop())
+  const proposal = await good.rt.requestSkill('b2', 'create', 'report-conversion', instruction)
+  assert.equal(proposal.name, 'report-conversion')
+  assert.deepEqual(proposal.evidence.repetitions.map(item => item.source), ['user-example:1', 'user-example:2', 'user-example:3'])
+
+  const invalidReply = { ...reply, content: '' }
+  const invalid = await startRuntime({ history: { b2: [...ownChat] }, replies: [JSON.stringify(invalidReply)], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => invalid.stop())
+  assert.equal(await invalid.rt.requestSkill('b2', 'create', 'report-conversion', instruction), null)
+  assert.deepEqual(invalid.learningState().proposals ?? {}, {})
+})
+
+test('direct Skill updates stay available and suppress duplicate and formatting-only drafts', async t => {
+  const seed = JSON.parse(JSON.stringify(TEAM))
+  seed.bots.b2.capabilities = ['report-conversion']
+  seed.capabilities.items['report-conversion'] = {
+    name: 'report-conversion',
+    kind: 'skill',
+    description: 'Use when converting a recurring report.',
+    content: '1. Keep the source values.\n2. Check the converted values.',
+    createdBy: 'b2',
+    createdAt: 3,
+    updatedAt: 3,
+  }
+  const update = JSON.stringify({
+    action: 'update',
+    description: 'Use when converting a recurring report without changing calculations.',
+    content: '1. Compare the source values.\n2. Convert the format.\n3. Check the converted values before delivery.',
+    why: 'The repeated report work needs the comparison step made explicit.',
+  })
+  const runtime = await startRuntime({
+    seed,
+    history: { b2: [...ownChat] },
+    replies: [update, update, JSON.stringify({ action: 'update', ...JSON.parse(update), content: '1. Compare the source values.\r\n2. Convert the format.\r\n3. Check the converted values before delivery.\r\n' })],
+    learningSeed: { learned: { b2: ['report-conversion'] } },
+    config: { learningTimes: { tickMs: 100_000 } },
+  })
+  t.after(() => runtime.stop())
+  const first = await runtime.rt.requestSkill('b2', 'update', 'report-conversion', 'Add the value comparison.')
+  const repeated = await runtime.rt.requestSkill('b2', 'update', 'report-conversion', 'Add the value comparison.')
+  assert.equal(repeated.id, first.id)
+  assert.equal(runtime.requests.length, 1)
+  const sameDraft = await runtime.rt.requestSkill('b2', 'update', 'report-conversion', 'State the comparison step clearly.')
+  assert.equal(sameDraft.id, first.id)
+  assert.equal(runtime.requests.length, 2)
+  assert.equal((await runtime.call('learning-answer', { id: first.id, approve: true })).value.applied, true)
+  assert.equal(await runtime.rt.requestSkill('b2', 'update', 'report-conversion', 'Reformat the same instructions.'), null)
+  assert.equal(runtime.requests.length, 3)
+  assert.equal(runtime.teamState().capabilities.items['report-conversion'].content, JSON.parse(update).content)
+})
+
 test('a completed ordinary turn does not request a Skill with default learning settings', async t => {
   const runtime = await startRuntime({ config: { automaticLearning: undefined } })
   t.after(() => runtime.stop())
@@ -596,6 +835,16 @@ test('a completed ordinary turn does not request a Skill with default learning s
   await runtime.rt.learningRun()
   assert.equal(runtime.requests.length, 0)
   assert.deepEqual((await runtime.call('state')).value.learning, {})
+})
+
+test('opt-in background learning never turns ordinary work into a Skill proposal', async t => {
+  const runtime = await startRuntime({ replies: [createReply] })
+  t.after(() => runtime.stop())
+  await finishTurn(runtime.ctx)
+  await runtime.rt.learningRun()
+  assert.equal(runtime.requests.length, 0)
+  assert.deepEqual(runtime.learningState().proposals ?? {}, {})
+  assert.equal(runtime.learningState().cursors?.b2, 11)
 })
 
 test('short turns do not mark a Bot chat; a longer turn marks it for review', async t => {
@@ -612,16 +861,16 @@ test('short turns do not mark a Bot chat; a longer turn marks it for review', as
   assert.deepEqual(long.learningState().pending.b2, ['b2'])
 })
 
-test('a none reply makes no proposal and advances the chat cursor', async t => {
-  const runtime = await startRuntime({ replies: [noneReply] })
+test('background learning advances the chat cursor without a Skill model call', async t => {
+  const runtime = await startRuntime({ replies: [createReply] })
   t.after(() => runtime.stop())
   await finishTurn(runtime.ctx)
   await until(() => runtime.learningState().cursors?.b2 === 11 && runtime.learningState().pending?.b2 === undefined)
-  assert.equal(runtime.requests.length, 1)
+  assert.equal(runtime.requests.length, 0)
   assert.deepEqual((await runtime.call('state')).value.learning ?? {}, {})
 })
 
-test('a folder lookup failure does not repeat the skill proposal', async t => {
+test('a folder lookup failure still completes the background pass without a Skill proposal', async t => {
   const runtime = await startRuntime({ config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   await finishTurn(runtime.ctx)
@@ -630,22 +879,21 @@ test('a folder lookup failure does not repeat the skill proposal', async t => {
     yield { seq: 10, time: 1, who: 'user', text: 'User: Please review this work' }
     yield { seq: 11, time: 2, who: 'assistant', text: 'Bot: I finished the work.' }
   }
-  runtime.rt.botShot = async () => createReply
   runtime.rt.resolveAgent = async () => { throw new Error('folder lookup failed') }
 
   await runtime.rt.learningRun()
 
-  assert.equal(Object.keys(runtime.learningState().proposals ?? {}).length, 1)
+  assert.equal(Object.keys(runtime.learningState().proposals ?? {}).length, 0)
   assert.equal(runtime.learningState().pending?.b2, undefined)
   await runtime.rt.learningRun()
-  assert.equal(Object.keys(runtime.learningState().proposals ?? {}).length, 1)
+  assert.equal(Object.keys(runtime.learningState().proposals ?? {}).length, 0)
+  assert.equal(runtime.requests.length, 0)
 })
 
 test('long turns ending during review remain pending for the next pass', async t => {
   const history = { b2: [...ownChat], b3: [...ownChat] }
   const runtime = await startRuntime({
     history,
-    replies: [noneReply, noneReply],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
@@ -674,63 +922,51 @@ test('long turns ending during review remain pending for the next pass', async t
   await finishTurn(runtime.ctx)
   await until(() => runtime.learningState().pending?.b2?.includes('b2'))
 
-  const botShot = runtime.rt.botShot
-  let endedDuringReview = false
-  runtime.rt.botShot = async (...args) => {
-    if (!endedDuringReview) {
-      endedDuringReview = true
+  let endedDuringRead = false
+  runtime.rt.partLines = async function* () {
+    yield { seq: 10, time: 1, who: 'user', text: 'User: Please review this work' }
+    yield { seq: 11, time: 2, who: 'you', text: 'You: I finished the work.' }
+    if (!endedDuringRead) {
+      endedDuringRead = true
       addNextTurn(history)
       history.b3.push(
-        { event: { seq: 12, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Please keep this new work too.' }] } } },
-        { event: { seq: 13, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'The second chat has new work.' }] } } } },
+        { event: { seq: 10, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Please keep this new work too.' }] } } },
+        { event: { seq: 11, type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'The second chat has new work.' }] } } } },
       )
       await finishTurn(runtime.ctx, { id: 'b2' })
       await finishTurn(runtime.ctx, { id: 'b3' })
       assert.deepEqual(b3Statuses, ['running', 'idle'])
     }
-    return botShot(...args)
   }
 
   await runtime.rt.learningRun()
 
   assert.deepEqual(runtime.learningState().pending.b2, ['b2', 'b3'])
-  assert.equal(runtime.learningState().cursors.b2, 11)
+  assert.equal(runtime.learningState().cursors.b2, 10)
 
   await runtime.rt.learningRun()
 
-  assert.equal(runtime.requests.length, 2)
-  const request = runtime.requests[1].messages[0].content[0].text
-  assert.match(request, /Please check the release process too\./)
-  assert.match(request, /Please keep this new work too\./)
+  assert.equal(runtime.requests.length, 0)
+  assert.equal(runtime.learningState().cursors.b3, 10)
   assert.equal(runtime.learningState().pending.b2, undefined)
 })
 
-test('approval ownership survives a normal skill edit and remains learned on review', async t => {
-  const history = { b2: [...ownChat] }
+test('approval ownership survives a normal skill edit and direct updates remain learned', async t => {
   const updateReply = JSON.stringify({
     action: 'update',
     name: 'release-checks',
-    description: 'Use when checking any release.',
-    content: 'Run the release checks.',
-    why: 'The work showed the scope should be broader.',
+    description: 'Use when checking any release candidate.',
+    content: 'Run the release checks and record the fresh result.',
+    why: 'The requested revision makes the acceptance result part of the Skill.',
   })
   const runtime = await startRuntime({
-    history,
-    replies: [createReply, updateReply],
+    history: { b2: [...ownChat] },
+    replies: [requestedCreateReply(), updateReply],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await runtime.rt.learningRun()
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = (await runtime.call('state')).value.learning.b2[0]
+  const proposal = await requestCreate(runtime)
   assert.equal(proposal.name, 'release-checks')
-
-  addNextTurn(history)
-  await finishTurn(runtime.ctx)
-  await until(() => runtime.learningState().pending?.b2?.includes('b2'))
-  await settle()
-  assert.equal(runtime.requests.length, 1)
   const answer = await runtime.call('learning-answer', { id: proposal.id, approve: true })
   assert.equal(answer.value.applied, true)
   await runtime.call('capability-save', {
@@ -739,22 +975,19 @@ test('approval ownership survives a normal skill edit and remains learned on rev
     description: 'Use when checking a release candidate.',
     content: 'Run the release checks.',
   })
-  await runtime.rt.learningRun()
-  await until(() => runtime.requests.length === 2)
-  await until(() => Object.values(runtime.learningState().proposals ?? {}).some(entry => entry.action === 'update'))
+  const updated = await runtime.rt.requestSkill('b2', 'update', 'release-checks', 'Also record the fresh acceptance result.')
+  assert.equal(updated.action, 'update')
   const saved = runtime.teamState()
   assert.equal(saved.capabilities.items['release-checks'].learned, undefined)
   assert.ok(saved.bots.b2.capabilities.includes('release-checks'))
   assert.deepEqual(runtime.learningState().learned.b2, ['release-checks'])
-  assert.match(runtime.requests[1].messages[0].content[0].text, /This Bot's learned skills[\s\S]*Use when checking a release candidate\./)
+  assert.match(runtime.requests[1].messages[0].content[0].text, /Use when checking a release candidate\./)
 })
 
 test('a failed create attachment can be retried without resaving or losing the proposal', async t => {
-  const runtime = await startRuntime({ replies: [createReply] })
+  const runtime = await startRuntime({ history: { b2: [...ownChat] }, replies: [requestedCreateReply()] })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = Object.values(runtime.learningState().proposals)[0]
+  const proposal = await requestCreate(runtime)
   const attach = runtime.rt.capabilityEndpoint
   let fail = true
   runtime.rt.capabilityEndpoint = async (...args) => {
@@ -778,11 +1011,10 @@ test('a failed create attachment can be retried without resaving or losing the p
 })
 
 test('a recreated approved skill is learned when its saved proposal is retried', async t => {
-  const runtime = await startRuntime({ replies: [createReply] })
+  const runtime = await startRuntime({ history: { b2: [...ownChat] }, replies: [requestedCreateReply()] })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = Object.values(runtime.learningState().proposals)[0]
+  const proposal = await requestCreate(runtime)
+  const draft = JSON.parse(requestedCreateReply())
   const endpoint = runtime.rt.capabilityEndpoint
   let fail = true
   runtime.rt.capabilityEndpoint = async (name, body, ...args) => {
@@ -801,14 +1033,15 @@ test('a recreated approved skill is learned when its saved proposal is retried',
   const deleted = await runtime.call('capability-delete', { name: 'release-checks' })
   assert.equal(deleted.ok, true)
   assert.deepEqual(runtime.learningState().learned.b2, [])
-  await runtime.call('capability-save', {
+  await runtime.rt.capabilitySave({
     name: 'release-checks',
     kind: 'skill',
-    description: 'Use when checking a release.',
-    content: 'Run the release checks.',
-  })
+    description: draft.description,
+    content: draft.content,
+  }, { botId: 'b2', ui: false })
 
   const retry = await runtime.call('learning-answer', { id: proposal.id, approve: true })
+  assert.equal(retry.ok, true, JSON.stringify(retry))
   assert.equal(retry.value.applied, true)
   assert.equal(runtime.learningState().proposals[proposal.id], undefined)
   assert.deepEqual(runtime.learningState().learned.b2, ['release-checks'])
@@ -816,11 +1049,9 @@ test('a recreated approved skill is learned when its saved proposal is retried',
 })
 
 test('a failed create retry refuses a skill edited after it was saved', async t => {
-  const runtime = await startRuntime({ replies: [createReply] })
+  const runtime = await startRuntime({ history: { b2: [...ownChat] }, replies: [requestedCreateReply()] })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = Object.values(runtime.learningState().proposals)[0]
+  const proposal = await requestCreate(runtime)
   const endpoint = runtime.rt.capabilityEndpoint
   let fail = true
   runtime.rt.capabilityEndpoint = async (name, body, ...args) => {
@@ -850,18 +1081,22 @@ test('a failed create retry refuses a skill edited after it was saved', async t 
   assert.equal(runtime.teamState().bots.b2.capabilities.includes('release-checks'), false)
 })
 
-test('deleting a learned skill clears ownership before a same-name skill is recreated', async t => {
-  const history = { b2: [...ownChat] }
+test('deleting a learned skill clears ownership before a recreated same-name skill is learned again', async t => {
+  const updateReply = JSON.stringify({
+    action: 'update',
+    name: 'release-checks',
+    description: 'Use when checking a recreated release.',
+    content: 'Run both release checks before delivery.',
+    why: 'The recreated Skill should include the verified second check.',
+  })
   const runtime = await startRuntime({
-    history,
-    replies: [createReply, noneReply],
+    history: { b2: [...ownChat] },
+    replies: [requestedCreateReply(), updateReply],
     config: { learningTimes: { tickMs: 100_000 } },
   })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await runtime.rt.learningRun()
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = Object.values(runtime.learningState().proposals)[0]
+  const proposal = await requestCreate(runtime)
+  const draft = JSON.parse(requestedCreateReply())
   const answer = await runtime.call('learning-answer', { id: proposal.id, approve: true })
   assert.equal(answer.value.applied, true)
   assert.deepEqual(runtime.learningState().learned.b2, ['release-checks'])
@@ -869,45 +1104,32 @@ test('deleting a learned skill clears ownership before a same-name skill is recr
   const deleted = await runtime.call('capability-delete', { name: 'release-checks' })
   assert.equal(deleted.ok, true)
   assert.deepEqual(runtime.learningState().learned.b2, [])
-  await runtime.call('capability-save', {
+  await runtime.rt.capabilitySave({
     name: 'release-checks',
     kind: 'skill',
-    description: 'Use when checking a release.',
-    content: 'Run the release checks.',
-  })
+    description: draft.description,
+    content: draft.content,
+  }, { botId: 'b2', ui: false })
   await runtime.call('bot-capability', { botId: 'b2', name: 'release-checks', attached: true })
   assert.ok(runtime.teamState().bots.b2.capabilities.includes('release-checks'))
-
-  addNextTurn(history)
-  await finishTurn(runtime.ctx)
-  await runtime.rt.learningRun()
-  assert.equal(runtime.requests.length, 2)
-  const request = runtime.requests[1].messages[0].content[0].text
-  assert.match(request, /This Bot has no learned skills yet\./)
-  assert.match(request, /Other skills on the team:\n- release-checks:/)
   assert.deepEqual(runtime.learningState().learned.b2, [])
+  const updated = await runtime.rt.requestSkill('b2', 'update', 'release-checks', 'Add the second verified release check.')
+  assert.equal(updated.action, 'update')
+  const approved = await runtime.call('learning-answer', { id: updated.id, approve: true })
+  assert.equal(approved.ok, true, JSON.stringify(approved))
+  assert.equal(approved.value.applied, true)
+  assert.deepEqual(runtime.learningState().learned.b2, ['release-checks'])
 })
 
-test('declined proposals are recorded and included in the next skill request', async t => {
-  const history = { b2: [...ownChat] }
-  const runtime = await startRuntime({ history, replies: [createReply, noneReply] })
+test('declined direct Skill proposals are recorded and remain visible as history', async t => {
+  const runtime = await startRuntime({ history: { b2: [...ownChat] }, replies: [requestedCreateReply()] })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = (await runtime.call('state')).value.learning.b2[0]
-
-  addNextTurn(history)
-  await finishTurn(runtime.ctx)
-  await until(() => runtime.learningState().pending?.b2?.includes('b2'))
-  await settle()
-  assert.equal(runtime.requests.length, 1)
+  const proposal = await requestCreate(runtime)
 
   const answer = await runtime.call('learning-answer', { id: proposal.id, approve: false })
   assert.equal(answer.value.applied, false)
-  await until(() => runtime.learningState().cursors?.b2 === 13 && runtime.learningState().pending?.b2 === undefined)
   assert.equal(runtime.teamState().capabilities.items['release-checks'], undefined)
   assert.equal(runtime.learningState().declined[0].name, 'release-checks')
-  assert.match(runtime.requests[1].messages[0].content[0].text, /Proposals the user declined[\s\S]*- release-checks: Use when checking a release\./)
   // The declined card stays in the chat part it was answered in, read-only.
   const view = (await runtime.call('state')).value
   assert.equal(view.learning.b2, undefined)
@@ -938,9 +1160,7 @@ test('an update approval fails if the learned skill description alone changed', 
   })
   const runtime = await startRuntime({ seed, replies: [updateReply], learningSeed: { learned: { b2: ['release-checks'] } } })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await until(() => Object.keys(runtime.learningState().proposals ?? {}).length === 1)
-  const proposal = (await runtime.call('state')).value.learning.b2[0]
+  const proposal = await runtime.rt.requestSkill('b2', 'update', 'release-checks', 'Add the newly verified release step.')
 
   await runtime.call('capability-save', {
     name: 'release-checks',
@@ -960,20 +1180,16 @@ test('an update approval fails if the learned skill description alone changed', 
 
 test('a saved secret in a proposed skill is not shown as a proposal', async t => {
   const secretValue = 'saved-secret-value-37'
+  const reply = JSON.parse(requestedCreateReply())
+  reply.content = `Run with ${secretValue}.`
   const runtime = await startRuntime({
-    replies: [JSON.stringify({
-      action: 'create',
-      name: 'release-checks',
-      description: 'Use when checking a release.',
-      content: `Run with ${secretValue}.`,
-      why: 'The work showed it is needed.',
-    })],
+    history: { b2: [...ownChat] },
+    replies: [JSON.stringify(reply)],
   })
   t.after(() => runtime.stop())
   await runtime.call('secret-set', { name: 'LEARNING_TEST', value: secretValue })
-  await finishTurn(runtime.ctx)
-  await until(() => runtime.learningState().cursors?.b2 === 11)
-  assert.deepEqual(runtime.learningState().proposals, {})
+  assert.equal(await requestCreate(runtime), null)
+  assert.deepEqual(runtime.learningState().proposals ?? {}, {})
 })
 
 test('an AGENTS edit containing a saved secret is not shown as a proposal', async t => {
@@ -985,7 +1201,7 @@ test('an AGENTS edit containing a saved secret is not shown as a proposal', asyn
     action: 'edit',
     edits: [{ op: 'add', after: '- Existing rule', text: `- Use ${secretValue}.`, why: 'The user corrected this repeatedly.' }],
   })
-  const runtime = await startRuntime({ seed, replies: [noneReply, reply], config: { learningTimes: { tickMs: 100_000 } } })
+  const runtime = await startRuntime({ seed, replies: [reply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   await runtime.call('secret-set', { name: 'AGENTS_TEST', value: secretValue })
   await finishTurn(runtime.ctx)
@@ -994,24 +1210,34 @@ test('an AGENTS edit containing a saved secret is not shown as a proposal', asyn
   assert.equal(Object.keys(runtime.learningState().agentsPending ?? {}).length, 0)
 })
 
-test('user corrections remain in long chat reviews after the text budget', async t => {
-  const runtime = await startRuntime({ replies: [noneReply], config: { learningTimes: { tickMs: 100_000 } } })
+test('requested Skill evidence keeps user examples after a long Bot output', async t => {
+  const reply = JSON.parse(evidenceCreateReply)
+  reply.evidence.repetitions = [
+    { source: 'conversation-turn:b2:9', observation: 'The first report conversion required the user correction.' },
+    { source: 'conversation-turn:b2:8', observation: 'The second report conversion needed the same correction.' },
+    { source: 'conversation-turn:b2:7', observation: 'The third report conversion repeated the correction.' },
+  ]
+  const runtime = await startRuntime({ history: { b2: [...ownChat] }, replies: [JSON.stringify(reply)], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   const lines = Array.from({ length: 30 }, (_, index) => ({
     seq: 41 - index,
     who: 'assistant',
     text: `Bot: ${'x'.repeat(1_200)}`,
   }))
-  lines.push({ seq: 10, who: 'user', text: 'User: Keep the correction even when the Bot writes a long answer.' })
+  lines.push(
+    { seq: 9, who: 'user', text: 'User: Keep the first correction after a long answer.' },
+    { seq: 8, who: 'user', text: 'User: Keep the second correction after a long answer.' },
+    { seq: 7, who: 'user', text: 'User: Keep the third correction after a long answer.' },
+  )
   runtime.rt.partLines = async function* () {
     yield* lines
   }
-  await finishTurn(runtime.ctx)
-  await runtime.rt.learningRun()
-  assert.match(runtime.requests[0].messages[0].content[0].text, /User: Keep the correction even when the Bot writes a long answer\./)
+  const proposal = await requestCreate(runtime, { name: 'report-conversion' })
+  assert.equal(proposal.name, 'report-conversion')
+  assert.match(runtime.requests[0].messages[0].content[0].text, /Keep the third correction after a long answer/)
 })
 
-test('a failed chat read keeps that Bot pending while other Bots are reviewed', async t => {
+test('a failed chat read keeps that Bot pending while other Bots advance', async t => {
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b3 = { id: 'b3', sessionId: 'b3', name: 'Coder', role: 'Coding', model: 'deepseek/v4', instructions: '', capabilities: [], createdAt: 3 }
   const runtime = await startRuntime({ seed, replies: [noneReply], config: { learningTimes: { tickMs: 100_000 } } })
@@ -1029,58 +1255,45 @@ test('a failed chat read keeps that Bot pending while other Bots are reviewed', 
   assert.deepEqual(runtime.learningState().pending.b2, ['b2'])
   assert.equal(runtime.learningState().pending.b3, undefined)
   assert.equal(runtime.learningState().cursors.b3, 11)
-  assert.equal(runtime.requests.length, 1)
+  assert.equal(runtime.requests.length, 0)
 })
 
-test('a learning review retries TRANSPORT and TIMEOUT failures on the same route and discards partial text', async t => {
+test('a requested Skill retries TRANSPORT and TIMEOUT failures on the same route and discards partial text', async t => {
   const runtime = await startRuntime({
+    history: { b2: [...ownChat] },
     replies: [
       { text: '{"action":"create","name":"half', finish: 'error', failure: { code: 'TRANSPORT', message: 'DeepSeek Messages transport failed' } },
       { text: '', finish: 'error', failure: { code: 'TIMEOUT', message: 'DeepSeek Messages stream idle timeout' } },
-      createReply,
+      requestedCreateReply(),
     ],
     config: { learningTimes: { tickMs: 100_000 }, llmRetryBackoff: { initialDelayMs: 1, maxDelayMs: 5 } },
   })
   t.after(() => runtime.stop())
-  await finishTurn(runtime.ctx)
-  await runtime.rt.learningRun()
+  const proposal = await requestCreate(runtime)
 
   assert.equal(runtime.requests.length, 3)
-  const proposals = Object.values(runtime.learningState().proposals ?? {})
-  assert.equal(proposals.length, 1)
-  assert.equal(proposals[0].name, 'release-checks')
-  assert.equal(runtime.learningState().pending?.b2, undefined)
+  assert.equal(proposal.name, 'release-checks')
+  assert.equal(Object.keys(runtime.learningState().proposals).length, 1)
 })
 
 
-test('a verified task creates a task-linked improvement proposal without applying it', async t => {
+test('a generic task improvement cannot create or update a named Skill', async t => {
   const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
 
   const created = await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })
 
   assert.equal(created.ok, true)
-  const proposal = created.value
-  assert.equal(proposal.kind, 'skill')
-  assert.equal(proposal.improvement.taskId, 'goal:g1:s1:t1')
-  assert.deepEqual(proposal.improvement.evidenceIds, ['verify-44'])
-  assert.deepEqual(proposal.improvement.sourceIds, ['session:b2:44'])
-  assert.equal(proposal.improvement.affectedBot.id, 'b2')
-  assert.equal(proposal.improvement.scope.kind, 'skill')
-  assert.match(proposal.improvement.observedProblem, /durable reusable check/)
-  assert.match(proposal.improvement.expectedBenefit, /Later delivery tasks/)
-  assert.match(proposal.improvement.rollbackPath, /Remove the learned skill/)
-  assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false, 'nothing is applied on proposal')
-  assert.equal(Object.keys(runtime.learningState().proposals).length, 1)
+  assert.equal(created.value, null)
+  assert.deepEqual(runtime.learningState().proposals ?? {}, {})
+  assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
 
   const request = runtime.requests[0].messages[0].content[0].text
   assert.match(request, /goal:g1:s1:t1/)
   assert.match(request, /verify-44/)
   assert.match(request, /npm test passed/)
   assert.doesNotMatch(request, /done status is enough/)
-
-  const detail = await runtime.call('task-detail', { taskId: 'goal:g1:s1:t1' })
-  assert.deepEqual(detail.value.improvements.proposals.map(item => item.id), [proposal.id])
+  assert.match(runtime.requests[0].system, /cannot create or update a named Skill/)
 })
 
 test('task improvement proposals reject pending, stale, and unverified evidence', async t => {
@@ -1105,8 +1318,27 @@ test('task improvement proposals reject pending, stale, and unverified evidence'
   assert.equal(stale.requests.length, 0)
 })
 
+test('task improvement model validation stays out of the UI and identical proposals dedupe', async t => {
+  const invalid = { ...JSON.parse(improvementReply), proposedChange: '' }
+  const quiet = await startRuntime({ seed: verifiedTaskSeed(), replies: [JSON.stringify(invalid)], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => quiet.stop())
+  const ignored = await quiet.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })
+  assert.equal(ignored.ok, true)
+  assert.equal(ignored.value, null)
+  assert.deepEqual(quiet.learningState().proposals ?? {}, {})
+
+  const { seed } = verifiedAgentsSeed(t)
+  const duplicate = await startRuntime({ seed, replies: [improvementAgentsReply, improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => duplicate.stop())
+  const first = (await duplicate.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+  const second = (await duplicate.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
+  assert.equal(second.id, first.id)
+  assert.equal(Object.keys(duplicate.learningState().proposals).length, 1)
+})
+
 test('approving a task improvement is idempotent, versioned, audited, and traceable', async t => {
-  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  const { folder, seed } = verifiedAgentsSeed(t)
+  const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
 
@@ -1118,10 +1350,10 @@ test('approving a task improvement is idempotent, versioned, audited, and tracea
   assert.equal(approved.value.proposal.version, 1)
   assert.equal(approved.value.proposal.audit.proposalId, proposal.id)
   assert.equal(approved.value.proposal.audit.taskId, 'goal:g1:s1:t1')
-  assert.deepEqual(approved.value.proposal.audit.evidenceIds, ['verify-44'])
+  assert.deepEqual(approved.value.proposal.audit.evidenceIds, ['verify-41', 'verify-42', 'verify-44'])
   assert.ok(approved.value.proposal.audit.beforeHash !== approved.value.proposal.audit.afterHash)
-  assert.match(approved.value.proposal.audit.rollbackPath, /Remove the learned skill/)
-  assert.ok(runtime.teamState().capabilities.items['verified-delivery-checks'])
+  assert.match(approved.value.proposal.audit.rollbackPath, /Restore AGENTS/)
+  assert.match(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), /Rerun acceptance checks/)
 
   const again = await runtime.call('learning-answer', { id: proposal.id, approve: true })
   assert.equal(again.ok, true)
@@ -1134,15 +1366,16 @@ test('approving a task improvement is idempotent, versioned, audited, and tracea
 })
 
 test('concurrent proposal decisions share approval and reject an opposite answer', async t => {
-  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  const { seed } = verifiedAgentsSeed(t)
+  const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
   let release
   const blocked = new Promise(resolve => { release = resolve })
-  const save = runtime.rt.capabilitySave.bind(runtime.rt)
-  runtime.rt.capabilitySave = async (...args) => {
+  const workFolder = runtime.rt.workFolder.bind(runtime.rt)
+  runtime.rt.workFolder = async (...args) => {
     await blocked
-    return save(...args)
+    return workFolder(...args)
   }
 
   const first = runtime.call('learning-answer', { id: proposal.id, approve: true })
@@ -1162,7 +1395,8 @@ test('concurrent proposal decisions share approval and reject an opposite answer
 })
 
 test('rejecting a task improvement is idempotent history and never changes the Bot', async t => {
-  const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+  const { folder, seed } = verifiedAgentsSeed(t)
+  const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
   t.after(() => runtime.stop())
   const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
 
@@ -1171,7 +1405,7 @@ test('rejecting a task improvement is idempotent history and never changes the B
   assert.equal(rejected.value.applied, false)
   assert.equal(rejected.value.duplicate, false)
   assert.equal(rejected.value.proposal.outcome, 'declined')
-  assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+  assert.equal(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), '# Project\n- Existing rule\n')
   assert.equal(runtime.learningState().settled[proposal.id].improvement.taskId, 'goal:g1:s1:t1')
 
   const again = await runtime.call('learning-answer', { id: proposal.id, approve: false })
@@ -1185,7 +1419,8 @@ test('rejecting a task improvement is idempotent history and never changes the B
 
 test('changed task evidence or Bot configuration blocks application for review', async t => {
   await t.test('stale evidence', async t => {
-    const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+    const { folder, seed } = verifiedAgentsSeed(t)
+    const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
     t.after(() => runtime.stop())
     const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
     runtime.rt.state.rooms.r1.goal.stages[0].tasks[0].verification.status = 'stale'
@@ -1197,11 +1432,12 @@ test('changed task evidence or Bot configuration blocks application for review',
     const open = runtime.learningState().proposals[proposal.id]
     assert.equal(open.requiresReview, true)
     assert.match(open.reviewReason, /stale/)
-    assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+    assert.equal(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), '# Project\n- Existing rule\n')
   })
 
   await t.test('changed Bot configuration', async t => {
-    const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })
+    const { folder, seed } = verifiedAgentsSeed(t)
+    const runtime = await startRuntime({ seed, replies: [improvementAgentsReply], config: { learningTimes: { tickMs: 100_000 } } })
     t.after(() => runtime.stop())
     const proposal = (await runtime.call('task-improvement-propose', { taskId: 'goal:g1:s1:t1' })).value
     runtime.rt.state.bots.b2.instructions = 'Changed after the proposal was created.'
@@ -1212,7 +1448,7 @@ test('changed task evidence or Bot configuration blocks application for review',
     const open = runtime.learningState().proposals[proposal.id]
     assert.equal(open.requiresReview, true)
     assert.match(open.reviewReason, /Bot configuration changed/)
-    assert.equal(Object.hasOwn(runtime.teamState().capabilities.items, 'verified-delivery-checks'), false)
+    assert.equal(readFileSync(join(folder, 'AGENTS.md'), 'utf8'), '# Project\n- Existing rule\n')
   })
 })
 
