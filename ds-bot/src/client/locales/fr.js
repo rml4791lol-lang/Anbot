@@ -1,6 +1,11 @@
 // French (fr) localization for Anbot client and DSH settings namespaces.
 
 export const FR = {
+  'Git branch': "Branche Git",
+  'Git baseline': "Commit de référence Git",
+  'Git revision': "Révision Git",
+  'Detached HEAD': "HEAD détachée",
+  'Present': "Présentes",
   'Development and debugging': "Développement et débogage",
   'UI and product': "Interface et produit",
   'Frontend': "Frontend",

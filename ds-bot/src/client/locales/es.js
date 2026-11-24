@@ -1,6 +1,11 @@
 // Spanish (es) localization for Anbot client and DSH settings namespaces.
 
 export const ES = {
+  'Git branch': "Rama de Git",
+  'Git baseline': "Confirmación base de Git",
+  'Git revision': "Revisión de Git",
+  'Detached HEAD': "HEAD separado",
+  'Present': "Presentes",
   'Development and debugging': "Desarrollo y depuración",
   'UI and product': "Interfaz y producto",
   'Frontend': "Frontend",

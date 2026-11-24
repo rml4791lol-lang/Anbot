@@ -11,6 +11,11 @@ import { DSH_DE, HOST_ERRORS_DE, DE } from './locales/de.js'
 export const NAMESPACE = 'ds-bot'
 
 const ZH = {
+  'Git branch': "Git 分支",
+  'Git baseline': "Git 基线",
+  'Git revision': "Git 当前版本",
+  'Detached HEAD': "分离 HEAD",
+  'Present': "有",
   'No skills are installed for this DSH profile yet.': '这个 DSH 配置还没有安装技能。',
   'Up to 5 skills. The prompt lists each name with one line saying when to use it.': '最多 5 个技能。提示词只列出每个技能的名称和一句使用时机。',
   'Search skills': '搜索技能',

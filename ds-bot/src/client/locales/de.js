@@ -1,6 +1,11 @@
 // German (de) localization for Anbot client and DSH settings namespaces.
 
 export const DE = {
+  'Git branch': "Git-Branch",
+  'Git baseline': "Git-Basiscommit",
+  'Git revision': "Git-Revision",
+  'Detached HEAD': "Losgelöster HEAD",
+  'Present': "Vorhanden",
   'Development and debugging': "Entwicklung und Fehlersuche",
   'UI and product': "Oberfläche und Produkt",
   'Frontend': "Frontend",

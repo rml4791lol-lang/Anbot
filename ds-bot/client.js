@@ -114,6 +114,11 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  "Git branch": "Gitブランチ",
+  "Git baseline": "Gitの基準コミット",
+  "Git revision": "Gitリビジョン",
+  "Detached HEAD": "分離されたHEAD",
+  "Present": "あり",
   "Development and debugging": "開発とデバッグ",
   "UI and product": "UIとプロダクト",
   "Frontend": "フロントエンド",
@@ -3016,6 +3021,11 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  "Git branch": "Git 브랜치",
+  "Git baseline": "Git 기준 커밋",
+  "Git revision": "Git 리비전",
+  "Detached HEAD": "분리된 HEAD",
+  "Present": "있음",
   "Development and debugging": "개발 및 디버깅",
   "UI and product": "UI 및 제품",
   "Frontend": "프런트엔드",
@@ -5963,6 +5973,11 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  "Git branch": "Rama de Git",
+  "Git baseline": "Confirmación base de Git",
+  "Git revision": "Revisión de Git",
+  "Detached HEAD": "HEAD separado",
+  "Present": "Presentes",
   "Development and debugging": "Desarrollo y depuración",
   "UI and product": "Interfaz y producto",
   "Frontend": "Frontend",
@@ -8910,6 +8925,11 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  "Git branch": "Branche Git",
+  "Git baseline": "Commit de référence Git",
+  "Git revision": "Révision Git",
+  "Detached HEAD": "HEAD détachée",
+  "Present": "Présentes",
   "Development and debugging": "Développement et débogage",
   "UI and product": "Interface et produit",
   "Frontend": "Frontend",
@@ -11812,6 +11832,11 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  "Git branch": "Git-Branch",
+  "Git baseline": "Git-Basiscommit",
+  "Git revision": "Git-Revision",
+  "Detached HEAD": "Losgelöster HEAD",
+  "Present": "Vorhanden",
   "Development and debugging": "Entwicklung und Fehlersuche",
   "UI and product": "Oberfläche und Produkt",
   "Frontend": "Frontend",
@@ -14760,6 +14785,11 @@ var DSH_DE = {
 // src/client/i18n.js
 var NAMESPACE = "ds-bot";
 var ZH = {
+  "Git branch": "Git 分支",
+  "Git baseline": "Git 基线",
+  "Git revision": "Git 当前版本",
+  "Detached HEAD": "分离 HEAD",
+  "Present": "有",
   "No skills are installed for this DSH profile yet.": "这个 DSH 配置还没有安装技能。",
   "Up to 5 skills. The prompt lists each name with one line saying when to use it.": "最多 5 个技能。提示词只列出每个技能的名称和一句使用时机。",
   "Search skills": "搜索技能",
@@ -45638,6 +45668,13 @@ function BotWorktree({ botId, sessionId, readOnly, openSession, followRestore })
   const root = hold?.root ?? observed?.root;
   const held = hold?.status === "held" && hold.sessionId === sessionId;
   const stopping = hold?.status === "stopping" && hold.sessionId === sessionId;
+  const facts = [
+    [t("Owner"), view?.owner],
+    [t("Git branch"), view?.git?.branch ?? (view?.git ? t("Detached HEAD") : null)],
+    [t("Git baseline"), view?.baseCommit?.slice(0, 12)],
+    [t("Git revision"), view?.git?.revision?.slice(0, 12)],
+    [t("Uncommitted changes"), view?.git ? view.git.dirty ? t("Present") : t("None") : null]
+  ].filter(([, value]) => value);
   const checkpoints = (view?.checkpoints ?? []).slice().reverse();
   const branches = (view?.previews ?? []).slice().reverse();
   return (0, import_react71.createElement)(
@@ -45646,6 +45683,7 @@ function BotWorktree({ botId, sessionId, readOnly, openSession, followRestore })
     (0, import_react71.createElement)("div", { className: "bt-section-title" }, t("Worktree control")),
     (0, import_react71.createElement)("div", { className: "bt-note", role: "status" }, detail ?? ""),
     root ? (0, import_react71.createElement)("p", { className: "bt-note", style: { overflowWrap: "anywhere" } }, root) : null,
+    root && facts.length ? (0, import_react71.createElement)("dl", null, facts.map(([label, value]) => (0, import_react71.createElement)("div", { key: label, className: "bt-kv" }, (0, import_react71.createElement)("dt", null, label), (0, import_react71.createElement)("dd", { style: { overflowWrap: "anywhere" } }, value)))) : null,
     error ? (0, import_react71.createElement)("p", { className: "bt-error", role: "alert" }, error) : null,
     hold ? (0, import_react71.createElement)("button", {
       type: "button",

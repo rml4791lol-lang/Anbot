@@ -1,6 +1,11 @@
 // Japanese (ja) localization for Anbot client and DSH settings namespaces.
 
 export const JA = {
+  'Git branch': "Gitブランチ",
+  'Git baseline': "Gitの基準コミット",
+  'Git revision': "Gitリビジョン",
+  'Detached HEAD': "分離されたHEAD",
+  'Present': "あり",
   'Development and debugging': "開発とデバッグ",
   'UI and product': "UIとプロダクト",
   'Frontend': "フロントエンド",

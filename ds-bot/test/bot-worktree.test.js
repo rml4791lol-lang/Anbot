@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { gitRepository, linkedWorktree, probeBotWorktree } from '../src/host/bot-worktree.js'
+import { gitRepository, linkedWorktree, observeGitWorktreeStatus, probeBotWorktree } from '../src/host/bot-worktree.js'
 import { checkpointWorktree, materializeCheckpoint, snapshotWorktree } from '../src/host/bot-checkpoint.js'
 import { createWorktreeHold } from '../src/host/worktree-hold.js'
 
@@ -71,6 +71,24 @@ test('Git and DSH independently prove worktree creation, attachment, and only th
   events.push({ type: 'turn/start', seq: 48, data: { turn: 4 } })
   live.status = 'idle'
   assert.deepEqual((await probeBotWorktree(rt, 'bot')).value, { ...expected, state: 'session-ready' })
+})
+
+test('the live Git worktree status reports its branch and working changes without altering the index', async t => {
+  const fixture = mkdtempSync(join(tmpdir(), 'anbot-worktree-status-'))
+  t.after(() => rmSync(fixture, { recursive: true, force: true }))
+  const source = join(fixture, 'source')
+  const worker = join(fixture, 'worker')
+  mkdirSync(source)
+  const git = (...args) => execFileSync('git', ['-C', source, ...args], { encoding: 'utf8' }).trim()
+  git('init', '-q')
+  git('-c', 'user.name=Anbot test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'base', '--allow-empty')
+  git('worktree', 'add', '-qb', 'anbot-status-test', worker)
+  const revision = git('rev-parse', 'HEAD')
+  assert.deepEqual(await observeGitWorktreeStatus(worker), { branch: 'anbot-status-test', revision, dirty: false })
+  writeFileSync(join(worker, 'notes.txt'), 'An untracked draft\n')
+  assert.deepEqual(await observeGitWorktreeStatus(worker), { branch: 'anbot-status-test', revision, dirty: true })
+  assert.equal(git('status', '--porcelain'), '')
+  assert.equal(await observeGitWorktreeStatus(join(fixture, 'missing')), null)
 })
 
 test('a Git checkpoint captures working contents without moving HEAD or changing the staged index', async t => {

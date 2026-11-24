@@ -50,12 +50,21 @@ export function BotWorktree({ botId, sessionId, readOnly, openSession, followRes
   const root = hold?.root ?? observed?.root
   const held = hold?.status === 'held' && hold.sessionId === sessionId
   const stopping = hold?.status === 'stopping' && hold.sessionId === sessionId
+  const facts = [
+    [t('Owner'), view?.owner],
+    [t('Git branch'), view?.git?.branch ?? (view?.git ? t('Detached HEAD') : null)],
+    [t('Git baseline'), view?.baseCommit?.slice(0, 12)],
+    [t('Git revision'), view?.git?.revision?.slice(0, 12)],
+    [t('Uncommitted changes'), view?.git ? (view.git.dirty ? t('Present') : t('None')) : null],
+  ].filter(([, value]) => value)
   const checkpoints = (view?.checkpoints ?? []).slice().reverse()
   const branches = (view?.previews ?? []).slice().reverse()
   return h('section', { 'aria-label': t('Worktree control') },
     h('div', { className: 'bt-section-title' }, t('Worktree control')),
     h('div', { className: 'bt-note', role: 'status' }, detail ?? ''),
     root ? h('p', { className: 'bt-note', style: { overflowWrap: 'anywhere' } }, root) : null,
+    root && facts.length ? h('dl', null, facts.map(([label, value]) =>
+      h('div', { key: label, className: 'bt-kv' }, h('dt', null, label), h('dd', { style: { overflowWrap: 'anywhere' } }, value)))) : null,
     error ? h('p', { className: 'bt-error', role: 'alert' }, error) : null,
     hold ? h('button', { type: 'button', className: 'bt-soft bt-soft-sm', disabled: readOnly || busy || !held,
       onClick: () => void change('bot-worktree-return') }, t('Return worktree'))

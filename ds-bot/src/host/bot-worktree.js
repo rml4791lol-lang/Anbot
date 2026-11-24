@@ -27,6 +27,22 @@ export async function linkedWorktree(folder) {
   return { status: 'observed', value: { root, gitDir, revision } }
 }
 
+export async function observeGitWorktreeStatus(root) {
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/iu.test(name))), GIT_OPTIONAL_LOCKS: '0' }
+  try {
+    const { stdout } = await runGit('git', ['-C', root, '-c', 'core.fsmonitor=false', 'status', '--porcelain=v2', '--branch', '-z', '--untracked-files=normal', '--ignore-submodules=all'], {
+      env, timeout: 3000, maxBuffer: 512 * 1024, windowsHide: true,
+    })
+    const rows = stdout.split('\0')
+    const head = rows.find(row => row.startsWith('# branch.head '))?.slice('# branch.head '.length)
+    const revision = rows.find(row => row.startsWith('# branch.oid '))?.slice('# branch.oid '.length)
+    if (!head || !revision) return null
+    return { branch: head === '(detached)' ? null : head, revision, dirty: rows.some(row => /^[12u?] /u.test(row)) }
+  } catch {
+    return null
+  }
+}
+
 /** @returns {Promise<import('./harness-contracts.js').WorktreeObservation>} */
 export async function probeBotWorktree(rt, botId) {
   if (rt.botOf(botId) === undefined) throw Object.assign(new Error('Unknown Bot'), { code: 'bot/not-found' })

@@ -1,6 +1,11 @@
 // Korean (ko) localization for Anbot client and DSH settings namespaces.
 
 export const KO = {
+  'Git branch': "Git 브랜치",
+  'Git baseline': "Git 기준 커밋",
+  'Git revision': "Git 리비전",
+  'Detached HEAD': "분리된 HEAD",
+  'Present': "있음",
   'Development and debugging': "개발 및 디버깅",
   'UI and product': "UI 및 제품",
   'Frontend': "프런트엔드",

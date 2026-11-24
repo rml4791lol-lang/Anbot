@@ -14,7 +14,7 @@ import { buildTeamActivity } from './team-activity.js'
 import { buildTaskDetail, redactCredentialText, taskSessionIds } from './task-detail.js'
 import { redactDeep } from './secrets.js'
 import { createBotSpecAccess } from './bot-spec.js'
-import { probeBotWorktree } from './bot-worktree.js'
+import { observeGitWorktreeStatus, probeBotWorktree } from './bot-worktree.js'
 import { observeBotRuntime } from './bot-runtime-view.js'
 import { createWorktreeHold } from './worktree-hold.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
@@ -449,8 +449,11 @@ export function install(rt) {
         case 'bot-worktree': {
           const worktree = await probeBotWorktree(rt, body.botId)
           const bot = rt.botOf(body.botId)
-          return ok({ ...worktree, hold: workspaceHold.view(body.botId), canTakeOver: workspaceHold.executorOf(body.botId).canTakeOver,
-            checkpoints: bot.checkpoints ?? [], previews: bot.checkpointPreviews ?? [] })
+          const git = worktree.status === 'observed' ? await observeGitWorktreeStatus(worktree.value.root) : null
+          const hold = workspaceHold.view(body.botId)
+          const allocation = worktree.value?.root === bot.projectWorkspace?.root ? bot.projectWorkspace : undefined
+          return ok({ ...worktree, hold, git, owner: bot.name, baseCommit: allocation?.baseCommit,
+            canTakeOver: workspaceHold.executorOf(body.botId).canTakeOver, checkpoints: bot.checkpoints ?? [], previews: bot.checkpointPreviews ?? [] })
         }
         case 'bot-runtime':
           return ok(readModelPayload(await observeBotRuntime(rt, body.botId, body.sessionId)))
