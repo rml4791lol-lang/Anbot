@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { linkedWorktree, probeBotWorktree } from '../src/host/bot-worktree.js'
+import { gitRepository, linkedWorktree, probeBotWorktree } from '../src/host/bot-worktree.js'
 import { checkpointWorktree, materializeCheckpoint, snapshotWorktree } from '../src/host/bot-checkpoint.js'
 import { createWorktreeHold } from '../src/host/worktree-hold.js'
 
@@ -20,6 +20,17 @@ test('Git and DSH independently prove worktree creation, attachment, and only th
   git('-c', 'user.name=Anbot test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '--allow-empty', '-m', 'base')
   git('worktree', 'add', '--quiet', '--detach', worker)
   git('worktree', 'add', '--quiet', '--detach', sibling)
+  const primary = await gitRepository(source)
+  assert.equal(primary.status, 'observed')
+  assert.deepEqual(primary.value, {
+    root: realpathSync(source), gitDir: realpathSync(join(source, '.git')),
+    commonDir: realpathSync(join(source, '.git')), revision: git('rev-parse', 'HEAD'), linked: false,
+  })
+  const checkout = await gitRepository(worker)
+  assert.equal(checkout.status, 'observed')
+  assert.equal(checkout.value.root, realpathSync(worker))
+  assert.equal(checkout.value.commonDir, realpathSync(join(source, '.git')))
+  assert.equal(checkout.value.linked, true)
   assert.match((await linkedWorktree(source)).reason, /primary checkout/u)
   assert.equal((await linkedWorktree(fixture)).status, 'unavailable')
 

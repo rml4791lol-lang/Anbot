@@ -4,7 +4,7 @@ import { promisify } from 'node:util'
 
 const runGit = promisify(execFile)
 
-export async function linkedWorktree(folder) {
+export async function gitRepository(folder) {
   if (typeof folder !== 'string' || folder === '') return { status: 'unavailable', reason: 'No working folder is set for this Bot.' }
   const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/iu.test(name)))
   try {
@@ -13,11 +13,18 @@ export async function linkedWorktree(folder) {
     })
     const [path, metadata, common, revision] = stdout.trimEnd().split(/\r?\n/u)
     const [root, gitDir, commonDir] = await Promise.all([path, metadata, common].map(value => realpath(value)))
-    if (gitDir === commonDir) return { status: 'unavailable', reason: 'The working folder is the primary checkout. Select a linked Git worktree.' }
-    return { status: 'observed', value: { root, gitDir, revision } }
+    return { status: 'observed', value: { root, gitDir, commonDir, revision, linked: gitDir !== commonDir } }
   } catch (error) {
-    return { status: 'unavailable', reason: error.code === 'ENOENT' ? 'Git or the working folder is missing.' : 'The working folder has no readable linked Git worktree.' }
+    return { status: 'unavailable', reason: error.code === 'ENOENT' ? 'Git or the working folder is missing.' : 'The working folder has no readable Git repository with a commit.' }
   }
+}
+
+export async function linkedWorktree(folder) {
+  const repository = await gitRepository(folder)
+  if (repository.status === 'unavailable') return repository
+  if (!repository.value.linked) return { status: 'unavailable', reason: 'The working folder is the primary checkout. Select a linked Git worktree.' }
+  const { root, gitDir, revision } = repository.value
+  return { status: 'observed', value: { root, gitDir, revision } }
 }
 
 /** @returns {Promise<import('./harness-contracts.js').WorktreeObservation>} */

@@ -7,6 +7,7 @@ import { MAX_AVATAR_IMAGE, ROOM_MAX_MEMBERS, ROOM_MODES, ROOM_NAME_MAX, ROOM_NOT
 import { currentColor, isColor, normalize, unquote } from './text.js'
 import { fitSkillShortlist, readSkillShortlist, SKILL_SHORTLIST_MAX } from './skill-shortlist.js'
 import { ownedPresetId } from './bot-presets.js'
+import { claimBotProjectWorkspace, isBotProjectWorkspaceDir, prepareBotProjectWorkspace, releaseBotProjectWorkspace } from './bot-project-workspace.js'
 import { nameProblem } from '../shared/mentions.js'
 
 const BROWSER_GRANT_KINDS = new Set(['post', 'upload', 'download', 'delete', '*'])
@@ -108,7 +109,7 @@ export function install(rt) {
   // `dir` is a working folder outside the team workspace. Such a Session is made by cwd
   // alone, so it joins no DSH workspace and the user's own project lists stay as they are —
   // unless the folder is already registered as a workspace, which it then joins (#710).
-  async function createSession(title, { dir, agentPreset, presetBinding } = {}) {
+  async function createSession(title, { dir, agentPreset, presetBinding, sessionId, cwdOnly = false } = {}) {
     // A Bot's tools run here too; while another dsh holds the team, a new Session would
     // belong to no saved Bot.
     const readOnly = rt.readOnly()
@@ -116,18 +117,19 @@ export function install(rt) {
     const preset = presetBinding === undefined ? await botPreset(agentPreset) : { agentPreset: await rt.ensureBotPreset(presetBinding) }
     const usable = dir !== undefined && await rt.isFolder(dir)
     if (dir !== undefined && !usable) rt.warn('ds-bot: the working folder %s is gone; %s starts in the team workspace', dir, title)
-    const known = usable ? await ctx.workspaceRegistry.resolveByPath(dir) : undefined
+    const isolated = usable && (cwdOnly || isBotProjectWorkspaceDir(rt, dir))
+    const known = usable && !isolated ? await ctx.workspaceRegistry.resolveByPath(dir) : undefined
     const place = known !== undefined ? { workspaceId: known.id } : usable ? { cwd: dir } : { workspaceId: await ensureWorkspace() }
-    const { sessionId } = await ctx.sessionController.create({ ...place, ...preset })
+    const created = await ctx.sessionController.create({ ...place, ...preset, ...(sessionId === undefined ? {} : { sessionId }) })
     try {
-      const agent = await rt.resolveAgent(sessionId)
+      const agent = await rt.resolveAgent(created.sessionId)
       await ctx.sessionTitle.rename(agent.session, title)
     } catch (error) {
-      await ctx.workspaceRegistry.archiveSession(sessionId)
+      await ctx.workspaceRegistry.archiveSession(created.sessionId)
         .catch(archiveError => rt.warn('ds-bot: archiving the Session for %s failed: %s', title, archiveError))
       throw error
     }
-    return sessionId
+    return created.sessionId
   }
 
   function cleanAvatar(input) {
@@ -220,7 +222,7 @@ export function install(rt) {
     return holdName('bot', cleanName, () => buildBot(cleanName, options))
   }
 
-  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, section, sectionId, skillShortlist, agentPreset }) {
+  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, section, sectionId, skillShortlist, agentPreset, autoWorkspace = true }) {
     const cleanAvatarValue = cleanAvatar(avatar)
     // Read before the Session exists, so a malformed shortlist leaves no half-made Bot.
     let skills = skillShortlist === null ? undefined : readSkillShortlist(skillShortlist)
@@ -237,6 +239,7 @@ export function install(rt) {
     const dir = workDir === undefined || workDir === null ? undefined : await rt.cleanWorkDir(workDir)
     const clash = dir === undefined ? undefined : await rt.privateClash(dir)
     if (clash) throw new Error(`${dir} is in or around the folder of ${clash.name}, a private Bot, so ${cleanName} cannot work there`)
+    const choseFolder = workDir !== undefined && workDir !== null
     // The picker and the host validate against the same live catalog; a name that is
     // not there is refused instead of being saved as a dead entry. A list longer than
     // five is fitted in instead of refused; the Bot's diagnostics name what went.
@@ -246,8 +249,23 @@ export function install(rt) {
     const original = rt.botOf(copyOf)
     const presetBinding = agentPreset === undefined ? undefined : await rt.createBotPreset(agentPreset, original?.presetBinding)
     let id
+    let projectReservation
     try {
-      id = await createSession(cleanName, { dir, agentPreset, presetBinding })
+      if (!choseFolder && autoWorkspace && typeof ctx.workspaceRegistry.get === 'function') {
+        const workspaceId = await ensureWorkspace()
+        projectReservation = await prepareBotProjectWorkspace(rt, {
+          name: cleanName,
+          source: ctx.workspaceRegistry.get(workspaceId)?.path,
+        })
+      }
+      id = await createSession(cleanName, {
+        dir: projectReservation?.workingDir ?? dir,
+        agentPreset,
+        presetBinding,
+        sessionId: projectReservation?.sessionId,
+        cwdOnly: projectReservation !== undefined,
+      })
+      const claimedProject = projectReservation === undefined ? undefined : claimBotProjectWorkspace(rt, projectReservation, id)
       const resolvedSecId = !main ? resolveSectionInput({ section, sectionId }) : undefined
       state.bots[id] = {
         id,
@@ -258,7 +276,8 @@ export function install(rt) {
         ...(cleanAvatarValue ? { avatar: cleanAvatarValue } : {}),
         ...(modelRef ? { model: modelRef } : {}),
         ...(effortId ? { effort: effortId } : {}),
-        ...(dir ? { workDir: dir } : {}),
+        ...(claimedProject ? { workDir: claimedProject.workingDir } : dir ? { workDir: dir } : {}),
+        ...(claimedProject ? { projectWorkspace: claimedProject } : {}),
         ...(resolvedSecId ? { sectionId: resolvedSecId } : {}),
         instructions: String(instructions).trim(),
         createdAt: Date.now(),
@@ -304,6 +323,7 @@ export function install(rt) {
         .then(() => sendKickoff(bot, greeting))
       return bot
     } catch (error) {
+      if (projectReservation !== undefined && id !== undefined) releaseBotProjectWorkspace(rt, projectReservation, id)
       await rt.dropBotPreset(presetBinding)
         .catch(cleanup => rt.warn('ds-bot: preset cleanup for %s failed: %s', cleanName, cleanup.message))
       if (id === undefined) throw error
@@ -391,7 +411,8 @@ export function install(rt) {
     if (bot.private === true) throw new Error(`${bot.name} is private, so it cannot be copied`)
     const served = (await rt.catalog()).some(entry => entry.ref === bot.model)
     // A folder that went away since leaves the copy in the team workspace.
-    const workDir = bot.workDir !== undefined && await rt.isFolder(bot.workDir) ? bot.workDir : undefined
+    const autoWorkspace = bot.projectWorkspace !== undefined
+    const workDir = !autoWorkspace && bot.workDir !== undefined && await rt.isFolder(bot.workDir) ? bot.workDir : undefined
     // No await from here to createBot's check, so two copies at once get different names.
     return createBot({
       name: freshName(`${bot.name} copy`),
@@ -404,6 +425,7 @@ export function install(rt) {
       // explicit Default pick); else the create would inherit the profile level.
       effort: served ? (bot.effort ?? null) : undefined,
       workDir,
+      autoWorkspace,
       agentPreset: bot.agentPreset,
       sectionId: bot.sectionId,
       copyOf: bot.id,
@@ -519,6 +541,7 @@ export function install(rt) {
     const moved = moving && (workDir !== bot.workDir || bot.directWorkDir !== undefined)
     if (moving) {
       delete bot.directWorkDir
+      if (bot.projectWorkspace?.workingDir !== workDir) delete bot.projectWorkspace
       if (workDir === undefined) delete bot.workDir
       else bot.workDir = workDir
     }
