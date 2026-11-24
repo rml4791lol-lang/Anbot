@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { install } from '../src/host/bot-workflow.js'
 
-function fixture({ engine = true } = {}) {
+function fixture({ engine = true, savedBot } = {}) {
   const events = []
   const request = []
   const close = []
@@ -16,15 +16,17 @@ function fixture({ engine = true } = {}) {
     start: (options) => { request.push(options); return run },
   } : undefined }
   let cleanup
+  const bot = savedBot ?? { id: 'bot' }
   const rt = {
     ctx: { get: name => name === 'agentPresets' ? preset : undefined, effect: effect => { cleanup = effect() } },
-    botOf: id => id === 'bot' ? { id } : undefined,
+    botOf: id => id === 'bot' ? bot : undefined,
+    save: async () => {},
     chatOf: () => agent.session.id,
     resolveAgent: async () => agent,
     warn() {},
   }
   install(rt)
-  return { rt, agent, events, request, close, lifecycle, cleanup }
+  return { rt, agent, bot, events, request, close, lifecycle, cleanup }
 }
 
 test('the workflow binds to its Bot Session and receives evidence counts from events only', async () => {
@@ -59,4 +61,28 @@ test('a missing native service produces an actionable error for that Bot', async
   await assert.rejects(rt.startBotWorkflow('missing'), /unknown bot/i)
   await assert.rejects(rt.startBotWorkflow('bot'), /DSH Agent preset/)
   assert.equal(rt.botWorkflowView('bot').status, 'error')
+})
+
+
+test('terminal Workflow evidence survives a fresh host with the same Bot record', async () => {
+  const first = fixture()
+  const started = await first.rt.startBotWorkflow('bot')
+  const result = { commands: 1, failures: 0, diffs: 1, deliverables: 0 }
+  first.lifecycle.resolve({ stopReason: 'completed', value: result })
+  await first.cleanup()
+  const restarted = fixture({ savedBot: JSON.parse(JSON.stringify(first.bot)) })
+  assert.deepEqual(restarted.rt.botWorkflowView('bot'), { ...started, status: 'completed', result })
+  assert.equal(restarted.request.length, 0)
+})
+
+test('a workflow still running at process loss is shown as interrupted without dispatching it again', async () => {
+  const first = fixture()
+  const started = await first.rt.startBotWorkflow('bot')
+  const restarted = fixture({ savedBot: JSON.parse(JSON.stringify(first.bot)) })
+  const interrupted = restarted.rt.botWorkflowView('bot')
+  assert.equal(interrupted?.status, 'interrupted')
+  assert.equal(interrupted?.runId, started.runId)
+  assert.equal(restarted.request.length, 0)
+  first.lifecycle.resolve({ stopReason: 'cancelled' })
+  await first.cleanup()
 })

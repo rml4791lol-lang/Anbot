@@ -10,7 +10,7 @@ export interface BotWorkflowView {
   sessionId: string
   runId: string | null
   throughSequence: number | null
-  status: 'preparing' | 'running' | 'cancelling' | 'completed' | 'cancelled' | 'error'
+  status: 'preparing' | 'running' | 'cancelling' | 'interrupted' | 'completed' | 'cancelled' | 'error'
   result?: SessionEvidenceSummary
   reason?: string
 }

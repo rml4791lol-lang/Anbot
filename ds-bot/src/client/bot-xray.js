@@ -3,7 +3,7 @@ import { call } from './api.js'
 import { t } from './i18n.js'
 
 const IN_PROGRESS = new Set(['preparing', 'running', 'cancelling'])
-const LABELS = { preparing: 'Preparing', running: 'Running', cancelling: 'Cancelling', completed: 'Completed', cancelled: 'Cancelled', error: 'Failed' }
+const LABELS = { preparing: 'Preparing', running: 'Running', cancelling: 'Cancelling', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled', error: 'Failed' }
 
 export function BotXRay({ botId, sessionId, readOnly }) {
   const [view, setView] = useState(undefined)

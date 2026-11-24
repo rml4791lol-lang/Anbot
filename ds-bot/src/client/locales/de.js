@@ -1,6 +1,7 @@
 // German (de) localization for Anbot client and DSH settings namespaces.
 
 export const DE = {
+  Interrupted: 'Unterbrochen',
   'Git branch': "Git-Branch",
   'Git baseline': "Git-Basiscommit",
   'Git revision': "Git-Revision",

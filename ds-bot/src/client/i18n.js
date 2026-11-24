@@ -11,6 +11,7 @@ import { DSH_DE, HOST_ERRORS_DE, DE } from './locales/de.js'
 export const NAMESPACE = 'ds-bot'
 
 const ZH = {
+  Interrupted: '已中断',
   'Git branch': "Git 分支",
   'Git baseline': "Git 基线",
   'Git revision': "Git 当前版本",

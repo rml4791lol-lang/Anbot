@@ -114,6 +114,7 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  Interrupted: "中断",
   "Git branch": "Gitブランチ",
   "Git baseline": "Gitの基準コミット",
   "Git revision": "Gitリビジョン",
@@ -3021,6 +3022,7 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  Interrupted: "중단됨",
   "Git branch": "Git 브랜치",
   "Git baseline": "Git 기준 커밋",
   "Git revision": "Git 리비전",
@@ -5973,6 +5975,7 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  Interrupted: "Interrumpido",
   "Git branch": "Rama de Git",
   "Git baseline": "Confirmación base de Git",
   "Git revision": "Revisión de Git",
@@ -8925,6 +8928,7 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  Interrupted: "Interrompu",
   "Git branch": "Branche Git",
   "Git baseline": "Commit de référence Git",
   "Git revision": "Révision Git",
@@ -11832,6 +11836,7 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  Interrupted: "Unterbrochen",
   "Git branch": "Git-Branch",
   "Git baseline": "Git-Basiscommit",
   "Git revision": "Git-Revision",
@@ -14785,6 +14790,7 @@ var DSH_DE = {
 // src/client/i18n.js
 var NAMESPACE = "ds-bot";
 var ZH = {
+  Interrupted: "已中断",
   "Git branch": "Git 分支",
   "Git baseline": "Git 基线",
   "Git revision": "Git 当前版本",
@@ -45489,7 +45495,7 @@ var TASK_CSS = `
 // src/client/bot-xray.js
 var import_react69 = require("react");
 var IN_PROGRESS = /* @__PURE__ */ new Set(["preparing", "running", "cancelling"]);
-var LABELS2 = { preparing: "Preparing", running: "Running", cancelling: "Cancelling", completed: "Completed", cancelled: "Cancelled", error: "Failed" };
+var LABELS2 = { preparing: "Preparing", running: "Running", cancelling: "Cancelling", interrupted: "Interrupted", completed: "Completed", cancelled: "Cancelled", error: "Failed" };
 function BotXRay({ botId, sessionId, readOnly }) {
   const [view, setView] = (0, import_react69.useState)(void 0);
   const [pending, setPending] = (0, import_react69.useState)(false);

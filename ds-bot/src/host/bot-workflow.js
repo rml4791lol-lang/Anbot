@@ -21,7 +21,30 @@ export function install(rt) {
   const entries = new Map()
   let closed = false
 
-  const botWorkflowView = botId => entries.get(botId)?.view ?? null
+  function botWorkflowView(botId) {
+    const live = entries.get(botId)?.view
+    if (live) return live
+    const saved = rt.botOf(botId)?.workflowEvidence
+    if (saved?.botId !== botId) return null
+    if (['completed', 'cancelled', 'error'].includes(saved.status)) return saved
+    return { ...saved, status: 'interrupted' }
+  }
+
+  async function persist(view) {
+    const bot = rt.botOf(view.botId)
+    if (bot === undefined) throw new Error('The Workflow Bot was removed')
+    const previous = bot.workflowEvidence
+    bot.workflowEvidence = { ...view }
+    try {
+      await rt.save({ required: true })
+    } catch (error) {
+      if (rt.botOf(view.botId) === bot) {
+        if (previous === undefined) delete bot.workflowEvidence
+        else bot.workflowEvidence = previous
+      }
+      throw error
+    }
+  }
 
   async function startBotWorkflow(botId) {
     const bot = rt.botOf(botId)
@@ -39,6 +62,7 @@ export function install(rt) {
       let run
       let result
       try {
+        await persist(view)
         const parent = await rt.resolveAgent(sessionId)
         controller.signal.throwIfAborted()
         if (rt.botOf(botId) === undefined || rt.chatOf(botId) !== sessionId) throw new Error('The Bot Session changed. Start the Workflow again.')
@@ -53,11 +77,12 @@ export function install(rt) {
         const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(RUN_TIMEOUT_MS)])
         run = engine.start({ parent, meta: META, script: SCRIPT, args, signal, maxTotalAgents: 1 })
         Object.assign(view, { runId: run.id, throughSequence: events.at(-1)?.seq ?? null, status: 'running' })
+        await persist(view)
         prepared.resolve({ ...view })
         result = await run.result
       } catch (error) {
         result = { stopReason: controller.signal.aborted ? 'cancelled' : 'error', error: error.message }
-        prepared.reject(error)
+        controller.abort(error)
       } finally {
         try {
           await run?.dispose()
@@ -65,10 +90,20 @@ export function install(rt) {
           result = { stopReason: 'error', error: 'DSH could not finish Workflow cleanup.' }
           rt.warn('ds-bot: Workflow cleanup failed for %s: %s', sessionId, error)
         }
-        view.status = result.stopReason
-        if (result.stopReason === 'completed') view.result = result.value
-        else if (typeof result.error === 'string') view.reason = result.error
+        const final = { ...view, status: result.stopReason }
+        if (result.stopReason === 'completed') final.result = result.value
+        else if (typeof result.error === 'string') final.reason = rt.redactSecrets?.(result.error) ?? result.error
+        try {
+          await persist(final)
+        } catch (error) {
+          rt.warn('ds-bot: Workflow result could not be recorded for %s: %s', sessionId, error)
+          final.status = 'error'
+          final.reason = 'The Workflow result could not be saved.'
+          delete final.result
+        }
+        Object.assign(view, final)
         delete entry.settled
+        prepared.reject(new Error(final.reason ?? 'The Workflow did not start.'))
       }
     })()
     return prepared.promise

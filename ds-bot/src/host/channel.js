@@ -95,7 +95,7 @@ export function install(rt) {
     // `sessionId` is the Bot's current own-chat part; `parts` its earlier ones.
     // `waiting`: the Bot holds its greeting until the user picks its model or fixes
     // what failed it. `blocked`: the facts of a failure only the user can fix (turns.js).
-    bots: Object.values(state.bots).map(({ segments, kickoff, openParts, taskSpec: _taskSpec, checkpoints: _checkpoints, checkpointPreviews: _checkpointPreviews, checkpointRestore: _checkpointRestore, ...bot }) => {
+    bots: Object.values(state.bots).map(({ segments, kickoff, openParts, taskSpec: _taskSpec, checkpoints: _checkpoints, checkpointPreviews: _checkpointPreviews, checkpointRestore: _checkpointRestore, workflowEvidence: _workflowEvidence, ...bot }) => {
       const tail = rt.chatTail(rt.chatOf(bot.id))
       // `openParts` are the parts opened while the Bot was busy: live, with their own
       // earlier parts, and each one's run state read from the live turns.
@@ -441,6 +441,7 @@ export function install(rt) {
           await rt.load()
           return ok(await rt.chatPage(String(body.botId ?? ''), body.cursor ?? undefined, body.steps === true))
         case 'bot-workflow':
+          await rt.load()
           return ok(readModelPayload(rt.botWorkflowView(String(body.botId ?? ''))))
         case 'bot-spec':
           return ok(botSpec.get(body.botId, body.sessionId))

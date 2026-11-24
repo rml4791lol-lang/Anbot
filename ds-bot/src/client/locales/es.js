@@ -1,6 +1,7 @@
 // Spanish (es) localization for Anbot client and DSH settings namespaces.
 
 export const ES = {
+  Interrupted: 'Interrumpido',
   'Git branch': "Rama de Git",
   'Git baseline': "Confirmación base de Git",
   'Git revision': "Revisión de Git",

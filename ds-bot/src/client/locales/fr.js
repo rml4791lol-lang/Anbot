@@ -1,6 +1,7 @@
 // French (fr) localization for Anbot client and DSH settings namespaces.
 
 export const FR = {
+  Interrupted: 'Interrompu',
   'Git branch': "Branche Git",
   'Git baseline': "Commit de référence Git",
   'Git revision': "Révision Git",
