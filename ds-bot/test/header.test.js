@@ -58,6 +58,19 @@ test('the Bot header has no right sidebar button', () => {
   assert.equal(sideButton(header({})), null)
 })
 
+test('the chat header draws the current Bot name and role from the roster', () => {
+  const bot = { id: 'a', name: 'Prism', sessionId: 'a', role: 'UI design' }
+  const view = header({}, { useRoster: hook({ ...roster, byId: { a: bot } }) }).children[0]
+  assert.equal(view.props.title, 'Prism · UI design')
+  assert.equal(view.children.find(node => node?.props?.className === 'bt-pill-name').children[0], 'Prism')
+  assert.equal(view.children.find(node => node?.props?.className === 'bt-pill-role').children[0], 'UI design')
+
+  const renamed = { ...bot, name: 'Nova', role: 'Frontend' }
+  const next = header({}, { useRoster: hook({ ...roster, byId: { a: renamed } }) }).children[0]
+  assert.equal(next.props.title, 'Nova · Frontend')
+  assert.equal(next.children.find(node => node?.props?.className === 'bt-pill-role').children[0], 'Frontend')
+})
+
 test('a Bot in another Conversation View can return to chat without changing its draft', () => {
   const state = { view: 'study-workspace', draft: 'Keep this draft', viewRequest: null }
   const views = [{ id: 'chat' }, { id: 'study-workspace' }]

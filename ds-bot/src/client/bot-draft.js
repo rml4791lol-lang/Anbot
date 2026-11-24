@@ -18,14 +18,29 @@ export function startModel(roster) {
 }
 
 // A chosen model is always sent: the host fixes it on the Bot at creation.
-export function createPayload({ name, look, image, model, effort, brief, instructions, skills, agentPreset, ownLook = false, sectionId }) {
+export function createPayload({
+  name, look, image, model, effort, brief, role, methods, acceptance, output, workDir,
+  instructions, skills, agentPreset, ownLook = false, sectionId,
+}) {
   // An abot with no character of its own starts with its engine's badge.
   const badge = !image && !ownLook && isLocalRoute(model) ? agentAvatar(String(model).split('/')[0]) : undefined
   const payload = { name, color: look.color, avatar: image ? { shape: look.shape, image } : badge !== undefined ? { shape: look.shape, image: badge.image } : { shape: look.shape } }
   if (model) payload.model = model
   if (effort !== undefined) payload.effort = effort
   if (brief) payload.brief = brief
-  if (instructions?.trim()) payload.instructions = instructions.trim()
+  if (role?.trim()) payload.role = role.trim()
+  // These are separate editable starting points in the form. The Bot schema keeps
+  // one long-lived instruction block, so preserve their headings when combining it.
+  const methodText = String(methods ?? instructions ?? '').trim()
+  const acceptanceText = String(acceptance ?? '').trim()
+  const outputText = String(output ?? '').trim()
+  const briefText = [
+    methodText,
+    acceptanceText ? `Acceptance criteria\n${acceptanceText}` : '',
+    outputText ? `Expected output\n${outputText}` : '',
+  ].filter(Boolean).join('\n\n')
+  if (briefText) payload.instructions = briefText
+  if (workDir?.trim()) payload.workDir = workDir.trim()
   if (skills?.length > 0) payload.skills = skills
   if (agentPreset) payload.agentPreset = agentPreset
   if (sectionId) payload.sectionId = sectionId

@@ -121,7 +121,7 @@ export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus
   const pill = h('button', {
     type: 'button', className: 'bt-pill', 'aria-expanded': away ? undefined : detailsOpen, 'data-memory': memoryNotice ? 'updated' : undefined,
     'aria-label': away ? t('Back to chat') : memoryNotice ? t('Memory updated. Open {name}\'s memory', { name: roster.byId[changed]?.name ?? name }) : t('View conversation details'),
-    title: away ? name : undefined,
+    title: away ? name : bot?.role ? `${name} · ${bot.role}` : undefined,
     onClick: () => (away ? selectView('chat') : memoryNotice ? actions.openMemory(changed) : actions.toggleDetails(sessionId)),
   },
     bot ? h(BotAvatar, { bot, size: 24, state: botState(running, doing, roster.questions?.[currentPart(bot)] !== undefined), badge: false })
@@ -131,6 +131,7 @@ export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus
         h('span', { className: 'bt-pill-goal' }, h('span', { className: 'bt-pill-ico', 'aria-hidden': true }, h(GoalIcon)), h('span', { className: 'bt-pill-title' }, view.title)),
         h('span', { className: 'bt-pill-name' }, name))
       : h('span', { className: 'bt-pill-name' }, away ? t('Back to chat') : bot?.name ?? room?.name ?? (title || t('New chat')), !away && bot?.engine ? h(AgentBadge, { engine: bot.engine }) : null),
+    !away && bot?.role ? h('span', { className: 'bt-pill-role' }, bot.role) : null,
     goalShown && view?.number !== undefined ? h('span', { className: 'bt-pill-count' }, `${view.number}/${view.count}`) : null,
     h(MemoryNotice, { shown: memoryNotice }),
     h('span', { className: 'bt-pill-go', 'aria-hidden': true }, h(GoArrow)))

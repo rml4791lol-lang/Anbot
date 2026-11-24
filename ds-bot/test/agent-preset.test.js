@@ -10,6 +10,7 @@ import * as repeatReminder from '@deepseek-ai/dsh-repeat-tool-reminder'
 
 import { validateJsonSchemaValue } from '@deepseek-ai/dsh-tools'
 import { createRuntime } from '../index.js'
+import { engineeringPresets } from '../src/shared/engineering-presets.js'
 import { fakeContext } from './fake-ctx.js'
 
 // Fei2411/DS-Bot#37: under DSH Desktop's default PTC preset a model may call only
@@ -27,6 +28,26 @@ const TEAM = {
   exchangeTurns: {},
   questions: {},
 }
+
+test('the ten professional recommendations are editable and use only bundled Skills', () => {
+  assert.deepEqual(engineeringPresets.map(preset => preset.id), [
+    'development-debug', 'review', 'ui-product', 'frontend', 'backend-db',
+    'qa', 'project-coordination', 'local-agent-collaboration', 'docs-knowledge', 'self-maintenance',
+  ])
+  for (const preset of engineeringPresets) {
+    for (const field of ['label', 'role', 'methods', 'plugin', 'localAgent', 'model', 'effort', 'workspace', 'permission', 'acceptance', 'output']) {
+      assert.equal(typeof preset[field], 'string', `${preset.id}.${field}`)
+      assert.ok(preset[field].trim().length > 0, `${preset.id}.${field}`)
+    }
+    assert.ok(preset.role.length <= 24, `${preset.id}.role fits the roster field`)
+    assert.ok(Array.isArray(preset.skills), `${preset.id}.skills`)
+    assert.ok(preset.instructions.includes(preset.acceptance), `${preset.id}.instructions acceptance`)
+    assert.ok(preset.instructions.includes(preset.output), `${preset.id}.instructions output`)
+    for (const skill of preset.skills) {
+      assert.doesNotThrow(() => readFileSync(new URL(`../src/host/skills/${skill.name}/SKILL.md`, import.meta.url), 'utf8'), `${preset.id}: ${skill.name}`)
+    }
+  }
+})
 
 function start({ presets, registry, saved = TEAM, failSession = false } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-agent-preset-'))

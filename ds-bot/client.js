@@ -114,6 +114,30 @@ function convertHostErrors(pairs) {
 
 // src/client/locales/ja.js
 var JA = {
+  "Development and debugging": "開発とデバッグ",
+  "UI and product": "UIとプロダクト",
+  "Frontend": "フロントエンド",
+  "Backend and database": "バックエンドとデータベース",
+  "QA": "品質保証",
+  "Project coordination": "プロジェクト調整",
+  "Local Agent collaboration": "ローカルエージェントの連携",
+  "Docs and knowledge": "文書とナレッジ",
+  "Self-maintenance": "Anbotの保守",
+  "Recommendation status": "推奨設定の状態",
+  "Applied": "適用済み",
+  "Advisory": "推奨設定",
+  "Methods": "作業方法",
+  "Effort": "推論の強度",
+  "Permission": "権限",
+  "Plugin": "プラグイン",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "役割、作業方法、受け入れ条件、成果物を編集できます。スキルはローカルエージェントに追加されません。",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "役割、作業方法、利用可能なスキル、受け入れ条件、成果物を編集できます。選んだ作業フォルダーが適用されます。",
+  "For example, Software developer": "例：ソフトウェア開発者",
+  "How this Bot should investigate, decide and work…": "ボットが調査、判断、作業する方法…",
+  "What must be true before the work is complete…": "作業を完了するために満たす条件…",
+  "What the Bot should deliver and report…": "ボットが提出、報告する内容…",
+  "Recommended Skills that this profile does not serve: {skills}": "このプロファイルで利用できない推奨スキル：{skills}",
+  "The team workspace is used when no folder is chosen.": "フォルダーを選ばない場合はチームの作業領域を使用します。",
   "X-Ray": "X-Ray",
   "Failed commands": "失敗したコマンド",
   "Diffs": "差分",
@@ -2992,6 +3016,30 @@ var DSH_JA = {
 
 // src/client/locales/ko.js
 var KO = {
+  "Development and debugging": "개발 및 디버깅",
+  "UI and product": "UI 및 제품",
+  "Frontend": "프런트엔드",
+  "Backend and database": "백엔드 및 데이터베이스",
+  "QA": "품질 보증",
+  "Project coordination": "프로젝트 조정",
+  "Local Agent collaboration": "로컬 에이전트 협업",
+  "Docs and knowledge": "문서 및 지식",
+  "Self-maintenance": "Anbot 자체 유지보수",
+  "Recommendation status": "권장 설정 상태",
+  "Applied": "적용됨",
+  "Advisory": "권장 설정",
+  "Methods": "작업 방식",
+  "Effort": "추론 강도",
+  "Permission": "권한",
+  "Plugin": "플러그인",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "역할, 작업 방식, 인수 기준, 결과물을 편집할 수 있습니다. 로컬 에이전트에는 스킬을 추가하지 않습니다.",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "역할, 작업 방식, 사용 가능한 스킬, 인수 기준, 결과물을 편집할 수 있습니다. 선택한 작업 폴더가 적용됩니다.",
+  "For example, Software developer": "예: 소프트웨어 개발자",
+  "How this Bot should investigate, decide and work…": "Bot의 조사, 판단, 작업 방식…",
+  "What must be true before the work is complete…": "작업 완료에 필요한 조건…",
+  "What the Bot should deliver and report…": "Bot이 전달하고 보고할 내용…",
+  "Recommended Skills that this profile does not serve: {skills}": "이 프로필에서 사용할 수 없는 권장 스킬: {skills}",
+  "The team workspace is used when no folder is chosen.": "폴더를 선택하지 않으면 팀 작업공간을 사용합니다.",
   "X-Ray": "X-Ray",
   "Failed commands": "실패한 명령",
   "Diffs": "변경 사항",
@@ -5915,6 +5963,30 @@ var DSH_KO = {
 
 // src/client/locales/es.js
 var ES = {
+  "Development and debugging": "Desarrollo y depuración",
+  "UI and product": "Interfaz y producto",
+  "Frontend": "Frontend",
+  "Backend and database": "Backend y base de datos",
+  "QA": "Control de calidad",
+  "Project coordination": "Coordinación de proyectos",
+  "Local Agent collaboration": "Colaboración entre agentes locales",
+  "Docs and knowledge": "Documentación y conocimiento",
+  "Self-maintenance": "Mantenimiento de Anbot",
+  "Recommendation status": "Estado de la recomendación",
+  "Applied": "Aplicado",
+  "Advisory": "Configuración recomendada",
+  "Methods": "Métodos",
+  "Effort": "Esfuerzo de razonamiento",
+  "Permission": "Permiso",
+  "Plugin": "Complemento",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "Se pueden editar el rol, los métodos, la aceptación y la entrega. El agente local conserva sus propias habilidades.",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "Se pueden editar el rol, los métodos, las habilidades disponibles, la aceptación y la entrega. Se aplica la carpeta elegida.",
+  "For example, Software developer": "Por ejemplo, desarrollador de software",
+  "How this Bot should investigate, decide and work…": "Cómo debe investigar, decidir y trabajar este Bot…",
+  "What must be true before the work is complete…": "Qué requisitos deben cumplirse para completar el trabajo…",
+  "What the Bot should deliver and report…": "Qué debe entregar y comunicar el Bot…",
+  "Recommended Skills that this profile does not serve: {skills}": "Habilidades recomendadas que este perfil no ofrece: {skills}",
+  "The team workspace is used when no folder is chosen.": "Si no eliges una carpeta, se usa el espacio de trabajo del equipo.",
   "X-Ray": "X-Ray",
   "Failed commands": "Comandos fallidos",
   "Diffs": "Cambios",
@@ -8838,6 +8910,30 @@ var DSH_ES = {
 
 // src/client/locales/fr.js
 var FR = {
+  "Development and debugging": "Développement et débogage",
+  "UI and product": "Interface et produit",
+  "Frontend": "Frontend",
+  "Backend and database": "Backend et base de données",
+  "QA": "Assurance qualité",
+  "Project coordination": "Coordination de projet",
+  "Local Agent collaboration": "Collaboration entre agents locaux",
+  "Docs and knowledge": "Documentation et connaissances",
+  "Self-maintenance": "Maintenance d’Anbot",
+  "Recommendation status": "État des recommandations",
+  "Applied": "Appliqué",
+  "Advisory": "Configuration conseillée",
+  "Methods": "Méthodes",
+  "Effort": "Effort de raisonnement",
+  "Permission": "Autorisation",
+  "Plugin": "Extension",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "Le rôle, les méthodes, les critères et les livrables sont modifiables. L’agent local gère ses propres compétences.",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "Le rôle, les méthodes, les compétences disponibles, les critères et les livrables sont modifiables. Le dossier choisi est appliqué.",
+  "For example, Software developer": "Par exemple, développeur logiciel",
+  "How this Bot should investigate, decide and work…": "Comment ce Bot doit enquêter, décider et travailler…",
+  "What must be true before the work is complete…": "Les conditions à remplir pour terminer le travail…",
+  "What the Bot should deliver and report…": "Ce que le Bot doit livrer et communiquer…",
+  "Recommended Skills that this profile does not serve: {skills}": "Compétences recommandées indisponibles dans ce profil : {skills}",
+  "The team workspace is used when no folder is chosen.": "Sans dossier sélectionné, l’espace de travail de l’équipe est utilisé.",
   "X-Ray": "X-Ray",
   "Failed commands": "Commandes en échec",
   "Diffs": "Modifications",
@@ -11716,6 +11812,30 @@ var DSH_FR = {
 
 // src/client/locales/de.js
 var DE = {
+  "Development and debugging": "Entwicklung und Fehlersuche",
+  "UI and product": "Oberfläche und Produkt",
+  "Frontend": "Frontend",
+  "Backend and database": "Backend und Datenbank",
+  "QA": "Qualitätssicherung",
+  "Project coordination": "Projektkoordination",
+  "Local Agent collaboration": "Zusammenarbeit lokaler Agenten",
+  "Docs and knowledge": "Dokumentation und Wissen",
+  "Self-maintenance": "Anbot-Wartung",
+  "Recommendation status": "Status der Empfehlungen",
+  "Applied": "Angewendet",
+  "Advisory": "Empfohlene Konfiguration",
+  "Methods": "Arbeitsweise",
+  "Effort": "Denkaufwand",
+  "Permission": "Berechtigung",
+  "Plugin": "Plugin",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "Rolle, Arbeitsweise, Abnahme und Ausgabe sind änderbar. Der lokale Agent verwaltet seine eigenen Skills.",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "Rolle, Arbeitsweise, verfügbare Skills, Abnahme und Ausgabe sind änderbar. Der gewählte Arbeitsordner wird übernommen.",
+  "For example, Software developer": "Zum Beispiel Softwareentwickler",
+  "How this Bot should investigate, decide and work…": "Wie dieser Bot untersuchen, entscheiden und arbeiten soll…",
+  "What must be true before the work is complete…": "Welche Voraussetzungen für den Abschluss erfüllt sein müssen…",
+  "What the Bot should deliver and report…": "Was der Bot liefern und berichten soll…",
+  "Recommended Skills that this profile does not serve: {skills}": "In diesem Profil nicht verfügbare empfohlene Skills: {skills}",
+  "The team workspace is used when no folder is chosen.": "Ohne Ordnerauswahl wird der Arbeitsbereich des Teams verwendet.",
   "X-Ray": "X-Ray",
   "Failed commands": "Fehlgeschlagene Befehle",
   "Diffs": "Dateiänderungen",
@@ -15312,6 +15432,30 @@ var ZH = {
   "Skills and MCP": "技能与 MCP",
   "Loaded preset plugins": "已加载的预设插件",
   "Start with a preset": "从预设开始",
+  "Development and debugging": "开发与调试",
+  "UI and product": "界面与产品设计",
+  "Frontend": "前端开发",
+  "Backend and database": "后端与数据库",
+  "QA": "测试与质量验收",
+  "Project coordination": "项目编排",
+  "Local Agent collaboration": "本地 Agent 协作",
+  "Docs and knowledge": "文档与知识整理",
+  "Self-maintenance": "Anbot 自我维护",
+  "Recommendation status": "预设应用情况",
+  "Applied": "已应用",
+  "Advisory": "建议配置",
+  "Methods": "工作方法",
+  "Effort": "思考强度",
+  "Permission": "权限",
+  "Plugin": "插件",
+  "Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.": "角色、工作方法、验收标准和交付格式均可编辑。本地 Agent 的技能由其自身管理。",
+  "Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.": "角色、工作方法、可用技能、验收标准和交付格式均可编辑。选定后会使用该工作目录。",
+  "For example, Software developer": "例如，软件开发工程师",
+  "How this Bot should investigate, decide and work…": "说明这个 Bot 如何调查、判断和执行…",
+  "What must be true before the work is complete…": "说明完成任务必须满足哪些条件…",
+  "What the Bot should deliver and report…": "说明这个 Bot 应交付和汇报什么…",
+  "Recommended Skills that this profile does not serve: {skills}": "当前配置未提供这些推荐技能：{skills}",
+  "The team workspace is used when no folder is chosen.": "未选目录时使用团队工作区。",
   "Debugging": "调试",
   "Code review": "代码评审",
   "Save checkpoint": "保存检查点",
@@ -18908,6 +19052,8 @@ html[data-bt-collapsing] [class*="_frame"]:has(>[class*="_sidebarCol"]){transiti
 .bt-pill:hover{background:color-mix(in srgb,var(--bt-main),#777 9%)}
 .bt-pill:active{transform:scale(.965)}
 .bt-pill-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bt-pill-role{min-width:0;max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--bt-ink-2)}
+@media(max-width:760px){.bt-pill-role{display:none}}
 .bt-pill-mem{flex:none;display:inline-flex;width:0;margin-left:-8px;overflow:hidden;transition:${spring(SPRING_SHAPE, "width", "margin-left")}}
 .bt-pill[data-memory=updated] .bt-pill-mem{width:var(--bt-mem-w);margin-left:0;transition:${spring(SPRING_STRETCH, "width", "margin-left")}}
 .bt-pill-mem-in{flex:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--bt-ink-2);font-size:13px;font-weight:500;opacity:0;filter:blur(6px);transform:translateX(-8px);transition:opacity .14s ease,filter .18s ease,${spring(SPRING_SHAPE, "transform")}}
@@ -26711,13 +26857,42 @@ function startModel(roster) {
   const usable = modelsFor(roster.models).filter((model) => model.needsKey !== true);
   return (usable.find((model) => model.ref === roster.prefs?.defaultBotModel) ?? usable.find((model) => model.ref === roster.defaultModel) ?? usable[0])?.ref ?? "";
 }
-function createPayload({ name, look, image, model, effort, brief, instructions, skills, agentPreset, ownLook = false, sectionId }) {
+function createPayload({
+  name,
+  look,
+  image,
+  model,
+  effort,
+  brief,
+  role,
+  methods,
+  acceptance,
+  output,
+  workDir,
+  instructions,
+  skills,
+  agentPreset,
+  ownLook = false,
+  sectionId
+}) {
   const badge = !image && !ownLook && isLocalRoute(model) ? agentAvatar(String(model).split("/")[0]) : void 0;
   const payload = { name, color: look.color, avatar: image ? { shape: look.shape, image } : badge !== void 0 ? { shape: look.shape, image: badge.image } : { shape: look.shape } };
   if (model) payload.model = model;
   if (effort !== void 0) payload.effort = effort;
   if (brief) payload.brief = brief;
-  if (instructions?.trim()) payload.instructions = instructions.trim();
+  if (role?.trim()) payload.role = role.trim();
+  const methodText = String(methods ?? instructions ?? "").trim();
+  const acceptanceText = String(acceptance ?? "").trim();
+  const outputText = String(output ?? "").trim();
+  const briefText = [
+    methodText,
+    acceptanceText ? `Acceptance criteria
+${acceptanceText}` : "",
+    outputText ? `Expected output
+${outputText}` : ""
+  ].filter(Boolean).join("\n\n");
+  if (briefText) payload.instructions = briefText;
+  if (workDir?.trim()) payload.workDir = workDir.trim();
   if (skills?.length > 0) payload.skills = skills;
   if (agentPreset) payload.agentPreset = agentPreset;
   if (sectionId) payload.sectionId = sectionId;
@@ -34667,31 +34842,173 @@ var GROUP_SETTINGS_CSS = `
 `;
 
 // src/shared/engineering-presets.js
+var professionalPreset = (preset) => ({
+  ...preset,
+  instructions: [
+    preset.methods,
+    `Acceptance criteria:
+${preset.acceptance}`,
+    `Expected output:
+${preset.output}`
+  ].join("\n\n")
+});
 var engineeringPresets = [
-  {
-    id: "debugging",
-    label: "Debugging",
-    instructions: "Handle software defects by reproducing the reported behavior, narrowing the cause, and verifying the smallest repair against a regression test. Use the anbot-debugging skill when investigating a defect.",
-    skills: [{ name: "anbot-debugging", purpose: "Reproduce a defect, isolate its cause, and verify a repair." }]
-  },
-  {
-    id: "code-review",
+  professionalPreset({
+    id: "development-debug",
+    label: "Development and debugging",
+    role: "Software developer",
+    methods: "Handle software defects by reproducing the reported behavior, tracing the first divergent boundary, and verifying the smallest repair against a regression test. Read the repository rules first, preserve unrelated work, and run the nearest focused checks.",
+    skills: [{ name: "anbot-debugging", purpose: "Reproduce a defect, isolate its cause, and verify a repair." }],
+    plugin: "Use the repository test tools and Anbot team tools already exposed in the Session.",
+    localAgent: "Codex CLI or another installed coding agent with file and shell tools.",
+    model: "A tool-capable coding model with enough context for the repository and failing logs.",
+    effort: "High for diagnosis and risky changes; medium for contained routine edits.",
+    workspace: "The repository checkout that contains the behavior, with only the local services it needs.",
+    permission: "Workspace write; add full access only for an observed command that needs it.",
+    acceptance: "A failing reproduction or concrete before/after evidence, focused tests, and a reviewed diff that preserves user changes.",
+    output: "Changed files, exact commands and results, remaining risks, and a concise handoff."
+  }),
+  professionalPreset({
+    id: "review",
     label: "Code review",
-    instructions: "Review software changes for concrete correctness and compatibility risks. Use the anbot-code-review skill and cite evidence for findings.",
-    skills: [{ name: "anbot-code-review", purpose: "Inspect a diff and verify concrete risks against the changed behavior." }]
-  },
-  {
-    id: "ui-review",
-    label: "UI review",
-    instructions: "Review or improve a user interface by identifying its real entry point and design standard, inspecting the running product at desktop and narrow widths, and checking relevant loading, empty, error, overflow and keyboard states. Use the anbot-ui-review skill and separate observed evidence from source-based findings.",
-    skills: [{ name: "anbot-ui-review", purpose: "Review and repair a running interface with responsive, interaction and accessibility evidence." }]
-  },
-  {
-    id: "local-coordination",
-    label: "Local coordination",
-    instructions: "Coordinate work among the Bots that appear in the current team. Inspect live availability, make bounded handoffs with the existing team message or group tools, track shared work where the group provides it, and verify returned evidence before reporting completion. Use the anbot-coordination skill and do not claim subagent, workflow or hidden teammate dispatch.",
-    skills: [{ name: "anbot-coordination", purpose: "Plan and hand off work to live team Bots, then verify the evidence they return." }]
-  }
+    role: "Code reviewer",
+    methods: "Read the repository rules and the actual base-to-candidate diff. Follow changed values into callers, storage, compatibility and permission boundaries. Reproduce concrete risks when possible, and report only findings with an exact trigger or state and source location.",
+    skills: [{ name: "anbot-code-review", purpose: "Inspect a diff and verify concrete risks against the changed behavior." }],
+    plugin: "Use repository instructions, diff inspection and the focused test runner already present.",
+    localAgent: "Claude Code or Codex CLI for an independent review pass.",
+    model: "A reasoning model able to inspect a large diff and source context.",
+    effort: "High for compatibility, security or data-path review.",
+    workspace: "A read-only checkout and the complete base-to-candidate diff.",
+    permission: "Read only by default; use workspace write only when the requested review includes running or adding focused checks.",
+    acceptance: "Every finding names the triggering input or state, affected behavior and source location. Unverified areas are separate from findings.",
+    output: "Findings ordered by severity, followed by checks run, unverified areas and a brief verdict."
+  }),
+  professionalPreset({
+    id: "ui-product",
+    label: "UI and product",
+    role: "UI and product engineer",
+    methods: "Identify the real entry point and design standard, then inspect the running product at desktop and narrow widths. Check loading, empty, error, overflow, interaction and keyboard states. Separate rendered evidence from source-based findings and make the smallest coherent product change.",
+    skills: [{ name: "anbot-ui-review", purpose: "Review and repair a running interface with responsive, interaction and accessibility evidence." }],
+    plugin: "Use the project browser or desktop harness and its existing UI inspection tools.",
+    localAgent: "Codex CLI with browser or shell access for an independent visual pass.",
+    model: "A vision-capable model when screenshots are part of the evidence.",
+    effort: "High for ambiguous product behavior and visual verification.",
+    workspace: "A runnable checkout with exactly the local services needed to render the changed surface.",
+    permission: "Workspace write and browser access; ask before external accounts or paid services.",
+    acceptance: "The real page is checked at desktop and narrow widths, relevant states are exercised, and focused tests cover the changed behavior.",
+    output: "Observed states and screenshots, changed files, checks and results, plus any state that remained unreachable."
+  }),
+  professionalPreset({
+    id: "frontend",
+    label: "Frontend",
+    role: "Frontend engineer",
+    methods: "Trace the component and state boundary before editing. Reuse the existing design system, keep behavior compatible, and handle responsive layout, accessibility, loading, empty, error and keyboard states. Validate the source change in the running interface.",
+    skills: [{ name: "anbot-ui-review", purpose: "Verify the frontend change in the running interface at representative widths." }],
+    plugin: "Use the existing UI component library, browser harness and frontend test runner.",
+    localAgent: "Codex CLI or another installed coding agent with repository and browser access.",
+    model: "A tool-capable coding model with image input when visual verification is required.",
+    effort: "High for ambiguous interaction or layout work; medium for contained component edits.",
+    workspace: "The frontend checkout and only the local services required to render it.",
+    permission: "Workspace write; external services remain unavailable without explicit authorization.",
+    acceptance: "Focused tests pass, the rendered result is checked at desktop and narrow widths, and the console has no new errors.",
+    output: "Changed components, rendered evidence, commands and results, and any responsive or interaction state left unverified."
+  }),
+  professionalPreset({
+    id: "backend-db",
+    label: "Backend and database",
+    role: "Backend & data engineer",
+    methods: "Trace the request through validation, authorization, persistence and response. Inspect schema, migrations, transactions, idempotency, retries, concurrency and backward compatibility. Reproduce failures on isolated data before changing behavior.",
+    skills: [
+      { name: "anbot-code-review", purpose: "Trace compatibility and data-path risks in the backend change." },
+      { name: "anbot-debugging", purpose: "Reproduce a backend or database failure before repairing it." }
+    ],
+    plugin: "Use the repository migration tool, database client and API test harness available to the Session.",
+    localAgent: "Codex CLI with shell and repository access for isolated backend runs.",
+    model: "A tool-capable coding model with a long context window for schema and call-path inspection.",
+    effort: "High for migrations, permissions, concurrency and write paths.",
+    workspace: "The backend checkout and an isolated database or fixtures. Never point tests at production data.",
+    permission: "Workspace write; production and shared external credentials require explicit authorization.",
+    acceptance: "Forward and rollback or fresh-install paths are checked, read-after-write behavior is observed, and focused integration tests pass.",
+    output: "Schema and API changes, commands and results, migration and rollback notes, and any data-safety limit."
+  }),
+  professionalPreset({
+    id: "qa",
+    label: "QA",
+    role: "QA engineer",
+    methods: "Derive scenarios from the stated contract rather than from the implementation. Record exact reproduction steps, then cover success, boundary, failure, timeout, retry, permission and state-transition behavior with isolated data. Repair a defect only when the task includes the fix.",
+    skills: [{ name: "anbot-debugging", purpose: "Distinguish a reproducible failure from intended behavior and verify the fix." }],
+    plugin: "Use the project test runner, browser or API harness, and issue tracker when those tools are exposed.",
+    localAgent: "An installed coding agent for isolated repro scripts and test runs.",
+    model: "A tool-capable model that can read logs and execute the test harness.",
+    effort: "Medium for planned coverage; high for intermittent or cross-layer failures.",
+    workspace: "An isolated test checkout, temporary data directories and allocated ports.",
+    permission: "Workspace write within the test area; no production or shared test data.",
+    acceptance: "Each scenario states expected and observed results, cleanup runs, and a defect fix has a regression check that failed before the repair.",
+    output: "A prioritized bug report or verified fixes, exact commands and results, coverage gaps and cleanup status."
+  }),
+  professionalPreset({
+    id: "project-coordination",
+    label: "Project coordination",
+    role: "Project coordinator",
+    methods: "Start from the current team, goals, task list and working folders. Define bounded work, ownership, dependencies, constraints and acceptance before delegating. Inspect live availability, avoid duplicate handoffs, and verify returned evidence before integrating or reporting completion.",
+    skills: [{ name: "anbot-coordination", purpose: "Plan and hand off work to live team Bots, then verify the evidence they return." }],
+    plugin: "Use only the live team, task and shared-board tools exposed in the current Session.",
+    localAgent: "A Main Bot in model mode is usually preferable; a local agent can coordinate only through exposed team tools.",
+    model: "A reliable reasoning model with tool calls and enough context for current work state.",
+    effort: "High for conflicting dependencies or broad coordination; medium for a bounded handoff.",
+    workspace: "The shared project folder, with each Bot staying inside its owned files and folder.",
+    permission: "Workspace write limited to coordination artifacts; do not claim hidden dispatch or broader access.",
+    acceptance: "Every handoff is self-contained with one owner and an acceptance check, returned evidence is independently verified, and no work is sent twice.",
+    output: "Current plan, owners, decisions, dependencies, handoff evidence, blockers and the next decision gate."
+  }),
+  professionalPreset({
+    id: "local-agent-collaboration",
+    label: "Local Agent collaboration",
+    role: "Multi-agent coordinator",
+    methods: "Inspect the installed local agents and choose from observed capability, sign-in and task fit. Give each worker an isolated worktree or non-overlapping files, a self-contained goal, constraints and acceptance. Integrate returned diffs only after checking the evidence and conflicts.",
+    skills: [{ name: "anbot-coordination", purpose: "Coordinate live agents with explicit ownership and verified returned evidence." }],
+    plugin: "Use only collaboration tools exposed in this Session; no hidden dispatcher or invented worker state.",
+    localAgent: "An installed local CLI selected by observed availability and capability.",
+    model: "Use a tool-capable coordinator model, or select the installed local agent explicitly when that is the runtime.",
+    effort: "High for cross-agent orchestration; medium for one bounded handoff.",
+    workspace: "An isolated Git worktree or a non-overlapping file set for each worker.",
+    permission: "Workspace write within owned files; no other agents' files, destructive Git operations or shared credentials.",
+    acceptance: "Every worker returns a diff or artifact plus checks, conflicts are resolved deliberately, and one integrated check verifies the combined result.",
+    output: "Ownership map, exact handoffs, returned evidence, integrated diff and checks, and any unresolved overlap."
+  }),
+  professionalPreset({
+    id: "docs-knowledge",
+    label: "Docs and knowledge",
+    role: "Technical writer",
+    methods: "Find the owning source of truth before drafting. Name the intended reader, preserve established product terms and backend-authored business text, and make every example, command, path and link verifiable. Prefer concise updates over restating code.",
+    skills: [],
+    plugin: "Use the repository docs tooling and source files already present; add no speculative documentation platform.",
+    localAgent: "Codex CLI or another installed agent with file search and repository access.",
+    model: "A precise long-context model able to compare documentation with source.",
+    effort: "Medium for focused edits; high for architecture, migration or safety guidance.",
+    workspace: "The repository that owns both the source behavior and the documentation.",
+    permission: "Read only while gathering evidence; workspace write only for the requested documentation files.",
+    acceptance: "Every behavioral claim is traceable to source or runtime evidence, examples and links resolve, and visual output is rendered when layout matters.",
+    output: "Concise documentation changes with affected audience, source references and validation performed."
+  }),
+  professionalPreset({
+    id: "self-maintenance",
+    label: "Self-maintenance",
+    role: "Anbot maintainer",
+    methods: "Work from the verified DSH compatibility source and inspect the owning code, tests and current diff first. Respect runtime, profile, generated-file and agent-ownership boundaries. Reproduce the issue, change only owned sources, and validate through the feature's normal entry point.",
+    skills: [
+      { name: "anbot-debugging", purpose: "Reproduce and verify a maintenance failure in the compatibility source." },
+      { name: "anbot-code-review", purpose: "Review the maintenance change for runtime and compatibility regressions." }
+    ],
+    plugin: "Use the repository checks and verified DSH compatibility source; do not patch an installed runtime in place.",
+    localAgent: "Codex CLI with repository shell tools, bound to an isolated checkout.",
+    model: "A long-context, tool-capable reasoning model for cross-file runtime work.",
+    effort: "High for runtime, migration and compatibility changes.",
+    workspace: "An isolated worktree or verified compatibility checkout. Do not modify installed apps, daily profiles or other agents' files.",
+    permission: "Workspace write limited to owned files; no destructive Git, production deployment or shared credentials.",
+    acceptance: "Focused tests exercise the changed entry point, the final diff is reviewed, and generated or installed artifacts remain untouched unless explicitly owned.",
+    output: "Owned changes, commands and results, compatibility assumptions, and any unverified runtime or release risk."
+  })
 ];
 
 // src/client/create-bot.js
@@ -34707,7 +35024,11 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
   const [image, setImage] = (0, import_react40.useState)(null);
   const [library, setLibrary] = (0, import_react40.useState)(false);
   const [name, setName] = (0, import_react40.useState)(start?.name ?? "");
+  const [role, setRole] = (0, import_react40.useState)("");
   const [instructions, setInstructions] = (0, import_react40.useState)("");
+  const [acceptance, setAcceptance] = (0, import_react40.useState)("");
+  const [output, setOutput] = (0, import_react40.useState)("");
+  const [workDir, setWorkDir] = (0, import_react40.useState)("");
   const [preset, setPreset] = (0, import_react40.useState)("");
   const [presets, setPresets] = (0, import_react40.useState)([]);
   const [presetError, setPresetError] = (0, import_react40.useState)("");
@@ -34720,6 +35041,7 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
   const [effort, setEffort] = (0, import_react40.useState)(void 0);
   const [busy, setBusy] = (0, import_react40.useState)(false);
   const [error, setError] = (0, import_react40.useState)("");
+  const [recommendationId, setRecommendationId] = (0, import_react40.useState)("");
   const fileRef = (0, import_react40.useRef)(null);
   const frame = (0, import_react40.useRef)(null);
   const localAgents = useLocalAgents(mode === "local");
@@ -34757,7 +35079,11 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
         model: chosen,
         effort: local ? void 0 : effort,
         brief,
-        instructions,
+        role,
+        methods: instructions,
+        acceptance,
+        output,
+        workDir,
         skills: local ? void 0 : skills,
         agentPreset: preset,
         ownLook,
@@ -34782,13 +35108,69 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
   const previewLook = image ? { ...look, image } : worn ? { ...look, image: worn } : look;
   const catalog = (roster.newBotSkillCatalog ?? roster.skillCatalog ?? []).filter((skill) => !Array.isArray(skill.bots));
   const visibleSkills = catalog.filter((skill) => skill.name.toLowerCase().includes(skillQuery.trim().toLowerCase()) || skills.some((item) => item.name === skill.name));
-  const recommendations = engineeringPresets.filter((item) => item.skills.every((skill) => catalog.some((candidate) => candidate.name === skill.name)));
-  const applyRecommendation = (item) => {
-    setInstructions((current2) => current2 === "" ? item.instructions : current2.includes(item.instructions) ? current2 : `${current2.trimEnd()}
+  const recommendations = engineeringPresets;
+  const activeRecommendation = recommendations.find((item) => item.id === recommendationId);
+  const recommendationSkills = (item) => ({
+    available: item.skills.filter((skill) => catalog.some((candidate) => candidate.name === skill.name)),
+    unavailable: item.skills.filter((skill) => !catalog.some((candidate) => candidate.name === skill.name))
+  });
+  const appendText = (current2, next) => current2.trim() === "" ? next : current2.includes(next) ? current2 : `${current2.trimEnd()}
 
-${item.instructions}`);
-    setSkills((current2) => [...current2, ...item.skills.filter((skill) => !current2.some((entry) => entry.name === skill.name))].slice(0, SKILL_SHORTLIST_MAX));
+${next}`;
+  const replaceUnchanged = (current2, previous, next) => current2.trim() === "" || current2 === previous ? next : current2;
+  const applyRecommendation = (item) => {
+    const previous = recommendations.find((candidate) => candidate.id === recommendationId);
+    setRole((current2) => replaceUnchanged(current2, previous?.role, item.role));
+    setInstructions((current2) => appendText(current2, item.methods));
+    setAcceptance((current2) => replaceUnchanged(current2, previous?.acceptance, item.acceptance));
+    setOutput((current2) => replaceUnchanged(current2, previous?.output, item.output));
+    const missing = new Set(recommendationSkills(item).unavailable.map((skill) => skill.name));
+    setSkills((current2) => {
+      const next = [...current2];
+      for (const skill of item.skills) {
+        if (missing.has(skill.name) || next.some((entry) => entry.name === skill.name) || next.length >= SKILL_SHORTLIST_MAX) continue;
+        next.push({ name: skill.name, purpose: skill.purpose });
+      }
+      return next;
+    });
+    setRecommendationId(item.id);
   };
+  const run2 = (value) => Promise.resolve(value).catch((failure) => {
+    setError(failure?.message ?? String(failure));
+    return false;
+  });
+  const activeUnavailable = activeRecommendation === void 0 ? [] : recommendationSkills(activeRecommendation).unavailable;
+  const recommendationStatus = activeRecommendation === void 0 ? null : (0, import_react40.createElement)(
+    "div",
+    {
+      className: "bt-field",
+      role: "status",
+      "aria-label": t("Recommendation status")
+    },
+    (0, import_react40.createElement)("p", { className: "bt-note" }, (0, import_react40.createElement)("strong", null, t("Applied")), " ", local ? t("Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.") : t("Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.")),
+    (0, import_react40.createElement)(
+      "details",
+      { className: "bt-note" },
+      (0, import_react40.createElement)("summary", null, t("Advisory")),
+      (0, import_react40.createElement)("ul", null, [
+        [t("Plugin"), activeRecommendation.plugin],
+        [t("Local agent"), activeRecommendation.localAgent],
+        [t("Model"), activeRecommendation.model],
+        [t("Effort"), activeRecommendation.effort],
+        [t("Workspace"), activeRecommendation.workspace],
+        [t("Permission"), activeRecommendation.permission]
+      ].map(([label, value]) => (0, import_react40.createElement)("li", { key: label }, (0, import_react40.createElement)("strong", null, label), " · ", value)))
+    ),
+    local || activeUnavailable.length === 0 ? null : (0, import_react40.createElement)(
+      "p",
+      { className: "bt-note bt-danger" },
+      (0, import_react40.createElement)("strong", null, t("Unavailable")),
+      " · ",
+      t("Recommended Skills that this profile does not serve: {skills}", {
+        skills: activeUnavailable.map((skill) => skill.name).join(", ")
+      })
+    )
+  );
   const card = (0, import_react40.createElement)(
     "div",
     { className: "bt-create-card" },
@@ -34886,21 +35268,40 @@ ${item.instructions}`);
       }, onPickEffort: (picked) => setEffort(picked ?? null) }),
       (0, import_react40.createElement)("span", { className: "bt-note" }, chosen ? t("The Bot runs on this model. You can change it later in its details.") : modelsFor(roster.models).length > 0 ? t("Pick a model here, or the Bot asks for one in its chat.") : t("Add a provider and a model in DeepSeek Harness first, or pick one in the Bot's chat later."))
     ) : null,
+    local ? null : (0, import_react40.createElement)(
+      "div",
+      { className: "bt-field" },
+      (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Working folder")),
+      (0, import_react40.createElement)(FolderMenu, { value: workDir || void 0, actions, run: run2, wide: true, onPick: setWorkDir }),
+      (0, import_react40.createElement)("span", { className: "bt-note" }, activeRecommendation?.workspace ?? t("The team workspace is used when no folder is chosen."))
+    ),
     (0, import_react40.createElement)(
       "details",
       { className: "bt-field" },
       (0, import_react40.createElement)("summary", null, t("What this Bot does")),
-      !local && recommendations.length > 0 ? (0, import_react40.createElement)(
+      !local ? (0, import_react40.createElement)(
         "div",
         { className: "bt-field" },
         (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Start with a preset")),
-        (0, import_react40.createElement)("div", null, recommendations.map((item) => (0, import_react40.createElement)("button", {
-          key: item.id,
-          type: "button",
-          className: "bt-soft bt-soft-sm",
-          disabled: skills.length + item.skills.filter((skill) => !skills.some((entry) => entry.name === skill.name)).length > SKILL_SHORTLIST_MAX,
-          onClick: () => applyRecommendation(item)
-        }, t(item.label))))
+        (0, import_react40.createElement)("div", null, recommendations.map((item) => {
+          const applied = recommendationId === item.id;
+          const unavailable = recommendationSkills(item).unavailable;
+          return (0, import_react40.createElement)(
+            "button",
+            {
+              key: item.id,
+              type: "button",
+              className: "bt-soft bt-soft-sm",
+              "aria-label": t(item.label),
+              "data-applied": applied || void 0,
+              onClick: () => applyRecommendation(item)
+            },
+            t(item.label),
+            applied ? ` · ${t("Applied")}` : null,
+            unavailable.length > 0 ? ` · ${t("Unavailable")} ${unavailable.map((skill) => skill.name).join(", ")}` : null
+          );
+        })),
+        recommendationStatus
       ) : null,
       presets.length > 0 ? (0, import_react40.createElement)(
         "label",
@@ -34916,13 +35317,50 @@ ${item.instructions}`);
       (0, import_react40.createElement)(
         "label",
         { className: "bt-field" },
-        (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Instructions")),
+        (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Role")),
+        (0, import_react40.createElement)("input", {
+          className: "bt-input",
+          maxLength: 24,
+          "aria-label": t("Role"),
+          value: role,
+          placeholder: t("For example, Software developer"),
+          onChange: (event) => setRole(event.target.value)
+        })
+      ),
+      (0, import_react40.createElement)(
+        "label",
+        { className: "bt-field" },
+        (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Methods")),
         (0, import_react40.createElement)("textarea", {
           className: "bt-input bt-input-area",
-          "aria-label": t("Instructions"),
-          placeholder: t("What this Bot is responsible for…"),
+          "aria-label": t("Methods"),
+          placeholder: t("How this Bot should investigate, decide and work…"),
           value: instructions,
           onChange: (event) => setInstructions(event.target.value)
+        })
+      ),
+      (0, import_react40.createElement)(
+        "label",
+        { className: "bt-field" },
+        (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Acceptance")),
+        (0, import_react40.createElement)("textarea", {
+          className: "bt-input bt-input-area",
+          "aria-label": t("Acceptance"),
+          value: acceptance,
+          placeholder: t("What must be true before the work is complete…"),
+          onChange: (event) => setAcceptance(event.target.value)
+        })
+      ),
+      (0, import_react40.createElement)(
+        "label",
+        { className: "bt-field" },
+        (0, import_react40.createElement)("span", { className: "bt-field-label" }, t("Output")),
+        (0, import_react40.createElement)("textarea", {
+          className: "bt-input bt-input-area",
+          "aria-label": t("Output"),
+          value: output,
+          placeholder: t("What the Bot should deliver and report…"),
+          onChange: (event) => setOutput(event.target.value)
         })
       ),
       local || catalog.length === 0 ? null : (0, import_react40.createElement)(
@@ -41425,7 +41863,7 @@ function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSe
       "aria-expanded": away ? void 0 : detailsOpen,
       "data-memory": memoryNotice ? "updated" : void 0,
       "aria-label": away ? t("Back to chat") : memoryNotice ? t("Memory updated. Open {name}'s memory", { name: roster.byId[changed]?.name ?? name }) : t("View conversation details"),
-      title: away ? name : void 0,
+      title: away ? name : bot?.role ? `${name} · ${bot.role}` : void 0,
       onClick: () => away ? selectView("chat") : memoryNotice ? actions.openMemory(changed) : actions.toggleDetails(sessionId)
     },
     bot ? (0, import_react55.createElement)(BotAvatar, { bot, size: 24, state: botState(running, doing, roster.questions?.[currentPart(bot)] !== void 0), badge: false }) : room2 ? (0, import_react55.createElement)(RoomAvatar, { room: room2, roster, size: 24 }) : null,
@@ -41435,6 +41873,7 @@ function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSe
       (0, import_react55.createElement)("span", { className: "bt-pill-goal" }, (0, import_react55.createElement)("span", { className: "bt-pill-ico", "aria-hidden": true }, (0, import_react55.createElement)(GoalIcon)), (0, import_react55.createElement)("span", { className: "bt-pill-title" }, view.title)),
       (0, import_react55.createElement)("span", { className: "bt-pill-name" }, name)
     ) : (0, import_react55.createElement)("span", { className: "bt-pill-name" }, away ? t("Back to chat") : bot?.name ?? room2?.name ?? (title || t("New chat")), !away && bot?.engine ? (0, import_react55.createElement)(AgentBadge, { engine: bot.engine }) : null),
+    !away && bot?.role ? (0, import_react55.createElement)("span", { className: "bt-pill-role" }, bot.role) : null,
     goalShown && view?.number !== void 0 ? (0, import_react55.createElement)("span", { className: "bt-pill-count" }, `${view.number}/${view.count}`) : null,
     (0, import_react55.createElement)(MemoryNotice, { shown: memoryNotice }),
     (0, import_react55.createElement)("span", { className: "bt-pill-go", "aria-hidden": true }, (0, import_react55.createElement)(GoArrow))

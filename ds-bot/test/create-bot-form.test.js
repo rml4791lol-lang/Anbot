@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { build } from 'esbuild'
+import { createPayload } from '../src/client/bot-draft.js'
+import { engineeringPresets } from '../src/shared/engineering-presets.js'
 
 // jsdom comes from the harness that test/harness-resolve.mjs found, like the dsh packages.
 const PLUGIN = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -74,6 +76,7 @@ const collect = (match) => {
   return out
 }
 const button = text => collect(n => n.type === 'button' && flatten(n).join('') === text)[0]
+const buttonByLabel = label => collect(n => n.type === 'button' && n.props['aria-label'] === label)[0]
 const render = (roster) => {
   slots.length = 0
   props = { roster: { bots: [], rooms: [], prefs: {}, ...roster }, actions: {}, onBack() {}, onCreated() {} }
@@ -118,7 +121,7 @@ test('creation sends editable instructions and only the explicitly selected prof
   ] })
   let payload
   props.actions.createBot = async value => { payload = value; return { id: 'new' } }
-  const input = collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Instructions')[0]
+  const input = collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Methods')[0]
   assert.ok(input)
   input.props.onChange({ target: { value: 'Verify changes against their tests.' } })
   const selected = collect(node => node.type === 'input' && node.props.value === 'review')[0]
@@ -138,28 +141,56 @@ test('a native preset recommendation fills editable fields and preserves an exis
   ] })
   let payload
   props.actions.createBot = async value => { payload = value; return { id: 'new' } }
-  const field = () => collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Instructions')[0]
+  const field = () => collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Methods')[0]
   field().props.onChange({ target: { value: 'Keep my constraints.' } })
   collect(node => node.type === 'input' && node.props.value === 'test-suite')[0].props.onChange({ target: { checked: true } })
-  assert.equal(button('Code review'), undefined)
-  button('Debugging').props.onClick()
-  button('Debugging').props.onClick()
+  buttonByLabel('Development and debugging').props.onClick()
+  buttonByLabel('Development and debugging').props.onClick()
   assert.match(field().props.value, /^Keep my constraints\.\n\nHandle software defects/u)
-  field().props.onChange({ target: { value: 'Use my edited brief.' } })
+  assert.equal(collect(node => node.type === 'input' && node.props['aria-label'] === 'Role')[0].props.value, 'Software developer')
+  field().props.onChange({ target: { value: 'Use my edited methods.' } })
+  collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Acceptance')[0].props.onChange({ target: { value: 'Focused checks pass.' } })
+  collect(node => node.type === 'textarea' && node.props['aria-label'] === 'Output')[0].props.onChange({ target: { value: 'Report changed files and results.' } })
   button('Create').props.onClick()
   await Promise.resolve()
-  assert.equal(payload?.instructions, 'Use my edited brief.')
+  assert.equal(payload?.instructions, 'Use my edited methods.\n\nAcceptance criteria\nFocused checks pass.\n\nExpected output\nReport changed files and results.')
   assert.equal(payload?.skills.map(skill => skill.name).join(','), 'test-suite,anbot-debugging')
-  assert.equal(payload?.role, undefined)
+  assert.equal(payload?.role, 'Software developer')
 })
 
-test('UI and coordination recommendations follow their live Skill availability', () => {
+test('recommendations stay visible and mark Skills that the live catalog does not serve', () => {
   const ui = { name: 'anbot-ui-review', description: 'Review a running interface' }
   const coordination = { name: 'anbot-coordination', description: 'Hand off work to team Bots' }
   render({ models: MODELS, skillCatalog: [ui] })
-  assert.ok(button('UI review'))
-  assert.equal(button('Local coordination'), undefined)
+  for (const item of engineeringPresets) assert.ok(buttonByLabel(item.label), item.id)
+  assert.doesNotMatch(flatten(buttonByLabel('UI and product')).join(' '), /Unavailable/u)
+  assert.match(flatten(buttonByLabel('Project coordination')).join(' '), /Unavailable anbot-coordination/u)
   render({ models: MODELS, skillCatalog: [coordination] })
-  assert.ok(button('Local coordination'))
-  assert.equal(button('UI review'), undefined)
+  assert.doesNotMatch(flatten(buttonByLabel('Project coordination')).join(' '), /Unavailable/u)
+  assert.match(flatten(buttonByLabel('UI and product')).join(' '), /Unavailable anbot-ui-review/u)
+})
+
+test('a partially available recommendation separates applied, advisory and unavailable guidance', () => {
+  render({ models: MODELS, skillCatalog: [{ name: 'anbot-debugging', description: 'Reproduce a defect' }] })
+  buttonByLabel('Self-maintenance').props.onClick()
+  assert.equal(collect(node => node.type === 'input' && node.props['aria-label'] === 'Role')[0].props.value, 'Anbot maintainer')
+  assert.equal(JSON.stringify(collect(node => node.type === 'input' && node.props.checked).map(node => node.props.value)), JSON.stringify(['anbot-debugging']))
+  const status = collect(node => node.props?.['aria-label'] === 'Recommendation status')[0]
+  assert.ok(status)
+  const text = flatten(status).join(' ')
+  assert.match(text, /Applied/u)
+  assert.match(text, /Advisory/u)
+  assert.match(text, /Plugin\s+·\s+Use the repository checks/u)
+  assert.match(text, /Permission\s+·\s+Workspace write limited to owned files/u)
+  assert.match(text, /Unavailable\s+·\s+Recommended Skills that this profile does not serve: anbot-code-review/u)
+})
+
+test('the create payload keeps combined briefs and an explicitly selected working folder', () => {
+  const payload = createPayload({
+    name: 'Maintainer', look: { shape: 'star', color: 'blue' }, model: 'ds/flash',
+    role: 'Anbot maintainer', methods: 'Inspect the owning source.', acceptance: 'Focused tests pass.', output: 'Report evidence.', workDir: '/tmp/owned-checkout',
+  })
+  assert.equal(payload.role, 'Anbot maintainer')
+  assert.equal(payload.workDir, '/tmp/owned-checkout')
+  assert.equal(payload.instructions, 'Inspect the owning source.\n\nAcceptance criteria\nFocused tests pass.\n\nExpected output\nReport evidence.')
 })

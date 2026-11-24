@@ -8,6 +8,7 @@ import { useEscape } from './overlay-hooks.js'
 import { createPayload, freshBotName, SKILL_SHORTLIST_MAX, skillPurpose, startModel } from './bot-draft.js'
 import { ModelMenu, useAgentModels } from './model-menu.js'
 import { CliList, ReadingModels, RunModeSwitch, useLocalAgents } from './agent-cards.js'
+import { FolderMenu } from './folder-menu.js'
 import { agentAvatar, modelsFor, routeOf } from './agent-routes.js'
 import { hostText, t } from './i18n.js'
 import { call } from './api.js'
@@ -28,7 +29,11 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const [image, setImage] = useState(null)
   const [library, setLibrary] = useState(false)
   const [name, setName] = useState(start?.name ?? '')
+  const [role, setRole] = useState('')
   const [instructions, setInstructions] = useState('')
+  const [acceptance, setAcceptance] = useState('')
+  const [output, setOutput] = useState('')
+  const [workDir, setWorkDir] = useState('')
   const [preset, setPreset] = useState('')
   const [presets, setPresets] = useState([])
   const [presetError, setPresetError] = useState('')
@@ -41,6 +46,7 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const [effort, setEffort] = useState(undefined)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [recommendationId, setRecommendationId] = useState('')
   const fileRef = useRef(null)
   const frame = useRef(null)
   const localAgents = useLocalAgents(mode === 'local')
@@ -71,7 +77,8 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
     try {
       const bot = await actions.createBot(createPayload({
         name: finalName, look, image, model: chosen, effort: local ? undefined : effort, brief,
-        instructions, skills: local ? undefined : skills, agentPreset: preset, ownLook, sectionId: start?.sectionId,
+        role, methods: instructions, acceptance, output, workDir,
+        skills: local ? undefined : skills, agentPreset: preset, ownLook, sectionId: start?.sectionId,
       }))
       onCreated(bot)
     } catch (failure) {
@@ -93,12 +100,56 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
   const catalog = (roster.newBotSkillCatalog ?? roster.skillCatalog ?? []).filter(skill => !Array.isArray(skill.bots))
   const visibleSkills = catalog.filter(skill => skill.name.toLowerCase().includes(skillQuery.trim().toLowerCase())
     || skills.some(item => item.name === skill.name))
-  const recommendations = engineeringPresets.filter(item => item.skills.every(skill => catalog.some(candidate => candidate.name === skill.name)))
+  const recommendations = engineeringPresets
+  const activeRecommendation = recommendations.find(item => item.id === recommendationId)
+  const recommendationSkills = item => ({
+    available: item.skills.filter(skill => catalog.some(candidate => candidate.name === skill.name)),
+    unavailable: item.skills.filter(skill => !catalog.some(candidate => candidate.name === skill.name)),
+  })
+  const appendText = (current, next) => current.trim() === '' ? next
+    : current.includes(next) ? current : `${current.trimEnd()}\n\n${next}`
+  const replaceUnchanged = (current, previous, next) => current.trim() === '' || current === previous ? next : current
   const applyRecommendation = (item) => {
-    setInstructions(current => current === '' ? item.instructions
-      : current.includes(item.instructions) ? current : `${current.trimEnd()}\n\n${item.instructions}`)
-    setSkills(current => [...current, ...item.skills.filter(skill => !current.some(entry => entry.name === skill.name))].slice(0, SKILL_SHORTLIST_MAX))
+    const previous = recommendations.find(candidate => candidate.id === recommendationId)
+    setRole(current => replaceUnchanged(current, previous?.role, item.role))
+    setInstructions(current => appendText(current, item.methods))
+    setAcceptance(current => replaceUnchanged(current, previous?.acceptance, item.acceptance))
+    setOutput(current => replaceUnchanged(current, previous?.output, item.output))
+    const missing = new Set(recommendationSkills(item).unavailable.map(skill => skill.name))
+    setSkills(current => {
+      const next = [...current]
+      for (const skill of item.skills) {
+        if (missing.has(skill.name) || next.some(entry => entry.name === skill.name) || next.length >= SKILL_SHORTLIST_MAX) continue
+        next.push({ name: skill.name, purpose: skill.purpose })
+      }
+      return next
+    })
+    setRecommendationId(item.id)
   }
+  const run = value => Promise.resolve(value).catch(failure => {
+    setError(failure?.message ?? String(failure))
+    return false
+  })
+  const activeUnavailable = activeRecommendation === undefined ? [] : recommendationSkills(activeRecommendation).unavailable
+  const recommendationStatus = activeRecommendation === undefined ? null : h('div', {
+    className: 'bt-field', role: 'status', 'aria-label': t('Recommendation status'),
+  },
+  h('p', { className: 'bt-note' }, h('strong', null, t('Applied')), ' ', local
+    ? t('Role, methods, acceptance and output are editable fields. Skills are not added to a local agent.')
+    : t('Role, methods, available Skills, acceptance and output are editable fields. The working folder is applied when selected.')),
+  h('details', { className: 'bt-note' }, h('summary', null, t('Advisory')),
+    h('ul', null, [
+      [t('Plugin'), activeRecommendation.plugin],
+      [t('Local agent'), activeRecommendation.localAgent],
+      [t('Model'), activeRecommendation.model],
+      [t('Effort'), activeRecommendation.effort],
+      [t('Workspace'), activeRecommendation.workspace],
+      [t('Permission'), activeRecommendation.permission],
+    ].map(([label, value]) => h('li', { key: label }, h('strong', null, label), ' · ', value)))),
+  local || activeUnavailable.length === 0 ? null : h('p', { className: 'bt-note bt-danger' },
+    h('strong', null, t('Unavailable')), ' · ', t('Recommended Skills that this profile does not serve: {skills}', {
+      skills: activeUnavailable.map(skill => skill.name).join(', '),
+    })))
   const card = h('div', { className: 'bt-create-card' },
     h(RunModeSwitch, { mode, setMode }),
     h('div', { className: 'bt-create-preview' },
@@ -141,15 +192,29 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
         : modelsFor(roster.models).length > 0
           ? t('Pick a model here, or the Bot asks for one in its chat.')
           : t('Add a provider and a model in DeepSeek Harness first, or pick one in the Bot\'s chat later.'))) : null,
+    local ? null : h('div', { className: 'bt-field' },
+      h('span', { className: 'bt-field-label' }, t('Working folder')),
+      h(FolderMenu, { value: workDir || undefined, actions, run, wide: true, onPick: setWorkDir }),
+      h('span', { className: 'bt-note' }, activeRecommendation?.workspace
+        ?? t('The team workspace is used when no folder is chosen.'))),
     h('details', { className: 'bt-field' },
       h('summary', null, t('What this Bot does')),
-      !local && recommendations.length > 0 ? h('div', { className: 'bt-field' },
+      !local ? h('div', { className: 'bt-field' },
         h('span', { className: 'bt-field-label' }, t('Start with a preset')),
-        h('div', null, recommendations.map(item => h('button', {
-          key: item.id, type: 'button', className: 'bt-soft bt-soft-sm',
-          disabled: skills.length + item.skills.filter(skill => !skills.some(entry => entry.name === skill.name)).length > SKILL_SHORTLIST_MAX,
-          onClick: () => applyRecommendation(item),
-        }, t(item.label))))) : null,
+        h('div', null, recommendations.map(item => {
+          const applied = recommendationId === item.id
+          const unavailable = recommendationSkills(item).unavailable
+          return h('button', {
+            key: item.id, type: 'button', className: 'bt-soft bt-soft-sm',
+            'aria-label': t(item.label),
+            'data-applied': applied || undefined,
+            onClick: () => applyRecommendation(item),
+          },
+          t(item.label),
+          applied ? ` · ${t('Applied')}` : null,
+          unavailable.length > 0 ? ` · ${t('Unavailable')} ${unavailable.map(skill => skill.name).join(', ')}` : null)
+        })),
+        recommendationStatus) : null,
       presets.length > 0 ? h('label', { className: 'bt-field' },
         h('span', { className: 'bt-field-label' }, t('Agent preset')),
         h('select', {
@@ -157,13 +222,34 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
         }, h('option', { value: '' }, t('Default')), presets.map(choice => h('option', { key: choice.id, value: choice.id }, choice.name)))) : null,
       presetError ? h('p', { className: 'bt-note bt-danger', role: 'status' }, presetError) : null,
       h('label', { className: 'bt-field' },
-        h('span', { className: 'bt-field-label' }, t('Instructions')),
+        h('span', { className: 'bt-field-label' }, t('Role')),
+        h('input', {
+          className: 'bt-input', maxLength: 24, 'aria-label': t('Role'), value: role,
+          placeholder: t('For example, Software developer'),
+          onChange: event => setRole(event.target.value),
+        })),
+      h('label', { className: 'bt-field' },
+        h('span', { className: 'bt-field-label' }, t('Methods')),
         h('textarea', {
           className: 'bt-input bt-input-area',
-          'aria-label': t('Instructions'),
-          placeholder: t('What this Bot is responsible for…'),
+          'aria-label': t('Methods'),
+          placeholder: t('How this Bot should investigate, decide and work…'),
           value: instructions,
           onChange: event => setInstructions(event.target.value),
+        })),
+      h('label', { className: 'bt-field' },
+        h('span', { className: 'bt-field-label' }, t('Acceptance')),
+        h('textarea', {
+          className: 'bt-input bt-input-area', 'aria-label': t('Acceptance'), value: acceptance,
+          placeholder: t('What must be true before the work is complete…'),
+          onChange: event => setAcceptance(event.target.value),
+        })),
+      h('label', { className: 'bt-field' },
+        h('span', { className: 'bt-field-label' }, t('Output')),
+        h('textarea', {
+          className: 'bt-input bt-input-area', 'aria-label': t('Output'), value: output,
+          placeholder: t('What the Bot should deliver and report…'),
+          onChange: event => setOutput(event.target.value),
         })),
       local || catalog.length === 0 ? null : h('details', { className: 'bt-field' },
         h('summary', null, t('Skills')),
