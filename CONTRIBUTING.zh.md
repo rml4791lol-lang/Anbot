@@ -1,4 +1,4 @@
-# 参与 DS Bot 开发
+# 参与 Anbot 开发
 
 [English](CONTRIBUTING.md) | 中文
 
@@ -6,11 +6,11 @@
 
 ## 谁可以提 Pull Request
 
-本仓库的协作者直接在这里推分支，向 `dev` 提 Pull Request（见[协作方式](#协作方式)）。目前只有协作者能提 Pull Request。如果你不是协作者，发现 bug 请开 Issue（见[报告问题](#报告问题)），提问或建议请到 [Discussions](https://github.com/Fei2411/DS-Bot/discussions)。
+本仓库的协作者直接在这里推分支，向 `dev` 提 Pull Request（见[协作方式](#协作方式)）。目前只有协作者能提 Pull Request。如果你不是协作者，发现 bug 请开 Issue（见[报告问题](#报告问题)），提问或建议请到 [Issues](https://github.com/rml4791lol-lang/Anbot/issues)。
 
 ## 最重要的规则
 
-1. **基于 DSH 构建：DSH 是唯一运行时和可变底座。** Bot 功能是 DSH 插件：只用 DSH 有文档的插件接口（Cordis 服务、插件客户端入口、profile patch）。桌面应用只通过 DSH 有文档的入口启动 DSH（`@deepseek-ai/dsh/profile-boot`、`dsh` 命令）。通用 Session、Turn、Tool、UI 契约需要修改时，可以在独立的 DSH 分支进行；DS Bot 仍然是产品层。任何 DSH 改动都需要固定版本、跨仓测试和回滚路径。绝不能原地修改已经安装的 DSH，也不能新增第二套运行时。
+1. **基于 DSH 构建：DSH 是唯一运行时和可变底座。** Bot 功能是 DSH 插件：只用 DSH 有文档的插件接口（Cordis 服务、插件客户端入口、profile patch）。桌面应用只通过 DSH 有文档的入口启动 DSH（`@deepseek-ai/dsh/profile-boot`、`dsh` 命令）。通用 Session、Turn、Tool、UI 契约需要修改时，可以在独立的 DSH 分支进行；Anbot 仍然是产品层。任何 DSH 改动都需要固定版本、跨仓测试和回滚路径。绝不能原地修改已经安装的 DSH，也不能新增第二套运行时。
 2. **Bot 的工作跑在 DSH Session 里。** Bot 的身份不变，工作跑在 DSH Session 里：私聊一条、每个群各一条，上下文快满时换一条新的。每个回合都走 DSH 正常的 agent 循环、工具和模型路由。不要另加一套 agent 运行时。
 3. **任何地方都不放真实密钥。** 不要提交 API key、token、cookie、`DSH_HOME` 目录、日志，或带个人信息的截图。测试和测试台用脚本化的模拟模型，不需要密钥。
 4. **只用原创素材。** 不要从其他产品或网站复制代码、文字、图标、logo 或其他图形。唯一例外是与 Apache 2.0 兼容许可的代码：注明出处，并把它的声明加进 `NOTICE` 文件。
@@ -18,7 +18,7 @@
 
 ## 协作方式
 
-团队里谁都可以做任何工作：分诊、修 bug、做功能、改界面、写文档。只有一部分决定归维护者：产品方向、改动已定的设计、这些规则、发版和架构。需要这类决定的 Issue 和 Pull Request 带 `maintainer` 标签；开工前先等维护者回复。DS Bot 要做成什么，见 [docs/vision.zh.md](docs/vision.zh.md)；已定的设计在 [docs/plans/](docs/plans/)。拿不准是 bug 还是设计如此时，先查这两处，再在 Issue 里问。
+团队里谁都可以做任何工作：分诊、修 bug、做功能、改界面、写文档。只有一部分决定归维护者：产品方向、改动已定的设计、这些规则、发版和架构。需要这类决定的 Issue 和 Pull Request 带 `maintainer` 标签；开工前先等维护者回复。Anbot 要做成什么，见 [docs/vision.zh.md](docs/vision.zh.md)；已定的设计在 [docs/plans/](docs/plans/)。拿不准是 bug 还是设计如此时，先查这两处，再在 Issue 里问。
 
 ### 分支
 
@@ -84,7 +84,7 @@
 - 仅测试台需要：pnpm `11`，以及插件测试所用 DSH 版本的 DeepSeek Harness 源码。
 
 ```sh
-git clone https://github.com/Fei2411/DS-Bot.git ds-bot-repo
+git clone https://github.com/rml4791lol-lang/Anbot.git ds-bot-repo
 cd ds-bot-repo
 
 # 一次装好三处依赖（都按 lockfile）：ds-bot 的构建工具（esbuild）、手机链路的包（../link），
@@ -169,22 +169,22 @@ dev/bench.sh dev 3081 8771 reset    # 模拟模型 + DSH Web；数据在 ../.dsh
 
 ## 报告问题
 
-最简单的方式是在 DS Bot 里：打开 **设置 → 反馈**，写下发生了什么，选 **在 GitHub 上报告**。它会新开一个 Issue，DS Bot 和 DSH 版本、系统、模型和最近的错误都已填好。**复制** 会把同样的内容放进剪贴板，**下载** 会保存完整的错误日志（`<DSH_HOME>/bot/logs/diagnostics.jsonl`）。
+最简单的方式是在 Anbot 里：打开 **设置 → 反馈**，写下发生了什么，选 **在 GitHub 上报告**。它会新开一个 Issue，Anbot 和 DSH 版本、系统、模型和最近的错误都已填好。**复制** 会把同样的内容放进剪贴板，**下载** 会保存完整的错误日志（`<DSH_HOME>/bot/logs/diagnostics.jsonl`）。
 
 手动开 Issue 时，请写上：
 
 - DSH 版本（DSH Desktop 或 `@deepseek-ai/dsh`）、操作系统，以及用的是 DSH Desktop 还是 DSH Web。
-- DS Bot 的安装方式（npm、发布文件、Git 地址或命令行）和版本。
+- Anbot 的安装方式（npm、发布文件、Git 地址或命令行）和版本。
 - 你做了什么、期望什么、实际发生了什么，报错请贴原文。
 - 一张整窗截图，包含聊天和报错。
 - 能让问题再次出现的步骤。
 
-DS Bot 会从诊断信息里去掉 API key、token、保存的密钥和你的用户目录。发出前请读一遍，并去掉截图里的个人信息。
+Anbot 会从诊断信息里去掉 API key、token、保存的密钥和你的用户目录。发出前请读一遍，并去掉截图里的个人信息。
 
 安全问题不要开公开 Issue。请在仓库的 **Security** 页使用 **Report a vulnerability**。
 
-Issue 只用来报告 bug。提问、想法和功能建议请发到 [Discussions](https://github.com/Fei2411/DS-Bot/discussions)。维护者认可的想法会开成 Issue。
+Issue 只用来报告 bug。提问、想法和功能建议请发到 [Issues](https://github.com/rml4791lol-lang/Anbot/issues)。维护者认可的想法会开成 Issue。
 
 ## 许可
 
-DS Bot 使用 [Apache License 2.0](LICENSE)。提交贡献即表示你同意按同一许可授权，如该许可第 5 条所述。
+Anbot 使用 [Apache License 2.0](LICENSE)。提交贡献即表示你同意按同一许可授权，如该许可第 5 条所述。

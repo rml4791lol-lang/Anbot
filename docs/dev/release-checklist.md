@@ -9,7 +9,7 @@ CI 只跑单元测试和 Linux 上的测试台。窗口外框、输入法、高 
 - Windows 10 / 11 x64，或 macOS（Apple 芯片）。
 - 官方的 DSH Desktop，版本和 README 里写的一致（现在是 `0.2.2-rc.1`）。只从 DeepSeek Harness 官方渠道下载。
 - 要发的包：在 `ds-bot/` 里运行 `npm pack`，得到 `ds-bot-<版本>.tgz`。
-- 桌面应用的安装包：在 `app/` 里运行 `npm run dist`，得到 `app/dist-pack/DS-Bot-<版本>-win-x64.exe`。`app/package.json` 和 `ds-bot/package.json` 的版本号要一样。
+- 桌面应用的安装包：在 `app/` 里运行 `npm run dist`，得到 `app/dist-pack/Anbot-<版本>-win-x64.exe`。`app/package.json` 和 `ds-bot/package.json` 的版本号要一样。
 - 也可以用发版工作流的试运行：在 GitHub 的 Actions 里选 Release → Run workflow，勾着 dry run 运行。跑完后在这次运行的页面下载 Windows 安装包和两个 Mac 的 zip（保留 7 天）。它们和 Release 里的文件在同样的 runner 上、用同样的方法打包，不发布任何东西。
 - 一个能用的模型（DeepSeek API key 或账号）。测试里要填的密钥都用**假值**。
 - 想保留现有数据，先备份数据目录：Windows 是 `C:\Users\<用户名>\.dsh\`，macOS 是 `~/.dsh/`。最好用一台没有自己团队数据的机器或账户来测。
@@ -29,7 +29,7 @@ CI 只跑单元测试和 Linux 上的测试台。窗口外框、输入法、高 
 | 2.1 | `.tgz` | 插件 → 添加插件 → 填 `.tgz` 的完整路径（去掉引号）→ 安装 → 立即启用 | 装好；需要时提示重启 | |
 | 2.2 | `.tgz` 的路径 | 用系统「复制为路径 / 拷贝路径名」得到的路径直接填；路径里有空格、中文时也试一次 | 能装 | |
 | 2.3 | npm（发布后） | 填 `ds-bot`；再用「中国大陆镜像源」装一次 | 两种安装源都能装，版本是新版 | |
-| 2.4 | GitHub（发布后，需要 Git） | 填 `github:Fei2411/DS-Bot#v<版本>&path:/ds-bot` | 能装；没装 Git 时记下错误信息 | |
+| 2.4 | GitHub（发布后，需要 Git） | 填 `github:rml4791lol-lang/Anbot#v<版本>&path:/ds-bot` | 能装；没装 Git 时记下错误信息 | |
 | 2.5 | 命令行 | 应用菜单 → 管理 dsh 命令 → 安装；退出 Desktop；新开终端运行 `dsh --version`、`dsh plugin --profile desktop add <tgz 路径>` | 能装；重启 Desktop 后生效 | |
 | 2.6 | 重启 | 完全退出（Windows：托盘图标 → 退出；macOS：⌘Q）再打开 | 团队界面出现 | |
 | 2.7 | 恢复（可选） | 故意装坏一次，看恢复对话框里的「禁用第三方插件」 | 能回到普通 DSH | |
@@ -141,7 +141,7 @@ DSH Desktop 和桌面应用各做一遍。
 
 ## 12. 桌面应用（Windows）
 
-发布 Release 时不勾「Set as the latest release」。工作流的最后一个任务「Download table, checksums and Latest」等所有安装包都传完，最后一步才把它标为 Latest。工作流跑完后确认：Release 里有 `SHA256SUMS.txt` 和不带版本号的文件（如 `DS-Bot-win-x64.exe`），说明开头是「下载 / Download」表，Release 标着「Latest」。有任务失败时，在这次运行里重跑失败的任务（Re-run failed jobs）；不要手动标为 Latest，那样 Release 就没有校验和和下载表。
+发布 Release 时不勾「Set as the latest release」。工作流的最后一个任务「Download table, checksums and Latest」等所有安装包都传完，最后一步才把它标为 Latest。工作流跑完后确认：Release 里有 `SHA256SUMS.txt` 和不带版本号的文件（如 `Anbot-win-x64.exe`），说明开头是「下载 / Download」表，Release 标着「Latest」。有任务失败时，在这次运行里重跑失败的任务（Re-run failed jobs）；不要手动标为 Latest，那样 Release 就没有校验和和下载表。
 
 12.7 和 12.8 要等整个 Release 工作流跑完、Release 页上显示「Latest」之后再做：Windows 的自动更新只看标为 Latest 的 Release，在那之前它会一直说没有新版本。Release 里还要有安装包、它的 `.blockmap` 和 `latest.yml`。上一个发布版本没有安装包时，跳过这两项。
 
@@ -175,7 +175,7 @@ APK 用上传密钥签名，密钥放在仓库的 `ANDROID_KEYSTORE_BASE64`、`A
 
 | # | 步骤 | 期望 | 结果 |
 |---|---|---|---|
-| 14.1 | 发布 Release，等工作流传完文件 | Release 里有 `DS-Bot-<版本>-android.apk`，下载表里有 Android 一行 | |
+| 14.1 | 发布 Release，等工作流传完文件 | Release 里有 `Anbot-<版本>-android.apk`，下载表里有 Android 一行 | |
 | 14.2 | 在电脑的 DS Bot 里打开 设置 → 手机，打开「手机访问」 | 服务器是 `wss://relay.dsbot.app/v1/link`，状态变成已开 | |
 | 14.3 | 在一台没装过 DS Bot 的 Android 手机上，从 Release 页下载 APK 并安装，打开后用相机扫电脑上的二维码 | 能装上；扫码后配对成功，进入团队 | |
 | 14.4 | 关掉 Wi-Fi，用移动数据给一个 Bot 发消息；打开一张聊天里的照片 | 收到回复；照片先显示预览，点开后显示原图 | |

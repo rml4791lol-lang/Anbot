@@ -330,13 +330,13 @@ jobs:
           key: ${{ steps.downloads.outputs.cache-primary-key }}
       - name: Check the zip
         run: |
-          zip="dist-pack/DS-Bot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
+          zip="dist-pack/Anbot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
           test -f "$zip"
       - name: Check the packaged app
         run: node scripts/check-packed.mjs
       - name: Install from the zip and check
         run: |
-          zip="dist-pack/DS-Bot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
+          zip="dist-pack/Anbot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
           ditto -x -k "$zip" /Applications
           app="/Applications/DS Bot.app"
           exe="$app/Contents/MacOS/DS Bot"
@@ -399,8 +399,8 @@ jobs:
       - name: Check the packages
         run: |
           version="$(node -p "require('./package.json').version")"
-          test -f "dist-pack/DS-Bot-$version-linux-x86_64.AppImage"
-          test -f "dist-pack/DS-Bot-$version-linux-amd64.deb"
+          test -f "dist-pack/Anbot-$version-linux-x86_64.AppImage"
+          test -f "dist-pack/Anbot-$version-linux-amd64.deb"
           test -f dist-pack/latest-linux.yml
       # An AppImage mounts through FUSE 2, and Ubuntu 24.04's AppArmor blocks the unprivileged
       # user namespaces that Chromium's sandbox needs; a throwaway runner may lift that.
@@ -415,7 +415,7 @@ jobs:
       - name: Install the deb and check
         run: |
           version="$(node -p "require('./package.json').version")"
-          sudo apt-get install -y "./dist-pack/DS-Bot-$version-linux-amd64.deb"
+          sudo apt-get install -y "./dist-pack/Anbot-$version-linux-amd64.deb"
           test -f /usr/share/applications/dsbot.desktop
           xvfb-run -a node scripts/check-packed.mjs "/opt/DS Bot/dsbot"
       # A deb cannot update itself: it points at the release page, as on macOS.

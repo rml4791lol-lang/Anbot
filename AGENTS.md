@@ -58,7 +58,7 @@ The full workflow is in [CONTRIBUTING.md](CONTRIBUTING.md#how-we-work). The part
 
 ### Issue tracker
 
-Issues for this fork live in GitHub Issues on `rml4791lol-lang/DS-Bot`. See `docs/agents/issue-tracker.md`.
+Anbot work is tracked in GitHub Issues on `rml4791lol-lang/Anbot`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
