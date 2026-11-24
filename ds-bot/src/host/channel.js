@@ -13,6 +13,10 @@ import { readTaskLedger } from './task-ledger.js'
 import { buildTeamActivity } from './team-activity.js'
 import { buildTaskDetail, redactCredentialText, taskSessionIds } from './task-detail.js'
 import { redactDeep } from './secrets.js'
+import { createBotSpecAccess } from './bot-spec.js'
+import { probeBotWorktree } from './bot-worktree.js'
+import { observeBotRuntime } from './bot-runtime-view.js'
+import { createWorktreeHold } from './worktree-hold.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
 
 const STAGED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -63,6 +67,8 @@ export function install(rt) {
   installBtw(rt)
   installSide(rt)
   const { ctx, state } = rt
+  const botSpec = createBotSpecAccess(rt)
+  const workspaceHold = rt.workspaceHold = createWorktreeHold(rt)
 
   // The DSH interface language of the last browser that asked for the team.
   let uiLocale
@@ -89,7 +95,7 @@ export function install(rt) {
     // `sessionId` is the Bot's current own-chat part; `parts` its earlier ones.
     // `waiting`: the Bot holds its greeting until the user picks its model or fixes
     // what failed it. `blocked`: the facts of a failure only the user can fix (turns.js).
-    bots: Object.values(state.bots).map(({ segments, kickoff, openParts, ...bot }) => {
+    bots: Object.values(state.bots).map(({ segments, kickoff, openParts, taskSpec: _taskSpec, checkpoints: _checkpoints, checkpointPreviews: _checkpointPreviews, checkpointRestore: _checkpointRestore, ...bot }) => {
       const tail = rt.chatTail(rt.chatOf(bot.id))
       // `openParts` are the parts opened while the Bot was busy: live, with their own
       // earlier parts, and each one's run state read from the live turns.
@@ -138,6 +144,7 @@ export function install(rt) {
     // The names a Bot may put in its shortlist: DSH's live catalog plus DS-Bot
     // skill capabilities, already merged and labelled by the host.
     skillCatalog: rt.skillCatalogView?.() ?? [],
+    newBotSkillCatalog: rt.newBotSkillCatalogView?.() ?? [],
     secretRequests: state.secretRequests ?? {},
     connectorRequests: state.connectorRequests ?? {},
     mailRequests: state.mailRequests ?? {},
@@ -145,6 +152,7 @@ export function install(rt) {
     models: rt.cachedCatalog(),
     defaultModel: rt.cachedDefault() ?? null,
     profileDefaultModel: rt.defaultRef() ?? null,
+    retryWithModel: typeof rt.retryBotModel === 'function',
     permissions: rt.permissionCatalog?.() ?? null,
     modelsKey: modelsKey(),
     prefs: state.prefs,
@@ -187,6 +195,7 @@ export function install(rt) {
     // A skill installed or removed changes this list without a team save; the
     // live key makes windows ask for the state carrying the new catalog.
     skillCatalog: rt.skillCatalogView?.() ?? [],
+    newBotSkillCatalog: rt.newBotSkillCatalogView?.() ?? [],
     phone: rt.phoneView(),
     imStatus: rt.imStatusView?.() ?? {},
     imVia: rt.imViaView?.() ?? {},
@@ -220,7 +229,7 @@ export function install(rt) {
   }
   // What a host that only reads the team may still answer.
   // Updates change the dsh profile, not the team, so a reading host may run them too.
-  const READS = new Set(['secret-store', 'secret-unlock', 'state', 'team-overview-insights', 'sites', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'markdown-image', 'file-download', 'changes-check', 'changes-summary', 'changes-diff', 'team-activity', 'task-detail'])
+  const READS = new Set(['secret-store', 'secret-unlock', 'state', 'team-overview-insights', 'sites', 'models', 'efforts', 'providers', 'provider-models', 'earlier', 'chat', 'run-stats', 'room-progress', 'group-rows', 'exchange', 'exchange-text', 'file-text', 'usage', 'schedules', 'memory-view', 'browser-wait', 'browser-result', 'diagnostics', 'diagnostics-log', 'diagnostics-clear', 'update-check', 'update-install', 'dsh-update-install', 'repo-stars', 'approval-answer', 'thinking', 'avatar-library', 'computer-system-status', 'computer-shot', 'local-agents', 'local-agent-models', 'agent-presets', 'browser-frame', 'hello', 'notices', 'avatar', 'room-chat', 'usage-summary', 'image', 'markdown-image', 'file-download', 'changes-check', 'changes-summary', 'changes-diff', 'team-activity', 'task-detail', 'bot-workflow', 'bot-spec', 'bot-worktree', 'bot-worktree-checkpoint-memory', 'bot-runtime'])
 
   const teamActivitySnapshot = (now = Date.now()) => {
     const since = now - 7 * 24 * 60 * 60 * 1000
@@ -431,15 +440,57 @@ export function install(rt) {
         case 'chat':
           await rt.load()
           return ok(await rt.chatPage(String(body.botId ?? ''), body.cursor ?? undefined, body.steps === true))
+        case 'bot-workflow':
+          return ok(readModelPayload(rt.botWorkflowView(String(body.botId ?? ''))))
+        case 'bot-spec':
+          return ok(botSpec.get(body.botId, body.sessionId))
+        case 'bot-spec-save':
+          return ok(await botSpec.save(body.botId, body.sessionId, body))
+        case 'bot-worktree': {
+          const worktree = await probeBotWorktree(rt, body.botId)
+          const bot = rt.botOf(body.botId)
+          return ok({ ...worktree, hold: workspaceHold.view(body.botId), canTakeOver: workspaceHold.executorOf(body.botId).canTakeOver,
+            checkpoints: bot.checkpoints ?? [], previews: bot.checkpointPreviews ?? [] })
+        }
+        case 'bot-runtime':
+          return ok(readModelPayload(await observeBotRuntime(rt, body.botId, body.sessionId)))
+        case 'bot-worktree-takeover':
+          await workspaceHold.change(body.botId, true)
+          return ok(workspaceHold.view(body.botId))
+        case 'bot-worktree-return':
+          return ok(await workspaceHold.change(body.botId, false))
+        case 'bot-worktree-checkpoint':
+          return ok(await workspaceHold.checkpoint(body.botId))
+        case 'bot-worktree-checkpoint-preview':
+          return ok(await workspaceHold.restorePreview(body.botId, body.checkpointRef))
+        case 'bot-worktree-checkpoint-restore':
+          return ok(await workspaceHold.restorePreview(body.botId, body.checkpointRef, { writable: true, keepCurrentMemory: body.keepCurrentMemory === true }))
+        case 'bot-worktree-checkpoint-activate':
+          return ok(await workspaceHold.activateRestore(body.botId, body.sessionId, { keepCurrentMemory: body.keepCurrentMemory === true }))
+        case 'bot-worktree-checkpoint-discard':
+          return ok(await workspaceHold.discardCheckpoint(body.botId, body.checkpointRef))
+        case 'bot-worktree-checkpoint-memory':
+          return ok(readModelPayload(await workspaceHold.checkpointMemory(body.botId, body.checkpointRef)))
+        case 'bot-worktree-checkpoint-memory-undo':
+          if (typeof body.changeId !== 'string' || body.changeId === '') return fail('No memory change selected', 'bot/invalid')
+          return ok(readModelPayload(await workspaceHold.checkpointMemory(body.botId, body.checkpointRef, body.changeId)))
+        case 'bot-workflow-start':
+          workspaceHold.assertUnheld(rt.chatOf(body.botId))
+          return ok(readModelPayload(await rt.startBotWorkflow(String(body.botId ?? ''))))
+        case 'bot-workflow-cancel':
+          return ok(readModelPayload(await rt.cancelBotWorkflow(String(body.botId ?? ''), body.runId)))
         // DSH's own whole-log figures for the current part of a Bot's chat, the ones its
         // status bar shows; a window without that bar shows them in the Bot's details.
         case 'run-stats': {
           await rt.load()
           const bot = rt.botOf(String(body.botId ?? ''))
           if (bot === undefined) return fail('Unknown Bot', 'bot/not-found')
+          const sessionId = rt.chatOf(bot.id)
+          if (body.sessionId !== undefined && body.sessionId !== sessionId) return fail('This Bot moved to another Session.', 'bot/stale')
           const projections = ctx.get?.('sessionProjections')
           if (projections === undefined) return ok(null)
-          const agent = await rt.resolveAgent(rt.chatOf(bot.id))
+          const agent = await rt.resolveAgent(sessionId)
+          if (rt.chatOf(bot.id) !== sessionId) return fail('This Bot moved to another Session.', 'bot/stale')
           return ok(projections.snapshot(agent.session, RUN_STATS).values)
         }
         case 'usage':
@@ -493,9 +544,11 @@ export function install(rt) {
         }
         case 'create-bot': {
           await rt.bootstrap()
-          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir, section: body.section, sectionId: body.sectionId, skillShortlist: body.skills })
+          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir, section: body.section, sectionId: body.sectionId, skillShortlist: body.skills, agentPreset: body.agentPreset })
           return ok(bot)
         }
+        case 'agent-presets':
+          return ok(await rt.agentPresetChoices())
         case 'update-bot':
           await rt.load()
           return ok(await rt.updateBot(body.id, body.skills === undefined ? body : { ...body, skillShortlist: body.skills }))
@@ -505,11 +558,21 @@ export function install(rt) {
           await rt.load()
           if (rt.abandonWork?.(String(body.id ?? '')) !== true) return fail('That wait is no longer open', 'bot/stale')
           return ok(true)
+        case 'retry-with-model': {
+          if (!rt.retryBotModel) return fail('This DSH runtime does not support a temporary model selection.', 'bot/model-unavailable')
+          await rt.load()
+          const bot = rt.botOf(String(body.botId ?? ''))
+          if (bot === undefined) return fail('Unknown Bot', 'bot/not-found')
+          await rt.retryBotModel(bot, body)
+          return ok(true)
+        }
         // The repair card's Retry, once the user fixed what failed the Bot's turn.
         case 'resume': {
           await rt.load()
           const bot = rt.botOf(String(body.botId ?? ''))
           if (bot === undefined) return fail('Unknown Bot', 'bot/not-found')
+          workspaceHold.assertUnheld(rt.chatOf(bot.id))
+          if (await rt.continueInterrupted?.(bot.id)) return ok(true)
           await rt.resumeBot(bot)
           return ok(true)
         }
@@ -816,6 +879,14 @@ export function install(rt) {
           const images = ids.map(id => staged.get(id))
           if (images.some(entry => entry === undefined)) return fail('A photo did not arrive. Send it again.', 'bot/stale')
           await rt.load()
+          const request = ids.length === 0 && rt.parseSkillRequest?.(text)
+          if (request) {
+            const sessionId = ownThreadTarget(body.sessionId) ?? body.sessionId
+            const owner = rt.chatOwners.get(sessionId)
+            if (!owner) return fail('Request a Skill change in a private Bot chat.', 'bot/refused')
+            workspaceHold.assertUnheld(sessionId)
+            return ok(await rt.requestSkill(owner, ...request))
+          }
           await rt.sendUser({
             sessionId: body.sessionId,
             content: [
@@ -1014,7 +1085,9 @@ export function install(rt) {
     const sessionId = ownThreadTarget(ref, past)
       ?? (room !== undefined ? rt.sessionOfRoom(room)
         : past !== undefined ? rt.sessionOfRoom(rt.roomOf(past.roomId)) : ref)
+    workspaceHold.assertUnheld(sessionId)
     await rt.ensureCapabilities(sessionId)
+    workspaceHold.assertUnheld(sessionId)
     await ctx.sessionController.prompt({
       requestId,
       sessionId,
@@ -1097,10 +1170,10 @@ export function install(rt) {
 
 
   ctx.effect(() => {
-    void rt.load()
+    const recovery = workspaceHold.recoverPendingRestores().catch(error => rt.warn('anbot: could not check interrupted restores: %s', error.message))
     // Registered last, so this disposer runs before the state lock is released.
     // In-flight side questions abort here; their entries stay answering for the
     // next owner.
-    return () => Promise.all([rt.btwDispose?.(), rt.sideDispose?.()])
+    return () => Promise.all([rt.btwDispose?.(), rt.sideDispose?.(), recovery])
   }, 'ds-bot: load state')
 }

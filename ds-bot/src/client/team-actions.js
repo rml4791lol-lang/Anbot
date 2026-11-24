@@ -18,10 +18,10 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
   const yieldTo = (state, view) => state.panelYield === true || panelFolded?.(view) === true
   // The panel on a side chat's view, on the chat the strip tab or menu named.
   const openSideChat = (sessionId, chatId) => {
-    ui.set(state => ({ ...state, details: sessionId, view: 'side', side: chatId ?? null, renaming: false, tab: null, panelYield: yieldTo(state, 'side') }))
+    ui.set(state => ({ ...state, details: sessionId, view: 'side', side: chatId ?? null, renaming: false, tab: null, panelYield: yieldTo(state, 'side'), teamBoardOpen: false }))
   }
   // `id` opens one Bot (page 'bots') or one group chat (page 'groups').
-  const openSettings = (page = 'general', id = null) => { ui.set(state => ({ ...state, settings: { page, id }, teamOverview: false, menu: null, palette: null, newChat: null })) }
+  const openSettings = (page = 'general', id = null) => { ui.set(state => ({ ...state, settings: { page, id }, teamOverview: false, teamBoardOpen: false, menu: null, palette: null, newChat: null })) }
   return {
     // The pane starts at the rail's edge, so a floating drawer would stick out from under it.
     openNewChat: (mode, sectionId = null) => { ui.set(state => ({ ...state, newChat: mode, newChatSection: sectionId ?? null, menu: null, palette: null, leftDrawer: false })) },
@@ -40,7 +40,7 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
         // A folded panel is open but not shown: its opener then means "show it"
         // (the column yields it room), not "close it".
         if (details === null && panelFolded?.('details') === true) return { ...state, renaming: false, tab: null, details: id, view: 'details', panelYield: true }
-        return { ...state, renaming: false, tab: null, details, view: 'details' }
+        return { ...state, renaming: false, tab: null, details, view: 'details', teamBoardOpen: false }
       })
     },
     // The open panel follows the main view; a subject with no browser (a group
@@ -53,14 +53,14 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
         const view = state.view === 'browser' && snap.byId[id] === undefined ? 'details'
           : state.view === 'side' && !(snap.sideChats?.[snap.byId[id]?.id] ?? []).some(chat => chat?.id === state.side) ? 'details'
             : state.view
-        return { ...state, details: id, view, renaming: false, tab: null }
+        return { ...state, details: id, view, renaming: false, tab: null, teamBoardOpen: false }
       })
     },
-    showDetails: (id, tab = null) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: false, tab, panelYield: yieldTo(state, 'details') })) },
+    showDetails: (id, tab = null) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: false, tab, panelYield: yieldTo(state, 'details'), teamBoardOpen: false })) },
     // Opening the conversation would move focus to its composer and blur the name field.
-    renameBot: (id) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: true, tab: null, panelYield: yieldTo(state, 'details') })) },
+    renameBot: (id) => { ui.set(state => ({ ...state, details: id, view: 'details', renaming: true, tab: null, panelYield: yieldTo(state, 'details'), teamBoardOpen: false })) },
     openSettings,
-    openTeamOverview: () => { ui.set(state => ({ ...state, teamOverview: true, teamActivity: false, details: null, view: 'details', renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, settings: null, memory: null })) },
+    openTeamOverview: () => { ui.set(state => ({ ...state, teamOverview: true, teamActivity: false, teamBoardOpen: false, details: null, view: 'details', renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, settings: null, memory: null })) },
     closeTeamOverview: () => { ui.set(state => (state.teamOverview ? { ...state, teamOverview: false } : state)) },
     teamOverviewInsights: fresh => call('team-overview-insights', { fresh: fresh === true }),
     sites: () => call('sites'),
@@ -70,9 +70,11 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     siteGroupDelete: id => call('site-group-delete', { id }),
     siteCheck: id => call('site-check', { id }),
     openMemoryFromOverview: id => { ui.set(state => ({ ...state, teamOverview: false, memory: id, menu: null, palette: null })) },
-    openTeamActivity: () => { ui.set(state => ({ ...state, teamActivity: true, teamOverview: false, menu: null, palette: null, newChat: null })) },
+    openTeamActivity: () => { ui.set(state => ({ ...state, teamActivity: true, teamOverview: false, teamBoardOpen: false, menu: null, palette: null, newChat: null })) },
     closeTeamActivity: () => { ui.set(state => state.teamActivity ? { ...state, teamActivity: false } : state) },
-    // DS Bot's own Models page: the providers DSH serves, their keys and models.
+    openTeamBoard: () => { ui.set(state => ({ ...state, teamBoardOpen: true, teamOverview: false, teamActivity: false, details: null, view: 'details', renaming: false, tab: null, side: null, newChat: null, exchange: null, menu: null, palette: null, groupSearch: null, settings: null, memory: null })) },
+    closeTeamBoard: () => { ui.set(state => state.teamBoardOpen ? { ...state, teamBoardOpen: false } : state) },
+    // Anbot's own Models page: the providers DSH serves, their keys and models.
     openModels: () => openSettings('models'),
     closeSettings: () => { ui.set(state => (state.settings ? { ...state, settings: null } : state)) },
     openMemory: (id) => { ui.set(state => ({ ...state, memory: id, menu: null, palette: null })) },
@@ -158,6 +160,7 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     removeProvider: provider => after(call('provider-remove', { provider })),
     // After a failed turn: the Bot answers the user's last unanswered message, which is never sent again.
     resume: botId => after(call('resume', { botId })),
+    retryWithModel: payload => after(call('retry-with-model', payload)),
     folders: () => call('folders'),
     folderPick: () => call('folder-pick'),
     folderList: path => call('folder-list', { path: path ?? '' }),
@@ -275,7 +278,7 @@ export function teamActions({ call, after, partFor, roster, ui, live, cards, hel
     // Hours come back in this browser's time zone, so days start at local midnight.
     usage: () => call('usage', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
     // The details panel's status line: turns, speed, cache hits and context for one Bot.
-    runStats: botId => call('run-stats', { botId }),
+    runStats: (botId, sessionId) => call('run-stats', { botId, ...(sessionId === undefined ? {} : { sessionId }) }),
     // `summarize` starts a summary when the entries changed; `regenerate` always does.
     memoryView: (id, flags = {}) => call('memory-view', { ...memoryOf(id), ...flags }),
     memoryAsk: (id, text) => call('memory-ask', { ...memoryOf(id), text }),

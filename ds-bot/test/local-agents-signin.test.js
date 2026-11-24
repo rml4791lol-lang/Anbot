@@ -10,6 +10,18 @@ import { build } from 'esbuild'
 import { ENGINES } from '../src/host/local-agents/engines.js'
 import { probeSignIn } from '../src/host/local-agents/discover.js'
 
+test('Claude Code authentication status comes from its supported status command', async () => {
+  const check = ENGINES['local-claude-code'].signedIn
+  assert.deepEqual(check.args, ['auth', 'status'])
+  const status = (text, exit = 0) => probeSignIn(process.execPath, {
+    ...check, args: ['-e', `process.stdout.write(${JSON.stringify(text)}); process.exitCode = ${exit}`],
+  })
+  assert.equal(await status('{"loggedIn":true,"authMethod":"claude.ai"}'), true)
+  assert.equal(await status('{"loggedIn":false,"authMethod":"none"}', 1), false)
+  assert.equal(await status('error: unknown command auth', 1), null)
+  assert.equal(await status('{"loggedIn":true}', 1), null)
+})
+
 // jsdom comes from the harness that test/harness-resolve.mjs found, like the dsh packages.
 const PLUGIN = dirname(dirname(fileURLToPath(import.meta.url)))
 const { JSDOM } = createRequire(join(process.env.DSH_HARNESS ?? join(PLUGIN, '..', 'deepseek-harness'), 'package.json'))('jsdom')
@@ -33,7 +45,7 @@ const expand = (node) => {
   if (Array.isArray(node)) return node.map(expand)
   if (typeof node !== 'object') return node
   if (typeof node.type === 'function') return expand(node.type(node.props))
-  return { ...node, props: { ...(node.props ?? {}), children: expand(node.props?.children) } }
+  return { ...node, props: { ...node.props, children: expand(node.props?.children) } }
 }
 let active = () => expand(AgentSignInRow(props))
 const rerender = () => { idx = 0; concrete = active() }
@@ -42,7 +54,7 @@ const react = {
   useContext: ctx => ctx.value,
   useCallback: fn => fn,
   useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
-  createElement: (type, p, ...children) => ({ type, props: { ...(p ?? {}), children } }),
+  createElement: (type, p, ...children) => ({ type, props: { ...p, children } }),
   Fragment: 'fragment',
   useEffect() {}, useLayoutEffect() {},
   useState: (init) => {

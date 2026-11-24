@@ -17,6 +17,8 @@ export function install(rt) {
   const { ctx, state } = rt
 
   const resolveAgent = async (sessionId) => {
+    const binding = rt.botOf(rt.selfOf(sessionId))?.presetBinding
+    if (binding !== undefined) await rt.ensureBotPreset(binding)
     const resolved = await ctx.sessionController.resolveAgent(sessionId)
     if ('error' in resolved) throw Object.assign(new Error(resolved.error?.message ?? 'Session unavailable'), { code: resolved.error?.code })
     rt.hideBotUnusedTools(resolved.agent)
@@ -236,6 +238,9 @@ export function install(rt) {
     }
     await rt.ensureCapabilities(targetSessionId)
     const agent = await resolveAgent(targetSessionId)
+    if (resumed && await rt.workspaceHold?.heldFor(agent.session)) {
+      throw Object.assign(new Error('The worktree is held. Return it before resuming.'), { code: 'bot/busy' })
+    }
     // A steered message cuts into a running turn at its next step; a follow-up
     // queues for the next turn (see turns.js for how each is routed); a silent note
     // queues the same way but without waking the Bot, so it is read at its next turn

@@ -29,11 +29,31 @@ function walk(node, found = []) {
   walk(node.props?.children, found)
   return found
 }
-function settings(bot, { main = false, rooms = [] } = {}) {
-  const roster = { mainBotIds: main ? [bot.id] : [], mainBotId: main ? bot.id : null, rooms, models: [], memory: false }
+function settings(bot, { main = false, rooms = [], permissions } = {}) {
+  const roster = { mainBotIds: main ? [bot.id] : [], mainBotId: main ? bot.id : null, rooms, models: [], memory: false, permissions }
   return walk(BotSettingsForm({ bot, roster, actions: {}, run: fn => fn }))
 }
 const bot = { id: 'b', name: 'Writer', role: 'Writer', instructions: '', capabilities: [] }
+
+test('Bot settings shows the permission picker with Full access one click away', () => {
+  const permissions = {
+    defaultPreset: 'workspace-write',
+    options: [
+      { value: 'read-only', name: 'Read only', description: 'Read files only.' },
+      { value: 'workspace-write', name: 'Workspace', description: 'Write in the workspace.' },
+      { value: 'danger-full-access', name: 'Full access', description: 'Run without asking.' },
+    ],
+  }
+  const tree = settings(bot, { permissions })
+  const children = tree[0].props.children
+  const model = children.findIndex(node => node?.type?.name === 'Card' && node.props?.title === 'Model')
+  const permission = children.findIndex(node => node?.type?.name === 'PermissionCard')
+  const folder = children.findIndex(node => node?.type?.name === 'Card' && node.props?.title === 'Working folder')
+  assert.ok(model >= 0)
+  assert.ok(model < permission && permission < folder)
+  assert.equal(children[permission].props.roster.permissions, permissions)
+  assert.ok(permissions.options.some(option => option.value === 'danger-full-access'))
+})
 
 test('the Private switch is enabled only for a state the host accepts', () => {
   const noFolder = settings(bot).find(node => node.props?.label === 'Private')

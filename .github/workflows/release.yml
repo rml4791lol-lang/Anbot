@@ -1,22 +1,16 @@
 name: Release
 
-# Publishes ds-bot to npm when a GitHub release is published, then attaches the desktop app's
-# Windows installer, macOS zips and Linux packages, and the phone app's Android APK, to the release. Windows and the Linux
-# AppImage update from latest.yml / latest-linux.yml; macOS and the Linux deb open the release
-# page for a manual download.
+# Builds Anbot releases from rml4791lol-lang/Anbot. The plugin tarball is attached
+# to GitHub Releases without publishing to npm. Desktop and Android keep their own checks.
 #
-# npm Trusted Publishing: npm trusts this workflow through GitHub's OIDC token, so the
-# repository keeps no npm token, and every version gets a provenance statement. It is set
-# up once on npmjs.com: package ds-bot → Settings → Trusted Publisher → GitHub Actions,
-# user Fei2411, repository DS-Bot, workflow release.yml, no environment.
+# The repository is private. GitHub Release assets and the releases API cannot be used as an
+# anonymous update feed. This workflow stores no updater credential; installed apps report the
+# private channel as a failed check unless a verifiable feed is supplied through
+# ANBOT_UPDATE_URL (or the compatible DS_BOT_UPDATE_URL).
 #
-# The release tag must be v<version in ds-bot/package.json> and must point at a commit on
-# main. A version with a pre-release part (0.2.0-rc.1) goes to the npm tag "next", so that
-# "latest" stays on the last stable version.
-#
-# Publish the release with "Set as latest release" turned off: the last job marks it Latest
-# once every package, the download table and SHA256SUMS.txt are on it, so a releases/latest
-# link never finds a release whose installer is still being built.
+# The release tag must be v<version in app/package.json>, and app/package.json must match the
+# bundled ds-bot plugin version. Publish with "Set as latest release" off. The final job marks it
+# Latest only after the Windows, macOS, Linux and Android assets, notes, and SHA256SUMS.txt are attached.
 
 on:
   release:
@@ -24,22 +18,23 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Run every check and pack the package, but do not publish
+        description: Run every check and build the packages without attaching a release
         type: boolean
         default: true
 
 permissions:
-  # write: attach the package file to the release.
   contents: write
-  id-token: write
 
 concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  APP_REPOSITORY: rml4791lol-lang/Anbot
+
 jobs:
-  publish:
-    name: Check and publish
+  checks:
+    name: Repository and plugin checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -47,42 +42,40 @@ jobs:
         shell: bash
         working-directory: ds-bot
     steps:
+      - name: Require the Anbot repository
+        if: github.repository != env.APP_REPOSITORY
+        run: |
+          echo "::error::This release workflow belongs to $APP_REPOSITORY, not $GITHUB_REPOSITORY."
+          exit 1
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
-      # Trusted Publishing needs npm 11.5.1 or later.
-      - run: npm install -g npm@11.6.2 --no-fund --no-audit
 
-      - name: Check the tag and the branch
-        if: github.event_name == 'release'
+      - name: Check the tag and versions
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          version="$(node -p "require('./package.json').version")"
-          if [ "$TAG" != "v$version" ]; then
-            echo "::error::The release tag is $TAG, but ds-bot/package.json has version $version. Tag v$version or change the version."
+          app="$(node -p "require('../app/package.json').version")"
+          plugin="$(node -p "require('./package.json').version")"
+          if [ "$app" != "$plugin" ]; then
+            echo "::error::app/package.json has version $app, but ds-bot/package.json has $plugin. Give both the same version."
             exit 1
           fi
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+          if [ "$GITHUB_EVENT_NAME" = release ] && [ "$TAG" != "v$app" ]; then
+            echo "::error::The release tag is $TAG, but Anbot has version $app. Tag v$app or change the version."
+            exit 1
+          fi
+          if [ "$GITHUB_EVENT_NAME" = release ] && ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
             echo "::error::$TAG points at a commit that is not on main. Release from main."
             exit 1
           fi
 
-      - name: Check the app version
-        run: |
-          version="$(node -p "require('./package.json').version")"
-          app="$(node -p "require('../app/package.json').version")"
-          if [ "$app" != "$version" ]; then
-            echo "::error::app/package.json has version $app, but ds-bot/package.json has $version. Give both the same version."
-            exit 1
-          fi
-
-      # The tests rebuild link.js from ../link and run its Relay Server, which have their own packages.
-      - name: Install the phone link's packages
+      # The plugin tests rebuild link.js from ../link and run its Relay Server.
+      - name: Install the phone link's test packages
         run: npm ci --no-fund --no-audit --prefix ../link
       - run: npm ci --no-fund --no-audit
       - run: npm run harness
@@ -90,30 +83,35 @@ jobs:
       - run: node scripts/build-client.mjs --check
       - run: npm run lint
 
-      - name: Pack (dry run)
-        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
-        run: npm pack --dry-run
-
-      - name: Publish
-        if: github.event_name == 'release' || (!inputs.dry_run && github.ref == 'refs/heads/main')
-        run: |
-          tag="$(node -p "require('./package.json').version.includes('-') ? 'next' : 'latest'")"
-          echo "Publishing $(node -p "require('./package.json').version") with the npm tag $tag"
-          npm publish --provenance --access public --tag "$tag"
-
-      # The release keeps the package file for installs without npm.
-      - name: Attach the package to the release
+      - name: Pack the plugin without publishing to npm
+        run: npm pack
+      - name: Attach the plugin to the release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: |
-          npm pack
-          gh release upload "$TAG" "ds-bot-$(node -p "require('./package.json').version").tgz" --clobber
+        run: gh release upload "$TAG" "ds-bot-$(node -p "require('./package.json').version").tgz" --clobber
+
+  app-contract:
+    name: App identity and release contract
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --no-fund --no-audit
+      - run: npm test
 
   app-windows:
     name: Desktop app installer (Windows)
-    needs: publish
+    needs: app-contract
     runs-on: windows-latest
     timeout-minutes: 30
     defaults:
@@ -134,24 +132,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: DS-Bot-win-x64
-          path: app/dist-pack/DS-Bot-*-win-x64.exe
+          name: Anbot-win-x64
+          path: app/dist-pack/Anbot-*-win-x64.exe
           retention-days: 7
           if-no-files-found: error
           compression-level: 0
-
       - name: Attach the installer to the release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          installer="dist-pack/DS-Bot-$(node -p "require('./package.json').version")-win-x64.exe"
+          installer="dist-pack/Anbot-$(node -p "require('./package.json').version")-win-x64.exe"
           gh release upload "$TAG" "$installer" "$installer.blockmap" dist-pack/latest.yml --clobber
 
   app-macos:
     name: Desktop app zip (macOS ${{ matrix.arch }})
-    needs: publish
+    needs: app-contract
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:
@@ -178,8 +175,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: DS-Bot-mac-${{ matrix.arch }}
-          path: app/dist-pack/DS-Bot-*-mac-${{ matrix.arch }}.zip
+          name: Anbot-mac-${{ matrix.arch }}
+          path: app/dist-pack/Anbot-*-mac-${{ matrix.arch }}.zip
           retention-days: 7
           if-no-files-found: error
           compression-level: 0
@@ -189,13 +186,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          zip="dist-pack/DS-Bot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
-          legacy="$(node scripts/legacy-release-assets.mjs "$zip")"
-          gh release upload "$TAG" "$zip" "$legacy" --clobber
+          zip="dist-pack/Anbot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
+          gh release upload "$TAG" "$zip" --clobber
 
   app-linux:
     name: Desktop app packages (Linux x64)
-    needs: publish
+    needs: app-contract
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -217,18 +213,17 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           xvfb-run -a node scripts/check-packed.mjs
       - name: Check the files for the release
-        # The dry run never uploads, so it checks here that every file the release attaches exists.
         run: |
           version="$(node -p "require('./package.json').version")"
-          ls -l "dist-pack/DS-Bot-$version-linux-x86_64.AppImage" "dist-pack/DS-Bot-$version-linux-amd64.deb" dist-pack/latest-linux.yml
+          ls -l "dist-pack/Anbot-$version-linux-x86_64.AppImage" "dist-pack/Anbot-$version-linux-amd64.deb" dist-pack/latest-linux.yml
       - name: Keep the packages for real-device checks
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: DS-Bot-linux-x64
+          name: Anbot-linux-x64
           path: |
-            app/dist-pack/DS-Bot-*-linux-x86_64.AppImage
-            app/dist-pack/DS-Bot-*-linux-amd64.deb
+            app/dist-pack/Anbot-*-linux-x86_64.AppImage
+            app/dist-pack/Anbot-*-linux-amd64.deb
           retention-days: 7
           if-no-files-found: error
           compression-level: 0
@@ -240,8 +235,7 @@ jobs:
         # The AppImage carries its block map inside the file, so there is no .blockmap to attach.
         run: |
           version="$(node -p "require('./package.json').version")"
-          legacy="$(node scripts/legacy-release-assets.mjs "dist-pack/DS-Bot-$version-linux-amd64.deb")"
-          gh release upload "$TAG" "dist-pack/DS-Bot-$version-linux-x86_64.AppImage" "dist-pack/DS-Bot-$version-linux-amd64.deb" "$legacy" dist-pack/latest-linux.yml --clobber
+          gh release upload "$TAG" "dist-pack/Anbot-$version-linux-x86_64.AppImage" "dist-pack/Anbot-$version-linux-amd64.deb" dist-pack/latest-linux.yml --clobber
 
   # The phone app's APK, signed with the upload key in the ANDROID_KEYSTORE_BASE64,
   # ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS secrets. Every later APK must carry
@@ -249,7 +243,7 @@ jobs:
   # signs with the debug key, and that APK is for checks only.
   app-android:
     name: Phone app (Android)
-    needs: publish
+    needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -289,10 +283,10 @@ jobs:
           rm -f "$RUNNER_TEMP/upload.jks"
           version="$(node -p "require('../ds-bot/package.json').version")"
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/DS-Bot-$version-android.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/Anbot-$version-android.apk"
       - name: Check the signature
         run: |
-          if unzip -l dist/DS-Bot-*-android.apk | grep -Eq 'lib/(x86|x86_64)/'; then
+          if unzip -l dist/Anbot-*-android.apk | grep -Eq 'lib/(x86|x86_64)/'; then
             echo "::error::Release APK contains x86 simulator binaries."
             exit 1
           fi
@@ -300,20 +294,8 @@ jobs:
           # the app's minSdkVersion is 24 (where Android prefers v2/v3).
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
           zipalign="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/zipalign"
-          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/aapt2"
-          badging="$("$aapt2" dump badging dist/DS-Bot-*-android.apk)"
-          compile_sdk="$(printf '%s\n' "$badging" | sed -n "s/.*compileSdkVersion='\([0-9]*\)'.*/\1/p" | head -n1)"
-          target_sdk="$(printf '%s\n' "$badging" | sed -n "s/.*targetSdkVersion:'\([0-9]*\)'.*/\1/p" | head -n1)"
-          if [ -z "$compile_sdk" ] || [ -z "$target_sdk" ] || [ "$compile_sdk" -gt "$target_sdk" ]; then
-            echo "::error::Invalid Android SDK levels in APK: compileSdkVersion=$compile_sdk targetSdkVersion=$target_sdk"
-            exit 1
-          fi
-          if ! printf '%s\n' "$badging" | grep -q "android.permission.POST_NOTIFICATIONS"; then
-            echo "::error::Release APK does not declare android.permission.POST_NOTIFICATIONS."
-            exit 1
-          fi
-          "$zipalign" -c -P 16 4 dist/DS-Bot-*-android.apk
-          certs="$("$apksigner" verify --min-sdk-version 21 --verbose --print-certs dist/DS-Bot-*-android.apk)"
+          "$zipalign" -c -P 16 4 dist/Anbot-*-android.apk
+          certs="$("$apksigner" verify --min-sdk-version 21 --verbose --print-certs dist/Anbot-*-android.apk)"
           echo "$certs" | grep -E '(^Verified using v[123] |certificate (DN|SHA-256 digest):)'
           for scheme in 'v1 scheme (JAR signing): true' 'v2 scheme (APK Signature Scheme v2): true' 'v3 scheme (APK Signature Scheme v3): true'; do
             if ! echo "$certs" | grep -Fq "Verified using $scheme"; then
@@ -329,8 +311,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: DS-Bot-android
-          path: mobile/dist/DS-Bot-*-android.apk
+          name: Anbot-android
+          path: mobile/dist/Anbot-*-android.apk
           retention-days: 7
           if-no-files-found: error
           compression-level: 0
@@ -339,7 +321,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" dist/DS-Bot-*-android.apk --clobber
+        run: gh release upload "$TAG" dist/Anbot-*-android.apk --clobber
 
   downloads:
     name: Download table, checksums and Latest
@@ -362,15 +344,13 @@ jobs:
         if: github.event_name == 'release'
         run: |
           version="$(node -p "require('./package.json').version")"
-          gh release download "$TAG" --dir "$RUNNER_TEMP/packages" --pattern "DS-Bot-$version-*"
+          gh release download "$TAG" --dir "$RUNNER_TEMP/packages" --pattern "Anbot-$version-*"
           gh release view "$TAG" --json body --jq .body > "$RUNNER_TEMP/notes.md"
-      # The dry run has no release, so it checks the table and the checksums on the packages
-      # that the app jobs kept.
       - name: Download the packages of the dry run
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
         with:
-          pattern: DS-Bot-*
+          pattern: Anbot-*
           path: ${{ runner.temp }}/packages
           merge-multiple: true
       - name: Write the download table and the checksums
@@ -387,7 +367,6 @@ jobs:
       - name: Put the download table on top of the notes
         if: github.event_name == 'release'
         run: gh release edit "$TAG" --notes-file "$RUNNER_TEMP/body.md"
-      # GitHub cannot make a pre-release Latest.
       - name: Mark the release as Latest
         if: github.event_name == 'release' && !github.event.release.prerelease
         run: gh release edit "$TAG" --latest

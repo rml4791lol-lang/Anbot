@@ -306,11 +306,10 @@ test('disposing the adapter cancels an in-flight Codex one-off and waits for its
   const spawn = adapter.deps.spawnEngine
   adapter.deps.spawnEngine = (...args) => {
     const engine = spawn(...args)
-    const prompt = engine.prompt.bind(engine)
-    engine.prompt = async (...args) => {
-      const turnId = await prompt(...args)
-      started.resolve(engine.child)
-      return turnId
+    const activateTurn = engine.activateTurn.bind(engine)
+    engine.activateTurn = (thread, turnId) => {
+      activateTurn(thread, turnId)
+      if (thread.turnId === turnId) started.resolve(engine.child)
     }
     return engine
   }

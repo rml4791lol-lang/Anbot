@@ -11,7 +11,7 @@ afterEach(() => { globalThis.fetch = realFetch })
 
 // The dsh-update module alone: a stub loader says the running DSH version, a
 // stub plugin manager says how the bot was installed, and fetch is scripted.
-function start({ current = '0.1.0', source, answers = {}, app = false, spawn, config = {}, profileDir }) {
+function start({ current = '0.1.0', source, answers = {}, app = false, spawn, config = { updateRegistry: 'https://npm.example/' }, profileDir }) {
   const fetched = []
   const spawns = []
   const warnings = []
@@ -49,10 +49,10 @@ function fakeChild(code) {
   return child
 }
 
-const registryLatest = dsBot => ({ [`https://registry.npmjs.org/${PKG.name}/latest`]: { version: PKG.version, dsBot } })
+const registryLatest = dsBot => ({ [`https://npm.example/${PKG.name}/latest`]: { version: PKG.version, dsBot } })
 const githubLatest = (tag, manifest) => ({
-  'https://api.github.com/repos/Fei2411/DS-Bot/releases/latest': { tag_name: tag },
-  [`https://raw.githubusercontent.com/Fei2411/DS-Bot/${tag}/ds-bot/package.json`]: manifest,
+  'https://api.github.com/repos/rml4791lol-lang/Anbot/releases/latest': { tag_name: tag },
+  [`https://raw.githubusercontent.com/rml4791lol-lang/Anbot/${tag}/ds-bot/package.json`]: manifest,
 })
 
 test('the newest released bot declares the verified DSH, offered to an older npm install', async () => {
@@ -98,13 +98,13 @@ test('a minBot newer than the running bot gates the DSH update until the bot goe
 })
 
 test('a git or local install asks the public repo\'s latest release for its declaration', async () => {
-  for (const source of ['github:Fei2411/DS-Bot#v0.1.0&path:/ds-bot', 'link:/work/ds-bot', undefined]) {
+  for (const source of ['github:rml4791lol-lang/Anbot#v0.1.0&path:/ds-bot', 'link:/work/ds-bot', undefined]) {
     const { rt, fetched } = start({ source, answers: githubLatest('v9.0.0', { dsBot: { verifiedDsh: '8.8.8' } }) })
     const view = await rt.dshUpdateCheck()
     assert.equal(view.verified, '8.8.8')
     assert.deepEqual(fetched, [
-      'https://api.github.com/repos/Fei2411/DS-Bot/releases/latest',
-      'https://raw.githubusercontent.com/Fei2411/DS-Bot/v9.0.0/ds-bot/package.json',
+      'https://api.github.com/repos/rml4791lol-lang/Anbot/releases/latest',
+      'https://raw.githubusercontent.com/rml4791lol-lang/Anbot/v9.0.0/ds-bot/package.json',
     ])
   }
 })
@@ -153,4 +153,10 @@ test('a failed npm install reports why and can be tried again', async () => {
   rt.dshUpdateStart()
   await flush()
   assert.equal((await rt.dshUpdateCheck()).phase, 'installed')
+})
+
+test('an unconfigured plugin registry is never queried for a DSH release declaration', async () => {
+  const { rt, fetched } = start({ source: `${PKG.name}@^${PKG.version}`, config: {} })
+  await rt.dshUpdateCheck()
+  assert.deepEqual(fetched, [])
 })

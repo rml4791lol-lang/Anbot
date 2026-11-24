@@ -142,6 +142,7 @@ function start({ replies = [], config = {}, history = {}, seed = TEAM, learningS
   }
   const settings = {
     memoryReviewDelayMs: 60_000,
+    automaticLearning: true,
     ...config,
     learningTimes: { minTurnMs: 0, idleMs: 0, intervalMs: 0, tickMs: 10, ...config.learningTimes },
   }
@@ -586,6 +587,15 @@ test('skillProblem validates actions, learned-skill limits, and secret-looking c
   assert.match(skillProblem({ ...proposal, why: 'The root password is hunter2' }, { skills: {}, learned: [] }), /secret/)
   assert.equal(skillProblem({ ...proposal, content: 'Compare `password == input` with a timing-safe check' }, { skills: {}, learned: [] }), undefined)
   assert.match(skillProblem({ ...proposal, description: 'x'.repeat(LEARNING.descriptionMax + 1) }, { skills: {}, learned: [] }), /description/)
+})
+
+test('a completed ordinary turn does not request a Skill with default learning settings', async t => {
+  const runtime = await startRuntime({ config: { automaticLearning: undefined } })
+  t.after(() => runtime.stop())
+  await finishTurn(runtime.ctx)
+  await runtime.rt.learningRun()
+  assert.equal(runtime.requests.length, 0)
+  assert.deepEqual((await runtime.call('state')).value.learning, {})
 })
 
 test('short turns do not mark a Bot chat; a longer turn marks it for review', async t => {

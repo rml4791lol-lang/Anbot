@@ -7,7 +7,7 @@ const sessionState = (map, id) => (map?.get?.(id) ?? map?.[id] ?? {})
 const nameOf = (roster, id) => roster.byId?.[id]?.name ?? roster.roomsById?.[id]?.name ?? id
 const questionOwner = (roster, sessionId) => roster.byId?.[sessionId] ?? roster.roomsById?.[sessionId]
 
-// A read-only projection of the live team. It uses only fields DS Bot already
+// A read-only projection of the live team. It uses only fields Anbot already
 // publishes: roster sections and tails, work from the turn engine, approvals,
 // question cards and per-Session status. It never invents a task record.
 export function overviewModel(roster, work = EMPTY_WORK, sessionStatus = new Map()) {

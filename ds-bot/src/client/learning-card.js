@@ -12,7 +12,7 @@ function LearningProposals({ turn, dock, sessionId, useRoster, actions }) {
   const roster = useRoster(value => value)
   const facts = useTurnFacts(sessionId, actions)
   const [failed, setFailed] = useState({})
-  const bot = roster.byId?.[sessionId]
+  const bot = roster.byId?.[sessionId] ?? roster.bots?.find(entry => currentPart(entry) === sessionId)
   // A proposal answered in another window or turn takes its failure with it, so this map
   // holds only the answers still waiting for another try (#1339).
   const settledIds = (bot === undefined ? [] : roster.learningSettled?.[bot.id] ?? []).map(entry => entry.id)

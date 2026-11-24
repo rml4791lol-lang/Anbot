@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { after, before, describe, test } from 'node:test'
@@ -7,6 +7,42 @@ import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { parse } from 'yaml'
 import { APP_PATCH_NAME, APP_PATCH_ROWS, writeAppPatch } from '../src/app-patch.mjs'
 import { loadAppProfile } from '../src/profile.mjs'
+import { composeOwnedRow } from '../src/profile-overlay.mjs'
+
+test('owned overlays merge mappings and replace arrays and Cordis expressions as units', () => {
+  const id = { id: 'owned', name: 'plugin' }
+  const current = { ...id, config: { preferences: { unchanged: 1, flags: { a: true, b: true } }, paths: ['old'], condition: { __jsExpr: 'true' } } }
+  const override = { ...id, config: { preferences: { flags: { a: false } }, paths: [], condition: { value: 'fixed' } } }
+  assert.deepEqual(composeOwnedRow(current, override), {
+    ...id, config: { preferences: { unchanged: 1, flags: { a: false, b: true } }, paths: [], condition: { value: 'fixed' } },
+  })
+  assert.equal(current.config.preferences.flags.a, true)
+  assert.equal(composeOwnedRow({ ...current, name: 'different-plugin' }, override), undefined)
+})
+
+test('owned overlays refuse nested provider keys, routes and unsafe object keys', () => {
+  const row = { id: 'owned', name: 'plugin', config: { enabled: true } }
+  for (const key of ['apiKey', 'X-API-Key', 'base_url', 'authorization', '__proto__']) {
+    const config = { profiles: [{ [key]: 'fixture-only' }] }
+    assert.equal(composeOwnedRow({ ...row, config }, row), undefined)
+    assert.equal(composeOwnedRow(row, { ...row, config }), undefined)
+  }
+  assert.equal(Object.prototype['fixture-only'], undefined)
+})
+
+test('owned overlays leave opaque header and environment configuration in its original layer', () => {
+  const row = { id: 'owned', name: 'plugin', config: { enabled: true } }
+  const protectedConfigs = [
+    { transport: { extra: [{ headers: { 'X-Private': 'fixture-only' } }] } },
+    { tool: { env: { SERVICE_VALUE: 'fixture-only' } } },
+    { service: { SERVICE_TOKEN: 'fixture-only' } },
+    { service: { signingPrivateKey: 'fixture-only' } },
+  ]
+  for (const config of protectedConfigs) {
+    assert.equal(composeOwnedRow({ ...row, config }, row), undefined)
+    assert.equal(composeOwnedRow(row, { ...row, config }), undefined)
+  }
+})
 
 // Every row of an entry list, with the rows inside groups.
 function rows(entries) {
@@ -72,5 +108,24 @@ describe('the overlay on the pinned DSH', () => {
     const layers = [...profile.layers.map(layer => layer.patches), profile.patches, parse(readFileSync(file, 'utf8'))]
     const row = rows(composeEntries(layers)).find(entry => entry.id === 'ui-settings-models')
     assert.deepEqual(row.config, { credentialOnboarding: false })
+  })
+
+  test('preserves existing model-settings options when the desktop adds its own override', () => {
+    const patch = { id: 'ui-settings-models', config: { credentialOnboarding: true, custom: { keep: ['one'] } } }
+    const configured = { ...profile, patches: [...profile.patches, patch] }
+    const [file] = writeAppPatch(configured)
+    const layers = [...configured.layers.map(layer => layer.patches), configured.patches, parse(readFileSync(file, 'utf8'))]
+    const row = rows(composeEntries(layers)).find(entry => entry.id === patch.id)
+    assert.deepEqual(row.config, { credentialOnboarding: false, custom: { keep: ['one'] } })
+  })
+
+  test('drops the generated file when the effective row can no longer be restated safely', () => {
+    const [file] = writeAppPatch(profile)
+    assert.ok(existsSync(file))
+    const configured = { ...profile, patches: [...profile.patches, {
+      id: 'ui-settings-models', config: { credentialOnboarding: true, custom: { apiKey: 'fixture-only' } },
+    }] }
+    assert.deepEqual(writeAppPatch(configured), [])
+    assert.equal(existsSync(file), false)
   })
 })

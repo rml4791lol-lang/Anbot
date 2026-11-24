@@ -35,6 +35,7 @@ export function stdioBridgePath(source = BUNDLED_MCP_STDIO) {
 
 const EFFORT_ORDER = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 const EFFORT_NAMES = { off: 'Off', minimal: 'Minimal', low: 'Low', medium: 'Medium', high: 'High', xhigh: 'Extra high', max: 'Max' }
+const STOP_REASONS = new Set(['end_turn', 'max_tokens', 'max_turn_requests', 'refusal', 'cancelled'])
 
 // Events a driver reports, normalized for the adapter:
 // {type:'text'|'thought',text} | {type:'activity',text} (one compact line of the
@@ -181,7 +182,7 @@ export class AcpEngine {
       return
     }
     const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
-    if (session === undefined) return
+    if (session === undefined || session.activePrompt?.cancelled) return
     // Devin CLI 3000.12 reports its compaction this way, not as compaction_update.
     if (method === '_cognition.ai/compaction') {
       session.push({ type: 'compaction', status: compactionStatus(params?.status) })
@@ -230,6 +231,7 @@ export class AcpEngine {
     if (method === 'session/request_permission') {
       const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
       if (session === undefined) return Promise.reject({ code: -32603, message: 'unknown session' })
+      if (session.activePrompt?.cancelled) return Promise.resolve({ outcome: { outcome: 'cancelled' } })
       const options = (params?.options ?? []).map(option => ({ optionId: option.optionId, name: option.name, kind: option.kind }))
       const call = callOf(session, params?.toolCall)
       // Cursor, Devin and Antigravity ask before MCP tool calls. A call to DS Bot's
@@ -421,6 +423,8 @@ export class AcpEngine {
     const worker = this.workerOf(session)
     if (worker !== undefined && worker !== this) return worker.prompt(session, blocks, { signal, effort })
     const peer = await this.ensure()
+    if (signal?.aborted) return true
+    if (session.activePrompt !== undefined) throw new Error('The previous local Agent turn is still stopping')
     if (configOptionsOf(session.configOptions ?? [], 'thought_level') !== undefined || session.defaultEffort !== undefined || session.effort !== undefined) {
       const current = session.effort ?? session.defaultEffort
       const target = effort ?? session.defaultEffort
@@ -438,12 +442,23 @@ export class AcpEngine {
       }
     }
     session.running = true
-    const reply = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: acpPrompt(blocks) }, { signal, timeout: 0 })
-    reply.then(
-      result => { session.running = false; session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn', ...(usageOf(result?.usage) ? { usage: usageOf(result.usage) } : {}) }) },
-      error => { session.running = false; session.push({ type: 'error', error }) },
-    )
-    return reply
+    // ACP acknowledges cancellation by answering the original request. Keep that RPC
+    // alive when DSH aborts its stream, so an aborted signal cannot impersonate the reply.
+    const active = { cancelled: false }
+    session.activePrompt = active
+    active.done = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: acpPrompt(blocks) }, { timeout: 0 }).then(
+      result => {
+        session.running = false
+        if (!active.cancelled) session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn', ...(usageOf(result?.usage) ? { usage: usageOf(result.usage) } : {}) })
+        return STOP_REASONS.has(result?.stopReason)
+      },
+      error => {
+        session.running = false
+        if (!active.cancelled) session.push({ type: 'error', error })
+        return false
+      },
+    ).finally(() => { if (session.activePrompt === active) delete session.activePrompt })
+    return active.done
   }
 
   canSteer(session) {
@@ -484,8 +499,14 @@ export class AcpEngine {
 
   cancel(session) {
     const worker = this.workerOf(session)
-    if (worker !== undefined && worker !== this) { worker.cancel(session); return }
-    this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+    if (worker !== undefined && worker !== this) return worker.cancel(session)
+    const active = session.activePrompt
+    if (active === undefined) return undefined
+    if (!active.cancelled) {
+      active.cancelled = true
+      this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+    }
+    return active.done
   }
 
   // The adapter stopped reading this session: a later open starts a new queue, or

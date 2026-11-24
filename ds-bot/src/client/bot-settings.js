@@ -11,7 +11,9 @@ import { BotSchedules } from './schedules.js'
 import { BotCapabilitiesCard } from './capability-settings.js'
 import { BotComputerCard } from './computer.js'
 import { AvatarLibraryPanel, avatarImage } from './avatar-library.js'
+import { PermissionPicker } from './permission-picker.js'
 import { useMemoryCount } from './memory-panel.js'
+import { SKILL_SHORTLIST_MAX, skillPurpose } from './bot-draft.js'
 import { SPRING_SHAPE, SPRING_TAP, spring, useGlide, useLinger } from './motion.js'
 import { t } from './i18n.js'
 
@@ -91,6 +93,24 @@ function modelHint(bot, roster) {
   if (!shown.served && (roster.models ?? []).length > 0) return t('This model is not available now. Pick another one.')
   if (bot.appliedModel && bot.appliedModel === bot.model) return t('Every message of this Bot runs on it.')
   return t('Applies from the next message.')
+}
+
+// The same presets appear in the details drawer, but Settings is where users look for
+// a permission control. Keep the full choice here so Full access is one visible pick.
+function PermissionCard({ bot, roster, actions, run }) {
+  const catalog = roster.permissions
+  if (!catalog?.options?.length) return null
+  return h(Card, { title: t('Permissions') },
+    h('div', { className: 'bt-set-row bt-bs-row bt-bs-stack' },
+      h('span', { className: 'bt-set-copy' },
+        h('span', { className: 'bt-bs-label' }, t('Permissions')),
+        h('span', { className: 'bt-set-hint' }, t('Full access lets this Bot run tools without asking.'))),
+      h(PermissionPicker, {
+        catalog,
+        saved: bot.permission ?? catalog.defaultPreset,
+        repick: bot.permission === undefined,
+        onPick: permission => run(actions.updateBot(bot.id, { permission })),
+      })))
 }
 
 // The selection ring of a picker cell follows the shape: a 1px line 3px outside it.
@@ -194,13 +214,6 @@ function MemoryCard({ bot, actions }) {
     h('button', { type: 'button', className: 'bt-set-row bt-bs-row', 'aria-label': t("Manage {name}'s memory", { name: bot.name }), onClick: () => actions.openMemory(bot.id) },
       h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, label)),
       h('span', { className: 'bt-mem-row-go' }, t('Manage'), h(ChevronRightIcon))))
-}
-
-const SKILL_SHORTLIST_MAX = 5
-const SKILL_PURPOSE_MAX = 160
-const skillPurpose = skill => {
-  const text = String(skill.description || skill.name).replace(/\s+/g, ' ').trim()
-  return text.length <= SKILL_PURPOSE_MAX ? text : `${text.slice(0, SKILL_PURPOSE_MAX - 3)}...`
 }
 
 // The prompt shows only these names and one line each; the skill bodies stay in the
@@ -351,6 +364,7 @@ export function BotSettingsForm({ bot, roster, actions, run }) {
       h('div', { className: 'bt-set-row bt-bs-row' },
         h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, t('Model')), h('span', { className: 'bt-set-hint' }, modelHint(bot, roster))),
         h(ModelMenu, { bot, roster, actions, run }))),
+    h(PermissionCard, { bot, roster, actions, run }),
     h(Card, { title: t('Working folder') },
       h('div', { className: 'bt-set-row bt-bs-row' },
         h('span', { className: 'bt-set-copy' }, h('span', { className: 'bt-bs-label' }, t('Folder'))),

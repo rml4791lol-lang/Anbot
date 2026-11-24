@@ -1,7 +1,8 @@
 import { createElement as h, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { currentPart, isHiddenTurn } from './text.js'
 import { CheckIcon, CopyIcon } from './icons.js'
-import { ModelKeyCard, manageModels } from './model-menu.js'
+import { ModelKeyCard, manageModels, useEfforts } from './model-menu.js'
+import { isLocalRoute } from './agent-routes.js'
 import { knownFailure } from './diagnostics.js'
 import { hostText, t } from './i18n.js'
 
@@ -149,6 +150,24 @@ function TechnicalDetails({ facts }) {
     h('button', { type: 'button', className: 'bt-mini bt-fail-copy', onClick: copy }, copied ? h(CheckIcon) : h(CopyIcon), copied ? t('Copied') : t('Copy')))
 }
 
+function RetryModelForm({ models, actions, busy, onSubmit }) {
+  const [ref, setRef] = useState('')
+  const [effort, setEffort] = useState('')
+  const selected = models.find(model => model.ref === ref)
+  const levels = useEfforts(selected, selected?.ref, actions)?.efforts ?? []
+  return h('form', { className: 'bt-retry-model', onSubmit: event => {
+    event.preventDefault()
+    if (!busy && selected) onSubmit(selected.ref, levels.some(level => level.id === effort) ? effort : undefined)
+  } },
+  h('label', null, t('Model for this retry'), h('select', { value: ref, disabled: busy, onChange: event => { setRef(event.target.value); setEffort('') } },
+    h('option', { value: '' }, t('Choose a model')),
+    models.map(model => h('option', { key: model.ref, value: model.ref },
+      [model.providerName ?? model.provider, model.name].join(' · '))))),
+  levels.length > 0 ? h('label', null, t('Thinking level'), h('select', { value: effort, disabled: busy, onChange: event => setEffort(event.target.value) },
+    h('option', { value: '' }, t('Default')), levels.map(level => h('option', { key: level.id, value: level.id }, level.name)))) : null,
+  h('button', { type: 'submit', className: 'bt-send bt-fail-go', disabled: busy || !selected }, busy ? t('Retrying…') : t('Retry once')))
+}
+
 export function FailureCell({ node, sessionId, useRoster, useTurnClock, actions }) {
   const roster = useRoster(value => value)
   const failRow = node?.data ?? {}
@@ -165,6 +184,7 @@ export function FailureCell({ node, sessionId, useRoster, useTurnClock, actions 
   const topUp = topUpOf(account)
   const [keying, setKeying] = useState(false)
   const [retry, setRetry] = useState('idle')
+  const [choosingModel, setChoosingModel] = useState(false)
   const [error, setError] = useState('')
   // A sign-in started here to leave a failing key route, with the model the Bot was on.
   const [joining, setJoining] = useState(null)
@@ -222,12 +242,15 @@ export function FailureCell({ node, sessionId, useRoster, useTurnClock, actions 
   // Retry would answer the user's last message instead, so it is not offered.
   const asked = isHiddenTurn(roster, sessionId, data.turn)
   const retrying = !asked && typeof actions.resume === 'function' && retryShown(data.code, blocked)
+  const configured = bot.model ?? bot.appliedModel
+  const alternatives = roster.retryWithModel === true && !asked && Number.isSafeInteger(data.turn) && !isLocalRoute(configured) && typeof actions.retryWithModel === 'function'
+    ? (roster.models ?? []).filter(model => model.ref !== configured && !model.needsKey && !isLocalRoute(model.ref)) : []
   // Once a credential failure is fixed, going on is the next step.
   const retryFirst = retrying && (fixes.length === 0 || CREDENTIAL_CODES.has(data.code))
-  const resume = () => {
+  const sendRetry = run => {
     setRetry('busy')
     setError('')
-    void Promise.resolve(actions.resume(bot.id))
+    void Promise.resolve().then(run)
       .then(() => setRetry('sent'), (failure) => { setRetry('idle'); setError(hostText(failure?.message ?? String(failure))) })
   }
   const button = (fix, primary) => {
@@ -238,15 +261,19 @@ export function FailureCell({ node, sessionId, useRoster, useTurnClock, actions 
     const toggles = keyHere && (fix === 'key' || fix === 'rekey')
     return h('button', { key: fix, type: 'button', className, 'aria-expanded': toggles ? keying : undefined, onClick: () => runs[fix]() }, FIX_LABELS[fix](signedIn))
   }
-  const retryButton = primary => h('button', { key: 'retry', type: 'button', className: primary ? 'bt-send bt-fail-go' : 'bt-soft bt-soft-sm', disabled: retry !== 'idle', onClick: resume }, retry === 'idle' ? t('Retry') : t('Retrying…'))
+  const retryButton = primary => h('button', { key: 'retry', type: 'button', className: primary ? 'bt-send bt-fail-go' : 'bt-soft bt-soft-sm', disabled: retry !== 'idle', onClick: () => sendRetry(() => actions.resume(bot.id)) }, retry === 'idle' ? t('Retry') : t('Retrying…'))
   const row = retryFirst
     ? [retryButton(true), ...fixes.map(fix => button(fix, false))]
     : [...fixes.map((fix, index) => button(fix, index === 0)), retrying ? retryButton(false) : null]
+  if (alternatives.length > 0) row.push(h('button', { key: 'retry-model', type: 'button', className: 'bt-soft bt-soft-sm',
+    'aria-expanded': choosingModel, disabled: retry !== 'idle', onClick: () => setChoosingModel(value => !value) }, t('Retry with another model')))
   // With nothing to do here the card reads as one a later turn moved past.
   if (!row.some(Boolean)) return settled()
   return h('div', { className: 'bt-fail', role: 'status' },
     h('div', { className: 'bt-fail-head' }, h('span', { className: 'bt-fail-dot', 'aria-hidden': true }), h('span', { className: 'bt-fail-text' }, text)),
     h('div', { className: 'bt-fail-actions' }, row),
+    choosingModel && alternatives.length > 0 ? h(RetryModelForm, { models: alternatives, actions, busy: retry !== 'idle',
+      onSubmit: (model, effort) => sendRetry(() => actions.retryWithModel({ botId: bot.id, sessionId, turn: data.turn, model, effort })) }) : null,
     keying && keyHere ? h(ModelKeyCard, { model: { provider, providerName: providerName(roster, provider) }, actions, onSaved: () => setKeying(false) }) : null,
     error ? h('div', { className: 'bt-fail-error', role: 'alert' }, error) : null,
     h(TechnicalDetails, { facts }))
@@ -260,6 +287,9 @@ export const TURN_ERROR_CSS = `
 .bt-fail[data-settled] .bt-fail-dot{margin-top:5.5px}
 .bt-fail-text{min-width:0;overflow-wrap:anywhere}
 .bt-fail-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:15px}
+.bt-retry-model{display:flex;flex-wrap:wrap;align-items:end;gap:8px;margin-left:15px}
+.bt-retry-model label{display:grid;gap:4px;min-width:0;color:var(--bt-ink-2);font-size:12px}
+.bt-retry-model select{max-width:100%;padding:5px 8px;border:1px solid var(--bt-line);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit}
 .bt-fail-actions .bt-fail-go{height:28px;padding:0 12px;font:inherit;font-size:12px}
 .bt-fail-link{display:inline-flex;align-items:center;box-sizing:border-box;text-decoration:none}
 .bt-fail:has(.bt-model-key){width:min(480px,86%)}

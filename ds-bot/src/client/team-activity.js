@@ -1,5 +1,5 @@
 // A read-only team activity surface: the task rows and activity records already owned
-// by DS Bot, with no second task state and no client-side completion rules.
+// by Anbot, with no second task state and no client-side completion rules.
 import { createElement as h, useEffect, useRef, useState } from 'react'
 import { call as apiCall } from './api.js'
 import { hostText, localText, t } from './i18n.js'
@@ -102,6 +102,9 @@ const copyText = () => ({
   detailError: t('Task detail could not be read.'),
   detailModeMismatch: t('Task detail data mode does not match the team activity data.'),
   verification: t('Verification'),
+  acceptanceChecks: t('Acceptance checks'),
+  rework: t('Rework'),
+  reworkFeedback: t('Rework feedback'),
 })
 
 const sourceLabel = (source, copy) => source === 'goal' ? copy.goalTask
@@ -200,7 +203,8 @@ const evidenceStateLabel = (state, copy) => state === 'verified' ? copy.verified
   : state === 'executed' ? copy.executed
     : state === 'reported' ? copy.reported
       : state === 'stale' ? copy.staleEvidence
-        : state === 'needs-review' ? copy.needsReview : copy.pending
+        : state === 'needs-review' ? copy.needsReview
+          : state === 'rework' ? copy.rework : copy.pending
 
 const traceTitle = (item, copy) => {
   if (item.titleKey === 'trace.request') return copy.taskRequest
@@ -314,6 +318,8 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
   const attempt = detail?.attempt
   const handoff = detail?.handoff
   const recovery = detail?.recovery
+  const rework = detail?.rework
+  const checks = Array.isArray(detail?.verification?.checks) ? detail.verification.checks : []
   const evidence = Array.isArray(detail?.evidence) ? detail.evidence : []
   const artifacts = Array.isArray(detail?.artifacts) ? detail.artifacts : []
   const detailNotice = detailStatus === 'loading' && detail === null ? h('p', { className: 'bt-task-detail-state', role: 'status' }, copy.detailLoading)
@@ -336,6 +342,7 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
       ...(detail && handoff ? [h('div', { key: 'handoff' }, h('dt', null, copy.handoffRoute), h('dd', null, [handoff.from?.name || handoff.from?.id, handoff.to?.name || handoff.to?.id].filter(Boolean).join(' → ') || copy.none, handoff.status ? ` · ${handoff.status}` : '', handoff.name ? ` · ${handoff.name}` : ''))] : []),
       ...(detail ? [h('div', { key: 'checkpoint' }, h('dt', null, copy.latestCheckpoint), h('dd', null, detail.checkpoint?.text || copy.none))] : []),
       ...(detail && recovery ? [h('div', { key: 'recovery' }, h('dt', null, copy.recovery), h('dd', null, recovery.records?.length > 0 ? recovery.records.map(item => `${item.kind}: ${item.summary}`).join(' · ') : copy.none))] : []),
+      ...(detail && rework?.count > 0 ? [h('div', { key: 'rework' }, h('dt', null, copy.rework), h('dd', null, `${rework.count}${rework.max !== null && rework.max !== undefined ? `/${rework.max}` : ''}${rework.records?.at(-1)?.feedback ? ` · ${copy.reworkFeedback}: ${rework.records.at(-1).feedback}` : ''}`))] : []),
       ...(detail ? [h('div', { key: 'next' }, h('dt', null, copy.nextAction), h('dd', null, detail.nextAction?.text || copy.none))] : []),
       ...(detail ? [h('div', { key: 'blockers' }, h('dt', null, copy.blockers), h('dd', null, blockers.length > 0
         ? h('ul', { className: 'bt-task-blockers' }, blockers.map(item => h('li', { key: item.id, 'data-kind': item.kind }, item.text)))
@@ -352,6 +359,10 @@ function Detail({ task, detail, detailStatus, detailError, roster, rolesById, al
     detail ? h('section', { className: 'bt-task-section' },
       h('h4', null, copy.evidence),
       h(EvidenceList, { evidence, selectedId: selectedEvidenceId, copy, onSelect: setSelectedEvidenceId })) : null,
+    detail && checks.length > 0 ? h('section', { className: 'bt-task-section' },
+      h('h4', null, copy.acceptanceChecks),
+      h('ul', { className: 'bt-task-checks' }, checks.map(check => h('li', { key: check.id, 'data-status': check.status },
+        h('b', null, check.label || check.id), h('span', null, check.command || check.path || check.kind || ''), h('small', null, check.status))))): null,
     detail ? h('section', { className: 'bt-task-section' },
       h('h4', null, copy.artifacts),
       artifacts.length > 0 ? h('div', { className: 'bt-task-artifacts' }, artifacts.map((item, index) => h('div', {
@@ -423,7 +434,7 @@ export function TeamActivityView({ data, roster, status = 'ready', error = '', s
     'data-source': item.source,
     'data-kind': item.kind,
   },
-  h('b', null, item.botName || 'DS Bot'),
+  h('b', null, item.botName || 'Anbot'),
   h('span', null, `${sourceLabel(item.source, copy)}${item.kind ? ` · ${item.kind}` : ''} · ${item.text}`),
   h('time', null, when(item.at))))
   const taskMessage = noMatch ? copy.noMatch : noCurrentTasks ? copy.noCurrentTasks : ''
@@ -616,7 +627,7 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-activity-task-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
 .bt-activity-task-title{font-size:12px;line-height:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt-activity-task-meta,.bt-activity-task-time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-activity-task-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence[data-evidence-state=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=stale],.bt-activity-task-evidence[data-evidence-state=needs-review]{color:var(--bt-danger)}
+.bt-activity-task-state{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence{width:max-content;max-width:100%;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-activity-task-evidence[data-evidence-state=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-activity-task-evidence[data-evidence-state=stale],.bt-activity-task-evidence[data-evidence-state=needs-review],.bt-activity-task-evidence[data-evidence-state=rework]{color:var(--bt-danger)}
 .bt-activity-task-state[data-status=waiting],.bt-activity-status[data-status=waiting]{color:var(--bt-star)}.bt-activity-task-state[data-status=reported],.bt-activity-task-state[data-status=blocked],.bt-activity-task-state[data-status=failed],.bt-activity-task-state[data-status=unknown],.bt-activity-status[data-status=reported],.bt-activity-status[data-status=blocked],.bt-activity-status[data-status=failed],.bt-activity-status[data-status=unknown]{color:var(--bt-danger)}
 .bt-activity-task-time{flex:none}
 .bt-activity-owner-mark{display:inline-flex;flex:none;align-items:center;justify-content:center;border-radius:999px;background:var(--bt-tag-bg);color:var(--bt-ink-2);font-size:12px;font-weight:600}
@@ -629,6 +640,7 @@ export const TEAM_ACTIVITY_CSS = `
 .bt-task-section{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-task-section h4,.bt-trace-head h4{margin:0;font-size:12px;line-height:16px;font-weight:600}
 .bt-task-evidence-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-evidence{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-task-evidence:hover,.bt-task-evidence[data-selected]{background:var(--bt-hover)}.bt-task-evidence:focus-visible,.bt-trace-tab:focus-visible,.bt-trace-record:focus-visible,.bt-detail-control:focus-visible{outline:2px solid var(--bt-accent);outline-offset:2px}.bt-task-evidence>span{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-task-evidence b{font-size:12px;line-height:16px;overflow-wrap:anywhere}.bt-task-evidence span span,.bt-task-evidence small{font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}.bt-evidence-fact{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--bt-ink-2)!important}.bt-task-evidence em,.bt-trace-trust{flex:none;font-style:normal;font-size:11px;line-height:16px;color:var(--bt-ink-2);border:1px solid var(--bt-line);border-radius:999px;padding:0 6px}.bt-task-evidence[data-trust=verified] em,.bt-trace-trust[data-trust=verified]{color:var(--bt-green);border-color:color-mix(in srgb,var(--bt-green) 42%,var(--bt-line))}.bt-task-evidence[data-trust=executed] em,.bt-trace-trust[data-trust=executed]{color:var(--bt-accent);border-color:color-mix(in srgb,var(--bt-accent) 42%,var(--bt-line))}.bt-task-evidence[data-trust=reported] em,.bt-trace-trust[data-trust=reported]{color:var(--bt-star)}
 .bt-task-artifacts{display:flex;flex-direction:column;gap:6px;margin-top:8px}.bt-task-artifact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-artifact b{font-size:12px;line-height:16px}.bt-task-artifact span{grid-column:1/-1}.bt-task-artifact small{grid-column:1/-1;font-size:11px;line-height:16px;color:var(--bt-ink-3);overflow-wrap:anywhere}
+.bt-task-checks{display:flex;flex-direction:column;gap:6px;margin:8px 0 0;padding:0;list-style:none}.bt-task-checks li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;border:.5px solid var(--bt-line-2);border-radius:8px;background:var(--bt-card)}.bt-task-checks b{font-size:12px;line-height:16px}.bt-task-checks span{grid-column:1/-1;font-size:11px;line-height:16px;color:var(--bt-ink-2);overflow-wrap:anywhere}.bt-task-checks small{grid-column:2;grid-row:1;font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-task-checks li[data-status=verified] small{color:var(--bt-green)}.bt-task-checks li[data-status=pending] small{color:var(--bt-accent)}
 .bt-trace-explorer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bt-line)}.bt-trace-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.bt-trace-head small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bt-trace-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--bt-tag-bg)}.bt-trace-tab{flex:1;border:0;border-radius:6px;padding:5px 7px;background:none;color:var(--bt-ink-2);font:inherit;font-size:11px;line-height:16px;cursor:pointer}.bt-trace-tab[aria-pressed=true]{background:var(--bt-card);color:var(--bt-ink);box-shadow:var(--bt-card-shadow)}
 .bt-trace-list,.bt-trace-relations{display:flex;flex-direction:column;gap:4px;margin-top:8px}.bt-trace-record{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:4px 8px;width:100%;padding:7px 8px;border:0;border-radius:6px;background:var(--bt-card);color:var(--bt-ink);font:inherit;text-align:left;cursor:pointer}.bt-trace-record:hover,.bt-trace-record[data-selected]{background:var(--bt-hover)}.bt-trace-record-main{display:flex;min-width:0;flex-direction:column;gap:2px}.bt-trace-record-main b{font-size:12px;line-height:16px}.bt-trace-record-main span{color:var(--bt-ink-2);font-size:11px;line-height:16px;overflow-wrap:anywhere}.bt-trace-record-main small,.bt-trace-record time{font-size:11px;line-height:16px;color:var(--bt-ink-3)}.bt-trace-record time{white-space:nowrap}.bt-trace-relation{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bt-card);font-size:11px;line-height:16px}.bt-trace-relation b{flex:none;color:var(--bt-ink-3)}.bt-trace-relation span{min-width:0;overflow-wrap:anywhere}.bt-trace-note{margin:8px 0 0;font-size:11px;line-height:16px;color:var(--bt-ink-3)}
 .bt-activity-status{display:inline-block;font-size:11px;line-height:16px;color:var(--bt-ink-2);background:var(--bt-tag-bg);border-radius:999px;padding:0 6px}

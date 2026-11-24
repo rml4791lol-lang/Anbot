@@ -1,7 +1,7 @@
 {
   "schema": 3,
   "scenario": "chief-forge-prism-mcp-repair",
-  "generatedAt": "2026-11-17T17:39:09.136Z",
+  "generatedAt": "2026-11-24T14:51:05.474Z",
   "outcome": "agentloop-verified",
   "mocking": "deterministic-local-model-transport-only",
   "agentLoop": {
@@ -40,7 +40,8 @@
         "tool/call": 4,
         "tool/result": 4,
         "step/end": 4,
-        "turn/end": 1
+        "turn/end": 1,
+        "session/end-seed": 1
       },
       "prism": {
         "session/end-seed": 1,
@@ -59,90 +60,6 @@
       }
     },
     "sessions": {
-      "prism": {
-        "eventCount": 32,
-        "eventTypes": {
-          "session/end-seed": 1,
-          "agent/inbox/spliced": 2,
-          "turn/start": 1,
-          "step/start": 3,
-          "system/message": 1,
-          "user/message": 3,
-          "request/header": 1,
-          "request/context": 1,
-          "assistant/message": 3,
-          "tool/call": 6,
-          "tool/result": 6,
-          "step/end": 3,
-          "turn/end": 1
-        },
-        "turnsStarted": 1,
-        "turnsEnded": 1,
-        "toolCalls": [
-          {
-            "name": "git_diff",
-            "arguments": {
-              "path": "ds-bot/src/host/local-agents/mcp.js"
-            },
-            "ok": true,
-            "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 9729 bytes -> 9780 bytes",
-            "diff": {
-              "paths": [
-                "ds-bot/src/host/local-agents/mcp.js"
-              ],
-              "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
-            }
-          },
-          {
-            "name": "bash",
-            "arguments": {
-              "command": "git diff --check"
-            },
-            "ok": true,
-            "exitCode": 0,
-            "output": "exit 0\n"
-          },
-          {
-            "name": "bash",
-            "arguments": {
-              "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs"
-            },
-            "ok": true,
-            "exitCode": 0,
-            "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.770333ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.50025\n"
-          },
-          {
-            "name": "bash",
-            "arguments": {
-              "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
-            },
-            "ok": true,
-            "exitCode": 0,
-            "output": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n"
-          },
-          {
-            "name": "bash",
-            "arguments": {
-              "command": "node test/acceptance/fixtures/no-dsh-patch.mjs"
-            },
-            "ok": true,
-            "exitCode": 0,
-            "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":50111,\"tree\":\"sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":12,\"preexistingPaths\":[\"apps/web/public/apple-touch-icon.png\",\"apps/web/public/icon-192.png\",\"apps/web/public/icon-512.png\",\"apps/web/public/icon-maskable-512.png\",\"packages/experimental/skill-badge/assets/dsh-badge.png\",\"packages/llm/llm-deepseek/tests/fixtures/red.png\",\"packages/llm/llm-pi-ai/tests/fixtures/qr-code.png\",\"snapshots/sdk/minimal-image-compaction/workspace/red.png\",\"snapshots/session/ptc-read-image-attachment-path/workspace/red.png\",\"snapshots/session/ptc-read-image/workspace.expected/red.png\",\"snapshots/session/read-image-attachment-path/workspace/red.png\",\"snapshots/session/read-image-text-route/workspace/red.png\"],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d\",\"trackedDiffDigest\":\"sha256:c5d6c95a2ab1db784b78a665b63d2f1a412855976b16bc4c288f88dfd8e0ec04\"}]}\n"
-          },
-          {
-            "name": "write_file",
-            "arguments": {
-              "path": "prism-review.json"
-            },
-            "ok": true,
-            "output": "wrote prism-review.json",
-            "artifact": {
-              "path": "prism-review.json",
-              "digest": "sha256:d52d24bc62526958dced867dd79369245eae6950531dbfce6693f0b820cd234c"
-            }
-          }
-        ]
-      },
       "chief": {
         "eventCount": 60,
         "eventTypes": {
@@ -198,7 +115,7 @@
                       "label": "Forge repaired the actual MCP inventory filter",
                       "path": "ds-bot/src/host/local-agents/mcp.js",
                       "expect": {
-                        "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+                        "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
                       }
                     },
                     {
@@ -228,7 +145,7 @@
                       "label": "Prism inspected the actual repair diff",
                       "path": "ds-bot/src/host/local-agents/mcp.js",
                       "expect": {
-                        "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+                        "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
                       }
                     },
                     {
@@ -380,6 +297,158 @@
             "output": "Goal \"Repair MCP inventory drift\" is complete.\nComplete. Tell the user what was delivered."
           }
         ]
+      },
+      "forge": {
+        "eventCount": 31,
+        "eventTypes": {
+          "agent/inbox/spliced": 2,
+          "turn/start": 1,
+          "step/start": 4,
+          "system/message": 1,
+          "user/message": 3,
+          "request/header": 1,
+          "request/context": 1,
+          "assistant/message": 4,
+          "tool/call": 4,
+          "tool/result": 4,
+          "step/end": 4,
+          "turn/end": 1,
+          "session/end-seed": 1
+        },
+        "turnsStarted": 1,
+        "turnsEnded": 1,
+        "toolCalls": [
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
+            },
+            "ok": true,
+            "exitCode": 1,
+            "output": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-R09Pcm/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
+          },
+          {
+            "name": "edit",
+            "arguments": {
+              "path": "ds-bot/src/host/local-agents/mcp.js",
+              "oldText": "  const facts = tools\n    .map(tool => ({",
+              "newText": "  const facts = tools\n    .filter(tool => tool.name.startsWith('mcp__'))\n    .map(tool => ({"
+            },
+            "ok": true,
+            "output": "edited ds-bot/src/host/local-agents/mcp.js",
+            "diff": {
+              "paths": [
+                "ds-bot/src/host/local-agents/mcp.js"
+              ],
+              "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
+            }
+          },
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
+            },
+            "ok": true,
+            "exitCode": 0,
+            "output": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n"
+          },
+          {
+            "name": "write_file",
+            "arguments": {
+              "path": "forge-handoff.json"
+            },
+            "ok": true,
+            "output": "wrote forge-handoff.json",
+            "artifact": {
+              "path": "forge-handoff.json",
+              "digest": "sha256:7bcebcef18708771392ac19a6cd5d515c7ee3ace045f554593c2ab8b9fa3b6c2"
+            }
+          }
+        ]
+      },
+      "prism": {
+        "eventCount": 32,
+        "eventTypes": {
+          "session/end-seed": 1,
+          "agent/inbox/spliced": 2,
+          "turn/start": 1,
+          "step/start": 3,
+          "system/message": 1,
+          "user/message": 3,
+          "request/header": 1,
+          "request/context": 1,
+          "assistant/message": 3,
+          "tool/call": 6,
+          "tool/result": 6,
+          "step/end": 3,
+          "turn/end": 1
+        },
+        "turnsStarted": 1,
+        "turnsEnded": 1,
+        "toolCalls": [
+          {
+            "name": "git_diff",
+            "arguments": {
+              "path": "ds-bot/src/host/local-agents/mcp.js"
+            },
+            "ok": true,
+            "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 10173 bytes -> 10224 bytes",
+            "diff": {
+              "paths": [
+                "ds-bot/src/host/local-agents/mcp.js"
+              ],
+              "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
+            }
+          },
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "git diff --check"
+            },
+            "ok": true,
+            "exitCode": 0,
+            "output": "exit 0\n"
+          },
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs"
+            },
+            "ok": true,
+            "exitCode": 0,
+            "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.610208ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 118.81725\n"
+          },
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs"
+            },
+            "ok": true,
+            "exitCode": 0,
+            "output": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n"
+          },
+          {
+            "name": "bash",
+            "arguments": {
+              "command": "node test/acceptance/fixtures/no-dsh-patch.mjs"
+            },
+            "ok": true,
+            "exitCode": 0,
+            "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":75658,\"tree\":\"sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9\"},{\"label\":\"plugin-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":38,\"tree\":\"sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"trackedDiffDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}]}\n"
+          },
+          {
+            "name": "write_file",
+            "arguments": {
+              "path": "prism-review.json"
+            },
+            "ok": true,
+            "output": "wrote prism-review.json",
+            "artifact": {
+              "path": "prism-review.json",
+              "digest": "sha256:893d28de5448e08b6b2a42d6310e29cf318a8f7d7499d2d37f0e948b3db81b10"
+            }
+          }
+        ]
       }
     }
   },
@@ -398,7 +467,7 @@
     "role": "Coordinator",
     "view": "Reality Gate",
     "goal": {
-      "id": "goal-bb399490",
+      "id": "goal-d84fc1c1",
       "createdByTool": "group_goal",
       "status": "complete",
       "verification": {
@@ -467,10 +536,10 @@
         ],
         "artifactDigests": {},
         "diffDigests": {
-          "ds-bot/src/host/local-agents/mcp.js": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "ds-bot/src/host/local-agents/mcp.js": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         },
         "missing": [],
-        "verifiedAt": 1794937147442
+        "verifiedAt": 1795531863320
       }
     },
     "stages": [
@@ -498,11 +567,11 @@
   },
   "forge": {
     "role": "Engineer",
-    "taskId": "goal:goal-bb399490:s1:t1",
+    "taskId": "goal:goal-d84fc1c1:s1:t1",
     "attemptId": "t1:a1",
     "worktree": {
       "isolated": true,
-      "baselineCommit": "9cb28146c9e096a8a3dd7b52ce0562fd0f126c95",
+      "baselineCommit": "c48bbd8e49dba5479bc0895d0b808b099d7669f9",
       "changedPaths": [
         "ds-bot/src/host/local-agents/mcp.js"
       ]
@@ -538,15 +607,15 @@
         "trust": "executed",
         "kind": "executed",
         "source": "tool-result",
-        "at": 1794937141675,
+        "at": 1795531857289,
         "actor": {
           "sessionId": "forge"
         },
-        "summary": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-RGDx3Q/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n",
+        "summary": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-R09Pcm/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n",
         "command": {
           "text": "node test/acceptance/fixtures/mcp-inventory-e2e.mjs",
           "exitCode": 1,
-          "outputDigest": "sha256:91726fe718af91b736296c1e2e2690fd707f23d3c901426307bf1f30f7cb9ea9"
+          "outputDigest": "sha256:96fe6184ef9c2888ea48575864617c59c01f5e7e0d82f8368d5f9ab75288f14c"
         },
         "record": {
           "sessionId": "forge",
@@ -562,7 +631,7 @@
         "trust": "verified",
         "kind": "verified",
         "source": "tool-result",
-        "at": 1794937141685,
+        "at": 1795531857296,
         "actor": {
           "sessionId": "forge"
         },
@@ -571,7 +640,7 @@
           "paths": [
             "ds-bot/src/host/local-agents/mcp.js"
           ],
-          "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         },
         "record": {
           "sessionId": "forge",
@@ -587,7 +656,7 @@
         "trust": "verified",
         "kind": "verified",
         "source": "tool-result",
-        "at": 1794937141896,
+        "at": 1795531857477,
         "actor": {
           "sessionId": "forge"
         },
@@ -611,7 +680,7 @@
         "trust": "executed",
         "kind": "executed",
         "source": "tool-result",
-        "at": 1794937141899,
+        "at": 1795531857479,
         "actor": {
           "sessionId": "forge"
         },
@@ -630,7 +699,7 @@
         "trust": "reported",
         "kind": "reported",
         "source": "assistant",
-        "at": 1794937141908,
+        "at": 1795531857490,
         "actor": {
           "sessionId": "forge"
         },
@@ -650,7 +719,7 @@
         },
         "ok": true,
         "exitCode": 1,
-        "output": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-RGDx3Q/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
+        "output": "exit 1\nnode:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    'mcp__github__search',\n+   'message_bot'\n  ]\n\n    at file:///private/var/folders/xs/c1_lc37j2gd_45v7tfpjmh200000gn/T/ds-bot-reality-gate-R09Pcm/forge-worktree/ds-bot/test/acceptance/fixtures/mcp-inventory-e2e.mjs:20:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 'mcp__github__search', 'message_bot' ],\n  expected: [ 'mcp__github__search' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.12.1\n"
       },
       {
         "name": "edit",
@@ -665,7 +734,7 @@
           "paths": [
             "ds-bot/src/host/local-agents/mcp.js"
           ],
-          "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         }
       },
       {
@@ -693,18 +762,18 @@
   },
   "prism": {
     "role": "Reviewer",
-    "taskId": "goal:goal-bb399490:s2:t2",
+    "taskId": "goal:goal-d84fc1c1:s2:t2",
     "attemptId": "t2:a1",
     "pickupCount": 1,
     "recovery": [
       {
-        "id": "t2:a1:resent:f138dfc1-6183-4576-b93c-b8871e3a37f8",
-        "at": 1794937145410,
+        "id": "t2:a1:resent:d600b8e3-3cf3-49f2-8f79-74f770405d47",
+        "at": 1795531860973,
         "attemptId": "t2:a1",
         "kind": "resent",
         "summary": "The queued handoff was delivered again after the host restarted.",
         "sessionId": "prism",
-        "exchangeId": "f138dfc1-6183-4576-b93c-b8871e3a37f8"
+        "exchangeId": "d600b8e3-3cf3-49f2-8f79-74f770405d47"
       }
     ],
     "toolCalls": 6,
@@ -715,12 +784,12 @@
           "path": "ds-bot/src/host/local-agents/mcp.js"
         },
         "ok": true,
-        "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 9729 bytes -> 9780 bytes",
+        "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 10173 bytes -> 10224 bytes",
         "diff": {
           "paths": [
             "ds-bot/src/host/local-agents/mcp.js"
           ],
-          "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         }
       },
       {
@@ -739,7 +808,7 @@
         },
         "ok": true,
         "exitCode": 0,
-        "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.770333ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.50025\n"
+        "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.610208ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 118.81725\n"
       },
       {
         "name": "bash",
@@ -757,7 +826,7 @@
         },
         "ok": true,
         "exitCode": 0,
-        "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":50111,\"tree\":\"sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":12,\"preexistingPaths\":[\"apps/web/public/apple-touch-icon.png\",\"apps/web/public/icon-192.png\",\"apps/web/public/icon-512.png\",\"apps/web/public/icon-maskable-512.png\",\"packages/experimental/skill-badge/assets/dsh-badge.png\",\"packages/llm/llm-deepseek/tests/fixtures/red.png\",\"packages/llm/llm-pi-ai/tests/fixtures/qr-code.png\",\"snapshots/sdk/minimal-image-compaction/workspace/red.png\",\"snapshots/session/ptc-read-image-attachment-path/workspace/red.png\",\"snapshots/session/ptc-read-image/workspace.expected/red.png\",\"snapshots/session/read-image-attachment-path/workspace/red.png\",\"snapshots/session/read-image-text-route/workspace/red.png\"],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d\",\"trackedDiffDigest\":\"sha256:c5d6c95a2ab1db784b78a665b63d2f1a412855976b16bc4c288f88dfd8e0ec04\"}]}\n"
+        "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":75658,\"tree\":\"sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9\"},{\"label\":\"plugin-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":38,\"tree\":\"sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"trackedDiffDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}]}\n"
       },
       {
         "name": "write_file",
@@ -768,7 +837,7 @@
         "output": "wrote prism-review.json",
         "artifact": {
           "path": "prism-review.json",
-          "digest": "sha256:d52d24bc62526958dced867dd79369245eae6950531dbfce6693f0b820cd234c"
+          "digest": "sha256:893d28de5448e08b6b2a42d6310e29cf318a8f7d7499d2d37f0e948b3db81b10"
         }
       }
     ],
@@ -777,7 +846,7 @@
         "verified": true,
         "result": {
           "path": "ds-bot/src/host/local-agents/mcp.js",
-          "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         }
       },
       "diffCheck": {
@@ -789,7 +858,7 @@
         "verified": true,
         "command": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
         "exitCode": 0,
-        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.770333ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.50025\n"
+        "result": "✔ the MCP inventory contains only MCP tools and is stable across input order (0.610208ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 118.81725\n"
       },
       "inventory": {
         "verified": true,
@@ -816,32 +885,29 @@
               "preexistingChanges": 0,
               "preexistingPaths": [],
               "untrackedFiles": [],
-              "files": 50111,
-              "tree": "sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82"
+              "files": 75658,
+              "tree": "sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9"
+            },
+            {
+              "label": "plugin-DSH-install",
+              "kind": "installed-packages",
+              "unchanged": true,
+              "preexistingChanges": 0,
+              "preexistingPaths": [],
+              "untrackedFiles": [],
+              "files": 38,
+              "tree": "sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c"
             },
             {
               "label": "shared-DSH-checkout",
               "kind": "git-checkout",
               "unchanged": true,
-              "preexistingChanges": 12,
-              "preexistingPaths": [
-                "apps/web/public/apple-touch-icon.png",
-                "apps/web/public/icon-192.png",
-                "apps/web/public/icon-512.png",
-                "apps/web/public/icon-maskable-512.png",
-                "packages/experimental/skill-badge/assets/dsh-badge.png",
-                "packages/llm/llm-deepseek/tests/fixtures/red.png",
-                "packages/llm/llm-pi-ai/tests/fixtures/qr-code.png",
-                "snapshots/sdk/minimal-image-compaction/workspace/red.png",
-                "snapshots/session/ptc-read-image-attachment-path/workspace/red.png",
-                "snapshots/session/ptc-read-image/workspace.expected/red.png",
-                "snapshots/session/read-image-attachment-path/workspace/red.png",
-                "snapshots/session/read-image-text-route/workspace/red.png"
-              ],
+              "preexistingChanges": 0,
+              "preexistingPaths": [],
               "untrackedFiles": [],
               "head": "66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db",
-              "statusDigest": "sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d",
-              "trackedDiffDigest": "sha256:c5d6c95a2ab1db784b78a665b63d2f1a412855976b16bc4c288f88dfd8e0ec04"
+              "statusDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "trackedDiffDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
             }
           ]
         }
@@ -859,24 +925,24 @@
       ],
       "results": [
         {
-          "digest": "sha256:d2e900dc2f4cf8bd4c80f2336361c6d4db0f2d948556cec174acaf087f9eb217",
-          "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 9729 bytes -> 9780 bytes"
+          "digest": "sha256:2a048cdaf2cde769415aad2891165ceed482df06259830871baa9c247d980b3c",
+          "output": "actual diff ds-bot/src/host/local-agents/mcp.js: 10173 bytes -> 10224 bytes"
         },
         {
           "digest": "sha256:28d3b9e880a77975493dc7e359144c0295a4f694cfe0af4f928c22307bc5c320",
           "output": "exit 0\n"
         },
         {
-          "digest": "sha256:b52223faaf80e04d180efdedd3aa67a3a9a87ab39309e5fa950b97b60f2cc98d",
-          "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.770333ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.50025\n"
+          "digest": "sha256:c4e2ab9fbdb1bd765d83c95cec268b3acdcc3c770745650a134b839c32abbb38",
+          "output": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.610208ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 118.81725\n"
         },
         {
           "digest": "sha256:8e9a0596620b6b31f00d5d2807cfa0a3ef84865bd6ce965fdb3da92e54a32ab1",
           "output": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n"
         },
         {
-          "digest": "sha256:aac4cf1eeedc2e74ae8442c3e3244aeaa7a73af3d219e54c08ab2b0e6fd9c96d",
-          "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":50111,\"tree\":\"sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":12,\"preexistingPaths\":[\"apps/web/public/apple-touch-icon.png\",\"apps/web/public/icon-192.png\",\"apps/web/public/icon-512.png\",\"apps/web/public/icon-maskable-512.png\",\"packages/experimental/skill-badge/assets/dsh-badge.png\",\"packages/llm/llm-deepseek/tests/fixtures/red.png\",\"packages/llm/llm-pi-ai/tests/fixtures/qr-code.png\",\"snapshots/sdk/minimal-image-compaction/workspace/red.png\",\"snapshots/session/ptc-read-image-attachment-path/workspace/red.png\",\"snapshots/session/ptc-read-image/workspace.expected/red.png\",\"snapshots/session/read-image-attachment-path/workspace/red.png\",\"snapshots/session/read-image-text-rou"
+          "digest": "sha256:74f750e8d035b31e9a2c346ee4d8ee9a5d248ed5873caa4e7ef24ec4e83c4b4b",
+          "output": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":75658,\"tree\":\"sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9\"},{\"label\":\"plugin-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":38,\"tree\":\"sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"trackedDiffDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}]}\n"
         }
       ],
       "limitations": "Deterministic local model transport; DSH AgentLoop, Session events, tool calls, restart recovery and persistence are real."
@@ -889,8 +955,8 @@
     "processes": [
       {
         "role": "first-host",
-        "pid": 7636,
-        "markerPid": 7636,
+        "pid": 35770,
+        "markerPid": 35770,
         "distinctChildProcess": true,
         "stoppedBy": "SIGTERM",
         "processSignal": "SIGTERM",
@@ -898,8 +964,8 @@
       },
       {
         "role": "second-host",
-        "pid": 7663,
-        "markerPid": 7663,
+        "pid": 35797,
+        "markerPid": 35797,
         "distinctChildProcess": true,
         "stoppedBy": "SIGTERM",
         "processSignal": "SIGTERM",
@@ -981,50 +1047,47 @@
         "preexistingChanges": 0,
         "preexistingPaths": [],
         "untrackedFiles": [],
-        "files": 50111,
-        "tree": "sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82"
+        "files": 75658,
+        "tree": "sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9"
+      },
+      {
+        "label": "plugin-DSH-install",
+        "kind": "installed-packages",
+        "unchanged": true,
+        "preexistingChanges": 0,
+        "preexistingPaths": [],
+        "untrackedFiles": [],
+        "files": 38,
+        "tree": "sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c"
       },
       {
         "label": "shared-DSH-checkout",
         "kind": "git-checkout",
         "unchanged": true,
-        "preexistingChanges": 12,
-        "preexistingPaths": [
-          "apps/web/public/apple-touch-icon.png",
-          "apps/web/public/icon-192.png",
-          "apps/web/public/icon-512.png",
-          "apps/web/public/icon-maskable-512.png",
-          "packages/experimental/skill-badge/assets/dsh-badge.png",
-          "packages/llm/llm-deepseek/tests/fixtures/red.png",
-          "packages/llm/llm-pi-ai/tests/fixtures/qr-code.png",
-          "snapshots/sdk/minimal-image-compaction/workspace/red.png",
-          "snapshots/session/ptc-read-image-attachment-path/workspace/red.png",
-          "snapshots/session/ptc-read-image/workspace.expected/red.png",
-          "snapshots/session/read-image-attachment-path/workspace/red.png",
-          "snapshots/session/read-image-text-route/workspace/red.png"
-        ],
+        "preexistingChanges": 0,
+        "preexistingPaths": [],
         "untrackedFiles": [],
         "head": "66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db",
-        "statusDigest": "sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d",
-        "trackedDiffDigest": "sha256:c5d6c95a2ab1db784b78a665b63d2f1a412855976b16bc4c288f88dfd8e0ec04"
+        "statusDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trackedDiffDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     ]
   },
   "detail": {
     "schema": 1,
     "dataMode": "live",
-    "generatedAt": 1794937149134,
-    "taskId": "goal:goal-bb399490:s2:t2",
+    "generatedAt": 1795531865473,
+    "taskId": "goal:goal-d84fc1c1:s2:t2",
     "task": {
-      "id": "goal:goal-bb399490:s2:t2",
-      "sourceId": "goal:goal-bb399490:s2:t2",
+      "id": "goal:goal-d84fc1c1:s2:t2",
+      "sourceId": "goal:goal-d84fc1c1:s2:t2",
       "source": "goal",
       "kind": "goal_task",
       "title": "PRISM_REVIEW Independently inspect the actual diff, run MCP inventory behavior and targeted tests, and prove DSH was not patched.",
       "subtitle": "Repair MCP inventory drift",
       "stageTitle": "Review",
       "stageId": "s2",
-      "parentId": "goal:goal-bb399490",
+      "parentId": "goal:goal-d84fc1c1",
       "ownerId": "prism",
       "ownerName": "Prism",
       "ownerKind": "bot",
@@ -1039,6 +1102,34 @@
       "verification": {
         "status": "verified",
         "reason": "All declared acceptance checks are bound to fresh evidence.",
+        "checks": [
+          {
+            "id": "prism-diff",
+            "status": "verified",
+            "evidenceId": "ev:tool-result:prism:prism-1-diff"
+          },
+          {
+            "id": "prism-diff-check",
+            "status": "verified",
+            "evidenceId": "ev:tool-result:prism:prism-1-diff-check"
+          },
+          {
+            "id": "prism-targeted-test",
+            "status": "verified",
+            "evidenceId": "ev:tool-result:prism:prism-1-targeted"
+          },
+          {
+            "id": "prism-inventory",
+            "status": "verified",
+            "evidenceId": "ev:tool-result:prism:prism-1-inventory"
+          },
+          {
+            "id": "prism-no-patch",
+            "status": "verified",
+            "evidenceId": "ev:tool-result:prism:prism-1-no-patch"
+          }
+        ],
+        "missing": [],
         "evidenceIds": [
           "ev:tool-result:prism:prism-1-diff",
           "ev:tool-result:prism:prism-1-diff-check",
@@ -1046,12 +1137,12 @@
           "ev:tool-result:prism:prism-1-inventory",
           "ev:tool-result:prism:prism-1-no-patch"
         ],
-        "verifiedAt": 1794937147442
+        "verifiedAt": 1795531863320
       },
       "acceptance": "Prism independently runs the diff, inventory, targeted tests and no-DSH-patch checks after the restart.",
       "evidence": "Prism ran the actual diff, inventory, targeted tests and no-DSH-patch checks after restart.",
       "note": "Independent review evidence received.",
-      "updatedAt": 1794937147442,
+      "updatedAt": 1795531863320,
       "warnings": []
     },
     "empty": false,
@@ -1066,7 +1157,7 @@
     "location": {
       "roomId": "r1",
       "roomName": "Reality Gate",
-      "goalId": "goal-bb399490",
+      "goalId": "goal-d84fc1c1",
       "goalTitle": "Repair MCP inventory drift",
       "goalStatus": "complete",
       "stageId": "s2",
@@ -1078,19 +1169,24 @@
       "id": "t2:a1",
       "number": 1,
       "status": "verified",
-      "startedAt": 1794937141929,
-      "updatedAt": 1794937147440,
+      "startedAt": 1795531857512,
+      "updatedAt": 1795531863317,
       "sessionId": "prism",
-      "exchangeId": "f138dfc1-6183-4576-b93c-b8871e3a37f8",
+      "exchangeId": "d600b8e3-3cf3-49f2-8f79-74f770405d47",
       "turn": 1
+    },
+    "rework": {
+      "count": 0,
+      "max": null,
+      "records": []
     },
     "handoff": null,
     "recovery": {
       "state": "recovered",
       "records": [
         {
-          "id": "t2:a1:resent:f138dfc1-6183-4576-b93c-b8871e3a37f8",
-          "at": 1794937145410,
+          "id": "t2:a1:resent:d600b8e3-3cf3-49f2-8f79-74f770405d47",
+          "at": 1795531860973,
           "attemptId": "t2:a1",
           "kind": "resent",
           "summary": "The queued handoff was delivered again after the host restarted.",
@@ -1100,37 +1196,37 @@
     },
     "checkpoint": {
       "text": "Stage acceptance verified.",
-      "at": 1794937147440,
+      "at": 1795531863317,
       "kind": "verified"
     },
     "nextAction": {
       "text": "Provide acceptance verification for: Prism independently runs the diff, inventory, targeted tests and no-DSH-patch checks after the restart.",
-      "sourceId": "goal:goal-bb399490:s2:t2"
+      "sourceId": "goal:goal-d84fc1c1:s2:t2"
     },
     "blockers": [],
     "evidence": [
       {
-        "id": "goal:goal-bb399490:s2:stage-evidence",
+        "id": "goal:goal-d84fc1c1:s2:stage-evidence",
         "trust": "reported",
         "title": "",
         "text": "Prism ran the actual diff, inventory, targeted tests and no-DSH-patch checks after restart.",
-        "at": 1794937147440,
-        "sourceId": "goal:goal-bb399490:s2",
+        "at": 1795531863317,
+        "sourceId": "goal:goal-d84fc1c1:s2",
         "artifact": null
       },
       {
         "id": "ev:tool-result:prism:prism-1-diff",
         "trust": "verified",
         "title": "",
-        "text": "actual diff ds-bot/src/host/local-agents/mcp.js: 9729 bytes -> 9780 bytes",
-        "at": 1794937145426,
+        "text": "actual diff ds-bot/src/host/local-agents/mcp.js: 10173 bytes -> 10224 bytes",
+        "at": 1795531860997,
         "sourceId": "tool-result",
         "artifact": null,
         "diff": {
           "paths": [
             "ds-bot/src/host/local-agents/mcp.js"
           ],
-          "digest": "sha256:db6d4a5c2ff5d848049ce3d62f643b39844b5306f681b0dfa0306aedf65c24fc"
+          "digest": "sha256:b330e01caa477bc981a032a4c8daa60248e4164d7baae32eaef8d4b5d2065803"
         },
         "stale": false
       },
@@ -1139,7 +1235,7 @@
         "trust": "verified",
         "title": "",
         "text": "exit 0\n",
-        "at": 1794937145506,
+        "at": 1795531861087,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
@@ -1153,14 +1249,14 @@
         "id": "ev:tool-result:prism:prism-1-targeted",
         "trust": "verified",
         "title": "",
-        "text": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.770333ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 156.50025\n",
-        "at": 1794937145768,
+        "text": "exit 0\n✔ the MCP inventory contains only MCP tools and is stable across input order (0.610208ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 118.81725\n",
+        "at": 1795531861288,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
           "text": "node --test test/acceptance/fixtures/mcp-inventory.test.mjs",
           "exitCode": 0,
-          "outputDigest": "sha256:b52223faaf80e04d180efdedd3aa67a3a9a87ab39309e5fa950b97b60f2cc98d"
+          "outputDigest": "sha256:c4e2ab9fbdb1bd765d83c95cec268b3acdcc3c770745650a134b839c32abbb38"
         },
         "stale": false
       },
@@ -1169,7 +1265,7 @@
         "trust": "verified",
         "title": "",
         "text": "exit 0\n{\"tools\":[\"mcp__github__search\"],\"initialRevision\":\"5f2436bcb409027806c4ff1fad0ef0ffff7da6a2796d196b06413b075d3dcff8\",\"changedRevision\":\"ca8e18cc02c43b24eba6838bebbd6a968396f8e3526fcb8d4d1443ab463050ba\"}\n",
-        "at": 1794937145996,
+        "at": 1795531861469,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
@@ -1183,14 +1279,14 @@
         "id": "ev:tool-result:prism:prism-1-no-patch",
         "trust": "verified",
         "title": "",
-        "text": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":50111,\"tree\":\"sha256:aec795b72f93a5247434e94b6545f3dec958b64c07c8850e8e041f6b9bd24d82\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":12,\"preexistingPaths\":[\"apps/web/public/apple-touch-icon.png\",\"apps/web/public/icon-192.png\",\"apps/web/public/icon-512.png\",\"apps/web/public/icon-maskable-512.png\",\"packages/experimental/skill-badge/assets/dsh-badge.png\",\"packages/llm/llm-deepseek/tests/fixtures/red.png\",\"packages/llm/llm-pi-ai/tests/fixtures/qr-code.png\",\"snapshots/sdk/minimal-image-compaction/workspace/red.png\",\"snapshots/session/ptc-read-image-attachment-path/workspace/red.png\",\"snapshots/session/ptc-read-image/workspace.expected/red.png\",\"snapshots/session/read-image-attachment-path/workspace/red.png\",\"snapshots/session/read-image-text-route/workspace/red.png\"],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:bf50c731d4b789b978c190ceb0ba5f4b51a1517259f7f8aed6b00d9f59a8869d\",\"trackedDiffDigest",
-        "at": 1794937147376,
+        "text": "exit 0\n{\"changedPaths\":[],\"dshPatched\":false,\"targets\":[{\"label\":\"pinned-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":75658,\"tree\":\"sha256:f7a3d6118a0d4c64283ae60afc9e639a011fe8243d9df0b5bceb779f7a90c2e9\"},{\"label\":\"plugin-DSH-install\",\"kind\":\"installed-packages\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"files\":38,\"tree\":\"sha256:b363a3e7d2e353f1f304b34c2899fc7b910f742b508e2a284918f6b31315b16c\"},{\"label\":\"shared-DSH-checkout\",\"kind\":\"git-checkout\",\"unchanged\":true,\"preexistingChanges\":0,\"preexistingPaths\":[],\"untrackedFiles\":[],\"head\":\"66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db\",\"statusDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"trackedDiffDigest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}]}\n",
+        "at": 1795531863273,
         "sourceId": "tool-result",
         "artifact": null,
         "command": {
           "text": "node test/acceptance/fixtures/no-dsh-patch.mjs",
           "exitCode": 0,
-          "outputDigest": "sha256:aac4cf1eeedc2e74ae8442c3e3244aeaa7a73af3d219e54c08ab2b0e6fd9c96d"
+          "outputDigest": "sha256:74f750e8d035b31e9a2c346ee4d8ee9a5d248ed5873caa4e7ef24ec4e83c4b4b"
         },
         "stale": false
       },
@@ -1199,7 +1295,7 @@
         "trust": "executed",
         "title": "",
         "text": "wrote prism-review.json",
-        "at": 1794937147383,
+        "at": 1795531863283,
         "sourceId": "tool-result",
         "artifact": null,
         "stale": false
@@ -1209,7 +1305,7 @@
         "trust": "reported",
         "title": "",
         "text": "Prism review passed. The actual diff, MCP inventory, targeted tests and no-DSH-patch checks all ran through real DSH tool calls. Review: prism-review.json",
-        "at": 1794937147391,
+        "at": 1795531863293,
         "sourceId": "assistant",
         "artifact": null,
         "stale": false
@@ -1221,6 +1317,34 @@
     "verification": {
       "status": "verified",
       "reason": "All declared acceptance checks are bound to fresh evidence.",
+      "checks": [
+        {
+          "id": "prism-diff",
+          "status": "verified",
+          "evidenceId": "ev:tool-result:prism:prism-1-diff"
+        },
+        {
+          "id": "prism-diff-check",
+          "status": "verified",
+          "evidenceId": "ev:tool-result:prism:prism-1-diff-check"
+        },
+        {
+          "id": "prism-targeted-test",
+          "status": "verified",
+          "evidenceId": "ev:tool-result:prism:prism-1-targeted"
+        },
+        {
+          "id": "prism-inventory",
+          "status": "verified",
+          "evidenceId": "ev:tool-result:prism:prism-1-inventory"
+        },
+        {
+          "id": "prism-no-patch",
+          "status": "verified",
+          "evidenceId": "ev:tool-result:prism:prism-1-no-patch"
+        }
+      ],
+      "missing": [],
       "evidenceIds": [
         "ev:tool-result:prism:prism-1-diff",
         "ev:tool-result:prism:prism-1-diff-check",
@@ -1228,17 +1352,17 @@
         "ev:tool-result:prism:prism-1-inventory",
         "ev:tool-result:prism:prism-1-no-patch"
       ],
-      "verifiedAt": 1794937147442
+      "verifiedAt": 1795531863320
     },
     "trace": {
       "status": "empty",
-      "sourceTaskId": "goal:goal-bb399490:s2:t2",
-      "sourceId": "goal:goal-bb399490:s2:t2",
+      "sourceTaskId": "goal:goal-d84fc1c1:s2:t2",
+      "sourceId": "goal:goal-d84fc1c1:s2:t2",
       "sessionIds": [],
       "relationships": [
         {
-          "from": "goal:goal-bb399490:s2:t2",
-          "to": "goal:goal-bb399490:s2:t2",
+          "from": "goal:goal-d84fc1c1:s2:t2",
+          "to": "goal:goal-d84fc1c1:s2:t2",
           "kind": "task-source",
           "labelKey": "trace.source"
         }
@@ -1260,7 +1384,7 @@
       "id": "ev:tool-result:forge:forge-2-before",
       "trust": "executed",
       "title": "",
-      "text": "sha256:91726fe718af91b736296c1e2e2690fd707f23d3c901426307bf1f30f7cb9ea9",
+      "text": "sha256:96fe6184ef9c2888ea48575864617c59c01f5e7e0d82f8368d5f9ab75288f14c",
       "sourceId": "tool-result"
     },
     {
@@ -1309,7 +1433,7 @@
       "id": "ev:tool-result:prism:prism-1-targeted",
       "trust": "verified",
       "title": "",
-      "text": "sha256:b52223faaf80e04d180efdedd3aa67a3a9a87ab39309e5fa950b97b60f2cc98d",
+      "text": "sha256:c4e2ab9fbdb1bd765d83c95cec268b3acdcc3c770745650a134b839c32abbb38",
       "sourceId": "tool-result"
     },
     {
@@ -1323,7 +1447,7 @@
       "id": "ev:tool-result:prism:prism-1-no-patch",
       "trust": "verified",
       "title": "",
-      "text": "sha256:aac4cf1eeedc2e74ae8442c3e3244aeaa7a73af3d219e54c08ab2b0e6fd9c96d",
+      "text": "sha256:74f750e8d035b31e9a2c346ee4d8ee9a5d248ed5873caa4e7ef24ec4e83c4b4b",
       "sourceId": "tool-result"
     },
     {

@@ -1,12 +1,12 @@
 {
-  "name": "dsbot",
-  "productName": "DS Bot",
-  "version": "0.3.8",
+  "name": "anbot",
+  "productName": "Anbot",
+  "version": "0.3.9",
   "private": true,
-  "description": "DS Bot desktop app: the ds-bot team on its own pinned DeepSeek Harness.",
-  "author": "Fei2411",
-  "homepage": "https://github.com/Fei2411/DS-Bot",
-  "desktopName": "dsbot.desktop",
+  "description": "Anbot desktop app: the ds-bot team on its own pinned DeepSeek Harness.",
+  "author": "rml4791lol-lang",
+  "homepage": "https://github.com/rml4791lol-lang/Anbot",
+  "desktopName": "anbot.desktop",
   "license": "Apache-2.0",
   "type": "module",
   "main": "src/main.mjs",
@@ -23,6 +23,7 @@
     "test": "node --import ./test/reset-env.mjs --test \"test/*.test.mjs\""
   },
   "dependencies": {
+    "@changfenhuang/dsh-genui": "0.17.0",
     "@deepseek-ai/cordis-plugin-group": "1.1.0",
     "@deepseek-ai/cordis-plugin-include": "1.1.0",
     "@deepseek-ai/dsh": "0.2.2-rc.5",

@@ -97,6 +97,7 @@ export function install(rt) {
   // the global skill catalog revision. Two Agents doing that at once would make
   // a strict snapshot permanently look incomplete during startup.
   let maskChain = Promise.resolve()
+  let newBotCatalog = []
 
   const library = () => state.capabilities.items
   const ensureLibrary = () => {
@@ -115,7 +116,7 @@ export function install(rt) {
       return attached === name || (item?.kind === 'pack' && (item.items ?? []).includes(name))
     })
     || (own(library(), name)?.kind === 'skill'
-      && (bot.skillShortlist ?? []).some(skill => skill.name === name)))
+      && bot.id !== botId && (bot.skillShortlist ?? []).some(skill => skill.name === name)))
   const skillItems = () => Object.values(library()).filter(item => item?.kind === 'skill' && typeof item.name === 'string')
   // DSH's catalog is a merge over providers and follows symbolic links; never a
   // directory scan. An Agent's own scope is the only place masks are registered.
@@ -141,13 +142,16 @@ export function install(rt) {
   const hostSkillService = () => {
     try { return ctx.get?.('skills') } catch { return undefined }
   }
+  const scopedSkillService = (agent) => {
+    let service = presetSkillService(agent)
+    try { service ??= agent?.ctx?.skills } catch { /* the caller has no skill scope */ }
+    return service
+  }
   const listProfileSkills = async ({ agent, cwd, strict = false } = {}) => {
     // An agent-scoped read sees the preset's providers; a host read sees the
     // root `ds-bot-profile` provider mounted by cordis.patch.yml. A test
     // embedder with neither simply has no profile catalog.
-    let service = presetSkillService(agent)
-    try { service ??= agent?.ctx?.skills } catch { /* the caller has no skill scope */ }
-    service ??= hostSkillService()
+    const service = scopedSkillService(agent) ?? hostSkillService()
     if (typeof service?.list !== 'function' && typeof service?.snapshot !== 'function') return []
     if (strict && typeof service.snapshot !== 'function') throw new Error('This DSH cannot verify the skill catalog.')
     const options = { cwd, ...(agent === undefined ? {} : { scope: agent }) }
@@ -200,7 +204,7 @@ export function install(rt) {
     { includeMasked: options.includeMasked === true, strict: options.strict === true },
   )
   async function refreshSkillCatalog({ publish = true } = {}) {
-    const before = catalogSignature(catalogCache)
+    const before = rt.skillCatalogSignature()
     try {
       const bots = Object.values(state.bots ?? {})
       const byCwd = new Map()
@@ -209,8 +213,9 @@ export function install(rt) {
         if (!byCwd.has(cwd)) byCwd.set(cwd, await buildCatalog({ cwd }))
         return byCwd.get(cwd)
       }
+      const defaultCatalog = await readAt(skillCwd({}))
       if (bots.length === 0) {
-        catalogCache = await readAt(skillCwd({}))
+        catalogCache = defaultCatalog
       } else {
         for (const bot of bots) {
           for (const skill of await readAt(skillCwd({ botId: bot.id }))) {
@@ -226,12 +231,13 @@ export function install(rt) {
         }
         catalogCache = [...merged.values()].sort((a, b) => a.name.localeCompare(b.name))
       }
+      newBotCatalog = defaultCatalog
     } catch (error) {
       rt.warn('ds-bot: skill catalog could not be read: %s', error)
     }
     // Do not make every save look like a catalog change. The live key is only
     // useful when the catalog actually moved (install, remove, rename, or scope).
-    if (publish && catalogSignature(catalogCache) !== before) rt.publishFeed?.('live', {})
+    if (publish && rt.skillCatalogSignature() !== before) rt.publishFeed?.('live', {})
     return catalogCache
   }
   // Validation and masking read the same view, so a name the picker shows is a
@@ -242,7 +248,8 @@ export function install(rt) {
     : catalogCache
       .filter(skill => !Array.isArray(skill.bots) || skill.bots.includes(botId))
       .map(skill => skill.byBot?.[botId] === undefined ? skill : { ...skill, ...skill.byBot[botId] })
-  rt.skillCatalogSignature = () => catalogSignature(catalogCache)
+  rt.newBotSkillCatalogView = () => newBotCatalog
+  rt.skillCatalogSignature = () => JSON.stringify([catalogSignature(catalogCache), catalogSignature(newBotCatalog)])
   rt.refreshSkillCatalog = refreshSkillCatalog
   // Plugin-provided skills (ppt-studio, graphlint, office-docx, …) are registered
   // in the Agent's own scope by the preset's plugins and never reach the host
@@ -586,6 +593,169 @@ export function install(rt) {
     if (values.some(status => status.state === 'connecting')) return { state: 'connecting' }
     return values.length > 0 ? { state: 'ready' } : undefined
   }
+
+  const observed = (value, source, at, reason) => ({
+    status: 'observed',
+    value,
+    at,
+    source,
+    ...(reason ? { reason } : {}),
+  })
+  const unavailable = (reason, source) => ({ status: 'unavailable', reason, source })
+  const redacted = (error, fallback) => rt.redactSecrets(
+    [error, error?.cause].filter(Boolean).map(part => String(part?.message ?? part)).join(': ') || fallback,
+  ).slice(0, 300)
+  const authorizationOf = item => item.kind === 'skill' ? 'not-required'
+    : item.kind === 'mcp' && item.transport === 'stdio' ? item.approved === true ? 'allowed' : 'approval-required'
+      : undefined
+  const toolNamesOf = view => {
+    if (view === undefined) return undefined
+    try {
+      const names = typeof view.keys === 'function' ? [...view.keys()]
+        : Array.isArray(view) ? view.map(tool => typeof tool === 'string' ? tool : tool?.name)
+          : undefined
+      return names?.every(name => typeof name === 'string') ? new Set(names) : undefined
+    } catch {
+      return undefined
+    }
+  }
+  const observeResponse = (botId, name, sessionId) => {
+    const status = sessionStatuses.get(botId)?.get(name)?.get(sessionId)
+    return status ? { ...status } : undefined
+  }
+
+  async function observeSessionCapabilities(bot, agent, selection) {
+    const { id: sessionId } = agent.session
+    const at = Date.now()
+    const names = bot.skillShortlist?.map(skill => skill.name) ?? []
+    // The host registry also accepts an exact Agent scope when the preset
+    // shares it. Never use an unscoped profile catalog as Session evidence.
+    const service = scopedSkillService(agent) ?? hostSkillService()
+    const cwd = rt.sessionFolder?.(agent.session, { observedOnly: true }) ?? skillCwd({ agent })
+    let snapshot
+    let snapshotError
+    try {
+      snapshot = await service?.snapshot?.({ scope: agent, cwd, signal: AbortSignal.timeout(3000) })
+    } catch (error) {
+      snapshotError = redacted(error, 'DSH could not read the scoped Skill catalog.')
+    }
+    const list = Array.isArray(snapshot?.skills) ? snapshot.skills : undefined
+    const complete = list !== undefined && snapshot.complete === true
+    const configured = bot.skillShortlist === undefined ? list?.filter(skill => skill.invocation?.modelInvocable === true).map(skill => skill.name) ?? [] : names
+    let toolSet
+    let toolsError
+    try {
+      toolSet = selection && typeof ctx.tools?.resolve === 'function'
+        ? await ctx.tools.resolve({ agent, modelSelection: selection, signal: AbortSignal.timeout(3000) })
+        : undefined
+    } catch (error) {
+      toolsError = redacted(error, 'DSH could not resolve the Session tool policy.')
+    }
+    let toolNames
+    if (toolSet !== undefined) {
+      try { toolNames = toolNamesOf(toolSet.view(agent)) } catch (error) {
+        toolsError = redacted(error, 'DSH could not read the resolved Session tool policy.')
+      }
+    }
+    const loader = toolNames?.has('skill')
+    const mcp = [...expandCapabilityNames(bot.capabilities, library())]
+      .filter(name => own(library(), name)?.kind === 'mcp')
+      .map(name => {
+        const current = observeResponse(bot.id, name, sessionId) ?? {}
+        const authorization = authorizationOf(own(library(), name))
+        const liveness = current.liveness ?? (current.state === 'error' ? 'failed' : 'unobserved')
+        const legacy = authorization === 'approval-required' ? 'needs-approval'
+          : liveness === 'failed' || current.state === 'error' ? 'error'
+            : liveness === 'reconnecting' ? 'connecting' : 'unobserved'
+        const reason = current.error ?? (authorization === 'approval-required' ? 'This local MCP server needs user approval.' : undefined)
+        return {
+          name,
+          kind: 'mcp',
+          status: legacy,
+          ...(reason ? { reason } : {}),
+          observations: {
+            cataloged: observed(true, 'capability-library', at),
+            loaderAdmitted: current.loaderAdmitted === true ? observed(true, 'mcp-loader', at)
+              : current.loaderAdmitted === false ? observed(false, 'mcp-loader', at)
+                : unavailable('The MCP loader has not reported whether it admitted this extension.', 'mcp-loader'),
+            bodyLoadable: current.bodyLoadable === true ? observed(true, 'mcp-activation', at)
+              : current.bodyLoadable === false ? observed(false, 'mcp-activation', at, current.error)
+                : unavailable('The MCP plugin has not reported whether its body loaded.', 'mcp-activation'),
+            initialConnected: typeof current.initialConnected === 'boolean'
+              ? observed(current.initialConnected, 'mcp-mount', at, current.error)
+              : unavailable('No completed initial MCP connection was observed.', 'mcp-mount'),
+            liveness: ['connected', 'reconnecting', 'failed'].includes(liveness)
+              ? observed(liveness, 'mcp-transport', at, current.error)
+              : unavailable(current.error ?? 'No live MCP transport lifecycle observation is available.', 'mcp-transport'),
+            authorization: authorization === undefined
+              ? unavailable('DSH did not report authorization for this remote MCP server.', 'capability-authorization')
+              : observed(authorization, 'capability-authorization', at),
+          },
+        }
+      })
+    const bodies = await Promise.all(configured.map(async name => {
+      const skill = list?.find(item => item.name === name)
+      if (!skill) return skill === undefined && !complete
+        ? unavailable('The scoped Skill catalog is incomplete; absence cannot be established.', 'dsh-skills')
+        : unavailable('The Skill is not present in the scoped catalog.', 'dsh-skills')
+      if (skill.invocation?.modelInvocable !== true) return unavailable('DSH marks this Skill as unavailable to the model.', 'dsh-skills')
+      if (loader === false) return unavailable('The Session tool policy denied the Skill loader; body loading was skipped.', 'skill-body')
+      if (typeof service?.get !== 'function') return unavailable('This DSH cannot load Skill bodies.', 'skill-body')
+      try {
+        const definition = await service.get(name, { scope: agent, cwd, signal: AbortSignal.timeout(3000) })
+        return definition && typeof definition.content === 'string'
+          ? observed(true, 'skill-body', at)
+          : observed(false, 'skill-body', at, 'DSH listed the Skill but did not return a loadable body.')
+      } catch (error) {
+        return observed(false, 'skill-body', at, redacted(error, 'DSH could not load the Skill body.'))
+      }
+    }))
+    try {
+      const skills = configured.map((name, index) => {
+        const skill = list?.find(item => item.name === name)
+        const cataloged = skill === undefined
+          ? complete ? observed(false, 'dsh-skills', at) : unavailable(snapshotError ?? 'The scoped Skill catalog is incomplete.', 'dsh-skills')
+          : observed(true, 'dsh-skills', at)
+        const loaderAdmitted = loader === undefined
+          ? unavailable(toolsError ?? 'The Session tool policy was not available.', 'dsh-tool-policy')
+          : observed(loader, 'dsh-tool-policy', at)
+        const bodyLoadable = bodies[index]
+        const masked = cataloged.status === 'observed' && cataloged.value === true && skill?.invocation?.modelInvocable !== true
+        const loaderDenied = loaderAdmitted.status === 'observed' && loaderAdmitted.value === false
+        const status = cataloged.status === 'observed' && cataloged.value === false ? 'unavailable'
+          : masked || loaderDenied || (bodyLoadable.status === 'observed' && bodyLoadable.value === false) ? 'unavailable'
+            : cataloged.status !== 'observed' || loaderAdmitted.status !== 'observed' || bodyLoadable.status !== 'observed'
+              ? 'unobserved'
+              : cataloged.value && loaderAdmitted.value && bodyLoadable.value ? 'ready' : 'unavailable'
+        const unavailableObservation = [bodyLoadable, loaderAdmitted, cataloged].find(item => item.status === 'unavailable')
+        const reason = masked ? 'DSH marks this Skill as unavailable to the model.'
+          : loaderDenied ? 'DSH did not admit the Skill loader for this Session.'
+            : bodyLoadable.reason ?? unavailableObservation?.reason
+        return {
+          name,
+          kind: 'skill',
+          status,
+          ...(reason ? { reason } : {}),
+          observations: {
+            cataloged,
+            loaderAdmitted,
+            bodyLoadable,
+            initialConnected: unavailable('MCP connection state does not apply to a Skill.', 'mcp-mount'),
+            liveness: unavailable('MCP liveness does not apply to a Skill.', 'dsh-tools'),
+            authorization: observed('not-required', 'capability-authorization', at),
+          },
+        }
+      })
+      return {
+        status: 'observed',
+        catalogObserved: complete,
+        observedAt: at,
+        mcp,
+        skills,
+        ...(snapshotError && !complete ? { catalogReason: snapshotError } : {}),
+      }
+    } finally { toolSet?.dispose() }
+  }
   const capabilityStatusesView = () => {
     const result = {}
     for (const bot of Object.values(state.bots)) {
@@ -670,13 +840,19 @@ export function install(rt) {
   const mountOne = async (agent, bot, agentMounts, name) => {
     const sessionId = agent.session.id
     const item = own(library(), name)
+    const authorization = authorizationOf(item)
     const drop = async () => {
       await disposeMount(agentMounts.get(name))
       agentMounts.delete(name)
     }
     if (item.kind === 'mcp' && item.transport === 'stdio' && item.approved !== true) {
       await drop()
-      statusSet(bot.id, name, sessionId, { state: 'needs-approval' })
+      statusSet(bot.id, name, sessionId, {
+        state: 'needs-approval',
+        cataloged: true,
+        authorization,
+        liveness: 'unobserved',
+      })
       return
     }
     let config
@@ -684,24 +860,46 @@ export function install(rt) {
       config = configFor(item, bot.id)
     } catch (error) {
       await drop()
-      statusSet(bot.id, name, sessionId, { state: 'error', error: rt.redactSecrets(error.message).slice(0, 300) })
+      statusSet(bot.id, name, sessionId, {
+        state: 'error',
+        error: rt.redactSecrets(error.message).slice(0, 300),
+        cataloged: true,
+        authorization,
+        liveness: 'unobserved',
+      })
       return
     }
     const key = `${name}:${createHash('sha256').update(JSON.stringify(config)).digest('hex')}`
     if (agentMounts.get(name)?.key === key) return
     await drop()
-    statusSet(bot.id, name, sessionId, { state: 'connecting' })
+    statusSet(bot.id, name, sessionId, {
+      state: 'connecting',
+      cataloged: true,
+      authorization,
+      liveness: 'unobserved',
+    })
+    let loaderAdmitted
+    let bodyLoadable
+    let loaderAttempted = false
+    let bodyAttempted = false
     try {
-      const plugin = item.kind === 'skill'
-        ? {
+      let plugin
+      if (item.kind === 'skill') {
+        plugin = {
           name: `ds-bot-capability-skill-${name}`,
           inject: ['skills'],
           apply(c) {
             c.effect(() => c.skills.register({ name: config.name, description: config.description, source: 'runtime', provider: config.provider, content: config.content }))
           },
         }
-        : await loadMcpPlugin()
+      } else {
+        loaderAttempted = true
+        plugin = await loadMcpPlugin()
+        loaderAdmitted = true
+        bodyLoadable = true
+      }
       if (stopped) return
+      bodyAttempted = true
       const fiber = item.kind === 'skill' ? agent.ctx.plugin(plugin) : agent.ctx.plugin(plugin, config)
       agentMounts.set(name, { key, fiber })
       await fiber.await()
@@ -718,12 +916,34 @@ export function install(rt) {
         if (winner?.provider !== config.provider) {
           throw new Error(`The DS-Bot skill ${name} did not become the visible catalog entry.`)
         }
+        bodyLoadable = true
       }
-      statusSet(bot.id, name, sessionId, { state: 'ready' })
+      const prior = {
+        state: 'ready',
+        cataloged: true,
+        loaderAdmitted,
+        bodyLoadable,
+        authorization,
+        liveness: 'unobserved',
+      }
+      const status = item.kind === 'mcp'
+        ? { ...prior, initialConnected: true }
+        : prior
+      statusSet(bot.id, name, sessionId, status)
     } catch (error) {
       await drop()
-      const message = rt.redactSecrets([error, error?.cause].filter(Boolean).map(part => String(part?.message ?? part)).join(': ') || 'Connection failed').slice(0, 300)
-      statusSet(bot.id, name, sessionId, { state: 'error', error: message })
+      const message = redacted(error, 'Connection failed')
+      if (loaderAttempted && loaderAdmitted === undefined) loaderAdmitted = false
+      if (bodyAttempted && bodyLoadable === undefined) bodyLoadable = false
+      statusSet(bot.id, name, sessionId, {
+        state: 'error',
+        error: message,
+        cataloged: true,
+        loaderAdmitted,
+        bodyLoadable,
+        ...(item.kind === 'mcp' ? { initialConnected: false, liveness: 'failed' } : { liveness: 'unobserved' }),
+        authorization,
+      })
     }
   }
   const reconcileAgent = async (agent, bot) => {
@@ -994,6 +1214,7 @@ export function install(rt) {
     capabilityEndpoint,
     capabilityLibraryView: libraryView,
     capabilityStatusesView,
+    observeSessionCapabilities,
     reconcileCapabilities: reconcile,
     scheduleCapabilitiesReconcile: scheduleReconcile,
     ensureCapabilities,

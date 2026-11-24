@@ -9,7 +9,6 @@ import { state as hostState } from './helpers/fake-host-process.mjs'
 import { state as updaterState, updater } from './helpers/fake-updater.mjs'
 import { messageBoxes, startAct, startApp, startState, waitFor } from './helpers/app-harness.mjs'
 import { installHooks } from './helpers/register.mjs'
-import { RELEASE_PAGE } from '../src/updates.mjs'
 
 await installHooks()
 
@@ -53,7 +52,7 @@ test('a failed start offers the downloading update on its banner and installs it
   // 「手动下载」 opens the release page.
   assert.equal(await startAct('manualDownload'), true)
   await waitFor(() => (state.opened ?? []).length === 1, 'open the release page')
-  assert.deepEqual(state.opened, [RELEASE_PAGE])
+  assert.deepEqual(state.opened, ['https://github.com/rml4791lol-lang/Anbot/releases/latest'])
 
   // Downloaded: it installs, and the Host's stop comes first.
   downloads[1].resolve()

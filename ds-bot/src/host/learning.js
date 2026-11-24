@@ -379,6 +379,7 @@ export function skillProblem(proposal, { skills, learned, limit = LEARNING.learn
 export function install(rt) {
   const { ctx, config, home, state } = rt
   const settings = { ...LEARNING, ...(config.learningTimes ?? {}) }
+  const automatic = config.automaticLearning === true
   const on = config.learning !== false && config.memory !== false
   const view = () => ({})
   if (!on) {
@@ -432,7 +433,7 @@ export function install(rt) {
   const noted = new Map()
   let lastActivity = Date.now()
   ctx.on('agent/status', ({ agent, status }) => {
-    if (stopped) return
+    if (stopped || !automatic) return
     const id = agent?.id
     if (id === undefined || !rt.isBotSession(id)) return
     lastActivity = Date.now()
@@ -597,7 +598,7 @@ export function install(rt) {
     }
     const problem = improvementProblem(answer, { detail, bot, learned, skills, agents, limit: settings.learnedMax })
     if (problem !== undefined) throw new Error(`the task improvement proposal is not usable: ${problem}`)
-    if (answer.action === 'none') return undefined
+    if (answer.action === 'none' || (!automatic && answer.scope === 'skill')) return undefined
     const verified = detail.evidence.filter(item => item.trust === 'verified' && item.stale !== true)
     let target
     let label
@@ -714,7 +715,7 @@ export function install(rt) {
   // proposal still waiting is skipped: its chat is read again in the next pass.
   let running
   async function run() {
-    if (stopped) return 0
+    if (stopped || !automatic) return 0
     if (running) return running
     running = (async () => {
       const store = data()
@@ -826,7 +827,7 @@ export function install(rt) {
   }
 
   const due = () => {
-    if (stopped) return false
+    if (stopped || !automatic) return false
     const store = data()
     const hasPending = Object.values(store.pending).some(sessions => sessions.length > 0)
       || (config.agentsMd !== false && Object.values(store.agentsPending).some(queue => queue.records?.length > 0))
@@ -952,6 +953,7 @@ export function install(rt) {
       if (Object.hasOwn(store.settled, id)) return settledAnswer(store.settled[id], approve)
       throw Object.assign(new Error('This proposal is no longer open'), { code: 'bot/stale' })
     }
+    if (!visibleProposal(proposal)) throw Object.assign(new Error('Request this Skill change in the Bot chat before approving it.'), { code: 'bot/stale' })
     if (proposal.requiresReview === true) {
       throw Object.assign(new Error(`This proposal requires review: ${proposal.reviewReason}`), { code: 'bot/refused' })
     }
@@ -1084,16 +1086,80 @@ export function install(rt) {
     await persist()
   }
 
+  const visibleProposal = entry => automatic || entry.requested === true || (entry.kind === 'agents' && Boolean(entry.improvement))
+  function parseSkillRequest(text) {
+    const match = text.trim().match(/^(?:\/skill\s+(create|update)\s+|(?:please\s+)?(create|update)\s+(?:the\s+)?skill\s+|(?:请(?:帮我)?\s*)?(创建|新建|更新|修改)(?:技能|\s+skill)\s*)(?:`([a-z0-9-]+)`|([a-z0-9-]+))(?=\s|[:：]|$)\s*[:：]?\s*([\s\S]*)$/iu)
+    if (!match) return undefined
+    const action = match[1] ?? match[2] ?? (['创建', '新建'].includes(match[3]) ? 'create' : 'update')
+    return [action.toLowerCase(), (match[4] ?? match[5]).toLowerCase(), match[6]]
+  }
+  ctx.on('agent/pre-step', async ({ agent, step, messages, signal }, next) => {
+    if (step !== 1 || messages.length !== 1) return next()
+    const [message] = messages
+    if (message.source?.kind !== 'user' || message.content?.length !== 1 || message.content[0].type !== 'text') return next()
+    const request = parseSkillRequest(message.content[0].text)
+    if (!request) return next()
+    await rt.load()
+    const botId = rt.chatOwners.get(agent.id)
+    if (!botId) return next()
+    signal?.throwIfAborted()
+    await requestSkill(botId, ...request)
+    return { kind: 'enter', messages: [] }
+  })
+  const drafting = new Map()
+  function requestSkill(botId, action, name, instruction) {
+    const key = JSON.stringify([botId, name])
+    if (drafting.has(key)) return drafting.get(key)
+    const run = draftRequestedSkill(botId, action, name, instruction).finally(() => drafting.delete(key))
+    drafting.set(key, run)
+    return run
+  }
+
+  async function draftRequestedSkill(botId, action, name, instruction) {
+    validateCapabilityName(name)
+    const bot = rt.botOf(botId)
+    if (!bot || stopped || rt.readOnly() !== undefined) throw new Error('Skill drafting is unavailable here.')
+    const before = skillsOf()[name]
+    if ((action === 'update') !== Boolean(before)) throw new Error(action === 'update' ? 'No shared Skill has this name.' : 'This Skill already exists.')
+    if (before && before.createdBy && before.createdBy !== botId && !state.mainBotIds.includes(botId)) {
+      throw new Error('Ask the Skill owner or a Main Bot to request the update.')
+    }
+    if (instruction.trim() === '') throw new Error('Describe the requested Skill change after the name.')
+    if (holdsSecret(instruction) || rt.redactSecrets(instruction) !== instruction) throw new Error('Remove secrets from the Skill request.')
+    const pending = Object.values(data().proposals).find(entry => entry.requested && entry.botId === botId && entry.name === name)
+    if (pending && pending.action === action && pending.requestHash === hashOf(instruction)) return pending
+    const reply = await rt.botShot(bot, 'Draft a user-requested Skill. Return only a JSON object with description, content and why. Do not include secrets or one-off task details.', JSON.stringify({
+      action, name, instruction, existing: before ? { description: before.description, content: before.content } : null,
+    }), { sessionId: rt.chatOf(botId), kind: 'memory' })
+    const draft = parseJson(reply)
+    const item = { action, name, description: textOf(draft?.description).trim(), content: textOf(draft?.content).trim(), why: clip(textOf(draft?.why).trim(), 300) }
+    if (item.description === before?.description.trim() && item.content === before?.content.trim()) return null
+    if (skillsOf()[name] !== before) throw new Error('The Skill changed while the draft was prepared.')
+    if ([item.description, item.content, item.why].some(value => rt.redactSecrets(value) !== value)) throw new Error('The Skill draft contains a saved secret.')
+    const problem = skillProblem(item, { skills: skillsOf(), learned: before ? [name] : [], limit: settings.learnedMax })
+    if (problem) throw new Error(problem)
+    const store = data()
+    const same = Object.values(store.proposals).find(entry => entry.requested && entry.botId === botId && entry.name === name
+      && entry.action === action && entry.description === item.description && entry.content === item.content)
+    if (same) return same
+    if (pending) throw new Error('Approve or decline the pending change to this Skill first.')
+    const proposal = { ...item, id: randomUUID(), kind: 'skill', requested: true, requestHash: hashOf(instruction), botId, at: Date.now(),
+      ...(before ? { previous: { description: before.description, content: before.content }, base: hashOf(`${before.description}\n${before.content}`) } : {}) }
+    store.proposals[proposal.id] = proposal
+    await persist()
+    return proposal
+  }
+
   // Per Bot, its proposals waiting for the user.
   const learningView = () => {
     const byBot = {}
-    for (const entry of Object.values(data().proposals)) (byBot[entry.botId] ??= []).push(entry)
+    for (const entry of Object.values(data().proposals)) if (visibleProposal(entry)) (byBot[entry.botId] ??= []).push(entry)
     return byBot
   }
   // Every pending and answered proposal tied to one task, including history that
   // left the Bot's current chat part.
   const improvementView = (taskId) => {
-    const pending = Object.values(data().proposals).filter(entry => entry.improvement?.taskId === taskId)
+    const pending = Object.values(data().proposals).filter(entry => visibleProposal(entry) && entry.improvement?.taskId === taskId)
     const history = Object.values(data().settled).filter(entry => entry.improvement?.taskId === taskId)
     const byTime = (a, b) => (a.at ?? 0) - (b.at ?? 0) || (a.settledAt ?? 0) - (b.settledAt ?? 0)
     return { proposals: pending.sort(byTime), history: history.sort(byTime) }
@@ -1120,5 +1186,5 @@ export function install(rt) {
     return result
   }
 
-  Object.assign(rt, { learningView, learningSettledView, improvementView, learningEndpoint, learningRun: run })
+  Object.assign(rt, { learningView, learningSettledView, improvementView, learningEndpoint, learningRun: run, requestSkill, parseSkillRequest })
 }

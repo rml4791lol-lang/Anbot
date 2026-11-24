@@ -72,7 +72,7 @@ export const failureLine = failure => `${failure.code}${failure.status ? ` ${fai
 // for closes, and the answer goes up to the Bot that asked. `id` is the Session the
 // answer comes from; `source` is the trigger the turn answered. A silent reply is one the
 // sender reads at its next turn: it is kept, and no turn is opened for it.
-export function answerSender(rt, id, source, text, long, silent = false) {
+export function answerSender(rt, id, source, text, long, silent = false, { rejectAcceptance = false, rejectReason } = {}) {
   const back = rt.roomOf(source.senderRoomId)?.sessions?.[source.senderSessionId]
   // The asking Bot may have written from a background part of its own chat: its reply
   // goes back to that part's thread, not to the part the user is reading. When the part
@@ -81,25 +81,49 @@ export function answerSender(rt, id, source, text, long, silent = false) {
   const part = back === undefined && asker !== undefined ? threadCurrentOfPart(asker, source.senderPart) : undefined
   const target = back ?? part
   const name = rt.botOf(rt.selfOf(id))?.name ?? 'The other Bot'
-  const work = rt.closeWork?.(source.exchangeId, name, text)
+  const acceptance = rejectAcceptance
+    ? rt.rejectWorkAcceptance?.(source.exchangeId, rejectReason ?? 'The worker did not finish, so its declared acceptance checks were not verified.') ?? { kind: 'legacy' }
+    : rt.reviewWorkAcceptance?.(source.exchangeId) ?? { kind: 'legacy' }
+  if (acceptance.kind === 'rework') {
+    void acceptance.persist().catch(error => rt.warn('ds-bot: acceptance rework for work %s did not start: %s', source.exchangeId, error))
+    return
+  }
+  let finalText = text
+  let finalLong = long
+  let verification
+  if (acceptance.kind === 'verified') {
+    verification = acceptance.verification
+    const checks = Array.isArray(verification.checks) ? verification.checks : []
+    const passed = checks.filter(check => check?.status === 'verified').length
+    const reworks = acceptance.reworks > 0 ? `; ${acceptance.reworks} rework${acceptance.reworks === 1 ? '' : 's'}` : ''
+    const note = `[Acceptance verified: ${passed}/${checks.length} checks${reworks}]`
+    finalText = finalText === '' ? note : `${finalText}\n\n${note}`
+    if (finalLong !== undefined) finalLong = { ...finalLong, text: `${finalLong.text}\n\n${note}`, length: (finalLong.length ?? finalLong.text.length) + note.length + 2 }
+  } else if (acceptance.kind === 'needs-review') {
+    verification = acceptance.verification
+    const note = `[Acceptance not verified]\n${acceptance.text}`
+    finalText = finalText === '' ? note : `${finalText}\n\n${note}`
+    if (finalLong !== undefined) finalLong = { ...finalLong, text: `${finalLong.text}\n\n${note}`, length: (finalLong.length ?? finalLong.text.length) + note.length + 2 }
+  }
+  const work = rt.closeWork?.(source.exchangeId, name, finalText, verification === undefined ? {} : { verification })
   // A reply that arrives after the user gave up the wait is a late answer: it closes
   // nothing, opens nothing, and says on it that the wait was already over.
   const late = work === undefined ? rt.abandonedWork?.(source.exchangeId) : undefined
   const marker = late === undefined ? '' : LATE_ANSWER
-  const body = marker === '' ? (long?.text ?? text) : `${marker}${long?.text ?? text}`
-  const length = long === undefined ? undefined : late === undefined ? long.length : (long.length ?? text.length) + marker.length
+  const body = marker === '' ? (finalLong?.text ?? finalText) : `${marker}${finalLong?.text ?? finalText}`
+  const length = finalLong === undefined ? undefined : late === undefined ? finalLong.length : (finalLong.length ?? finalText.length) + marker.length
   // An answer with nothing in it wakes the asker for nothing: the work above is already
   // closed with what came back, and the asker reads it at its next turn. Only punctuation
   // or space is nothing; one letter, digit or CJK character is an answer. A late answer
   // and one that went as a file still go out.
-  if (late === undefined && long === undefined && !/[\p{L}\p{N}]/u.test(body)) return
+  if (late === undefined && finalLong === undefined && !/[\p{L}\p{N}]/u.test(body)) return
   const exchangeId = randomUUID()
   void rt.deliver({
     fromId: rt.selfOf(id),
     toId: source.senderSessionId,
     ...(target ? { sessionId: target } : {}),
     text: body,
-    ...(length === undefined ? {} : { files: long.files, length }),
+    ...(length === undefined ? {} : { files: finalLong.files, length }),
     role: 'reply',
     replyTo: source.exchangeId,
     exchangeId,
@@ -225,6 +249,7 @@ export function install(rt) {
   // Bot's request keeps its exchange; anything else is a nudge in the Bot's own chat.
   const retryTurn = (id, info, note, text) => {
     const keeps = info !== undefined && (info.role === 'room' || expectsReply(info))
+    const { taskId, attemptId } = info ?? {}
     return rt.deliver({
       ...(keeps && info.senderSessionId ? { fromId: info.senderSessionId } : {}),
       toId: rt.selfOf(id),
@@ -233,6 +258,7 @@ export function install(rt) {
       ...(keeps && info.roomId ? { roomId: info.roomId } : {}),
       ...(keeps && info.exchangeId ? { exchangeId: info.exchangeId } : {}),
       ...(info?.work ? { work: info.work } : {}),
+      ...(typeof taskId === 'string' && taskId && typeof attemptId === 'string' && attemptId ? { taskId, attemptId } : {}),
       ...(keeps && info.audience ? { audience: info.audience } : {}),
       ...(keeps && info.askedBy ? { askedBy: info.askedBy } : {}),
       ...(keeps && info.senderRoomId ? { fromRoomId: info.senderRoomId } : {}),
@@ -558,7 +584,7 @@ export function install(rt) {
   // reply in its Session there while it is still a member. A sender that asked for it
   // while working on another Bot's request goes on with that work when it reads it.
   // `long`: the text as attachLong sends it, when it went as a file.
-  const tellSender = (id, source, text, long, silent) => answerSender(rt, id, source, text, long, silent)
+  const tellSender = (id, source, text, long, silent, options) => answerSender(rt, id, source, text, long, silent, options)
 
   // Runs before a deleted Bot leaves the team. Its Sessions stop with it, and the
   // turn/end that follows is no longer the team's, so their activity and turn records go
@@ -1393,13 +1419,13 @@ export function install(rt) {
           }
           if (failure !== undefined) {
             // The sender was told a reply comes later; without this it would wait forever.
-            tellSender(id, source, `${name} could not answer your message: its model call failed (${failureLine(failure)}). Tell the user if it matters; do not retry right away.`)
+            tellSender(id, source, `${name} could not answer your message: its model call failed (${failureLine(failure)}). Tell the user if it matters; do not retry right away.`, undefined, undefined, { rejectAcceptance: true, rejectReason: `The worker turn failed before it could prove acceptance: ${failureLine(failure)}.` })
           } else if (reply !== '' || reason?.kind === 'aborted') {
             // A stopped turn still owes the sender a line, or it would wait forever for a
             // reply that never comes. An idle acknowledgement after a completed request
             // is not an answer: the request was already accepted when it was delivered.
             if (reply !== '' && toolCount === 0 && isAcknowledgementOnlyText(reply)) return
-            tellSender(id, source, reply !== '' ? reply : `${name} was stopped before it could answer your message.`)
+            tellSender(id, source, reply !== '' ? reply : `${name} was stopped before it could answer your message.`, undefined, undefined, { rejectAcceptance: true, rejectReason: 'The worker turn was stopped before it could prove acceptance.' })
           }
         }
         // Work a Bot asked for, also when what came back for it opens the turn: while

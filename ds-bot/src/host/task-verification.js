@@ -92,7 +92,7 @@ export function evidenceForRecord(raw, taskId, redact = defaultRedact) {
 export function normalizeEvidenceTrust(evidence, verification) {
   const ids = new Set((Array.isArray(verification?.evidenceIds) ? verification.evidenceIds : []).map(text))
   const verifiedAt = timeOf(verification?.verifiedAt)
-  const downgradeVerified = verification?.status === 'stale'
+  const downgradeVerified = verification?.status !== 'verified'
   return (Array.isArray(evidence) ? evidence : []).map(item => {
     if (item?.trust !== 'verified') return item
     const bound = !downgradeVerified
@@ -104,7 +104,7 @@ export function normalizeEvidenceTrust(evidence, verification) {
 }
 
 function evidenceStateOf(task, evidence, status) {
-  if (status === 'stale' || status === 'needs-review' || status === 'verified') return status
+  if (['stale', 'needs-review', 'rework', 'verified'].includes(status)) return status
   if (task?.status === 'reported' || task?.status === 'done') return 'reported'
   if (evidence.some(item => item?.trust === 'executed' && item.stale !== true)) return 'executed'
   if (evidence.some(item => item?.trust === 'reported' || item?.trust === 'requested')) return 'reported'
@@ -129,6 +129,9 @@ export function projectTaskVerification(raw, evidence = []) {
     if (declaredStatus === 'stale') {
       status = 'stale'
       reason = text(declared.reason) || 'The verified artifact changed after acceptance.'
+    } else if (declaredStatus === 'rework') {
+      status = 'rework'
+      reason = text(declared.reason) || 'The task was sent back for rework.'
     } else if (declaredStatus === 'needs-review') {
       status = 'needs-review'
       reason = text(declared.reason) || 'The task needs review before acceptance.'
@@ -142,6 +145,9 @@ export function projectTaskVerification(raw, evidence = []) {
   const verification = {
     status,
     reason,
+    ...(declared && Array.isArray(declared.checks) ? { checks: declared.checks } : {}),
+    ...(declared && Array.isArray(declared.missing) ? { missing: declared.missing.map(text) } : {}),
+    ...(declared && declared.manual !== undefined ? { manual: declared.manual === true } : {}),
     ...(declared && Array.isArray(declared.evidenceIds) ? { evidenceIds: declared.evidenceIds.map(text) } : {}),
     ...(declared && timeOf(declared.verifiedAt) !== undefined ? { verifiedAt: timeOf(declared.verifiedAt) } : {}),
   }

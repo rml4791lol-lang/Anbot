@@ -4,13 +4,14 @@
 // own chat instead. `credentialOnboarding` is the documented switch of
 // @deepseek-ai/dsh-client-ui-settings-models.
 //
-// A patch replaces the targeted row's whole `config`, so this row is restated from the
-// pinned DSH whenever it changes. Overlays outrank the profile, and DSH refuses a settings
-// form write that an overlay overrides: the overlay holds no row the Settings page writes
-// (never `ui-settings-general`).
+// Cordis replaces the whole config. Build this app-owned override from the composed
+// UI settings row to retain the profile's other options. Provider rows are untouched.
 import { dirname, join } from 'node:path'
-import { writeFileSync } from 'node:fs'
-import { stringify } from 'yaml'
+import { rmSync, writeFileSync } from 'node:fs'
+import { composeEntries } from '@deepseek-ai/dsh-app-boot'
+import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { dump } from 'js-yaml'
+import { composeOwnedRow } from './profile-overlay.mjs'
 
 export const APP_PATCH_NAME = 'app-onboarding.patch.yml'
 export const APP_PATCH_ROWS = [
@@ -24,6 +25,13 @@ export const APP_PATCH_ROWS = [
  */
 export function writeAppPatch(profile) {
   const file = join(dirname(profile.dir), APP_PATCH_NAME)
-  writeFileSync(file, stringify(APP_PATCH_ROWS), 'utf8')
+  const layers = [...(profile.layers ?? []).map(layer => layer.patches), profile.patches ?? []]
+  const entries = composeEntries(layers)
+  const rows = APP_PATCH_ROWS.map(override => composeOwnedRow(entries.find(entry => entry.id === override.id), override)).filter(Boolean)
+  if (rows.length === 0) {
+    rmSync(file, { force: true })
+    return []
+  }
+  writeFileSync(file, dump(rows, { schema: entryListSchema }), 'utf8')
   return [file]
 }

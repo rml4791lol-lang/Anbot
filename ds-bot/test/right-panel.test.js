@@ -310,6 +310,8 @@ test('every Bot gets the Sessions section and New session, not only local-agent 
   const engine = drawer('a', {}, { ...roster, byId: { a: { id: 'a', name: 'Writer', sessionId: 'a', engine: 'claude-code', parts: ['a', 'a-old'] } } })
   const engineEntry = buttonsOf(engine).find(button => textOf(button).includes('New session'))
   assert.ok(engineEntry, 'the local-agent Bot still has it')
+  assert.ok(buttonsOf(engine).find(button => textOf(button).includes('Earlier sessions (1)')), 'older Sessions start folded')
+  assert.equal(buttonsOf(engine).some(button => button.props.title === 'Open this earlier session'), false)
 })
 
 // A second instance of the drawer bundle whose React runs effects at once and keeps

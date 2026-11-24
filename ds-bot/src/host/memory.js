@@ -1588,15 +1588,52 @@ export function install(rt) {
     return rows
   }
 
-  // Every change the owner's scopes made, oldest first across the logs they
-  // landed in. A row outside those scopes is not the owner's to see or undo.
+  // Keep append order within each journal. Checkpoint boundaries must survive
+  // wall-clock changes. The history panel sorts by time for display.
   function ownerRows(panel) {
     const keys = new Set(Object.values(panel.scopes).map(scopeKey))
     const rows = []
     for (const path of journalPathsOf(panel)) {
       for (const row of journalRows(path)) if (keys.has(row.scope)) rows.push(row)
     }
-    return rows.sort((a, b) => String(a.time).localeCompare(String(b.time)))
+    return rows
+  }
+
+  const cursorOf = (rows, scope) => rows.findLast(row => row.scope === scope && typeof row.id === 'string')?.id ?? null
+
+  function rowsAfterCheckpoint(rows, record, botId) {
+    const cursors = record.memoryCursors
+    if (!cursors) return null
+    const byScope = new Map([[`bot:${botId}`, cursors.own], ['team', cursors.team]])
+    for (const [scope, cursor] of byScope) {
+      if (cursor !== null && !rows.some(row => row.scope === scope && row.id === cursor)) return null
+    }
+    const open = new Set([...byScope].filter(([, cursor]) => cursor === null).map(([scope]) => scope))
+    return rows.filter(row => {
+      if (open.has(row.scope)) return true
+      if (byScope.get(row.scope) === row.id) open.add(row.scope)
+      return false
+    })
+  }
+
+  const linkedChange = (row, record) => row.session === record.sessionId
+    && ['add', 'remove', 'replace'].includes(row.op) && typeof row.id === 'string'
+  const byTime = (a, b) => String(a.time).localeCompare(String(b.time))
+
+  function checkpointMemoryReview(botId, record) {
+    return settled(() => {
+      const rows = ownerRows(panelOf({ botId }))
+      const later = rowsAfterCheckpoint(rows, record, botId)
+      if (later === null) return { status: 'unavailable', changed: true, changes: [] }
+      const undone = new Set(rows.map(row => row.restored))
+      return {
+        status: 'observed', changed: later.length !== 0,
+        changes: later.filter(row => linkedChange(row, record) && !undone.has(row.id)).sort(byTime).slice(-HISTORY_PAGE).reverse().map(row => ({
+          id: row.id, time: row.time, op: row.op, scope: row.scope === 'team' ? 'team' : 'own',
+          text: splitMeta(String((row.op === 'remove' ? row.before : row.after) ?? '').replace(/^\s*[-*]\s+/, '')).text,
+        })),
+      }
+    })
   }
 
   const HISTORY_PAGE = 50
@@ -1605,7 +1642,7 @@ export function install(rt) {
     const panel = panelOf(body)
     const rows = await settled(() => ownerRows(panel))
     const undone = new Set(rows.map(row => row.restored).filter(id => typeof id === 'string'))
-    const newest = rows.filter(row => row.op === 'add' || row.op === 'remove' || row.op === 'replace').reverse()
+    const newest = rows.filter(row => row.op === 'add' || row.op === 'remove' || row.op === 'replace').sort(byTime).reverse()
     let slice = newest
     if (body.before !== undefined && body.before !== null) {
       const at = newest.findIndex(row => row.id === body.before)
@@ -1640,7 +1677,7 @@ export function install(rt) {
   // make what follows it vanish from recall.
   const entryLine = line => typeof line === 'string' && !/[\r\n]/.test(line) && /^\s*[-*]\s+\S/.test(line)
 
-  async function memoryRestore(body) {
+  async function memoryRestore(body, checkpoint) {
     const panel = panelOf(body)
     const id = String(body.id ?? '')
     if (id === '') throw new Error('Give the change log id of the change to restore.')
@@ -1652,6 +1689,9 @@ export function install(rt) {
       const row = rows.find(record => record.id === id)
       if (row === undefined) throw new Error('That change is not in the change log of this memory.')
       if (rows.some(record => record.restored === id)) throw new Error('That change is already restored.')
+      if (checkpoint !== undefined && (!rowsAfterCheckpoint(rows, checkpoint, panel.id)?.includes(row) || !linkedChange(row, checkpoint))) {
+        throw new Error('This change was not written by the checkpoint Session after capture.')
+      }
       const scope = journalScope(row.scope)
       if (scope === undefined || !flatFile(row.file)) {
         throw new Error('That change is not a change that can be restored.')
@@ -1794,6 +1834,21 @@ export function install(rt) {
 
   Object.assign(rt, {
     memoryEnabled: true, renewMemory, archiveBotMemory, archiveGroupMemory, memoryEndpoint, memoryEdit, memoryAdd, memoryReviews,
+    memoryCheckpointCursors: botId => settled(() => {
+      const rows = ownerRows(panelOf({ botId }))
+      return { own: cursorOf(rows, `bot:${botId}`), team: cursorOf(rows, 'team') }
+    }),
+    checkpointMemoryReview,
+    checkpointMemoryUndo: (botId, checkpoint, id) => memoryRestore({ botId, id }, checkpoint),
+    memoryCheckpointCursor: async (botId) => {
+      await recover()
+      const { path } = journalFor(`bot:${botId}`, 'read')
+      const line = readJournal(path).trimEnd().split('\n').at(-1)
+      if (!line) return null
+      const row = JSON.parse(line)
+      if (typeof row.id !== 'string') throw new Error('The memory journal has no valid checkpoint cursor.')
+      return row.id
+    },
     memoryNews: () => Object.fromEntries(news), botShot, tidyMemoryNow: tidyNow,
   })
 }

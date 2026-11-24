@@ -172,15 +172,22 @@ export function summarizeTasks(rows = []) {
   const closed = opened.filter(item => item.close !== undefined && Number.isFinite(item.open.time) && Number.isFinite(item.close.time) && item.close.time >= item.open.time)
   const answeredRows = closed.filter(item => item.close.outcome === 'answered')
   const abandoned = closed.filter(item => item.close.outcome === 'abandoned')
+  const verified = closed.filter(item => item.close.verified === true)
+  const needsReview = closed.filter(item => item.close.needsReview === true || item.close.verification === 'needs-review')
+  const reworked = closed.filter(item => Number.isInteger(item.close.reworks) && item.close.reworks > 0)
   const durations = closed.map(item => item.close.time - item.open.time).filter(ms => Number.isFinite(ms) && ms >= 0).sort((a, b) => a - b)
   return {
     opened: opened.length,
     closed: closed.length,
     answered: answeredRows.length,
     abandoned: abandoned.length,
+    verified: verified.length,
+    needsReview: needsReview.length,
+    reworked: reworked.length,
     unclassified: closed.length - answeredRows.length - abandoned.length,
     pending: opened.length - closed.length,
     completion: rate(answeredRows.length, opened.length),
+    verification: rate(verified.length, opened.length),
     abandonRate: rate(abandoned.length, opened.length),
     p50Ms: quantile(durations, 0.5),
     p90Ms: quantile(durations, 0.9),

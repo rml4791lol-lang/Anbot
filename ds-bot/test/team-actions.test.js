@@ -52,8 +52,8 @@ test('openModels opens DS Bot settings on the Models page and closes the menus',
 
 test('the details status line asks the host for one Bot\'s current part', async () => {
   const { actions, sent, pulls } = bench()
-  await actions.runStats('chief')
-  assert.deepEqual(sent, [['run-stats', { botId: 'chief' }]])
+  await actions.runStats('chief', 'part-2')
+  assert.deepEqual(sent, [['run-stats', { botId: 'chief', sessionId: 'part-2' }]])
   // A read: it does not pull the whole team again.
   assert.equal(pulls(), 0)
 })
@@ -77,4 +77,21 @@ test('team activity opens as a read-only dialog and closes without changing the 
   actions.closeTeamActivity()
   assert.equal(ui.getSnapshot().teamActivity, false)
   assert.equal(pulls(), 0)
+})
+
+test('the team board takes the right side from details and dialogs', () => {
+  const { actions, ui } = bench()
+  actions.showDetails('chief')
+  actions.openTeamBoard()
+  assert.equal(ui.getSnapshot().teamBoardOpen, true)
+  assert.equal(ui.getSnapshot().details, null)
+
+  actions.showDetails('chief')
+  assert.equal(ui.getSnapshot().teamBoardOpen, false)
+  assert.equal(ui.getSnapshot().details, 'chief')
+
+  actions.openTeamBoard()
+  actions.openSettings()
+  assert.equal(ui.getSnapshot().teamBoardOpen, false)
+  assert.ok(ui.getSnapshot().settings)
 })

@@ -308,6 +308,7 @@ export function install(rt) {
     claimLock()
     if (holder !== undefined) warn('ds-bot: %s', readOnly())
     const { migrated, stale } = adopt(readFileState())
+    if (Object.values(state.bots).some(bot => bot.presetBinding !== undefined)) await rt.restoreBotPresets?.()
     storeReady = true
     rt.onStoreSync?.()
     if (holder !== undefined) return
@@ -647,6 +648,7 @@ export function install(rt) {
 
   Object.assign(rt, {
     state, load, save, refresh, readOnly, hasLoaded, syncReadOnly, own, onSaved, closeCard,
+    indexSessionsAfterRollback: indexSessions,
     botOf, roomOf, isMain, chatOf, sessionOfRoom, selfOf, isBotSession,
     chatOwners, groupOwners, roomOwners, pastOwners,
     groupSessionsOf, dropGroupSession, retireGroupSession, findBot, findRooms, isAdminOf,

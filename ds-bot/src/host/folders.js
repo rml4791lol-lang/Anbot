@@ -31,7 +31,8 @@ export function install(rt) {
     const room = rt.roomOf(roomId)
     if (room?.workDir !== undefined) return room.workDir
     if (room !== undefined && botId !== undefined && Object.hasOwn(room.memberDirs ?? {}, botId)) return room.memberDirs[botId] ?? undefined
-    return rt.botOf(botId)?.workDir
+    const bot = rt.botOf(botId)
+    return (roomId === undefined ? bot?.directWorkDir : undefined) ?? bot?.workDir
   }
   const isFolder = path => stat(path).then(info => info.isDirectory(), () => false)
   const real = path => realpath(path).catch(() => resolve(path))
@@ -54,9 +55,9 @@ export function install(rt) {
   // a change; undefined when nothing is there.
   const folderAt = (base, input) => realpath(resolve(base, input)).catch(() => undefined)
   // Where a Session works: the folder DSH has for it, else the one DS Bot made it for.
-  const sessionFolder = (session) => {
+  const sessionFolder = (session, { observedOnly = false } = {}) => {
     const reported = session?.header === undefined ? undefined : ctx.get?.('workingDirectory')?.get?.(session) ?? session.header.cwd
-    if (reported !== undefined) return reported
+    if (reported !== undefined || observedOnly) return reported
     const id = session?.id
     const room = rt.roomOf(id)
     if (room !== undefined) return workDirOf({ roomId: room.id }) ?? teamFolder()

@@ -108,6 +108,9 @@ test('leases: one Bot per app, release on turn end, idle and release', async () 
 test('protected apps match by id, name and executable', () => {
   for (const app of [
     { id: 'io.github.fei2411.dsbot' },
+    { id: 'io.github.rml4791lol-lang.anbot' },
+    { name: 'Anbot' },
+    { path: 'C:\\Apps\\Anbot.exe' },
     { id: 'com.deepseek.harness.computer-use.dev' },
     { id: 'com.apple.systempreferences' },
     { id: 'com.apple.keychainaccess' },

@@ -38,6 +38,8 @@
 - board 与 todo 都是自报面，采用率低时数字只代表「谁在报」，不代表「谁在做」。
 - 跨天的 work 在 `--days` 边界会被截断（open 在窗口外、close 在窗口内时只计入 `closedWithoutOpen`，不进时长）。
 
+2026-11-22 起，带 typed checks 的 hand-off 在收尾时会单独记录 `verified`、`needsReview` 和 `reworks`。没有 typed checks 的旧 hand-off 仍是 `answered`，不会被报告成 verified；`answered` 和 `verified` 不能互相替代。
+
 ## 之后（3 项，每项都有产物）
 
 | # | 做什么 | 产物 | 验收 |

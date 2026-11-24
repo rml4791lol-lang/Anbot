@@ -27,6 +27,7 @@ import { partIndexOf, withBtwRows } from './btw-model.js'
 import { ViaTag } from './user-message.js'
 import { layoutOf, thinkingShown } from './themes.js'
 import { isAcknowledgementOnlyText } from '../shared/idle-text.js'
+import { AnswerQuestionLink } from './answer-question-link.js'
 
 export { clockLabel }
 
@@ -63,22 +64,26 @@ export function Bubbles({ texts, roster, selfId, actions, streaming, sessionId, 
     Number.isFinite(time) ? h('div', { className: 'bt-utime', title: clockLabel(time) }, messageClock(time)) : null)
 }
 
-// A folded message's last code block shows only its start; DS Bot draws its own
+// A folded message's last code block shows only its start; Anbot draws its own
 // copy control for it, bound to the whole block. DSH's and the app's copy
 // buttons live in the block's banner and their markup differs, so none of
 // theirs is intercepted or cloned.
+async function writeCopiedText(value, failure) {
+  if (typeof value === 'function' && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+    // Safari needs the clipboard write inside the click, before the attachment loads.
+    const text = Promise.resolve().then(value).then(value => new Blob([value], { type: 'text/plain' }))
+    await navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })])
+  } else {
+    const text = typeof value === 'function' ? await value() : value
+    if (!await writeClipboard(text)) throw new Error(failure)
+  }
+}
+
 function FoldCodeCopy({ code, actions }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     try {
-      if (typeof code === 'function' && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
-        // Safari needs the clipboard write inside the click, before the attachment loads.
-        const text = Promise.resolve().then(code).then(value => new Blob([value], { type: 'text/plain' }))
-        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })])
-      } else {
-        const text = typeof code === 'function' ? await code() : code
-        if (!await writeClipboard(text)) throw new Error('Could not copy the code block')
-      }
+      await writeCopiedText(code, 'Could not copy the code block')
       setCopied(true); setTimeout(() => setCopied(false), 1000)
     } catch (error) { actions?.reportError?.(error, 'copy') }
   }
@@ -87,7 +92,7 @@ function FoldCodeCopy({ code, actions }) {
 
 // A folded message's last code block shows only its start. The start is not
 // given to the host's Markdown — its block would carry a copy bound to the
-// part shown — so DS Bot draws the part itself, with a copy bound to the
+// part shown — so Anbot draws the part itself, with a copy bound to the
 // whole block. `body` renders the markdown before the block.
 const foldArea = (body, code, codeHead, actions) => (code === undefined ? body
   : h('div', { className: 'bt-fold-code' },
@@ -95,8 +100,48 @@ const foldArea = (body, code, codeHead, actions) => (code === undefined ? body
     h('pre', { className: 'bt-fold-pre' }, h('code', null, codeHead)),
     h(FoldCodeCopy, { code, actions })))
 
+// A partial message's full text is read by expansion, code copy and message copy. Keep
+// one loader for the mounted bubble so all three share the same result or failure.
+function useWholeMessage(text, whole) {
+  const cache = useRef()
+  const cut = whole !== undefined && whole.length > text.length
+  if (!cut) {
+    cache.current = undefined
+    return undefined
+  }
+  if (cache.current?.text !== text || cache.current?.length !== whole.length) {
+    cache.current = { text, length: whole.length, load: whole.load }
+  }
+  const entry = cache.current
+  if (entry.source === undefined) {
+    entry.source = {
+      length: entry.length,
+      load: () => {
+        if (entry.settled) return entry.error === undefined ? Promise.resolve(entry.value) : Promise.reject(entry.error)
+        if (entry.pending !== undefined) return entry.pending
+        const pending = Promise.resolve().then(() => entry.load?.()).then(
+          value => { entry.settled = true; entry.value = value; entry.pending = undefined; return value },
+          error => { entry.settled = true; entry.error = error; entry.pending = undefined; throw error },
+        )
+        entry.pending = pending
+        return pending
+      },
+    }
+  }
+  return entry.source
+}
+
 function Bubble({ text, index, roster, selfId, actions, sessionId, msgKey, mentions, fold, picked, live, lead, whole, textInteractionSource }) {
-  const { shown, folded, control, code, codeHead } = useFold(text, { limit: fold, whole, live })
+  const source = useWholeMessage(text, whole)
+  const { shown, folded, control, code, codeHead } = useFold(text, { limit: fold, whole: source, live })
+  const copySource = source === undefined ? (folded ? text : shown) : async () => {
+    let loaded
+    try { loaded = await source.load() } catch { throw new Error('Could not read the whole message') }
+    if (loaded?.whole !== true || typeof loaded.text !== 'string' || loaded.text.length !== source.length) {
+      throw new Error('Could not read the whole message')
+    }
+    return loaded.text
+  }
   const key = msgKey ? `${msgKey}:${index}` : undefined
   const body = shown === '' ? null : h(MarkdownText, { text: linkMentions(shown, roster.bots, selfId), streaming: live, labels: mdLabels(), variant: 'compact', fileMentions: mentions })
   const row = useRef(null)
@@ -117,7 +162,7 @@ function Bubble({ text, index, roster, selfId, actions, sessionId, msgKey, menti
         control ? h('div', { className: 'bt-fold-body' }, area) : area,
         control),
       h(ReplyGuide, { box: bubble, active: !live && !folded }),
-      live ? null : h(MessageTools, { text: folded ? text : shown, name: roster.byId[selfId]?.name ?? t('Bot'), sessionId, react: key ? emoji => actions.toggleReaction(msgKey, index, emoji) : undefined, actions, open: toolsOpen })),
+      live ? null : h(MessageTools, { text: folded ? text : shown, copySource, name: roster.byId[selfId]?.name ?? t('Bot'), sessionId, react: key ? emoji => actions.toggleReaction(msgKey, index, emoji) : undefined, actions, open: toolsOpen })),
     picked.length ? h('div', { className: 'bt-reacts' }, picked.map(emoji => h('button', {
       key: emoji, type: 'button', className: 'bt-react', 'aria-label': t('Remove reaction {emoji}', { emoji }), onClick: () => actions.toggleReaction(msgKey, index, emoji),
     }, emoji))) : null)
@@ -146,7 +191,7 @@ function useDismiss(open, close, refs) {
 
 // The hover toolbar beside a reply bubble: Add reaction, Reply, More. `open` is
 // the touch fallback: a tap on the bubble toggles it (see Bubble).
-function MessageTools({ text, name, sessionId, react, actions, open: tapped }) {
+function MessageTools({ text, copySource = text, name, sessionId, react, actions, open: tapped }) {
   // The anchor element is kept, not its rect: the visible viewport can move
   // (on-screen keyboard) while the popover is open.
   const [panel, setPanel] = useState(null)
@@ -167,8 +212,11 @@ function MessageTools({ text, name, sessionId, react, actions, open: tapped }) {
       ? { left: Math.min(Math.max(rect.left + rect.width / 2, STRIP_HALF), window.innerWidth - STRIP_HALF), top: rect.top - 6, '--bt-origin': 'bottom center' }
       : { left: Math.min(rect.left, window.innerWidth - 208), ...(below ? { top: rect.bottom + 4 } : { bottom: viewBottom() - rect.top + 4, '--bt-origin': 'bottom left' }) }
   }, [panel, tick])
-  const copy = () => {
-    void navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1000) })
+  const copy = async () => {
+    try {
+      await writeCopiedText(copySource, 'Could not copy the message')
+      setCopied(true); setTimeout(() => setCopied(false), 1000)
+    } catch (error) { actions?.reportError?.(error, 'copy') }
   }
   const download = () => {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }))
@@ -176,7 +224,7 @@ function MessageTools({ text, name, sessionId, react, actions, open: tapped }) {
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
-  const item = (label, Icon, run) => h('button', { key: label, type: 'button', role: 'menuitem', onClick: () => { close(); run() } }, h(Icon), label)
+  const item = (label, Icon, run) => h('button', { key: label, type: 'button', role: 'menuitem', onClick: () => { close(); return run() } }, h(Icon), label)
   return h('div', { ref: tools, className: 'bt-tools', 'data-open': panel !== null || tapped || undefined },
     react ? h('button', { type: 'button', className: 'bt-tool', 'aria-label': t('Add reaction'), title: t('Add reaction'), 'aria-expanded': panel?.kind === 'react', onClick: event => open('react', event) }, h(SmileIcon)) : null,
     sessionId ? h('button', { type: 'button', className: 'bt-tool', 'aria-label': t('Reply'), title: t('Reply'), onClick: () => actions.quote(sessionId, text) }, h(ReplyIcon)) : null,
@@ -312,7 +360,9 @@ export function AssistantCell({ node, groupPart, sessionId, openFile, fileMentio
       // time makes one Elapsed show settled + running.
       ...(thinking !== undefined ? { at: typeof thinking.time === 'number' ? thinking.time - (ms ?? 0) : undefined } : { ms }),
     }) : null,
-    texts.length ? h(Bubbles, { texts, roster, selfId, actions, streaming: running, sessionId, msgKey: `${sessionId}:${data.turn}:${node.key ?? data.seq ?? ''}`, useUi, mentions, fold: FOLD_HUGE, time: speaker === undefined ? data.time : undefined, textInteractionSource }) : null)
+    texts.length ? h(Fragment, null,
+      texts.some(text => text.length >= 1200) ? h(AnswerQuestionLink, { key: sessionId, turn: data.turn }) : null,
+      h(Bubbles, { texts, roster, selfId, actions, streaming: running, sessionId, msgKey: `${sessionId}:${data.turn}:${node.key ?? data.seq ?? ''}`, useUi, mentions, fold: FOLD_HUGE, time: speaker === undefined ? data.time : undefined, textInteractionSource })) : null)
 }
 
 // `code` in an activity line is the command or path the agent works on.
@@ -395,7 +445,7 @@ export function claimLines(claims) {
     lines.push({
       kind: 'inProgress',
       text: t('No background work detected'),
-      detail: t('DS Bot has no recorded tool call or active background task for this reply.'),
+      detail: t('Anbot has no recorded tool call or active background task for this reply.'),
     })
   }
   for (const path of claims.missingFiles ?? []) lines.push({ kind: 'file', text: t('File not found: {path}', { path }) })
@@ -1116,6 +1166,49 @@ const DRAWN = new Set(['message_bot', 'stop_bot', 'create_bot', 'update_bot', 'g
 // Calls whose card a dock above the composer carries when the call is not drawn.
 const CARDS = new Set(['ask_user', 'request_secret', 'request_connector', 'mail_send', 'show_view', 'browser_handoff', 'computer_handoff'])
 
+// DSH records applied file changes as opaque result metadata. Only complete
+// result metadata proves that files changed; names, arguments and output text never do.
+function fileDiffs(call) {
+  if (call.kind !== 'tool-result') return null
+  const meta = call.meta
+  if (meta === null || typeof meta !== 'object' || Array.isArray(meta)) return null
+  const diffs = meta.diffs
+  if (!Array.isArray(diffs)) return null
+  if (diffs.length === 0) {
+    return meta.operation === 'create' && typeof meta.path === 'string' && meta.path.trim() !== ''
+      ? [{ path: meta.path, oldText: null, newText: '' }]
+      : null
+  }
+  const narrowed = []
+  for (const diff of diffs) {
+    if (diff === null || typeof diff !== 'object' || Array.isArray(diff)) return null
+    const { path, oldText, newText } = diff
+    if (typeof path !== 'string' || path.trim() === '') return null
+    if (oldText !== null && typeof oldText !== 'string') return null
+    if (typeof newText !== 'string') return null
+    narrowed.push({ path, oldText, newText })
+  }
+  return narrowed
+}
+
+function FileChangesCell({ diffs }) {
+  const paths = []
+  const seen = new Set()
+  for (const diff of diffs) {
+    if (seen.has(diff.path)) continue
+    seen.add(diff.path)
+    paths.push(diff.path)
+  }
+  return h('details', { className: 'bt-event bt-event-quiet bt-file-changes', 'data-file-count': paths.length },
+    h('summary', { className: 'bt-event-summary', title: paths.join('\n') },
+      h('span', { className: 'bt-event-caret', 'aria-hidden': true }),
+      h('span', { className: 'bt-event-summary-label' }, t('Files changed')),
+      h('span', { className: 'bt-event-summary-name' }, paths.join(', '))),
+    h('div', { className: 'bt-event-body' },
+      h('div', { className: 'bt-event-detail', role: 'list', tabIndex: 0, 'aria-label': t('Files changed') },
+        paths.map(path => h('code', { key: path, role: 'listitem', style: { display: 'block' } }, path)))))
+}
+
 // The root and its sub-calls in dispatch order, each call once.
 export function callTree(root) {
   const calls = []
@@ -1220,13 +1313,15 @@ function renderCall(call, { sessionId, roster, actions, useUi, useWork, findBot,
     case 'remember':
     case 'forget':
       return done ? h(MemoryEvent, { sessionId, scope: arg('scope'), tool, result: contentText(call.content), failed: call.isError === true, code: call.error?.code, roster, actions, findBot }) : h(CellEmpty)
-    default:
+    default: {
       if (isComputerCall(tool)) {
         return h(Fragment, null,
           h(ComputerCallRow, { sessionId, call, roster, actions, hooks }),
           h(AppAccessCall, { sessionId, callId: call.callId, roster, actions, heldCards, hooks }))
       }
-      return h(CellEmpty)
+      const changes = fileDiffs(call)
+      return changes ? h(FileChangesCell, { diffs: changes }) : h(CellEmpty)
+    }
   }
 }
 
@@ -1243,7 +1338,10 @@ export function ToolCell({ node, sessionId, useRoster, useUi, useWork, useHeldCa
   const calls = hidden
     ? callTree(root).filter(call => (toolName(call) === 'ask_user' || toolName(call) === 'show_view') && call.callId && closed?.[call.callId] !== undefined)
     : callTree(root)
-  const drawn = calls.filter(call => DRAWN.has(toolName(call)) || isComputerCall(toolName(call)))
+  const drawn = calls.filter(call => {
+    const tool = toolName(call)
+    return DRAWN.has(tool) || isComputerCall(tool) || (!CARDS.has(tool) && fileDiffs(call) !== null)
+  })
   // The newest call still running names the work, so a program reads as the tool it is in.
   const running = root.kind === 'tool-result' ? undefined : calls.findLast(call => call.kind !== 'tool-result')
   const note = running ? toolActivity(toolName(running), toolArgs(running).text, findBot, roster.byId[sessionId]) : null

@@ -110,9 +110,9 @@ const question = (callId, over = {}) => ({ id: 'question', callId, question: 'Wh
 const request = (callId, over = {}) => ({ id: 'request', callId, sessionId: chief.id, name: 'DEMO_TOKEN', purpose: 'Test card', status: 'pending', kind: 'fill', ...over })
 
 const text$ = value => [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value) }]
-const call = (name, callId, { args = {}, content = '', subCalls = [], running = false, isError = false, error } = {}) => (running
+const call = (name, callId, { args = {}, content = '', subCalls = [], running = false, isError = false, error, meta } = {}) => (running
   ? { phase: 'start', name, callId, argsRaw: JSON.stringify(args), subCalls, turn: 0 }
-  : { kind: 'tool-result', name, callId, call: { name, argsRaw: JSON.stringify(args) }, content: text$(content), isError, ...(error === undefined ? {} : { error }), subCalls })
+  : { kind: 'tool-result', name, callId, call: { name, argsRaw: JSON.stringify(args) }, content: text$(content), isError, ...(error === undefined ? {} : { error }), ...(meta === undefined ? {} : { meta }), subCalls })
 const program = (subCalls, over = {}) => call('run_code', 'program', { subCalls, ...over })
 
 test('a member\'s messages in a row stack under its name, and an event line starts a new block', () => {
@@ -430,6 +430,86 @@ test('a hidden Bot-to-Bot turn draws none of its sub-calls', () => {
   const root = program([call('request_secret', 'program:ptc:1', { args: { name: 'DEMO_TOKEN' } }), call('message_bot', 'program:ptc:2', { args: { to: 'Writer' } })])
   assert.equal(shown(root, { roster }), '')
   assert.match(shown(root, { roster, turn: 2 }), /Chief needs a key.*Messaged/)
+})
+
+const fileChange = (callId, path = 'src/app.js', over = {}) => call('apply_patch', callId, {
+  args: { patch: 'not used for presentation' },
+  content: 'Done.',
+  meta: { diffs: [{ path, oldText: 'before\n', newText: 'after\n' }] },
+  ...over,
+})
+
+test('native file diffs draw one compact disclosure with every changed file once', () => {
+  const root = call('apply_patch', 'edit:1', {
+    meta: { diffs: [
+      { path: 'src/app.js', oldText: 'before\n', newText: 'after\n' },
+      { path: 'src/new.js', oldText: null, newText: 'created\n' },
+      { path: 'src/app.js', oldText: 'far apart\n', newText: 'also changed\n' },
+    ] },
+  })
+  const disclosure = find(show(root), node => node.type === 'details' && node.props?.className?.includes('bt-file-changes'))
+  assert.ok(disclosure)
+  assert.equal(disclosure.props.open, undefined, 'the summary starts collapsed')
+  assert.equal(disclosure.props['data-file-count'], 2)
+  const summary = find(disclosure, node => node.type === 'summary')
+  assert.match(text(summary), /Files changed.*src\/app\.js, src\/new\.js/)
+  assert.equal(summary.props.title, 'src/app.js\nsrc/new.js')
+  const list = find(disclosure, node => node.props?.role === 'list')
+  assert.equal(list.props.tabIndex, 0)
+  assert.equal(list.props['aria-label'], 'Files changed')
+  assert.deepEqual(findAll(disclosure, node => node.type === 'code').map(text), ['src/app.js', 'src/new.js'])
+})
+
+test('a native write creation with an empty hunk list still names the created file', () => {
+  const created = call('write', 'create:1', { meta: { operation: 'create', path: 'src/created.js', diffs: [] } })
+  assert.match(shown(created), /Files changed.*src\/created\.js/)
+  assert.ok(emptied(show(call('write', 'update:1', { meta: { operation: 'update', path: 'src/same.js', diffs: [] } }))))
+  assert.ok(emptied(show(call('write', 'create:2', { meta: { operation: 'create', path: '  ', diffs: [] } }))))
+})
+
+test('file-change rows require complete native result metadata', () => {
+  const named = call('a_tool_with_no_built_in_row', 'metadata:1', {
+    meta: { diffs: [{ path: 'src/metadata.js', oldText: null, newText: 'created\n' }] },
+  })
+  assert.match(shown(named), /Files changed.*src\/metadata\.js/)
+  assert.ok(emptied(show(call('bash', 'shell:1', { content: 'Files changed: src/app.js' }))))
+  assert.ok(emptied(show(call('write', 'write:1', { args: { file_path: 'src/app.js' }, content: 'Success.' }))))
+  for (const [index, meta] of [
+    { diffs: [] },
+    { diffs: [{ path: '  ', oldText: 'before\n', newText: 'after\n' }] },
+    { diffs: [{ path: 'src/app.js', newText: 'after\n' }] },
+    { diffs: [{ path: 'src/app.js', oldText: 1, newText: 'after\n' }] },
+    { diffs: 'not a list' },
+  ].entries()) assert.ok(emptied(show(call('apply_patch', `bad:${index}`, { meta }))))
+  assert.match(shown(fileChange('failed:1', 'src/app.js', { isError: true })), /Files changed.*src\/app\.js/)
+})
+
+test('a recorded empty-file deletion still proves the file changed', () => {
+  const deletion = call('apply_patch', 'delete-empty:1', {
+    meta: { diffs: [{ path: 'src/empty.txt', oldText: '', newText: '' }] },
+  })
+  assert.match(shown(deletion), /Files changed.*src\/empty\.txt/)
+})
+
+test('native file diffs keep special outputs, nested calls and hidden turns intact', () => {
+  const special = call('message_bot', 'message:1', {
+    args: { to: 'Writer' },
+    meta: { diffs: [{ path: 'src/not-a-standalone-row.js', oldText: null, newText: 'x\n' }] },
+  })
+  const specialOut = show(special)
+  assert.equal(find(specialOut, node => node.type === 'details' && node.props?.className?.includes('bt-file-changes')), undefined)
+  assert.match(text(specialOut), /Messaged.*Writer/)
+
+  const cardOnly = call('computer_handoff', 'handoff:1', {
+    meta: { diffs: [{ path: 'src/still-in-the-dock.js', oldText: null, newText: 'x\n' }] },
+  })
+  assert.ok(emptied(show(cardOnly)))
+
+  const nested = program([fileChange('program:ptc:1', 'src/nested.js')])
+  assert.match(shown(nested), /Files changed.*src\/nested\.js/)
+  const roster = team({ exchangeTurns: { chief: [1] } })
+  assert.equal(shown(nested, { roster }), '')
+  assert.match(shown(nested, { roster, turn: 2 }), /Files changed.*src\/nested\.js/)
 })
 
 // The line a memory write that changed nothing draws.

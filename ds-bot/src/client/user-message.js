@@ -217,7 +217,9 @@ export function UserMessageCell({ node, sessionId, useRoster, actions, renderMes
     setToolsOpen(value => !value)
   }
   const fold = { data, text, shown, folded, control, onClick: tapTools }
-  return h('div', { ref: row, className: 'bt-umsg', 'data-steering': steering || undefined },
+  const question = steering ? undefined : text.trim().replace(/\s+/gu, ' ').slice(0, 120) || undefined
+  return h('div', { ref: row, className: 'bt-umsg', 'data-steering': steering || undefined,
+    'data-bt-question': question, tabIndex: question ? -1 : undefined },
     h('div', { className: 'bt-ustack' },
       prepared === undefined
         ? h(ProjectedContent, { ...fold, roster, sessionId, actions, renderMessageImages, openFile, openSkill })

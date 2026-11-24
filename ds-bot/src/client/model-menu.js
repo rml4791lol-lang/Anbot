@@ -47,7 +47,7 @@ export function modelOf(bot, roster) {
 // The thinking levels of one model, `{efforts, defaultEffort?}` or undefined when it
 // has none. The catalog carries them for models Bots use; any other ref asks the host.
 const effortCache = new Map()
-function useEfforts(served, ref, actions) {
+export function useEfforts(served, ref, actions) {
   const [fetched, setFetched] = useState(undefined)
   useEffect(() => {
     setFetched(undefined)

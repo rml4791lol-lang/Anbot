@@ -4,12 +4,30 @@ import {
   PendingCallCache,
   evidenceFromEvents,
   invalidateAcceptance,
+  normalizeAcceptanceChecks,
   progressAfterTurn,
   progressFingerprint,
   verifyAcceptance,
 } from '../src/host/task-evidence.js'
 
 const textBlock = text => [{ type: 'text', text }]
+
+test('typed hand-off checks default command success to exit 0 and reject prose checks', () => {
+  assert.deepEqual(normalizeAcceptanceChecks([
+    { id: 'tests', kind: 'command', command: 'npm test' },
+    { id: 'artifact', kind: 'artifact', path: 'dist/app.zip', expect: { digest: 'sha256:abc' } },
+  ]).checks, [
+    { id: 'tests', kind: 'command', label: 'npm test', required: true, command: 'npm test', expect: { exitCode: 0 } },
+    { id: 'artifact', kind: 'artifact', label: 'dist/app.zip', required: true, path: 'dist/app.zip', expect: { digest: 'sha256:abc' } },
+  ])
+  assert.match(normalizeAcceptanceChecks([{ id: 'done', kind: 'manual' }]).error, /command, artifact, or diff/)
+  assert.match(normalizeAcceptanceChecks('done').error, /must be an array/)
+  assert.equal(normalizeAcceptanceChecks([{ id: 'tests', kind: 'command', command: 'npm test', expect: { exitCode: 1 } }]).checks[0].expect.exitCode, 1)
+  assert.match(normalizeAcceptanceChecks([
+    { id: 'same', kind: 'command', command: 'npm test' },
+    { id: 'same', kind: 'command', command: 'npm run test' },
+  ]).error, /repeated/)
+})
 
 test('only an exact successful command result satisfies a command check', () => {
   const evidence = evidenceFromEvents({

@@ -99,6 +99,12 @@ export async function installSpecOf(ctx) {
 export const repoSlug = () =>
   /github\.com[/:]([\w.-]+\/[\w.-]+?)(?:\.git)?$/i.exec(String(PKG.repository?.url ?? PKG.repository ?? ''))?.[1] ?? null
 
+export function ownUpdateSource(source, config) {
+  if (source.kind === 'registry') return typeof config.updateRegistry === 'string' && config.updateRegistry.trim() !== ''
+  if (source.kind === 'git') return `${source.owner}/${source.repo}`.toLowerCase() === repoSlug()?.toLowerCase()
+  return false
+}
+
 const repoUrl = () => {
   const repo = repoSlug()
   return repo ? `https://github.com/${repo}` : null
@@ -185,12 +191,10 @@ export function install(rt) {
     const release = await fetchJson(`https://api.github.com/repos/${source.owner}/${source.repo}/releases/latest`, { 'user-agent': `${PKG.name}/${PKG.version}` })
     const version = cleanVersion(release?.tag_name)
     if (!version) return null
-    // The API answers through redirects, so the release's html_url names the
-    // repository's current address; the install moves to it.
     const current = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/releases\//.exec(release.html_url ?? '')
-    const [owner, repo] = current ? [current[1], current[2]] : [source.owner, source.repo]
+    if (current && !ownUpdateSource({ kind: 'git', owner: current[1], repo: current[2] }, config)) return null
     const fragment = [release.tag_name, ...source.rest].join('&')
-    return { version, spec: `github:${owner}/${repo}#${fragment}` }
+    return { version, spec: `github:${repoSlug()}#${fragment}` }
   }
 
   async function runCheck() {
@@ -199,8 +203,9 @@ export function install(rt) {
     status.source = source.kind
     let found = null
     try {
-      if (source.kind === 'registry') found = await newestFromRegistry()
-      else if (source.kind === 'git') found = await newestFromGitHub(source)
+      if (ownUpdateSource(source, config)) {
+        found = source.kind === 'registry' ? await newestFromRegistry() : await newestFromGitHub(source)
+      }
     } catch (error) {
       rt.warn('ds-bot: update check failed: %s', error?.message ?? error)
     }

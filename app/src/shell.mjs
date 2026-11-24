@@ -7,82 +7,98 @@ import { createTray } from './tray.mjs'
 
 export const SHELL_TEXT = {
   en: {
-    tooltip: 'DS Bot',
-    open: 'Open DS Bot',
-    quit: 'Quit DS Bot',
-    notice: 'DS Bot keeps running in the system tray. Its Bots go on working while the window is closed.',
+    tooltip: 'Anbot',
+    open: 'Open Anbot',
+    quit: 'Quit Anbot',
+    quitActive: 'Work is still running. Quit Anbot and interrupt it?',
+    quitUnknown: 'Anbot could not check whether work is running. Quit anyway?',
+    notice: 'Anbot keeps running in the system tray. Its Bots go on working while the window is closed.',
     noticeConfirm: 'OK',
-    fallback: 'The system tray is not available, so DS Bot cannot stay in the background. Do you want to end it?',
+    fallback: 'The system tray is not available, so Anbot cannot stay in the background. Do you want to end it?',
     cancel: 'Cancel',
     stopAll: 'Stop all',
   },
   zh: {
-    tooltip: 'DS Bot',
-    open: '打开 DS Bot',
-    quit: '退出 DS Bot',
-    notice: 'DS Bot 会留在系统托盘里继续运行，关掉窗口时 Bot 们照常工作。',
+    tooltip: 'Anbot',
+    open: '打开 Anbot',
+    quit: '退出 Anbot',
+    quitActive: '还有任务正在运行。要退出 Anbot 并中断任务吗？',
+    quitUnknown: '无法确认任务是否仍在运行。要退出 Anbot 吗？',
+    notice: 'Anbot 会留在系统托盘里继续运行，关掉窗口时 Bot 们照常工作。',
     noticeConfirm: '好',
-    fallback: '系统托盘不可用，DS Bot 不能留在后台。要结束它吗？',
+    fallback: '系统托盘不可用，Anbot 不能留在后台。要结束它吗？',
     cancel: '取消',
     stopAll: '全部停止',
   },
   'zh-TW': {
-    tooltip: 'DS Bot',
-    open: '打開 DS Bot',
-    quit: '結束 DS Bot',
-    notice: 'DS Bot 會留在系統匣裡繼續運行，關掉視窗時 Bot 們照常工作。',
+    tooltip: 'Anbot',
+    open: '打開 Anbot',
+    quit: '結束 Anbot',
+    quitActive: '仍有工作正在執行。要結束 Anbot 並中斷工作嗎？',
+    quitUnknown: '無法確認是否仍有工作正在執行。要結束 Anbot 嗎？',
+    notice: 'Anbot 會留在系統匣裡繼續運行，關掉視窗時 Bot 們照常工作。',
     noticeConfirm: '好',
-    fallback: '系統匣不可用，DS Bot 不能留在背景。要結束它嗎？',
+    fallback: '系統匣不可用，Anbot 不能留在背景。要結束它嗎？',
     cancel: '取消',
     stopAll: '全部停止',
   },
   ja: {
-    tooltip: 'DS Bot',
-    open: 'DS Bot を開く',
-    quit: 'DS Bot を終了',
-    notice: 'DS Bot はシステムトレイで動作し続けます。ウィンドウを閉じても Bot は作業を続けます。',
+    tooltip: 'Anbot',
+    open: 'Anbot を開く',
+    quit: 'Anbot を終了',
+    quitActive: '作業中です。Anbot を終了して作業を中断しますか？',
+    quitUnknown: '作業中か確認できませんでした。Anbot を終了しますか？',
+    notice: 'Anbot はシステムトレイで動作し続けます。ウィンドウを閉じても Bot は作業を続けます。',
     noticeConfirm: 'OK',
-    fallback: 'システムトレイが利用できないため、DS Bot をバックグラウンドに残せません。終了しますか？',
+    fallback: 'システムトレイが利用できないため、Anbot をバックグラウンドに残せません。終了しますか？',
     cancel: 'キャンセル',
     stopAll: 'すべて停止',
   },
   ko: {
-    tooltip: 'DS Bot',
-    open: 'DS Bot 열기',
-    quit: 'DS Bot 종료',
-    notice: 'DS Bot은 시스템 트레이에서 계속 실행됩니다. 창을 닫아도 Bot은 계속 작업합니다.',
+    tooltip: 'Anbot',
+    open: 'Anbot 열기',
+    quit: 'Anbot 종료',
+    quitActive: '작업이 진행 중입니다. Anbot을 종료하고 작업을 중단할까요?',
+    quitUnknown: '진행 중인 작업을 확인할 수 없습니다. Anbot을 종료할까요?',
+    notice: 'Anbot은 시스템 트레이에서 계속 실행됩니다. 창을 닫아도 Bot은 계속 작업합니다.',
     noticeConfirm: '확인',
-    fallback: '시스템 트레이를 사용할 수 없어 DS Bot을 백그라운드에 유지할 수 없습니다. 종료할까요?',
+    fallback: '시스템 트레이를 사용할 수 없어 Anbot을 백그라운드에 유지할 수 없습니다. 종료할까요?',
     cancel: '취소',
     stopAll: '모두 중지',
   },
   es: {
-    tooltip: 'DS Bot',
-    open: 'Abrir DS Bot',
-    quit: 'Salir de DS Bot',
-    notice: 'DS Bot sigue ejecutándose en la bandeja del sistema. Sus Bots continúan trabajando mientras la ventana está cerrada.',
+    tooltip: 'Anbot',
+    open: 'Abrir Anbot',
+    quit: 'Salir de Anbot',
+    quitActive: 'Hay trabajo en curso. ¿Quieres salir de Anbot e interrumpirlo?',
+    quitUnknown: 'Anbot no pudo comprobar si hay trabajo en curso. ¿Quieres salir?',
+    notice: 'Anbot sigue ejecutándose en la bandeja del sistema. Sus Bots continúan trabajando mientras la ventana está cerrada.',
     noticeConfirm: 'Aceptar',
-    fallback: 'La bandeja del sistema no está disponible, por lo que DS Bot no puede permanecer en segundo plano. ¿Quieres cerrarlo?',
+    fallback: 'La bandeja del sistema no está disponible, por lo que Anbot no puede permanecer en segundo plano. ¿Quieres cerrarlo?',
     cancel: 'Cancelar',
     stopAll: 'Detener todo',
   },
   fr: {
-    tooltip: 'DS Bot',
-    open: 'Ouvrir DS Bot',
-    quit: 'Quitter DS Bot',
-    notice: 'DS Bot continue de fonctionner dans la barre d’état système. Ses Bots continuent de travailler lorsque la fenêtre est fermée.',
+    tooltip: 'Anbot',
+    open: 'Ouvrir Anbot',
+    quit: 'Quitter Anbot',
+    quitActive: 'Une tâche est en cours. Quitter Anbot et interrompre la tâche ?',
+    quitUnknown: 'Anbot n’a pas pu vérifier si une tâche est en cours. Quitter quand même ?',
+    notice: 'Anbot continue de fonctionner dans la barre d’état système. Ses Bots continuent de travailler lorsque la fenêtre est fermée.',
     noticeConfirm: 'OK',
-    fallback: 'La barre d’état système n’est pas disponible, DS Bot ne peut donc pas rester en arrière-plan. Voulez-vous l’arrêter ?',
+    fallback: 'La barre d’état système n’est pas disponible, Anbot ne peut donc pas rester en arrière-plan. Voulez-vous l’arrêter ?',
     cancel: 'Annuler',
     stopAll: 'Tout arrêter',
   },
   de: {
-    tooltip: 'DS Bot',
-    open: 'DS Bot öffnen',
-    quit: 'DS Bot beenden',
-    notice: 'DS Bot läuft im Systembereich weiter. Seine Bots arbeiten weiter, während das Fenster geschlossen ist.',
+    tooltip: 'Anbot',
+    open: 'Anbot öffnen',
+    quit: 'Anbot beenden',
+    quitActive: 'Es laufen noch Aufgaben. Anbot beenden und die Aufgaben unterbrechen?',
+    quitUnknown: 'Anbot konnte nicht prüfen, ob Aufgaben laufen. Trotzdem beenden?',
+    notice: 'Anbot läuft im Systembereich weiter. Seine Bots arbeiten weiter, während das Fenster geschlossen ist.',
     noticeConfirm: 'OK',
-    fallback: 'Der Systembereich ist nicht verfügbar, daher kann DS Bot nicht im Hintergrund bleiben. Möchtest du es beenden?',
+    fallback: 'Der Systembereich ist nicht verfügbar, daher kann Anbot nicht im Hintergrund bleiben. Möchtest du es beenden?',
     cancel: 'Abbrechen',
     stopAll: 'Alle stoppen',
   },
@@ -201,7 +217,7 @@ export function createShell(options) {
     } catch (error) {
       // Without a tray the window stays where the user can reach it; the app never vanishes.
       tray = undefined
-      log.warn(`DS Bot: the system tray is not available: ${error instanceof Error ? error.message : String(error)}`)
+      log.warn(`Anbot: the system tray is not available: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -213,12 +229,12 @@ export function createShell(options) {
     const t = text()
     try {
       const { response } = await options.fallback.show({
-        type: 'question', title: 'DS Bot', message: t.fallback,
+        type: 'question', title: 'Anbot', message: t.fallback,
         buttons: [t.quit, t.cancel], defaultId: 1, cancelId: 1, noLink: true,
       })
       if (response === 0) { quit(); return }
     } catch (error) {
-      log.warn(`DS Bot: the fallback quit could not be asked: ${error instanceof Error ? error.message : String(error)}`)
+      log.warn(`Anbot: the fallback quit could not be asked: ${error instanceof Error ? error.message : String(error)}`)
     }
     // The window stays in the task bar, where the user can reach it.
     target.minimize()

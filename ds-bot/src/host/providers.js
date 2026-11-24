@@ -24,6 +24,7 @@ function protocolsOf(section) {
   return Array.isArray(fromSchema) && fromSchema.length > 0 ? fromSchema : PROTOCOLS
 }
 const MAX_MODELS = 500
+const THINKING_LEVELS = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
 // pi-ai guesses compatibility from the endpoint hostname and treats any unrecognized
 // gateway as OpenAI's own server (sending the `developer` role, `store: false`, and
 // `max_completion_tokens`). Every OpenAI-compatible server accepts `system` and
@@ -84,6 +85,19 @@ function lookupKnownModel(known, rawId) {
   return known.get(id) ?? known.get(bare) ?? (bare.startsWith('kimi-') ? known.get(bare.slice(5)) : known.get(`kimi-${bare}`))
 }
 
+function thinkingLevels(value) {
+  if (value === undefined || value === false) return value
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw invalid('Declare the model’s thinking levels as a mapping')
+  const entries = Object.entries(value)
+  if (!entries.some(([level]) => level !== 'off')) throw invalid('Declare at least one thinking level, or disable reasoning')
+  for (const [level, wire] of entries) {
+    if (!THINKING_LEVELS.has(level) || !(level === 'off' && wire === null) && (typeof wire !== 'string' || wire.trim() === '')) {
+      throw invalid('Each thinking level needs a supported name and its provider value')
+    }
+  }
+  return Object.fromEntries(entries)
+}
+
 // A model as the route stores it: what discovery told about it, under pi-ai's names,
 // with any missing capacity or modalities filled from a known catalog model of the same id.
 function modelEntry(model, known) {
@@ -93,6 +107,7 @@ function modelEntry(model, known) {
   const whole = value => (Number.isInteger(value) && value > 0 ? value : undefined)
   const contextWindow = whole(model?.contextWindow) ?? whole(match?.contextWindow)
   const maxTokens = whole(model?.maxTokens)
+  const reasoningEfforts = thinkingLevels(model?.reasoningEfforts)
   const rawInput = Array.isArray(model?.inputModalities) && model.inputModalities.length > 0
     ? model.inputModalities
     : Array.isArray(model?.input) && model.input.length > 0
@@ -104,6 +119,7 @@ function modelEntry(model, known) {
     ...(typeof model?.name === 'string' && model.name.trim() !== '' ? { name: model.name.trim() } : {}),
     ...(contextWindow ? { contextWindow } : {}),
     ...(maxTokens ? { maxTokens } : {}),
+    ...(reasoningEfforts === undefined ? {} : { reasoningEfforts }),
     ...(input.length > 0 ? { input } : {}),
   }
 }
@@ -405,7 +421,7 @@ export function install(rt) {
       const old = current.get(id)
       const saved = typeof old === 'string' ? { id: old } : old
       const incoming = typeof model === 'string' ? { id: model } : model
-      const next = modelEntry({ ...saved, ...incoming }, known)
+      const next = modelEntry({ ...saved, ...incoming, reasoningEfforts: incoming.reasoningEfforts }, known)
       return { ...saved, ...next }
     })
     if (new Set(models.map(model => model.id)).size !== models.length) throw invalid('Two models have the same id')

@@ -2,7 +2,7 @@
 // login-shell PATH plus the usual install folders, and an environment that
 // keeps their own sign-in but leaks nothing of ours.
 import { execFile, spawn } from 'node:child_process'
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { delimiter, join, win32 } from 'node:path'
 
@@ -12,7 +12,7 @@ const DROP_EXACT = new Set([
   'ACP_BACKEND', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL',
   'CLAUDE_CODE_OAUTH_TOKEN', 'GEMINI_API_KEY', 'GOOGLE_API_KEY', 'XAI_API_KEY', 'ELECTRON_RUN_AS_NODE',
 ])
-const DROP_PREFIX = ['DS_BOT_', 'DSH_', 'ANTIGRAVITY_', 'AGY_', 'DEEPSEEK_']
+const DROP_PREFIX = ['ANBOT_', 'DS_BOT_', 'DSH_', 'ANTIGRAVITY_', 'AGY_', 'DEEPSEEK_']
 
 function isFile(path) {
   try { return statSync(path).isFile() } catch { return false }
@@ -21,7 +21,8 @@ function isFile(path) {
 export function cleanEnv(extra = {}) {
   const env = {}
   for (const [key, value] of Object.entries(process.env)) {
-    if (DROP_EXACT.has(key) || DROP_PREFIX.some(prefix => key.startsWith(prefix))) continue
+    const upper = key.toUpperCase()
+    if (DROP_EXACT.has(upper) || DROP_PREFIX.some(prefix => upper.startsWith(prefix))) continue
     env[key] = value
   }
   // A CLI found outside our sparse PATH (a script with `#!/usr/bin/env node`)
@@ -88,17 +89,26 @@ function searchDirs() {
   return dirs
 }
 
-// The executable's full path, or undefined when the CLI is not installed. Only
-// file checks: the folders from refreshSearchDirs() join once it has run.
+function canExecute(path) {
+  try {
+    if (!statSync(path).isFile()) return false
+    accessSync(path, process.platform === 'win32' ? constants.R_OK : constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// File checks only; the folders from refreshSearchDirs() join once it has run.
 export function findExecutable(name) {
   if (name.includes('/') || name.includes('\\')) {
     const path = name.startsWith('~') ? join(homedir(), name.slice(1)) : name
-    return isFile(path) ? path : undefined
+    return canExecute(path) ? path : undefined
   }
   for (const dir of searchDirs()) {
     for (const file of candidates(name)) {
       const path = join(dir, file)
-      if (isFile(path)) return path
+      if (canExecute(path)) return path
     }
   }
   return undefined
@@ -190,6 +200,14 @@ function parseJsonSignIn(stdout) {
 }
 
 function classifySignIn(error, stdout, stderr, check) {
+  if (check.format === 'claude-auth-json') {
+    try {
+      const state = JSON.parse(String(stdout ?? '').trim())
+      if (state?.loggedIn === true) return error === null ? true : null
+      if (state?.loggedIn === false) return error === null || error.code === 1 ? false : null
+    } catch {}
+    return null
+  }
   const fromJson = parseJsonSignIn(stdout)
   if (fromJson !== null) return fromJson
   const text = `${stdout ?? ''}${stderr ?? ''}`

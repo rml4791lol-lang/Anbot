@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -28,25 +28,27 @@ const TEAM = {
   questions: {},
 }
 
-function start({ presets } = {}) {
+function start({ presets, registry, saved = TEAM, failSession = false } = {}) {
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-agent-preset-'))
-  writeFileSync(join(home, 'state.json'), JSON.stringify(TEAM))
-  const services = presets === undefined ? {} : { agentPresets: { list: async () => presets } }
+  writeFileSync(join(home, 'state.json'), JSON.stringify(saved))
+  const services = registry !== undefined ? { agentPresets: registry }
+    : presets === undefined ? {} : { agentPresets: { list: async () => presets } }
   const ctx = fakeContext({ services })
   const created = []
+  const archived = []
   Object.assign(ctx, {
     workspaceRegistry: {
       get: id => (id === 'w1' ? { id } : undefined),
       resolveByPath: async () => undefined,
       create: async path => ({ id: 'w1', path }),
-      archiveSession: async () => {},
+      archiveSession: async id => { archived.push(id) },
     },
     sessionController: {
       create: async (request) => {
         created.push(request)
         return { sessionId: `new${created.length}` }
       },
-      resolveAgent: async id => ({ agent: { id, session: { id } } }),
+      resolveAgent: async id => failSession ? { error: { message: 'Agent startup failed' } } : { agent: { id, session: { id } } },
     },
     sessionTitle: { rename: async () => {} },
   })
@@ -59,7 +61,7 @@ function start({ presets } = {}) {
     await ctx.dispose()
     rmSync(home, { recursive: true, force: true, maxRetries: 5 })
   }
-  return { rt, created, relay, warnings, stop }
+  return { rt, created, archived, relay, warnings, stop, home }
 }
 
 async function drain(stream) {
@@ -94,6 +96,88 @@ test('without a usable standard preset a Bot Session keeps DSH\'s default', asyn
     await rt.createSession('Chief')
     assert.deepEqual(created, [{ workspaceId: 'w1' }])
   }
+})
+
+test('a Bot binds the requested native preset without changing the relay default', async (t) => {
+  const { rt, created, stop } = start({ presets: [{ id: 'standard' }, { id: 'minimal', name: 'Minimal' }] })
+  t.after(stop)
+  await rt.load()
+  const bot = await rt.createBot({ name: 'Reviewer', agentPreset: 'minimal', pickModel: true })
+  assert.equal(bot.agentPreset, 'minimal')
+  assert.equal(rt.state.bots[bot.id].agentPreset, 'minimal')
+  await rt.createSession('Reviewer · fresh', { agentPreset: bot.agentPreset })
+  await rt.createSession('Group relay')
+  assert.deepEqual(created.map(request => request.agentPreset), ['minimal', 'minimal', 'standard'])
+})
+
+test('an explicit missing or broken preset refuses to create a Session', async (t) => {
+  const { rt, created, stop } = start({ presets: [{ id: 'standard' }, { id: 'broken', broken: 'failed to start' }] })
+  t.after(stop)
+  await rt.load()
+  for (const agentPreset of ['missing', 'broken', {}]) {
+    await assert.rejects(rt.createBot({ name: 'Reviewer', agentPreset, pickModel: true }), /preset/i)
+  }
+  assert.equal(created.length, 0)
+  assert.equal(Object.values(rt.state.bots).some(bot => bot.name === 'Reviewer'), false)
+})
+
+test('a failed Agent startup archives its new Session and releases its preset', async (t) => {
+  const active = new Set()
+  const registry = {
+    list: async () => ['standard', 'ptc', ...active].map(id => ({ id })),
+    readDocument: async () => ({ content: '[]' }),
+    register: async ({ id }) => {
+      active.add(id)
+      return () => active.delete(id)
+    },
+  }
+  const { rt, created, archived, stop } = start({ registry, failSession: true })
+  t.after(stop)
+  await rt.load()
+  await assert.rejects(rt.createBot({ name: 'Reviewer', agentPreset: 'ptc', pickModel: true }), /Agent startup failed/u)
+  assert.equal(created.length, 1)
+  assert.deepEqual(archived, ['new1'])
+  assert.equal(active.size, 0)
+  assert.equal(Object.keys(rt.state.bots).length, 1)
+})
+
+test('an owned preset is recreated on restart without persisting its plugin configuration', async (t) => {
+  const content = '- name: fixture-plugin\n  config: { localValue: fixture-only }'
+  const registry = (source = content) => {
+    const active = new Map()
+    return {
+      active,
+      list: async () => [{ id: 'standard' }, { id: 'ptc' }, ...active.values()],
+      readDocument: async () => ({ content: source }),
+      register: async definition => {
+        active.set(definition.id, definition)
+        return () => active.delete(definition.id)
+      },
+    }
+  }
+  const first = registry()
+  const one = start({ registry: first })
+  t.after(one.stop)
+  await one.rt.load()
+  const bot = await one.rt.createBot({ name: 'Reviewer', agentPreset: 'ptc', pickModel: true })
+  assert.equal(bot.agentPreset, 'ptc')
+  assert.match(bot.presetBinding.id, /^anbot-preset-/u)
+  assert.equal(one.created[0].agentPreset, bot.presetBinding.id)
+  const raw = readFileSync(join(one.home, 'state.json'), 'utf8')
+  assert.doesNotMatch(raw, /fixture-only/u)
+  const saved = JSON.parse(raw)
+  const second = registry()
+  const two = start({ registry: second, saved })
+  t.after(two.stop)
+  await two.rt.load()
+  assert.equal(second.active.get(bot.presetBinding.id)?.plugins[0].name, 'fixture-plugin')
+  const third = registry('- name: changed-plugin')
+  const three = start({ registry: third, saved })
+  t.after(three.stop)
+  await three.rt.load()
+  assert.equal(third.active.size, 0)
+  await assert.rejects(three.rt.ensureBotPreset(bot.presetBinding), /changed/u)
+  await assert.rejects(three.rt.resolveAgent(three.rt.chatOf(bot.id)), /preset ptc changed/u)
 })
 
 test('a group round calls group_relay directly when the Session declares it', async (t) => {

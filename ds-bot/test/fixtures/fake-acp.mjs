@@ -167,7 +167,10 @@ async function runPrompt(session, prompt, requestId) {
     return
   }
   if (text.includes('count-sessions')) { finish(`sessions: ${sessions.size}`); return }
-  if (/\bhang\b/.test(text)) return // session/cancel releases it below
+  if (/\bhang\b/.test(text)) {
+    session.hangingPrompt = requestId
+    return
+  }
   if (text.includes('wait-gate')) {
     // Keeps this turn open until the test writes $FAKE_ACP_GATE/open, so a
     // second message can arrive while the first turn still runs.
@@ -434,9 +437,15 @@ process.stdin.on('data', (chunk) => {
         sessions.delete(params.sessionId)
         reply(id, {})
         break
-      case 'session/cancel':
+      case 'session/cancel': {
+        const session = sessions.get(params.sessionId)
         update(params.sessionId, { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: 'cancelled' } })
+        if (session?.hangingPrompt !== undefined) {
+          reply(session.hangingPrompt, { stopReason: 'cancelled' })
+          delete session.hangingPrompt
+        }
         break
+      }
       default:
         if (id !== undefined) fail(id, `method not found: ${method}`)
     }

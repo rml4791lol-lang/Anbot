@@ -61,6 +61,12 @@ TeamBoard({
 - CSS：`[TEAM_BOARD_CSS, 'team-board']` 加入 `index.js` 的编译样式表清单，组件不重复注入。
 - 未验证：右列实际渲染效果（需用户重启应用后看图）；DSH `rightbar` 停靠面在 0.2.2-rc.1 上的多 entry 行为未自测。
 
+## 开合协调（2026-11-22）
+
+- board 的开合状态放进共享 `ui.teamBoardOpen`，挂载层只读该状态并调用 `openTeamBoard` / `closeTeamBoard`，不再各存一份本地状态。
+- 右侧同一时间只放一个面：打开 board 会关闭 Bot/群详情、设置和其它覆盖层；打开详情或设置会关闭 board。这样不会再出现 board 被详情栏压成窄缝。
+- `defaultOpen` 仍可配置，但只在没有详情或设置面板时生效。
+
 ## 状态口径
 
 - `running`：`work.bots[bot.id]` 存在（含 `roomId` 的群聊条目）。

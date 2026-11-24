@@ -20,7 +20,7 @@ export function useLocalAgents(wanted) {
     return call(endpoint).then(setView).catch(() => setView({ detected: [], custom: [] })).finally(() => setScanning(false))
   }
   useEffect(() => { if (wanted && view === null) void load('local-agents') }, [wanted])
-  const agents = view === null ? [] : [...view.detected, ...view.custom.map(agent => ({ route: agent.route, name: agent.name, command: agent.command, args: agent.args, signedIn: null }))]
+  const agents = view === null ? [] : [...view.detected, ...view.custom.map(agent => ({ ...agent, signedIn: null }))]
   return { agents, known: view !== null, scanning, refresh: () => load('local-agent-refresh') }
 }
 
@@ -44,6 +44,7 @@ export function AgentLogo({ route, name = '', size = 28, className = 'bt-cli-log
 const SIGNED_IN = { true: 'Signed in', false: 'Not signed in', null: 'Sign-in unknown' }
 
 function cliMeta(agent) {
+  if (agent.installed === false) return h('span', { className: 'bt-cli-meta' }, t('Command not found'))
   if (agent.signedIn === true || agent.signedIn === false || agent.signIn) {
     return h('span', { className: 'bt-cli-meta', 'data-state': String(agent.signedIn) },
       h('i', { className: 'bt-cli-dot', 'aria-hidden': true }), t(SIGNED_IN[agent.signedIn]))
@@ -60,7 +61,7 @@ function CliCard({ agent, selected, onPick }) {
     setTimeout(() => setCopied(false), 1600)
   }
   return h('div', { className: 'bt-cli', 'data-selected': selected ? '' : undefined },
-    h('button', { type: 'button', className: 'bt-cli-pick', 'aria-pressed': selected, onClick: onPick },
+    h('button', { type: 'button', className: 'bt-cli-pick', 'aria-pressed': selected, disabled: agent.installed === false, onClick: onPick },
       h(AgentLogo, { route: agent.route, name: agent.name, size: 28 }),
       h('span', { className: 'bt-cli-copy' },
         h('span', { className: 'bt-cli-name' }, agent.name),
@@ -87,7 +88,7 @@ export function CliList({ agents, known, scanning, refresh, selected, onPick, ac
 }
 
 export const RunModeSwitch = ({ mode, setMode }) => h(Segmented, { label: t('Runs on'), value: mode },
-  h('button', { type: 'button', 'aria-pressed': mode === 'model', onClick: () => setMode('model') }, t('DS Bot model')),
+  h('button', { type: 'button', 'aria-pressed': mode === 'model', onClick: () => setMode('model') }, t('Anbot model')),
   h('button', { type: 'button', 'aria-pressed': mode === 'local', onClick: () => setMode('local') }, t('Local agent')))
 
 export const ReadingModels = () => h('span', { className: 'bt-loading' },
@@ -112,13 +113,15 @@ export function RunModeCard({ bot, roster, actions, run, Card }) {
     setTarget(next === 'model' ? startModel(roster) : '')
   }
   const agent = agents.find(entry => entry.route === routeOf(target))
-  const changing = target !== '' && (isLocalRoute(target) ? routeOf(target) !== bot.engine : bot.engine !== undefined)
+  const changing = target !== '' && (isLocalRoute(target)
+    ? agent !== undefined && agent.installed !== false && routeOf(target) !== bot.engine
+    : bot.engine !== undefined)
   const confirm = () => run(actions.updateBot(bot.id, { model: target, changeEngine: true, ...avatarAfter(bot, target) })).then((done) => { if (done !== false) setOpen(false) })
   return h(Card, { title: t('Runs on') },
     h('div', { className: 'bt-set-row bt-bs-row' },
       h('span', { className: 'bt-set-copy' },
-        h('span', { className: 'bt-bs-label' }, bot.engine === undefined ? t('DS Bot model') : engineName, bot.engine === undefined ? null : h(AgentBadge, { engine: bot.engine })),
-        h('span', { className: 'bt-set-hint' }, bot.engine === undefined ? t('Answers with a model served by DS Bot, with DS Bot\'s tools.') : t('Answers through this CLI on your computer, with its own tools and sign-in.'))),
+        h('span', { className: 'bt-bs-label' }, bot.engine === undefined ? t('Anbot model') : engineName, bot.engine === undefined ? null : h(AgentBadge, { engine: bot.engine })),
+        h('span', { className: 'bt-set-hint' }, bot.engine === undefined ? t('Answers with a model served by Anbot, with Anbot\'s tools.') : t('Answers through this CLI on your computer, with its own tools and sign-in.'))),
       h('button', { type: 'button', className: 'bt-soft bt-soft-sm', 'aria-expanded': open, onClick: () => (open ? setOpen(false) : start()) }, open ? t('Cancel') : t('Change'))),
     open ? h('div', { className: 'bt-runmode' },
       h(RunModeSwitch, { mode, setMode: switchMode }),

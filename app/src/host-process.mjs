@@ -1,6 +1,7 @@
 // Runs the Host in plain Node on Linux, Electron's Node mode elsewhere, and owns its lifetime.
 // Follows DeepSeek Harness apps/desktop/src/host-process.ts (MIT); see NOTICE.
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 
 const STDERR_TAIL_CHARS = 8 * 1024
@@ -85,6 +86,24 @@ export class HostProcess {
   send(message) {
     if (!this.#child?.connected) throw new Error('The DSH Host IPC channel is closed')
     this.#child.send(message)
+  }
+
+  workActivity() {
+    const id = randomUUID()
+    return new Promise((resolve) => {
+      const done = (activity) => {
+        clearTimeout(timer)
+        off()
+        resolve(activity)
+      }
+      const off = this.onMessage(message => {
+        if (message?.type === 'anbot:work-activity-result' && message.id === id) {
+          done(message.activity === 'active' || message.activity === 'idle' ? message.activity : 'unknown')
+        }
+      })
+      const timer = setTimeout(() => done('unknown'), 1500)
+      try { this.send({ type: 'anbot:work-activity', id }) } catch { done('unknown') }
+    })
   }
 
   /**

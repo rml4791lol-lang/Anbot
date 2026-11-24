@@ -20,6 +20,10 @@ import { PermissionPicker, presetDanger, presetName } from './permission-picker.
 import { TaskBoard } from './task-board.js'
 import { BotConnectors } from './connectors.js'
 import { ComputerView } from './computer.js'
+import { BotXRay } from './bot-xray.js'
+import { BotSpecEditor } from './bot-spec-editor.js'
+import { BotWorktree } from './bot-worktree.js'
+import { BotRuntime } from './bot-runtime.js'
 import { t } from './i18n.js'
 
 function transcriptOf(list, id, name, hiddenTurns = []) {
@@ -34,7 +38,7 @@ function transcriptOf(list, id, name, hiddenTurns = []) {
   return lines.join('\n\n')
 }
 
-const TAB_LABELS = { details: 'Details', browser: 'Browser', computer: 'Computer' }
+const TAB_LABELS = { details: 'Details', xray: 'X-Ray', browser: 'Browser', computer: 'Computer' }
 
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, '') } catch { return '' } }
 const shortUrl = url => String(url ?? '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '')
@@ -57,13 +61,13 @@ export function RunStats({ bot, part, running, actions }) {
   useEffect(() => {
     if (!actions.runStats) return undefined
     let current = true
-    actions.runStats(bot.id).then(
+    actions.runStats(bot.id, part).then(
       (values) => { if (current) setRead({ scope, values }) },
       // The line stays as it was until the next read works.
       () => {},
     )
     return () => { current = false }
-  }, [scope, bot.id, running, actions])
+  }, [scope, bot.id, part, running, actions])
   const shown = runStatsOf(read?.scope === scope ? read.values : null)
   if (shown.length === 0) return null
   return h('div', { className: 'bt-run-stats' },
@@ -79,7 +83,7 @@ function BrowserCards({ bot, sessionId, roster, actions, useBrowserTabs, useBrow
   const pages = useBrowserPages(map => map)
   useEffect(() => { actions.browserEnsure?.(bot.id) }, [bot.id])
   if (roster.browser !== true || !actions.browserShow) {
-    return h('div', { className: 'bt-muted' }, t('The browser is in DSH Desktop and the DS Bot app.'))
+    return h('div', { className: 'bt-muted' }, t('The browser is in DSH Desktop and the Anbot app.'))
   }
   if (state.ids.length === 0) {
     return h('div', { className: 'bt-browser-empty-mark' },
@@ -233,22 +237,26 @@ function GroupOverview({ room, roster, actions, usage, useWork, openSettings }) 
 
 // A Bot's chat sessions: the current one first, then the parts opened while the Bot
 // was busy (each still live, marked when its turn runs), then the earlier ones, newest
-// first. Every Bot's chat has parts, whether it answers with a DS Bot model or a local
+// first. Every Bot's chat has parts, whether it answers with an Anbot model or a local
 // CLI. A running part opened from here is read-only until its turn ends: two sessions
 // running at once means two model calls.
 function BotSessions({ bot, part, run, useSessions, actions, running }) {
+  const [showEarlier, setShowEarlier] = useState(false)
+  useEffect(() => { setShowEarlier(false) }, [bot.id])
   const runningOf = id => running?.[id] === true
   const open = (bot.openParts ?? []).map(entry => ({ id: entry.sessionId, open: true, running: runningOf(entry.sessionId) }))
   // Two sessions running at once means two model calls: shown only while a background
   // part really runs, above the list rather than as a quiet footnote.
   const backgroundRunning = open.some(entry => entry.running)
-  const entries = [
+  const allEntries = [
     { id: part, current: true, running: runningOf(part) },
     ...open,
     ...(bot.parts ?? []).filter(id => id !== part).slice().reverse().map(id => ({ id, earlier: true })),
   ]
+  const earlier = allEntries.filter(entry => entry.earlier)
+  const entries = showEarlier ? allEntries : allEntries.filter(entry => !entry.earlier)
   const rows = useSessions(list => entries.map(entry => list.byId?.[entry.id]), rowsEqual)
-  const total = entries.length
+  const total = allEntries.length
   const openPart = (entry) => {
     if (entry.current) return undefined
     if (entry.open && actions.openPart !== undefined) return () => run(actions.openPart(bot.id, entry.id, entry.running))
@@ -278,7 +286,11 @@ function BotSessions({ bot, part, run, useSessions, actions, running }) {
           entry.running ? h('span', { className: 'bt-agent-session-run', role: 'status' }, t('Running'))
             : entry.current ? t('Current')
               : when ? new Date(when).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''))
-    })))
+    })),
+    earlier.length > 0
+      ? h('button', { type: 'button', className: 'bt-agent-sessions-more', 'aria-expanded': showEarlier, onClick: () => setShowEarlier(value => !value) },
+          showEarlier ? t('Hide earlier sessions') : t('Earlier sessions ({count})', { count: earlier.length }))
+      : null)
 }
 const rowsEqual = (a, b) => a.length === b.length && a.every((row, index) => row?.title === b[index]?.title && row?.updatedAt === b[index]?.updatedAt)
 
@@ -357,8 +369,7 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
     if (room) await run(actions.updateRoom(room.id, { name: next }))
   }
   const subtitle = bot ? undefined : roomSubtitle(room, roster)
-  // Tab sets: a 1:1 Bot has Details and Browser; a group has only Details, so no tab row.
-  const tabs = bot ? (roster.computer?.enabled === true ? ['details', 'browser', 'computer'] : ['details', 'browser']) : ['details']
+  const tabs = bot ? ['details', 'xray', 'browser', ...(roster.computer?.enabled === true ? ['computer'] : [])] : ['details']
   return [h(Fragment, { key: 'top' }, top),
     h('div', { key: 'id', className: 'bt-drawer-id', 'data-move': side },
       bot ? h(BotAvatar, { bot, size: 64, state: botState(running, doing, roster.questions?.[part] !== undefined), main: isMainBot, badge: false, gaze: true, pokeable: true })
@@ -383,6 +394,13 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
       errorLine,
       room && tab === 'details' ? h(GroupOverview, { room, roster, actions, usage, useWork, openSettings: () => setView('settings') }) : null,
       bot && tab === 'computer' ? h(ComputerView, { bot, actions, hooks: { useComputer } }) : null,
+      bot && tab === 'xray' ? h(Fragment, null,
+        h(RunStats, { bot, part, running, actions }),
+        h(BotRuntime, { key: `runtime:${part}`, botId: bot.id, sessionId: part, running, readOnly: Boolean(roster.readOnly) }),
+        h(BotWorktree, { key: `worktree:${part}`, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly), openSession: actions.openAgentSession,
+          followRestore: () => actions.landOn(bot.id, { botId: bot.id, sessionId: part }) }),
+        h(BotSpecEditor, { key: part, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly) }),
+        h(BotXRay, { key: bot.id, botId: bot.id, sessionId: part, readOnly: Boolean(roster.readOnly) })) : null,
       bot && tab === 'details' ? [
         h(RunStats, { key: 'stats', bot, part, running, actions }),
         h('div', { key: 'model', className: 'bt-drawer-model' },
@@ -390,8 +408,8 @@ export function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, ro
           h(ModelMenu, { bot, roster, actions, run, wide: true, inline: true }),
           modelOf(bot, roster) ? null : h('div', { className: 'bt-note' }, t('Pick a model and {name} can start.', { name: bot.name })),
         ),
-        h(BotSessions, { key: 'sessions', bot, part, run, useSessions, actions, running: roster.partsRunning }),
         h(PermissionRow, { key: 'permission', bot, roster, actions, run }),
+        h(BotSessions, { key: 'sessions', bot, part, run, useSessions, actions, running: roster.partsRunning }),
         h(BotConnectors, { key: 'connectors', bot, roster, actions, run }),
         h('div', { key: 'folder', className: 'bt-drawer-model' },
           h('div', { className: 'bt-section-title' }, t('Working folder')),

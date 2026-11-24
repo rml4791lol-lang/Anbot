@@ -2,6 +2,7 @@
 // record, so the prefix stays byte-stable across turns and roster changes.
 
 import { skillShortlistSection } from './skill-shortlist.js'
+import { botSpecPrompt } from './bot-spec.js'
 
 // Every rule belongs to one of eight sections, read in this order: identity,
 // work loop, evidence, stopping, delivery, collaboration, memory, failure. A
@@ -43,6 +44,7 @@ const SECTIONS = [
     team: [
       '- The team changes over time. Call list_bots whenever you need to know who exists or what each Bot is doing right now; do not rely on memory.',
       '- Before you answer a question about a fact, a version, a path, a file, a capability, a setting, or your own model, channel or thinking level: check it with a tool first (list_bots, list_bot_models, read the file, run the command) and go by what you saw. Never answer such a question from memory: a claim that turns out false costs more than the minute the check took. When something cannot be checked here, say so and name what you tried; never fill the gap with a guess.',
+      '- When you hand a task to another Bot with message_bot, pass typed checks whenever the result can be proved by a command, artifact, or diff. A reply without matching executed evidence is sent back as rework; only a verified result counts as complete. Never treat a Bot\'s "done" sentence as acceptance.',
     ],
   },
   {
@@ -120,6 +122,7 @@ export function install(rt) {
     if (bot !== undefined) {
       // A Bot that keeps no shortlist reads exactly as before: no empty heading.
       const shortlist = skillShortlistSection(bot.skillShortlist)
+      const spec = rt.chatOf?.(self) === id ? botSpecPrompt(bot.taskSpec) : ''
       return [
         '# Your identity',
         `You are ${bot.name}, a Bot on the user's team in DS Bot.${bot.role ? ` Your role: ${bot.role}.` : ''}`,
@@ -127,6 +130,7 @@ export function install(rt) {
         '',
         rulesFor(rt.isMain(self)),
         ...(shortlist === '' ? [] : ['', shortlist]),
+        ...(spec === '' ? [] : ['', spec]),
       ].join('\n')
     }
     const room = rt.roomOf(id)

@@ -235,6 +235,21 @@ function attemptFor(raw) {
   }
 }
 
+function reworkFor(raw) {
+  const records = (Array.isArray(raw?.work?.rework) ? raw.work.rework : []).map(item => ({
+    at: timeOf(item?.at),
+    attemptId: text(item?.attemptId),
+    previousAttemptId: text(item?.previousAttemptId),
+    missing: Array.isArray(item?.missing) ? item.missing.map(text) : [],
+    feedback: redactText(item?.feedback),
+  }))
+  return {
+    count: Number.isInteger(raw?.work?.reworkCount) ? raw.work.reworkCount : records.length,
+    max: Number.isInteger(raw?.work?.maxReworks) ? raw.work.maxReworks : null,
+    records,
+  }
+}
+
 function handoffFor(raw, state) {
   const ids = raw?.work ?? raw?.task?.handoff
   if (!ids || typeof ids !== 'object') return null
@@ -322,7 +337,18 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
   const nonLiveReason = dataMode === 'preview' ? 'Preview data is not verification.'
     : dataMode === 'demo' ? 'Demo data is not verification.'
       : 'Data mode is unavailable, so verification cannot be trusted.'
-  const verification = nonLive ? { status: 'unavailable', reason: nonLiveReason } : projected.verification
+  const verification = nonLive ? { status: 'unavailable', reason: nonLiveReason } : {
+    ...projected.verification,
+    ...(Array.isArray(projected.verification.checks) ? {
+      checks: projected.verification.checks.map(check => ({
+        ...check,
+        ...(check.label ? { label: redactText(check.label) } : {}),
+        ...(check.command ? { command: redactText(check.command) } : {}),
+        ...(check.path ? { path: redactText(check.path) } : {}),
+      })),
+    } : {}),
+    ...(projected.verification.reason ? { reason: redactText(projected.verification.reason) } : {}),
+  }
   const artifacts = mergedArtifacts([...artifactsFor(raw, evidence), ...traceParts.artifacts])
   const blockers = blockersFor(raw, activityTask)
   const recovery = recoveryFor(raw)
@@ -359,6 +385,7 @@ export function buildTaskDetail({ state, activity, taskId, records = [], sourceW
     },
     location: locationFor(activityTask, raw),
     attempt: attemptFor(raw),
+    rework: reworkFor(raw),
     handoff: handoffFor(raw, state),
     recovery,
     checkpoint: checkpointFor(raw, activityTask),

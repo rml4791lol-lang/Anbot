@@ -162,6 +162,15 @@ test('a custom API goes in with its endpoint, protocol, compatibility switches a
   assert.equal(writes.at(-1)[1][0].value.compat, undefined)
 })
 
+test('a custom route keeps explicit wire mappings for reasoning models', async () => {
+  const { rt, writes } = dsh()
+  const base = { custom: true, provider: 'reasoning-gw', api: 'openai-responses', baseURL: 'https://resp.example/v1' }
+  await assert.rejects(rt.addProvider({ ...base, models: [{ id: 'm', reasoningEfforts: { max: '' } }] }), { code: 'bot/invalid' })
+  assert.equal(writes.length, 0)
+  await rt.addProvider({ ...base, models: [{ id: 'm', reasoningEfforts: { off: null, max: 'max' } }] })
+  assert.deepEqual(writes[0][1][0].value.models, [{ id: 'm', reasoningEfforts: { off: null, max: 'max' } }])
+})
+
 test('when DSH advertises google-generative-ai in llm-pi-ai schema, Gemini custom routes and discovery are admitted without OpenAI compat switches', async () => {
   const { rt, writes, discovered } = dsh()
   const origDescribe = rt.ctx.get('settings').describe

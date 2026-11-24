@@ -17,7 +17,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import { canonicalExecPath } from './canonical-path.mjs'
 import { disk } from './copy-tree.mjs'
-import { configureIdentity } from './legacy.mjs'
+import { configureIdentity, homeFromEnv, shellDataFromEnv } from './legacy.mjs'
 import { hostPort } from './host-port.mjs'
 import { captureStdio, LogFile } from './logs.mjs'
 import { Pickers } from './picker-host.mjs'
@@ -74,14 +74,15 @@ const trayIconFile = () => join(assets, process.platform === 'win32' ? 'tray.ico
 // through the sidebar.
 const material = materialOf(process.platform, release())
 configureIdentity(app)
-if (process.env.DS_BOT_SHELL_DATA) app.setPath('userData', process.env.DS_BOT_SHELL_DATA)
+const explicitShellData = shellDataFromEnv()
+if (explicitShellData) app.setPath('userData', explicitShellData)
 const frameFile = join(app.getPath('userData'), 'start-frame.json')
 
 // Loaded once the start window is up (loadModules).
 let BotBrowserGuests, partitionOf, BotViews, isBotId, importFromBrowser, listSources, applyCookies, CookieImports, parseCookieFile
 let downloadSaver, chooseLocations, defaultPlaces, lang, pickerLabels, pickRoot, programFolder, saveLocations, teamIn, teamsAt, tx, HostProcess
 let copySessions, findTeam, importTeam, restoreSessions, teamInUse, teamSizes, userDshHome, copyData, copyReason, moveProblem, BUNDLES, CHECK_PROFILE, PROFILE, ImportFlow
-let watchReleases, watchUpdates, RELEASE_PAGE, getDshRuntimeVersion, electronUpdater
+let watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv, getDshRuntimeVersion, electronUpdater
 
 let mainWindow
 // Settles once the hidden team window exists.
@@ -141,6 +142,7 @@ let downloadsBound = false
 // Quitting during the first run's import (its card or its copy) or a data move waits for it to
 // stop at a safe point, so that it leaves no half team and no temporary copy.
 let copying
+let quittingAfterWorkCheck = false
 const copyAbort = new AbortController()
 let browserGuests
 let botViews
@@ -195,7 +197,7 @@ if (canonical !== undefined) {
   logs = new LogFile({ dir: join(app.getPath('userData'), 'logs') })
   rawOutput = captureStdio(logs)
   app.once('will-quit', () => { logs.flush() })
-  console.log(`DS Bot ${app.getVersion()} (${process.platform} ${process.arch}), Electron ${process.versions.electron}`)
+  console.log(`Anbot ${app.getVersion()} (${process.platform} ${process.arch}), Electron ${process.versions.electron}`)
   startWindow = new StartWindow({
     electron: { BrowserWindow, ipcMain, screen, shell: electronShell, clipboard, nativeTheme, systemPreferences },
     // 〔保存日志…〕 on the start window's failure cards.
@@ -245,15 +247,36 @@ if (canonical !== undefined) {
       void copying.finally(() => { copying = undefined; app.quit() })
       return
     }
-    // The app is on its way out: the window may close for good.
-    shell.beginQuit()
-    if (stopped || host === undefined) return
+    if (stopped || host === undefined) { shell.beginQuit(); return }
     event.preventDefault()
+    if (quittingAfterWorkCheck) return
     // The Host is already stopping: the quit follows it.
     if (stopping) { void (hostStop ?? Promise.resolve()).then(() => { app.quit() }); return }
-    void stopHost().then(() => { app.quit() })
+    quittingAfterWorkCheck = true
+    void confirmQuit(host).then(confirmed => {
+      quittingAfterWorkCheck = false
+      if (!confirmed) { shell.cancelQuit(); return }
+      shell.beginQuit()
+      void stopHost().then(() => { app.quit() })
+    }, error => {
+      quittingAfterWorkCheck = false
+      shell.cancelQuit()
+      console.error('Anbot: quit confirmation failed:', error)
+    })
   })
   app.whenReady().then(async () => { shell.install(); await start() }).catch(fail)
+}
+
+async function confirmQuit(current) {
+  if (!hostReady || shell.isQuitting() || shell.isSessionEnding()) return true
+  const activity = await current.workActivity()
+  if (current !== host) return false
+  if (activity === 'idle' || shell.isQuitting() || shell.isSessionEnding()) return true
+  const t = shellText()
+  const message = activity === 'active' ? t.quitActive : t.quitUnknown
+  const buttons = [{ label: t.quit }, { label: t.cancel, primary: true }]
+  const answer = await askInWindow({ message, buttons, cancel: 1 }, { front: true })
+  return answer === 0 && current === host
 }
 
 function stopHost() {
@@ -262,8 +285,8 @@ function stopHost() {
   return hostStop
 }
 
-// A throwaway run (DS_BOT_HOME) asks nothing and shows what a later start shows.
-const startKind = () => (process.env.DS_BOT_HOME || existsSync(join(app.getPath('userData'), 'locations.json')) ? 'later' : 'first')
+// A throwaway run (ANBOT_HOME or the compatible DS_BOT_HOME) asks nothing and shows what a later start shows.
+const startKind = () => (homeFromEnv() || existsSync(join(app.getPath('userData'), 'locations.json')) ? 'later' : 'first')
 
 async function start() {
   setMenu()
@@ -311,7 +334,7 @@ async function loadModules() {
   ;({ ImportFlow } = flows)
   ;({ copyData, copyReason, moveProblem } = moves)
   ;({ BUNDLES, CHECK_PROFILE, PROFILE } = profile)
-  ;({ watchReleases, watchUpdates, RELEASE_PAGE } = updatesModule)
+  ;({ watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv } = updatesModule)
   ;({ getDshRuntimeVersion } = boot)
   electronUpdater = updater.default
   browserGuests = new BotBrowserGuests({ session, origin: () => origin, devTools: !app.isPackaged })
@@ -460,7 +483,7 @@ function tellPlace(dataDir) {
 // when the data went there (start-window §5). Places saved before that was kept keep it from
 // now on; a failed write costs only the line.
 function tellLowSpace(freeAtStart) {
-  if (process.env.DS_BOT_HOME) return
+  if (homeFromEnv()) return
   if (freeAtStart === undefined) {
     try {
       saveLocations(places)
@@ -502,7 +525,7 @@ async function pickAndPlace() {
     return
   }
   if (root.reason !== undefined) {
-    console.log(`DS Bot: the place ${root.at} cannot be used (${root.reason})`)
+    console.log(`Anbot: the place ${root.at} cannot be used (${root.reason})`)
     proposed = undefined
     startWindow.card({ kind: 'rejected', reason: root.reason, path: root.at })
     return
@@ -545,7 +568,7 @@ async function startOver(root) {
     if (stopping || mine !== attempt) return
     setPlaces({ dataDir: root.dataDir, workspace: root.workspace })
     saveLocations(places)
-    console.log(`DS Bot: the data goes to ${places.dataDir}`)
+    console.log(`Anbot: the data goes to ${places.dataDir}`)
   } finally {
     restarting = false
   }
@@ -615,16 +638,16 @@ async function startEngine(mine) {
   // taken has nothing left out.
   if (warm === undefined) {
     await restoreSessions(places.dataDir).then(({ copied, newer }) => {
-      if (copied.length > 0) console.log(`DS Bot: copied ${copied.join(', ')}, which the import left out`)
-      if (newer.length > 0) console.warn(`DS Bot: this DSH cannot read ${newer.join(', ')}, which the import left out`)
-    }, (error) => { console.error('DS Bot: the Sessions the import left out were not copied:', error) })
+      if (copied.length > 0) console.log(`Anbot: copied ${copied.join(', ')}, which the import left out`)
+      if (newer.length > 0) console.warn(`Anbot: this DSH cannot read ${newer.join(', ')}, which the import left out`)
+    }, (error) => { console.error('Anbot: the Sessions the import left out were not copied:', error) })
   }
   if (!shadowedAsked) {
     const { shadowedBundles, removeShadowed } = await import('./profile-shadow.mjs')
     const shadowed = shadowedBundles(profileDir(), BUNDLES)
     if (shadowed.length > 0 && mine === attempt) {
       const names = shadowed.map(({ name, version }) => `${name} ${version}`).join(', ')
-      console.warn(`DS Bot: the profile carries its own ${names}, which shadows the bundled copy`)
+      console.warn(`Anbot: the profile carries its own ${names}, which shadows the bundled copy`)
       if (await askCard({ kind: 'shadowed', names }) === 'remove' && mine === attempt) {
         // A failed removal stops the start with the reason, and the next try asks again.
         await removeShadowed(profileDir(), shadowed.map(entry => entry.name)).catch((error) => {
@@ -712,7 +735,7 @@ async function importStep(mine) {
   if (result.outcome === 'copied') {
     startWindow.done('import')
     const { summary } = result
-    console.log(`DS Bot: copied ${String(summary.bots)} Bots and ${String(summary.sessions)} Sessions from ${summary.from}`)
+    console.log(`Anbot: copied ${String(summary.bots)} Bots and ${String(summary.sessions)} Sessions from ${summary.from}`)
     // The team lives here now; moving it is Settings' job (the data move).
     startWindow.place(undefined)
     return {}
@@ -734,7 +757,7 @@ async function importElsewhere(signal) {
     const root = rootOf(picked, { dshHome: userDshHome(), program: app.isPackaged ? programFolder() : undefined, current: places })
     if (root.same) return false
     if (root.reason !== undefined) {
-      console.log(`DS Bot: the place ${root.at} cannot be used (${root.reason})`)
+      console.log(`Anbot: the place ${root.at} cannot be used (${root.reason})`)
       if (await askCard({ kind: 'rejected', reason: root.reason, path: root.at }, { signal }) === 'pick') continue
       return false
     }
@@ -750,8 +773,8 @@ async function importElsewhere(signal) {
 
 function handleIpc() {
 
-  // A throwaway run (DS_BOT_HOME) keeps its folders where it was told.
-  const fixed = Boolean(process.env.DS_BOT_HOME)
+  // A throwaway run (ANBOT_HOME or DS_BOT_HOME) keeps its folders where it was told.
+  const fixed = Boolean(homeFromEnv())
   // The team view has mounted (ds-bot calls dsBotApp.ready()): the start window hands over.
   const computerIndicator = createComputerIndicator({
     BrowserWindow, screen, html: indicatorHtml, ipcMain,
@@ -791,7 +814,7 @@ function handleIpc() {
     if (!fromWindow(event)) return
     void computerCursor.update(entry)
   })
-  app.on('before-quit', () => { computerIndicator.dispose(); computerCursor.dispose() })
+  app.once('will-quit', () => { computerIndicator.dispose(); computerCursor.dispose() })
   ipcMain.on(IPC.ready, (event, report) => { if (fromWindow(event)) startWindow.ready(report) })
   // It has drawn the whale the start window hands over: the windows cross-fade.
   ipcMain.on(IPC.handoffReady, (event) => { if (fromWindow(event)) startWindow.teamReady() })
@@ -864,7 +887,7 @@ function handleIpc() {
   ipcMain.handle(IPC.browserImportLive, async (event, sourceId, close) => {
     assertWindow(event)
     const source = (await listSources()).find((item) => item.id === sourceId)
-    if (!source) throw new Error('DS Bot: an unknown browser profile')
+    if (!source) throw new Error('Anbot: an unknown browser profile')
     let outcome
     try {
       outcome = await importFromBrowser(source, { close: close === true })
@@ -881,9 +904,9 @@ function handleIpc() {
   })
   ipcMain.handle(IPC.browserImportApply, async (event, key, id) => {
     assertWindow(event)
-    if (typeof key !== 'string' || !key.startsWith('bot:')) throw new Error('DS Bot: a Bot storage key is required')
+    if (typeof key !== 'string' || !key.startsWith('bot:')) throw new Error('Anbot: a Bot storage key is required')
     const pending = cookieImports.take(typeof id === 'string' ? id : '')
-    if (!pending) throw new Error('DS Bot: this import is no longer pending')
+    if (!pending) throw new Error('Anbot: this import is no longer pending')
     const storage = session.fromPartition(partitionOf(key))
     return applyCookies(storage, pending.cookies)
   })
@@ -953,14 +976,14 @@ async function checkTeam(where, signal, onProgress) {
     try {
       signal.throwIfAborted()
       const { unreadable } = await check.start()
-      if (unreadable.length > 0) console.warn(`DS Bot: this DSH cannot read ${unreadable.join(', ')}`)
+      if (unreadable.length > 0) console.warn(`Anbot: this DSH cannot read ${unreadable.join(', ')}`)
       return unreadable.length
     } finally {
       signal.removeEventListener('abort', stop)
       await check.stop()
     }
   } catch (error) {
-    if (!signal.aborted) console.error('DS Bot: the chats were not checked before the copy:', error)
+    if (!signal.aborted) console.error('Anbot: the chats were not checked before the copy:', error)
     return 0
   } finally {
     await rm(home, { recursive: true, force: true, maxRetries: 5 }).catch((error) => { console.error(error) })
@@ -1006,7 +1029,7 @@ async function pickMove() {
 function moveCard(to) {
   const reason = moveReason(to)
   if (reason !== undefined) {
-    console.log(`DS Bot: the data cannot move to ${to} (${reason})`)
+    console.log(`Anbot: the data cannot move to ${to} (${reason})`)
     startWindow.card({ kind: 'rejected', reason, path: to })
     return
   }
@@ -1143,8 +1166,8 @@ async function runMove(to, workspace) {
 // Windows and a Linux AppImage update themselves; macOS and a Linux deb ask to download the new
 // version. Throwaway runs check only a given feed and never ask.
 function startUpdates() {
-  const feed = process.env.DS_BOT_UPDATE_URL || undefined
-  const throwaway = Boolean(process.env.DS_BOT_HOME)
+  const feed = updateFeedFromEnv()
+  const throwaway = Boolean(homeFromEnv())
   if (!app.isPackaged || (throwaway && feed === undefined)) return undefined
   if (process.platform === 'darwin') {
     return watchReleases({
@@ -1158,7 +1181,7 @@ function startUpdates() {
     const debArch = { x64: 'amd64', arm64: 'arm64' }[process.arch] ?? process.arch
     return watchReleases({
       current: app.getVersion(), arch: process.arch, feed, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
-      asset: version => `DS-Bot-${version}-linux-${debArch}.deb`,
+      asset: version => `Anbot-${version}-linux-${debArch}.deb`,
     })
   }
   if (process.platform === 'win32' || process.platform === 'linux') {
@@ -1310,7 +1333,7 @@ function createWindow() {
     // The window never squeezes the chat: RAIL_WIDTH + MIN_CHAT from ds-bot's
     // src/client/frame-layout.js is the avatar rail plus the smallest chat column.
     ...startWindow.mainBounds(), minWidth: 508, minHeight: 480,
-    title: 'DS Bot', show: false, icon: iconFile,
+    title: 'Anbot', show: false, icon: iconFile,
     backgroundColor: material ? '#00000000' : dark ? '#1b1b1c' : '#ffffff',
     // Frameless as in DSH Desktop: the window controls overlay the page's band. On Windows the
     // caption buttons keep the sidebar's colors until the page sends the colors of the surface
@@ -1491,7 +1514,7 @@ function shellText() {
 function assertWindow(event) {
   const contents = mainWindow?.webContents
   if (contents === undefined || event.sender !== contents || event.senderFrame !== contents.mainFrame
-    || !event.senderFrame.url.startsWith(`${origin}/`)) throw new Error('DS Bot: rejected IPC from an unknown page')
+    || !event.senderFrame.url.startsWith(`${origin}/`)) throw new Error('Anbot: rejected IPC from an unknown page')
 }
 
 function fromWindow(event) {
@@ -1543,7 +1566,7 @@ function updateAct(name) {
   if (!failed) return
   if (name === 'manualDownload' || offered?.page) {
     const page = offered?.page ?? RELEASE_PAGE
-    if (!process.env.DS_BOT_HOME) void electronShell.openExternal(page)
+    if (!homeFromEnv()) void electronShell.openExternal(page)
     return
   }
   if (updates === undefined || updates.state().phase !== 'failed') return

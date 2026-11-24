@@ -11,13 +11,15 @@ import { join } from 'node:path'
 import { LATE_ANSWER, TEXT_KEPT } from './constants.js'
 import { headOf } from './text.js'
 import { installTaskLog } from './task-ledger.js'
-import { PendingCallCache, clearRecoveryNeeded, evidenceFromEvents, noteAttemptRecovery, noteRecoveryNeeded, progressAfterTurn, progressFingerprint } from './task-evidence.js'
+import { PendingCallCache, clearRecoveryNeeded, evidenceFromEvents, noteAttemptRecovery, noteRecoveryNeeded, progressAfterTurn, progressFingerprint, verifyAcceptance } from './task-evidence.js'
 import { isOpenPart, ownChatSessions } from './threads.js'
 
 const minutes = since => {
   const count = Math.floor((Date.now() - since) / 60_000)
   return count < 1 ? 'for less than a minute' : `for ${count} min`
 }
+const MAX_ACCEPTANCE_REWORKS = 2
+const REWORK_TEXT_MAX = 1200
 // A card can wait for days.
 const forHowLong = since => {
   const hours = Math.floor((Date.now() - since) / 3_600_000)
@@ -115,21 +117,33 @@ export function install(rt) {
   // child, is the sub-work, so a child that is continued hands up a result per run.
   // `fromPart`: the part of the sender's own chat it wrote from, which its answer goes
   // back to when that is a background part.
-  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask, fromPart }) {
+  function openWork(id, { from, to, parent, fromRoom, room, name, child, goalTask, fromPart, checks = [], acceptance = '' }) {
     const above = parent === undefined ? undefined : works()[parent]
     const now = Date.now()
     const attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
     const goalTaskId = typeof goalTask?.taskId === 'string' ? goalTask.taskId : ''
     const goalTaskAttemptId = typeof goalTask?.attemptId === 'string' ? goalTask.attemptId : ''
+    const requiredChecks = Array.isArray(checks) ? checks.filter(check => check?.required !== false) : []
+    const verification = requiredChecks.length > 0
+      ? {
+          state: 'pending', status: 'pending', manual: false, checkEvidence: {}, evidenceIds: [],
+          checks: requiredChecks.map(check => ({ id: check.id, status: 'pending' })),
+          missing: requiredChecks.map(check => check.id),
+          reason: 'Waiting for matching executed evidence for every acceptance check.',
+        }
+      : { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' }
     const record = {
       ...(from ? { from } : {}), ...(to ? { to } : {}), ...(room ? { room } : {}), ...(above ? { parent } : {}),
       ...(fromRoom ? { fromRoom } : {}), ...(fromPart ? { fromPart } : {}), ...(name ? { name } : {}), ...(child ? { child } : {}),
       ...(goalTaskId ? { goalTask: { taskId: goalTaskId, ...(goalTaskAttemptId ? { attemptId: goalTaskAttemptId } : {}) } } : {}),
+      ...(acceptance ? { acceptance } : {}),
+      ...(Array.isArray(checks) && checks.length > 0 ? { checks } : {}),
       open: [], results: [], at: now,
       attempt,
       checkpoint: { at: now, attemptId: attempt.id, kind: 'progress', summary: 'Work started.', nextAction: name ?? 'Complete the requested work.' },
       progress: { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now },
-      verification: { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' },
+      verification,
+      ...(requiredChecks.length > 0 ? { rework: [], reworkCount: 0, maxReworks: MAX_ACCEPTANCE_REWORKS } : {}),
       evidence: [],
     }
     works()[id] = record
@@ -154,7 +168,21 @@ export function install(rt) {
     const work = works()[id]
     if (work === undefined) return undefined
     delete works()[id]
-    logTask({ kind: 'close', id, from: work.from, to: work.to, parent: work.parent, room: work.room, outcome: extra.abandoned === true ? 'abandoned' : 'answered', chars: text.length })
+    const verification = extra.verification ?? work.verification
+    logTask({
+      kind: 'close', id, from: work.from, to: work.to, parent: work.parent, room: work.room,
+      outcome: extra.abandoned === true ? 'abandoned' : 'answered', chars: text.length,
+      attemptId: work.attempt?.id, sessionId: work.attempt?.sessionId,
+      ...(verification?.state === 'verified' ? { verified: true } : {}),
+      ...(verification?.state === 'needs-review' ? { needsReview: true } : {}),
+      ...(Number.isInteger(work.reworkCount) && work.reworkCount > 0 ? { reworks: work.reworkCount } : {}),
+      ...(Array.isArray(verification?.checks) ? {
+        checks: {
+          total: verification.checks.length,
+          verified: verification.checks.filter(check => check?.status === 'verified').length,
+        },
+      } : {}),
+    })
     // What it still waits for comes back to it alone.
     for (const child of Object.values(works())) if (child.parent === id) delete child.parent
     const above = works()[work.parent]
@@ -269,10 +297,228 @@ export function install(rt) {
       work.attempt = { id: `${id}:a1`, n: 1, status: 'working', startedAt: now, updatedAt: now }
       work.checkpoint ??= { at: now, attemptId: work.attempt.id, kind: 'progress', summary: 'Recovered work.', nextAction: work.name ?? 'Continue the requested work.' }
       work.progress ??= { state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]), unchangedTurns: 0, changedAt: now }
-      work.verification ??= { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' }
+      if (work.verification === undefined) {
+        const required = (Array.isArray(work.checks) ? work.checks : []).filter(check => check?.required !== false)
+        work.verification = required.length > 0
+          ? {
+              state: 'pending', status: 'pending', manual: false, checkEvidence: {}, evidenceIds: [],
+              checks: required.map(check => ({ id: check.id, status: 'pending' })), missing: required.map(check => check.id),
+              reason: 'Waiting for matching executed evidence for every acceptance check.',
+            }
+          : { state: 'pending', status: 'pending', manual: true, evidenceIds: [], checks: [], missing: [], reason: 'No typed acceptance checks were declared for this hand-off.' }
+      }
+      if (Array.isArray(work.checks) && work.checks.some(check => check?.required !== false)) {
+        work.rework ??= []
+        work.reworkCount ??= work.rework.length
+        work.maxReworks ??= MAX_ACCEPTANCE_REWORKS
+      }
       work.evidence ??= []
     }
     return work.attempt
+  }
+
+  const requiredChecksOf = work => (Array.isArray(work?.checks) ? work.checks : [])
+    .filter(check => check?.required !== false)
+
+  const checkText = (check) => {
+    if (check?.kind === 'command') return `${check.id}: command "${check.command}" must exit ${check.expect?.exitCode ?? 0}`
+    if (check?.kind === 'artifact') return `${check.id}: artifact "${check.path}" must be presented with a digest${check.expect?.digest ? ' matching the pinned digest' : ''}`
+    if (check?.kind === 'diff') return `${check.id}: a diff for "${check.path}" must be executed${check.expect?.digest ? ' and match the pinned digest' : ''}`
+    return String(check?.id ?? '')
+  }
+
+  const pendingAcceptance = (checks, reason, attemptId) => {
+    const required = checks.filter(check => check?.required !== false)
+    return {
+      state: 'pending', status: 'pending', manual: false, checkEvidence: {}, evidenceIds: [],
+      checks: required.map(check => ({ id: check.id, status: 'pending' })),
+      missing: required.map(check => check.id), reason, attemptId,
+    }
+  }
+
+  const verificationWithChecks = (work, verification) => {
+    const details = new Map(requiredChecksOf(work).map(check => [check.id, check]))
+    return (Array.isArray(verification?.checks) ? verification.checks : []).map((check) => {
+      const detail = details.get(check.id) ?? {}
+      return {
+        ...detail,
+        id: check.id,
+        status: check.status,
+        ...(check.evidenceId ? { evidenceId: check.evidenceId } : {}),
+      }
+    })
+  }
+
+  function markAccepted(work, verification, now) {
+    const checks = verificationWithChecks(work, verification)
+    const ids = new Set(Object.values(verification.checkEvidence ?? {}))
+    for (const item of Array.isArray(work.evidence) ? work.evidence : []) {
+      if (!ids.has(item.id)) continue
+      item.trust = 'verified'
+      item.kind = 'verified'
+      item.verifiedAt = now
+    }
+    work.verification = {
+      ...verification,
+      state: 'verified',
+      status: 'verified',
+      manual: false,
+      checks,
+      reason: 'All required acceptance checks matched fresh executed evidence.',
+      attemptId: work.attempt?.id,
+    }
+    if (work.attempt !== undefined) work.attempt.status = 'verified'
+    work.checkpoint = {
+      ...work.checkpoint,
+      at: now,
+      attemptId: work.attempt?.id,
+      kind: 'verified',
+      summary: `Acceptance verified: ${checks.filter(check => check.status === 'verified').length}/${checks.length} checks.`,
+      nextAction: 'Hand the verified result back to the Bot that asked for it.',
+    }
+    return work.verification
+  }
+
+  function archiveAttempt(work) {
+    if (work.attempt === undefined) return
+    work.attempts = [...(Array.isArray(work.attempts) ? work.attempts : []), { ...work.attempt }].slice(-8)
+  }
+
+  // Decide whether an answer may close a hand-off. A typed check is evaluated against
+  // executed evidence from the current attempt only. A failed check starts a new attempt
+  // with the worker, instead of letting a convincing sentence close the work.
+  function reviewWorkAcceptance(id, now = Date.now()) {
+    const work = works()[id]
+    if (work === undefined) return { kind: 'missing' }
+    const checks = requiredChecksOf(work)
+    if (checks.length === 0) return { kind: 'manual' }
+    const verification = verifyAcceptance({ checks, evidence: evidenceOf(work), now })
+    if (verification.state === 'verified') {
+      return { kind: 'verified', verification: markAccepted(work, verification, now), reworks: work.reworkCount ?? 0 }
+    }
+    const missing = Array.isArray(verification.missing) && verification.missing.length > 0
+      ? verification.missing.map((checkId) => checkText(checks.find(check => check.id === checkId))).join('; ')
+      : 'required executed evidence is missing'
+    const maxReworks = Number.isInteger(work.maxReworks) ? work.maxReworks : MAX_ACCEPTANCE_REWORKS
+    const reworks = Number.isInteger(work.reworkCount) ? work.reworkCount : 0
+    if (reworks < maxReworks) {
+      const previous = work.attempt
+      archiveAttempt(work)
+      const next = {
+        id: `${id}:a${(previous?.n ?? 1) + 1}`,
+        n: (previous?.n ?? 1) + 1,
+        status: 'working',
+        startedAt: now,
+        updatedAt: now,
+      }
+      const feedback = headOf(`Acceptance check failed: ${missing}. Run the required check again and leave executed evidence that matches the declaration.`, REWORK_TEXT_MAX)
+      work.attempt = next
+      work.reworkCount = reworks + 1
+      work.rework = [...(Array.isArray(work.rework) ? work.rework : []), {
+        at: now,
+        attemptId: next.id,
+        previousAttemptId: previous?.id,
+        missing: verification.missing ?? [],
+        feedback,
+      }].slice(-8)
+      work.verification = pendingAcceptance(checks, feedback, next.id)
+      work.progress = {
+        state: 'moving', fingerprint: progressFingerprint([]), lastTurnFingerprint: progressFingerprint([]),
+        unchangedTurns: 0, changedAt: now,
+      }
+      work.checkpoint = {
+        at: now, attemptId: next.id, kind: 'rework', summary: feedback,
+        nextAction: 'Run the failed acceptance check and leave fresh executed evidence.',
+      }
+      delete work.held
+      const fromName = nameOf(work.from) ?? 'the Bot that asked'
+      const reworkText = headOf(
+        `[Acceptance check failed · attempt ${next.n} of ${maxReworks + 1}]\nThis work is still open; do not send it back to ${fromName} yet.\n\n${feedback}`,
+        REWORK_TEXT_MAX,
+      )
+      return {
+        kind: 'rework',
+        verification: work.verification,
+        persist: () => save({ required: true })
+          .then(() => rt.deliver({
+            fromId: work.from,
+            fromName,
+            toId: work.to,
+            text: reworkText,
+            role: 'request',
+            exchangeId: id,
+            taskId: `handoff:${id}`,
+            attemptId: next.id,
+            recordExchange: false,
+          }))
+          .catch((error) => {
+            noteRecoveryNeeded(work, {
+              attemptId: next.id,
+              reason: 'The acceptance rework could not be delivered after the check failed; recover this work before accepting it.',
+            })
+            save()
+            throw error
+          }),
+      }
+    }
+    const reason = headOf(`Acceptance was not met after ${reworks} rework${reworks === 1 ? '' : 's'}: ${missing}.`, REWORK_TEXT_MAX)
+    work.verification = {
+      ...verification,
+      state: 'needs-review',
+      status: 'needs-review',
+      manual: false,
+      checks: verificationWithChecks(work, verification),
+      reason,
+      attemptId: work.attempt?.id,
+    }
+    if (work.attempt !== undefined) work.attempt.status = 'needs-review'
+    work.checkpoint = {
+      at: now, attemptId: work.attempt?.id, kind: 'needs-review', summary: reason,
+      nextAction: 'Report the acceptance failure; start a new hand-off if the work should be tried again.',
+    }
+    return { kind: 'needs-review', verification: work.verification, reworks, text: reason }
+  }
+
+  // A message that joined an unread request can add or replace its acceptance
+  // declaration before the receiver starts. The new declaration is the one the
+  // receiver sees in the joined text, so it is also the one the host must enforce.
+  function setWorkAcceptance(id, checks = [], acceptance = '') {
+    const work = works()[id]
+    if (work === undefined) return Promise.resolve(false)
+    if (Array.isArray(checks) && checks.length > 0) {
+      work.checks = checks
+      work.verification = pendingAcceptance(checks, 'Waiting for matching executed evidence for every acceptance check.', work.attempt?.id)
+      work.rework = []
+      work.reworkCount = 0
+      work.maxReworks = MAX_ACCEPTANCE_REWORKS
+    }
+    if (acceptance !== '') work.acceptance = acceptance
+    return save({ required: true }).then(() => true)
+  }
+
+  // A failed or stopped worker did not produce a result to verify. Do not spend two
+  // reworks on an infrastructure failure: keep the honest needs-review state and let
+  // the asker decide whether to retry.
+  function rejectWorkAcceptance(id, reason, now = Date.now()) {
+    const work = works()[id]
+    const checks = requiredChecksOf(work)
+    if (work === undefined || checks.length === 0) return undefined
+    const previous = work.verification ?? {}
+    const checkDetails = verificationWithChecks(work, previous)
+    work.verification = {
+      ...previous,
+      state: 'needs-review', status: 'needs-review', manual: false,
+      checks: checkDetails.length > 0 ? checkDetails : checks.map(check => ({ ...check, status: 'pending' })),
+      missing: Array.isArray(previous.missing) && previous.missing.length > 0 ? previous.missing : checks.map(check => check.id),
+      reason,
+      attemptId: work.attempt?.id,
+    }
+    if (work.attempt !== undefined) work.attempt.status = 'needs-review'
+    work.checkpoint = {
+      at: now, attemptId: work.attempt?.id, kind: 'needs-review', summary: reason,
+      nextAction: 'Report the failure; start a new hand-off if the work should be tried again.',
+    }
+    return { kind: 'needs-review', verification: work.verification, text: reason }
   }
 
   function workForSession(info) {
@@ -306,10 +552,10 @@ export function install(rt) {
     const { work } = target
     ensureAttempt(target.id, work, now)
     const tagged = evidence.map(item => ({ ...item, attemptId: work.attempt.id }))
-    const known = new Set(evidenceOf(work).map(item => item.id))
+    const known = new Set((Array.isArray(work.evidence) ? work.evidence : []).map(item => item.id))
     const added = tagged.filter(item => !known.has(item.id))
     if (added.length === 0) return false
-    work.evidence = [...evidenceOf(work), ...added].slice(-32)
+    work.evidence = [...(Array.isArray(work.evidence) ? work.evidence : []), ...added].slice(-64)
     const last = added.at(-1)
     work.checkpoint = {
       at: now,
@@ -399,11 +645,11 @@ export function install(rt) {
     const scoped = events.filter(event => Number.isInteger(event.data?.turn) && turns.has(event.data.turn))
     const evidence = evidenceFromEvents({ sessionId, actor: { sessionId }, events: scoped })
       .map(item => ({ ...item, attemptId: work.attempt.id }))
-    const known = new Set(evidenceOf(work).map(item => item.id))
+    const known = new Set((Array.isArray(work.evidence) ? work.evidence : []).map(item => item.id))
     const added = evidence.filter(item => !known.has(item.id))
     if (added.length === 0) return false
     clearRecoveryNeeded(work)
-    work.evidence = [...evidenceOf(work), ...added].slice(-32)
+    work.evidence = [...(Array.isArray(work.evidence) ? work.evidence : []), ...added].slice(-64)
     const last = added.at(-1)
     work.checkpoint = {
       at: last.at ?? Date.now(),
@@ -649,5 +895,5 @@ export function install(rt) {
     return lines.join('; ')
   }
 
-  Object.assign(rt, { workOf, openWork, closeWork, dropWork, takenWork: taken, lateWork, answerMissed, ownsWork: owns, waitsWork: waits, holdWork: hold, workAsker: askedBy, answerText, upstreamOf, sameWork, forgetBotWork: forgetBot, statusOf, waitingView, settleSubWork, subWorkRun, nameSubWork, abandonWork, abandonedWork: takeAbandoned, workBinding: binding, noteWorkEvidence: noteEvidence, bindWorkAttempt: bindAttempt, finishWorkTurn: finishTurn, reconcileWorkEvidence: reconcileEvidence })
+  Object.assign(rt, { workOf, openWork, closeWork, dropWork, takenWork: taken, lateWork, answerMissed, ownsWork: owns, waitsWork: waits, holdWork: hold, workAsker: askedBy, answerText, upstreamOf, sameWork, forgetBotWork: forgetBot, statusOf, waitingView, settleSubWork, subWorkRun, nameSubWork, abandonWork, abandonedWork: takeAbandoned, workBinding: binding, noteWorkEvidence: noteEvidence, bindWorkAttempt: bindAttempt, finishWorkTurn: finishTurn, reconcileWorkEvidence: reconcileEvidence, reviewWorkAcceptance, setWorkAcceptance, rejectWorkAcceptance })
 }

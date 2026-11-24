@@ -21,6 +21,7 @@ import { HANDOFF_ACK, HISTORY_TIMEOUT_MS, REPLY_KIND, SOURCE_KIND } from './cons
 import { assembleLlmStream } from './models.js'
 import { parseReplies, relayRange, stackReplies } from '../shared/group-replies.js'
 import { CHECKPOINT_PROMPT, STEWARD_SYSTEM, checkpointCount, checkpointTail, checkpointTailNote, checkpointText, linesFor, parseDecision, stewardRequest } from './steward.js'
+import { observeContextBudget } from './bot-context-view.js'
 import { RESUME_DELAY_MS } from './resume.js'
 import { clip, createClock, escapeRegExp, estimateTokens, reminderPrompts, splitRef, textOf } from './text.js'
 import { pageThinkingMs } from './thinking.js'
@@ -274,9 +275,17 @@ export function install(rt) {
     // A CLI's window is the one it reports; it keeps its own room for replies.
     const reported = localPart(session) ? rt.localAgentContext?.(session.id)?.size : undefined
     if (reported !== undefined) return linesFor({ window: reported, checkRatio: config.checkRatio, checkTokens: config.checkTokens })
-    const info = await ctx.llm.resolveModelInfo(route.provider, route.model)
-    return linesFor({ window: info.context?.contextWindow, reserve: route.maxTokens ?? info.defaultMaxTokens, checkRatio: config.checkRatio, checkTokens: config.checkTokens })
+    return linesForRoute(route)
   }
+
+  async function linesForRoute(route, requireDeclaredWindow = false) {
+    const info = await ctx.llm.resolveModelInfo(route.provider, route.model)
+    const window = info.context?.contextWindow
+    if (requireDeclaredWindow && !(Number.isInteger(window) && window > 0)) return undefined
+    return linesFor({ window, reserve: route.maxTokens ?? info.defaultMaxTokens, checkRatio: config.checkRatio, checkTokens: config.checkTokens })
+  }
+
+  const contextBudgetOf = session => observeContextBudget(session, { measure: measureOf, limits: route => linesForRoute(route, true) })
 
   // The backend's own entry points leave Bot Sessions alone, earlier parts and group
   // records included: automatic pressure and overflow compaction do nothing, and
@@ -1271,7 +1280,10 @@ export function install(rt) {
     if (signal.aborted) throw signal.reason
     const dir = rt.workDirOf(job)
     const intended = dir !== undefined && await rt.isFolder(dir) ? dir : rt.teamFolder()
-    const freshId = await rt.createSession(room === undefined ? name : bot === undefined ? room.name : `${name} · ${room.name}`, { dir })
+    const freshId = await rt.createSession(room === undefined ? name : bot === undefined ? room.name : `${name} · ${room.name}`, {
+      dir,
+      ...(bot === undefined ? {} : { agentPreset: bot.agentPreset, presetBinding: bot.presetBinding }),
+    })
     // The group's own Session never asks the model, so it takes the team's default; the
     // earlier part's route may be one DSH no longer serves (#1310).
     if (bot === undefined) await rt.selectRoomSession(freshId)
@@ -1301,7 +1313,7 @@ export function install(rt) {
       ;(room.segments[bot.id] ??= []).push(segment)
       room.sessions[bot.id] = freshId
     } else {
-      pushThreadPart(bot, agent.id, freshId, segment)
+      pushThreadPart(bot, agent.id, freshId, { ...segment, directWorkDir: bot.directWorkDir })
       // Read the thread again: a part the user opened meanwhile turned this one into a
       // background thread, whose successor must be recorded for its own thread.
       const successor = successorOfMovedPart(bot, freshId)
@@ -1386,6 +1398,7 @@ export function install(rt) {
   ctx.on('agent/pre-step', async function placeStep(payload, next) {
     await rt.load()
     const { agent } = payload
+    if (await rt.workspaceHold?.heldFor(agent.session)) return { kind: 'reject' }
     const past = rt.pastOwners.get(agent.id)
     if (past !== undefined && !rt.isBotSession(agent.id)) {
       await forward(past, payload.messages, threadTargetOf(agent.id, past)).catch(error => rt.warn('ds-bot: input for %s was not handed on: %s', agent.id, error))
@@ -2017,6 +2030,7 @@ export function install(rt) {
   // deterministic handoff package, no model call. While the Bot is working the fresh
   // part starts at once and the part it replaces keeps running in the background.
   async function newPart(sessionId) {
+    rt.workspaceHold?.assertUnheld(sessionId)
     await rt.load()
     const agent = await rt.resolveAgent(sessionId)
     const place = placeOf(sessionId)
@@ -2059,6 +2073,7 @@ export function install(rt) {
   // Opening an earlier part again: it becomes the current one and the part that
   // was current joins the earlier ones where it sat.
   async function switchPart(botId, partId) {
+    rt.workspaceHold?.assertUnheld(rt.chatOf(botId))
     await rt.load()
     const bot = rt.botOf(botId)
     if (bot === undefined) throw Object.assign(new Error('Unknown Bot'), { code: 'bot/not-found' })
@@ -2081,8 +2096,10 @@ export function install(rt) {
     // DSH turns away every step of an archived Session and every task aimed at it, so
     // the part leaves the archive before it becomes current.
     await ctx.workspaceRegistry.unarchiveSession(partId)
-    segments.splice(at, 1)
-    segments.splice(at, 0, { sessionId: current, endedAt: Date.now() })
+    const [picked] = segments.splice(at, 1)
+    segments.splice(at, 0, { sessionId: current, endedAt: Date.now(), directWorkDir: bot.directWorkDir })
+    if (picked.directWorkDir === undefined) delete bot.directWorkDir
+    else bot.directWorkDir = picked.directWorkDir
     bot.sessionId = partId
     rt.chatOwners.delete(current)
     rt.chatOwners.set(partId, botId)
@@ -2115,5 +2132,5 @@ export function install(rt) {
     return true
   }
 
-  Object.assign(rt, { clock, partsOf, partsOfThread, historyEntry, partLines, noteText, earlierPage, chatPage, displayItems, applySteps, followFolder, followEngine, heldBack, newPart, switchPart, sessionTokens: session => tokensOf(session), switchJobs: () => switches.values() })
+  Object.assign(rt, { clock, partsOf, partsOfThread, historyEntry, partLines, noteText, earlierPage, chatPage, displayItems, applySteps, followFolder, followEngine, heldBack, newPart, switchPart, contextBudgetOf, sessionTokens: session => tokensOf(session), switchJobs: () => switches.values() })
 }

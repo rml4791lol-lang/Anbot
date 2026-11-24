@@ -2,12 +2,14 @@
 // stdin takes user/control JSON messages; stdout streams the assistant's
 // events until a `result` ends the turn.
 import { readdirSync, realpathSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { homedir } from 'node:os'
 import { join, sep } from 'node:path'
 import { cleanEnv, findEngineExecutable, spawnAgent } from './discover.js'
 
 // Claude Code tools that only read; the rest may change files or run something.
 const READ_TOOLS = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch', 'TodoWrite', 'NotebookRead'])
+const TERMINAL_RESULTS = new Set(['success', 'error_during_execution', 'error_max_turns', 'error_max_budget_usd', 'error_max_structured_output_retries'])
 
 // Checkers that only look at a file. A review of a finished file must not stop
 // on an approval card, and reading a file is not the call worth refusing.
@@ -87,12 +89,12 @@ export class ClaudeEngine {
     return session.start({ cwd, resumeId, system, mode, mcp, model })
   }
 
-  prompt(session, blocks) {
-    return session.prompt(blocks)
+  prompt(session, blocks, { signal } = {}) {
+    return session.prompt(blocks, signal)
   }
 
   canSteer(session) {
-    return session.running === true
+    return session.activePrompt !== undefined
   }
 
   steer(session, text) {
@@ -100,7 +102,7 @@ export class ClaudeEngine {
   }
 
   cancel(session) {
-    session.cancel()
+    return session.cancel()
   }
 
   compact(session) {
@@ -144,7 +146,8 @@ class ClaudeSession {
   }
 
   write(message) {
-    try { this.child?.stdin.write(`${JSON.stringify(message)}\n`) } catch { this.dead = true }
+    if (!this.child?.stdin.writable) return false
+    try { this.child.stdin.write(`${JSON.stringify(message)}\n`); return true } catch { this.dead = true; return false }
   }
 
   async start({ cwd, resumeId, system, mode, mcp, model }) {
@@ -204,6 +207,7 @@ class ClaudeSession {
     // stream error. The failure goes into the session queue instead.
     child.stdin.on('error', (error) => {
       this.dead = true
+      this.finishPrompt(false)
       const failure = fail(`${this.engine.engine.name} stopped reading input: ${error.message}`)
       this.rejectStart?.(failure)
       this.rejectStart = undefined
@@ -211,6 +215,7 @@ class ClaudeSession {
     })
     child.on('error', (error) => {
       this.dead = true
+      this.finishPrompt(false)
       const failure = fail(`${this.engine.engine.name} could not start: ${error.message}`)
       this.rejectStart?.(failure)
       this.rejectStart = undefined
@@ -218,6 +223,7 @@ class ClaudeSession {
     })
     child.on('exit', (code, signal) => {
       this.dead = true
+      this.finishPrompt(false)
       // Claude Code deletes old conversations; resuming one that is gone exits
       // before init with this line on stderr.
       if (this.resumeId !== undefined && this.cliSessionId === undefined && /no conversation found/i.test(stderr)) this.resumeMissing = true
@@ -255,6 +261,7 @@ class ClaudeSession {
           const used = ['input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens', 'output_tokens'].reduce((sum, key) => sum + (usage[key] ?? 0), 0)
           if (used > 0) this.emit({ type: 'context', used })
         }
+        if (this.activePrompt?.cancelled) break
         for (const block of event.message?.content ?? []) {
           if (block.type === 'text') this.emit({ type: 'text', text: block.text ?? '' })
           else if (block.type === 'thinking') this.emit({ type: 'thought', text: block.thinking ?? '' })
@@ -265,6 +272,10 @@ class ClaudeSession {
       case 'control_request': {
         const request = event.request ?? {}
         if (request.subtype === 'can_use_tool') {
+          if (this.activePrompt?.cancelled) {
+            this.write(permissionResponse(event.request_id, null, request.input))
+            break
+          }
           const tool = request.tool_name ?? 'tool'
           this.emit({
             type: 'permission', id: event.request_id,
@@ -277,16 +288,20 @@ class ClaudeSession {
         }
         break
       }
-      case 'result':
+      case 'result': {
         // A resume of a conversation the CLI no longer has ends at once, before
         // init and with no turn.
         if (this.resumeId !== undefined && this.cliSessionId === undefined && event.is_error === true && (event.num_turns ?? 0) === 0) {
           this.resumeMissing = true
           // It exits next and reads no more input.
           this.dead = true
+          this.finishPrompt(false)
           this.emit({ type: 'error', error: Object.assign(new Error(`${this.engine.engine.name} no longer has this conversation`), { code: 'LOCAL_AGENT_EXIT' }) })
           break
         }
+        if (this.activePrompt === undefined || !TERMINAL_RESULTS.has(event.subtype)
+          || typeof this.cliSessionId !== 'string' || event.session_id !== this.cliSessionId) break
+        const cancelled = this.activePrompt.cancelled
         {
           // modelUsage names each model's window; the session's own model decides.
           const models = Object.entries(event.modelUsage ?? {})
@@ -294,10 +309,13 @@ class ClaudeSession {
           if (typeof size === 'number' && size > 0) this.emit({ type: 'context', size })
         }
         this.running = false
+        this.finishPrompt(true)
+        if (cancelled) break
         this.emit(event.subtype === 'success' || event.is_error !== true
           ? { type: 'done', reason: 'stop', usage: usageOf(event.usage) }
           : { type: 'error', error: new Error(event.result ?? 'the agent failed') })
         break
+      }
       default: break
     }
   }
@@ -310,32 +328,54 @@ class ClaudeSession {
     return new Promise(resolve => { this.idWaiters.push(resolve) })
   }
 
-  prompt(blocks) {
+  prompt(blocks, signal) {
+    if (signal?.aborted) return Promise.resolve(true)
+    if (this.activePrompt !== undefined) throw new Error('The previous Claude Code prompt is still stopping')
     this.running = true
-    this.write({ type: 'user', message: { role: 'user', content: claudeContent(blocks) } })
-    return Promise.resolve()
+    const active = { settled: Promise.withResolvers(), cancelled: false }
+    this.activePrompt = active
+    if (!this.write({ type: 'user', message: { role: 'user', content: claudeContent(blocks) } })) {
+      this.dead = true
+      this.finishPrompt(false)
+      this.emit({ type: 'error', error: Object.assign(new Error('Claude Code stopped reading input'), { code: 'LOCAL_AGENT_EXIT' }) })
+    }
+    return active.settled.promise
   }
 
   async steer(thread, input) {
-    this.prompt(Array.isArray(input) ? input : [{ type: 'text', text: input }])
+    return this.prompt(Array.isArray(input) ? input : [{ type: 'text', text: input }])
   }
 
   // `/compact` in stream-json runs the CLI's own compaction and ends with a result.
   compact() {
-    this.prompt([{ type: 'text', text: '/compact' }])
+    void this.prompt([{ type: 'text', text: '/compact' }])
     return true
   }
 
+  finishPrompt(terminal) {
+    const active = this.activePrompt
+    delete this.activePrompt
+    active?.settled.resolve(terminal)
+  }
+
   cancel() {
-    // The documented interrupt asks the turn to stop cleanly.
-    this.write({ type: 'control_request', request: { subtype: 'interrupt' } })
+    const active = this.activePrompt
+    if (active === undefined) return undefined
+    if (!active.cancelled) {
+      active.cancelled = true
+      this.write({ type: 'control_request', request_id: randomUUID(), request: { subtype: 'interrupt' } })
+    }
+    return active.settled.promise
   }
 
   kill() {
     this.dead = true
-    this.child?.kill('SIGTERM')
-    setTimeout(() => { try { this.child?.kill('SIGKILL') } catch {} }, 5_000).unref?.()
+    this.finishPrompt(false)
+    const child = this.child
     this.child = undefined
+    if (child === undefined) return
+    child.kill('SIGTERM')
+    setTimeout(() => { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL') }, 5_000).unref?.()
   }
 }
 

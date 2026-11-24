@@ -22,6 +22,7 @@ export const state = {
   envs: [],
   stops: 0,
   fail: false,
+  activity: 'idle',
   // The Host waits for the test to let it answer.
   held: false,
   release: () => { if (open !== undefined) { open(); open = undefined } },
@@ -52,6 +53,8 @@ export class HostProcess {
   onMessage(listener) { this.#messageListeners.add(listener); return () => this.#messageListeners.delete(listener) }
 
   send() {}
+
+  async workActivity() { return state.activity }
 
   async stop() { state.stops += 1 }
 }

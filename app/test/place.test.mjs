@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { join, parse, resolve, sep } from 'node:path'
 import { test } from 'node:test'
-import { currentRootOf, DATA_DIR, driveOf, formatBytes, freeSpace, isEmptyTree, LAYER, LOW_SHARE, pickFrom, placeOf, rootOf, runningLow, shortPath, WORKSPACE_DIR } from '../src/place.mjs'
+import { currentRootOf, DATA_DIR, defaultPlaces, driveOf, formatBytes, freeSpace, isEmptyTree, LAYER, LOW_SHARE, pickFrom, placeOf, rootOf, runningLow, shortPath, WORKSPACE_DIR } from '../src/place.mjs'
 
 const win32 = process.platform === 'win32'
 const temp = (t) => {
@@ -47,7 +47,7 @@ test('sizes read as Explorer shows them', () => {
 test('the drive letter is read from a Windows path only', () => {
   if (win32) {
     assert.equal(driveOf('C:\\Users\\me\\.ds-bot'), 'C')
-    assert.equal(driveOf('d:/DS Bot'), 'D')
+    assert.equal(driveOf('d:/Anbot'), 'D')
   } else {
     assert.equal(driveOf('/home/user/.ds-bot'), undefined)
   }
@@ -81,14 +81,14 @@ test('a drive runs low at a fifth of the free space it had when the data went th
 
 test('the picker opens in the data folder\'s parent', (t) => {
   const dir = temp(t)
-  assert.equal(pickFrom(join(dir, 'DS Bot', 'data')), join(dir, 'DS Bot'))
+  assert.equal(pickFrom(join(dir, 'Anbot', 'data')), join(dir, 'Anbot'))
 })
 
 test('the current root is the parent of a data and a workspace folder that are siblings', (t) => {
   const dir = temp(t)
   assert.equal(currentRootOf(join(dir, 'R', DATA_DIR), join(dir, 'R', WORKSPACE_DIR)), join(dir, 'R'))
   // The default places are not under one root.
-  assert.equal(currentRootOf(join(dir, '.ds-bot'), join(dir, 'DS Bot')), undefined)
+  assert.equal(currentRootOf(join(dir, '.ds-bot'), join(dir, 'Anbot')), undefined)
   assert.equal(currentRootOf(join(dir, 'R', DATA_DIR), undefined), undefined)
 })
 
@@ -113,7 +113,7 @@ test('a new or empty folder is the root itself', (t) => {
   assert.deepEqual(rootOf(empty, noProbe), { root: empty, dataDir: join(empty, DATA_DIR), workspace: join(empty, WORKSPACE_DIR), added: false })
 })
 
-test('a drive or a folder with other things in it gets a DS Bot layer', (t) => {
+test('a drive or a folder with other things in it gets a Anbot layer', (t) => {
   const dir = temp(t)
   writeFileSync(join(dir, 'notes.txt'), '')
   const layered = rootOf(dir, noProbe)
@@ -157,18 +157,18 @@ test('the place the data is in now is no change, and a place inside it is refuse
   assert.equal(rootOf(join(current.workspace, 'sub'), { ...noProbe, current }).reason, 'nested')
   // The default places: picking the home puts the root on the workspace the start made.
   const home = join(dir, 'home')
-  mkdirSync(join(home, 'DS Bot'), { recursive: true })
+  mkdirSync(join(home, 'Anbot'), { recursive: true })
   writeFileSync(join(home, 'other.txt'), '')
-  const defaults = { dataDir: join(home, '.ds-bot'), workspace: join(home, 'DS Bot') }
+  const defaults = { dataDir: join(home, '.anbot'), workspace: join(home, 'Anbot') }
   const atHome = rootOf(home, { ...noProbe, current: defaults })
   assert.equal(atHome.reason, undefined)
-  assert.equal(atHome.root, join(home, 'DS Bot'))
+  assert.equal(atHome.root, join(home, 'Anbot'))
   assert.equal(atHome.added, true)
-  assert.equal(rootOf(join(home, 'DS Bot'), { ...noProbe, current: defaults }).added, false)
+  assert.equal(rootOf(join(home, 'Anbot'), { ...noProbe, current: defaults }).added, false)
   // Once the workspace holds files, the layer the home pick would add is a used folder.
-  writeFileSync(join(home, 'DS Bot', 'theirs.txt'), '')
+  writeFileSync(join(home, 'Anbot', 'theirs.txt'), '')
   assert.equal(rootOf(home, { ...noProbe, current: defaults }).reason, 'foreign')
-  assert.equal(rootOf(join(home, 'DS Bot', 'sub'), { ...noProbe, current: defaults }).reason, 'nested')
+  assert.equal(rootOf(join(home, 'Anbot', 'sub'), { ...noProbe, current: defaults }).reason, 'nested')
   assert.equal(rootOf(join(home, 'elsewhere'), { ...noProbe, current: defaults }).reason, undefined)
 })
 
@@ -217,4 +217,14 @@ test('the write probe makes only the missing layers and takes them away again', 
   rootOf(kept, { env: {} })
   assert.equal(existsSync(kept), true)
   assert.equal(existsSync(join(kept, DATA_DIR)), false)
+})
+
+test('default locations retain an existing DS Bot workspace and prefer a configured Anbot home', () => {
+  const home = resolve('test-home')
+  const legacy = { dataDir: join(home, '.ds-bot'), workspace: join(home, 'DS Bot') }
+  const current = { dataDir: join(home, '.anbot'), workspace: join(home, 'Anbot') }
+  assert.deepEqual(defaultPlaces({ home, exists: path => path === legacy.dataDir }), legacy)
+  assert.deepEqual(defaultPlaces({ home, exists: path => path === legacy.workspace }), legacy)
+  assert.deepEqual(defaultPlaces({ home, exists: () => true }), current)
+  assert.deepEqual(defaultPlaces({ home, exists: () => false }), current)
 })

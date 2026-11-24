@@ -152,7 +152,7 @@ export function ProvidersPage({ actions, run, roster, Section, advanced = null }
 function keyState(key) {
   if (key === null) return null
   if (!key.configured) return ['missing', t('Needs an API key')]
-  return key.writable ? ['set', t('Key set')] : ['outside', t('Key set outside DS Bot')]
+  return key.writable ? ['set', t('Key set')] : ['outside', t('Key set outside Anbot')]
 }
 
 export function ProviderRow({ provider, apply, actions, roster, revision, open, onToggle }) {
@@ -242,7 +242,7 @@ export function ProviderRow({ provider, apply, actions, roster, revision, open, 
       state ? h('span', { className: 'bt-set-control' }, h('span', { className: 'bt-provider-state', 'data-state': state[0] }, state[1])) : null),
     open ? h('div', { className: 'bt-secret-edit' },
       provider.key?.writable ? h(KeyEditor, { provider, apply, actions }) : null,
-      provider.key && !provider.key.writable ? h('div', { className: 'bt-set-hint' }, t('This key comes from outside DS Bot, such as an environment variable, and cannot be changed here.')) : null,
+      provider.key && !provider.key.writable ? h('div', { className: 'bt-set-hint' }, t('This key comes from outside Anbot, such as an environment variable, and cannot be changed here.')) : null,
       modelsBlock,
       provider.removable ? h('div', { className: 'bt-secret-row-actions' },
         confirm

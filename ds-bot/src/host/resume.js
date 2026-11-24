@@ -174,7 +174,13 @@ export function install(rt) {
   let interrupted = readNotes(file, rt.warn)
 
   /** @type {Record<string, {botId:string, roomId?:string, since:number, trigger?:any, approval?:{tool:string, reason:string}, resumed?:boolean}>} */
-  let turns = {}
+  const startupTurns = interrupted.turns
+  let turns = { ...startupTurns }
+  // The delayed scan still owns these records. A turn of the same Session may start
+  // and end while it waits, but must not replace or erase the record the scan will
+  // dispatch. Once recovery replaces one, normal event tracking resumes.
+  const isStartupTurn = id => Object.hasOwn(startupTurns, id) && turns[id] === startupTurns[id]
+  const resuming = new Set()
   // A new delivery can persist before recovery runs; it must keep the old queue.
   /** @type {Record<string, {at:number, args:any}[]>} deliveries no turn has taken up, by Session */
   let queued = interrupted.queued
@@ -197,6 +203,18 @@ export function install(rt) {
       const snapshot = latest
       await writeNotes(file, snapshot)
     }).catch(error => rt.warn('ds-bot: noting running turns failed: %s', error))
+  }
+  const persistRecovery = async () => {
+    if (stopped || rt.readOnly() !== undefined) throw new Error('This host cannot reserve recovery.')
+    // Write the reservation before dispatch. A later coalesced write must see
+    // the same reservation, and cannot run ahead of this write.
+    latest = JSON.stringify({ turns, queued })
+    const reserved = writing.then(() => {
+      if (stopped || rt.readOnly() !== undefined) throw new Error('This host cannot reserve recovery.')
+      return writeNotes(file, latest)
+    })
+    writing = reserved.catch(error => rt.warn('ds-bot: reserving recovery failed: %s', error))
+    await reserved
   }
   const update = (id, change) => {
     const next = change(turns[id])
@@ -289,25 +307,33 @@ export function install(rt) {
     if (!rt.isBotSession(id)) return
     switch (event.type) {
       case 'turn/start': {
+        if (isStartupTurn(id)) break
         const owner = rt.groupOwners.get(id)
         const botId = owner?.botId ?? rt.chatOwners.get(id)
         // turns.js runs first and has already claimed or restored the trigger.
         const info = rt.live.get(id)?.info
-        update(id, () => ({ botId, ...(owner ? { roomId: owner.roomId } : {}), since: event.time ?? Date.now(), ...(info !== undefined ? { trigger: triggerOf(info) } : {}) }))
+        update(id, prior => ({ botId, ...(owner ? { roomId: owner.roomId } : {}), since: event.time ?? Date.now(), ...(info !== undefined ? { trigger: triggerOf(info) } : {}),
+          ...(info?.resumed || (prior?.resumed && resuming.has(id)) ? { resumed: true } : {}) }))
         break
       }
       case 'user/message': {
         if (event.data?.source?.kind !== SOURCE_KIND) break
+        if (isStartupTurn(id)) break
         // turns.js, installed earlier, has already claimed the turn's trigger.
         const info = rt.live.get(id)?.info
-        update(id, record => (record === undefined || record.trigger !== undefined || info === undefined ? record
-          : { ...record, trigger: triggerOf(info), ...(info.resumed ? { resumed: true } : {}) }))
+        update(id, record => {
+          if (record === undefined) return record
+          const trigger = record.trigger === undefined && info !== undefined ? triggerOf(info) : undefined
+          const resumed = event.data.source.resumed === true && !record.resumed
+          return trigger || resumed ? { ...record, ...(trigger ? { trigger } : {}), ...(resumed ? { resumed: true } : {}) } : record
+        })
         break
       }
       case 'turn/end': {
         // DSH stops every turn as it shuts down; that one is picked up at the next start.
         const reason = event.data?.reason
         if (reason?.kind === 'aborted' && reason.reason?.kind === 'disposed') break
+        if (isStartupTurn(id)) break
         update(id, () => undefined)
         break
       }
@@ -318,37 +344,77 @@ export function install(rt) {
   rt.noteApproval = (sessionId, approval) => update(sessionId, record => (record === undefined ? record
     : approval === undefined ? (({ approval: _, ...rest }) => rest)(record) : { ...record, approval }))
 
-  async function resumeTurn(sessionId, record) {
+  function targetForResume(sessionId, record) {
+    if (record.roomId === undefined) return rt.chatOf(record.botId)
+    return rt.roomOf(record.roomId)?.sessions?.[record.botId] ?? sessionId
+  }
+
+  async function resumeTurn(sessionId, record, { manual = false } = {}) {
     const bot = rt.botOf(record.botId)
     if (bot === undefined) return
+    if (turns[sessionId] !== record || resuming.has(sessionId)) return false
+    const target = targetForResume(sessionId, record)
+    if (target === undefined) return
+    const room = record.roomId === undefined ? undefined : rt.roomOf(record.roomId)
+    if (record.roomId !== undefined && (!room || !room.members.includes(bot.id))) return
+    resuming.add(sessionId)
+    try {
+      return await dispatchRecovery(sessionId, record, target, bot, room, manual)
+    } finally { resuming.delete(sessionId) }
+  }
+
+  async function dispatchRecovery(sessionId, record, target, bot, room, manual) {
+    // A restarted turn stays in its own live part when it still belongs to the Bot. This
+    // matters for a background part, whose foreground chat is another Session.
+    const ownPart = room === undefined && rt.selfOf(sessionId) === bot.id && rt.isBotSession(sessionId) ? sessionId : undefined
+    const destination = ownPart ?? target
+    const targetAgent = await rt.resolveAgent(destination)
+    if (targetAgent.status === 'running' || turns[sessionId] !== record) return false
+    const held = await rt.workspaceHold?.heldFor(targetAgent.session)
+    if (turns[sessionId] !== record) return false
+    if (held || (!manual && (record.resumed || record.paused))) {
+      const paused = held ? 'worktree-held' : record.paused ?? 'limit-reached'
+      update(sessionId, () => ({ ...record, paused }))
+      if (room && !record.paused && !held) await rt.postToRoom(room, bot, '', { resumed: true, quiet: true, again: true })
+      return false
+    }
+    const reserved = { ...record, resumed: true, paused: 'limit-reached' }
+    update(sessionId, () => reserved)
+    await persistRecovery()
+    if (turns[sessionId] !== reserved) return false
+    if (await rt.workspaceHold?.heldFor(targetAgent.session) || turns[sessionId] !== reserved) return false
     const text = resumeText(record)
     const identity = {
       ...(record.trigger?.taskId ? { taskId: record.trigger.taskId } : {}),
       ...(record.trigger?.attemptId ? { attemptId: record.trigger.attemptId } : {}),
     }
-    if (record.roomId !== undefined) {
-      const room = rt.roomOf(record.roomId)
-      if (room === undefined || !room.members.includes(bot.id)) return
-      await rt.postToRoom(room, bot, '', { resumed: true, quiet: true, ...(record.resumed ? { again: true } : {}) })
-      // A turn already picked up once and cut off again stays stopped: a restart loop
-      // must not run it forever.
-      if (record.resumed) return
-      await rt.deliver({ toId: bot.id, sessionId: room.sessions?.[bot.id] ?? sessionId, role: 'room', roomId: room.id, note: 'picking up after a restart', resumed: true, text, ...identity, ...(record.trigger?.askedBy ? { askedBy: record.trigger.askedBy } : {}) })
-      return
+    if (room !== undefined) {
+      await rt.postToRoom(room, bot, '', { resumed: true, quiet: true })
+      await rt.deliver({ toId: bot.id, sessionId: destination, role: 'room', roomId: room.id, note: 'picking up after a restart', resumed: true, text, ...identity, ...(record.trigger?.askedBy ? { askedBy: record.trigger.askedBy } : {}) })
+      update(sessionId, current => current === reserved ? undefined : current)
+      return true
     }
-    if (record.resumed) return
-    // The turn ran in a part that is still one of the Bot's: it goes on there, not in the
-    // foreground chat when that part is a background one. A part gone since (archived and
-    // dropped) falls back to the Bot's current chat.
-    const ownPart = rt.selfOf(sessionId) === bot.id && rt.isBotSession(sessionId) ? { sessionId } : {}
     const trigger = record.trigger
     if ((trigger?.role === 'request' || trigger?.role === 'stopped') && trigger.senderSessionId && trigger.audience !== 'user' && rt.botOf(trigger.senderSessionId)) {
       // The sender still waits for this turn's answer, so it goes on under the same exchange.
-      await rt.deliver({ fromId: trigger.senderSessionId, toId: bot.id, ...ownPart, ...(trigger.senderPart ? { fromPart: trigger.senderPart } : {}), role: trigger.role, ...(trigger.exchangeId ? { exchangeId: trigger.exchangeId } : {}), ...(trigger.senderRoomId ? { fromRoomId: trigger.senderRoomId } : {}), ...identity, resumed: true, text })
-      return
+      await rt.deliver({ fromId: trigger.senderSessionId, toId: bot.id, sessionId: destination, ...(trigger.senderPart ? { fromPart: trigger.senderPart } : {}), role: trigger.role, ...(trigger.exchangeId ? { exchangeId: trigger.exchangeId } : {}), ...(trigger.senderRoomId ? { fromRoomId: trigger.senderRoomId } : {}), ...identity, resumed: true, text })
+      update(sessionId, current => current === reserved ? undefined : current)
+      return true
     }
     // A turn that went on with work another Bot asked for still owes that Bot its answer.
-    await rt.deliver({ toId: bot.id, ...ownPart, role: 'resume', resumed: true, text, ...(trigger?.work ? { work: trigger.work } : {}), ...identity })
+    await rt.deliver({ toId: bot.id, sessionId: destination, role: 'resume', resumed: true, text, ...(trigger?.work ? { work: trigger.work } : {}), ...identity })
+    update(sessionId, current => current === reserved ? undefined : current)
+    return true
+  }
+
+  rt.interruptedTurnState = sessionId => turns[sessionId]?.paused ?? null
+  rt.continueInterrupted = async botId => {
+    const sessionId = rt.chatOf(botId)
+    const record = turns[sessionId]
+    if (!record?.paused || record.botId !== botId) return false
+    const accepted = await resumeTurn(sessionId, record, { manual: true })
+    if (!accepted) throw Object.assign(new Error('The interrupted Session cannot resume yet.'), { code: 'bot/busy' })
+    return true
   }
 
   // Where a queued note goes now: its Session if it still is one, else the
@@ -369,6 +435,7 @@ export function install(rt) {
     if (fresh.length === 0) return
     const target = sessionFor(sessionId, fresh[0].args)
     const agent = await rt.resolveAgent(target)
+    if (await rt.workspaceHold?.heldFor(agent.session)) return
     // Every exchange of a folded batch is in its one message: that message in the
     // inbox means the whole batch already has a turn to run in.
     const waiting = new Set([...(agent.inbox?.nextStep ?? []), ...(agent.inbox?.nextTurn ?? [])].flatMap(message => idsOf(message.source)))
@@ -452,6 +519,7 @@ export function install(rt) {
     // The turn was cut off before it finished: the work is picked up again, as after
     // a restart that cut it off.
     if (reason === undefined || reason.kind === 'interrupted') {
+      if (turns[sessionId] === undefined) update(sessionId, () => record)
       await resumeTurn(sessionId, record)
       return
     }
@@ -531,7 +599,6 @@ export function install(rt) {
     // Every note is noted again as this run's own before anything is written: a start
     // that stops part way through picking them up leaves them all on disk, and the next
     // start picks up what this one did not settle. Each is dropped once it is settled.
-    turns = { ...noted }
     // What the last run still had on the way is noted again first, under the
     // Session it would go to now: nothing is cleared before it is handed over.
     // A Bot that is gone takes its notes with it; what a turn already read here
@@ -574,7 +641,7 @@ export function install(rt) {
           continue
         }
         // Whatever the log could tell, the note is done with: the turn is not resumed.
-        update(sessionId, () => undefined)
+        update(sessionId, current => current === record ? undefined : current)
         continue
       }
       // Still running: the note stays as it is, as if it had started here.
@@ -611,11 +678,9 @@ export function install(rt) {
     taken = undefined
     for (const [sessionId, record] of cut) {
       // A turn picked up here that fails keeps its note: the next start has it again.
-      const picked = await resumeTurn(sessionId, record).then(() => true, (error) => {
+      await resumeTurn(sessionId, record).catch(error => {
         rt.warn('ds-bot: picking up the turn of %s failed: %s', sessionId, error)
-        return false
       })
-      if (picked) update(sessionId, () => undefined)
     }
     // What a group's members were asked for and will not pick up is settled now.
     await rt.settleRoomBatches?.()

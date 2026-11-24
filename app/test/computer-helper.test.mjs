@@ -14,7 +14,7 @@ const binDir = (runtimeDir, arch = 'arm64') => join(runtimeDir, 'app.asar.unpack
 function fixture(t, bundle = BUNDLE, content = 'helper v1') {
   const root = mkdtempSync(join(tmpdir(), 'ds-bot-computer-helper-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
-  const runtimeDir = join(root, 'DS Bot.app', 'Contents', 'Resources')
+  const runtimeDir = join(root, 'Anbot.app', 'Contents', 'Resources')
   const dir = binDir(runtimeDir)
   mkdirSync(dirname(join(dir, bundle, EXECUTABLE)), { recursive: true })
   writeFileSync(join(dir, bundle, EXECUTABLE), content)
@@ -94,7 +94,7 @@ const packaged = fileURLToPath(new URL('../node_modules/@deepseek-ai/dsh-experim
 test('a real copy keeps DeepSeek\'s signature and drops quarantine', { skip: process.platform !== 'darwin' || !existsSync(join(packaged, `darwin-${process.arch}`, 'current.json')) }, async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'ds-bot-computer-helper-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
-  const runtimeDir = join(root, 'DS Bot.app', 'Contents', 'Resources')
+  const runtimeDir = join(root, 'Anbot.app', 'Contents', 'Resources')
   const dir = binDir(runtimeDir, process.arch)
   mkdirSync(dirname(dir), { recursive: true })
   cpSync(join(packaged, `darwin-${process.arch}`), dir, { recursive: true, verbatimSymlinks: true })

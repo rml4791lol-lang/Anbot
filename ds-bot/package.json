@@ -1,7 +1,7 @@
 {
   "name": "ds-bot",
-  "version": "0.3.8",
-  "description": "DS Bot: a team of long-lived Bots for DeepSeek Harness, with Main Bots, Bot-to-Bot messages and group chats",
+  "version": "0.3.9",
+  "description": "Anbot: a team of long-lived Bots for DeepSeek Harness, with Main Bots, Bot-to-Bot messages and group chats",
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",
@@ -11,13 +11,13 @@
     "multi-agent",
     "agents"
   ],
-  "homepage": "https://github.com/Fei2411/DS-Bot#readme",
+  "homepage": "https://github.com/rml4791lol-lang/Anbot#readme",
   "bugs": {
-    "url": "https://github.com/Fei2411/DS-Bot/issues"
+    "url": "https://github.com/rml4791lol-lang/Anbot/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Fei2411/DS-Bot.git",
+    "url": "git+https://github.com/rml4791lol-lang/Anbot.git",
     "directory": "ds-bot"
   },
   "license": "Apache-2.0",
@@ -56,8 +56,10 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-scope": "*",
+    "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/dsh-tools": "*",
     "@deepseek-ai/dsh-typert-protocol": "*",
     "@deepseek-ai/dsh-web": "*"
@@ -88,12 +90,22 @@
     "pngjs": "7.0.0",
     "semver": "^7.8.6",
     "undici": "8.11.2",
-    "ws": "8.18.3"
+    "ws": "8.18.3",
+    "@deepseek-ai/cordis-plugin-include": "1.1.0",
+    "js-yaml": "4.3.2"
   },
   "allowScripts": {
     "esbuild": true
   },
   "bin": {
     "ds-bot": "./bin/ds-bot-doctor.mjs"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-agent": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-session": {
+      "optional": true
+    }
   }
 }

@@ -39,7 +39,7 @@ export function writeStartFrame(file, change) {
     renameSync(`${file}.tmp`, file)
     return true
   } catch (error) {
-    console.error('DS Bot: the start window\'s theme was not saved:', error)
+    console.error('Anbot: the start window\'s theme was not saved:', error)
     return false
   }
 }

@@ -13,7 +13,7 @@ import { LocalAgentAdapter } from './adapter.js'
 import { AcpEngine } from './acp.js'
 import { CodexEngine } from './codex.js'
 import { ClaudeEngine } from './claude.js'
-import { ENGINES, customRoute, isLocalAgentRoute, validateCustom } from './engines.js'
+import { ENGINES, confirmsPromptStop, customRoute, engineOf as engineOfRoute, isLocalAgentRoute, validateCustom } from './engines.js'
 import { cleanEnv, findEngineExecutable, findExecutable, probeSignIn, probeVersion, refreshSearchDirs } from './discover.js'
 
 const SIGNED_IN_TTL_MS = 60_000
@@ -208,10 +208,29 @@ export function install(rt) {
   // The Settings page's endpoints.
 
   const detected = () => [...found.values()].map(entry => ({ route: entry.route, name: entry.name, path: entry.path, version: entry.version ?? null, signIn: entry.signIn, signedIn: entry.signedIn ?? null, capabilities: ENGINES[entry.route].capabilities }))
-  const customView = () => store().custom.map(agent => ({ ...agent, route: customRoute(agent.id) }))
+  const customView = () => store().custom.map(agent => ({
+    ...agent,
+    route: customRoute(agent.id),
+    installed: findExecutable(agent.command) !== undefined,
+  }))
 
   // One CLI's models: the first look starts that CLI, later ones read what it said.
   const localAgentModels = route => (servedRoutes().includes(route) ? adapter.probeModels(route) : Promise.resolve([]))
+
+  /** @returns {Promise<import('../harness-contracts.js').CliObservation | null>} */
+  async function observeLocalAgent(route) {
+    const spec = engineOfRoute(route, customAgents())
+    if (!spec) return null
+    const path = findExecutable(spec.command)
+    const cached = found.get(route)
+    if (path === undefined) return { name: spec.name, installed: false, signedIn: null }
+    if (cached?.path === path && cached.signedInAt !== undefined && Date.now() - cached.signedInAt < SIGNED_IN_TTL_MS) {
+      return { name: spec.name, installed: true, signedIn: cached.signedIn }
+    }
+    const signedIn = await probeSignIn(path, spec.signedIn)
+    if (cached?.path === path) Object.assign(cached, { signedIn, signedInAt: Date.now() })
+    return { name: spec.name, installed: true, signedIn }
+  }
 
   async function localAgentsEndpoint(endpoint, body) {
     switch (endpoint) {
@@ -268,6 +287,7 @@ export function install(rt) {
   Object.assign(rt, {
     isLocalAgentRoute, isLocalAgentRef, engineOf, engineOfBot, localAgentOf, isLocalAgentSession,
     localAgentRoutes: allRoutes, localAgentsEndpoint, localAgentModels,
+    observeLocalAgent,
     engineNameOf: ref => (isLocalAgentRef(ref) ? adapter.providerInfo(splitRef(ref).provider).name : `the model ${ref}`),
     closeLocalAgentSession: (sessionId, reason) => adapter.closeSession(sessionId, reason),
     // The parts module's view of a CLI session's context, and the requests it makes of
@@ -277,6 +297,9 @@ export function install(rt) {
     localAgentCompact: (sessionId, signal) => adapter.compact(String(sessionId), signal),
     localAgentNote: (sessionId, text, signal) => adapter.note(String(sessionId), text, signal),
     localAgentAsk: (sessionId, request) => adapter.ask(String(sessionId), request),
+    localAgentCanConfirmStop: route => confirmsPromptStop(engineOfRoute(route, customAgents())?.kind),
+    stopLocalAgentForTakeover: sessionId => adapter.stopForTakeover(sessionId),
+    localAgentHasUnsettledPrompt: sessionId => adapter.hasUnsettledPrompt(sessionId),
     localAgentBadge: (ref) => {
       const provider = splitRef(ref)?.provider
       return provider !== undefined && isLocalAgentRoute(provider) ? provider : undefined
