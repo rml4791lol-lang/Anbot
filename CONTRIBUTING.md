@@ -11,7 +11,7 @@ Collaborators of this repository push branches here and open pull requests into 
 ## The rules that matter most
 
 1. **Build on DSH as the only runtime and mutable substrate.** The Bot features are a DSH plugin: use the plugin APIs that DSH documents (Cordis services, the plugin client entry, profile patches). The desktop app starts DSH only through the entry points that DSH documents (`@deepseek-ai/dsh/profile-boot`, the `dsh` command). General Session, Turn, Tool and UI contracts may be changed in an independent DSH branch when they are shared concerns; Anbot remains the product layer. Any DSH change needs a pinned version, cross-repo tests and a rollback path. Never patch an installed DSH in place, and never add a second runtime.
-2. **Bots run in DSH Sessions.** A Bot keeps its identity while its work runs in DSH Sessions: one for its own chat, one for each group, a fresh one when the context fills up. Every turn goes through the normal DSH agent loop, tools and model routes. Do not add a second agent runtime.
+2. **Bots run in DSH Sessions.** Each Bot has its own saved profile (including model, thinking level, instructions, folder and permissions), distinct from the host's DSH profile. Its chat, group work and background tasks use separate Sessions; long context can be condensed in place or continued in a fresh part. Every turn goes through the normal DSH agent loop, tools and model routes. Model Bots use DSH's agent loop and model service; local-agent routes delegate tools, model access and context to the CLI. Auxiliary model calls bypass the agent loop, and DeepSeek OCR/TTS/ASR and web search/fetch make direct service requests. Do not assume all requests use DSH model routing, and do not add a second agent runtime.
 3. **No real secrets anywhere.** Do not commit API keys, tokens, cookies, `DSH_HOME` folders, logs or screenshots with personal data. The tests and the test bench use a scripted mock model and need no key.
 4. **Only original material.** Do not copy code, text, icons, logos or other graphics from other products or websites. Code under a license compatible with Apache 2.0 is the only exception: say where it comes from and add its notice to a `NOTICE` file. This rule is about Anbot's own interface. To name a third-party product that Anbot connects to (for example the agent CLI a Bot runs on), use that product's official logo, and list it in `NOTICE` with its source and owner.
 5. **Every change is tested.** Run the unit tests and the client check for every change (see [Test a change](#test-a-change)).
@@ -51,6 +51,8 @@ Anyone on the team can do any kind of work: triage, bug fixes, features, the int
 | Priority | `P0` crash, data loss or cannot use · `P1` hurts daily use · `P2` ordinary bug or feature · `P3` suggestion or narrow case |
 | Area | `area/host` server side (`index.js`, `src/host/`) · `area/client` interface (`src/client/`) · `area/group` group chats, mentions, Bot-to-Bot messages · `area/memory` memory, conversation parts, context · `area/browser` Bot browser, page reading, web search · `area/build` CI, release, scripts, test bench · `area/docs` |
 | Flow | `maintainer` waits for the maintainer · `needs-info` waits for the reporter · `upstream` the cause is in DSH or another plugin · `duplicate` · `auto-found` found by automated testing |
+| PR Agent | `agent/antigravity` · `agent/claude-code` · `agent/codex` · `agent/devin` · `agent/dsbot` · `agent/other` (which AI agent opened the PR) |
+| PR Review | `review/approved` · `review/changes-requested` · `review/needs-decision` · `review/re-review` (mutually exclusive) · `reviewed-by/<agent>` (which AI agent reviewed the PR) |
 
 An issue that spans several areas, or none, gets no area label.
 
@@ -58,7 +60,7 @@ An issue that spans several areas, or none, gets no area label.
 
 1. Open the pull request into `dev` and fill in the template. Link the issue with `Fixes #<number>`; a bug fix always names the bug it fixes. When opening a pull request from a fork, keep **Allow edits from maintainers** turned on so that the maintainer can resolve conflicts or make small adjustments before merging.
 2. Write one sentence about what users will notice in the **Changelog** field of the template, or "none". Do not edit `CHANGELOG.md`: the maintainer writes it from these sentences at release time.
-3. When CI passes, merge it yourself with **Create a merge commit**, then delete the branch. A review is not required; if you want one, ask a teammate in the pull request.
+3. When CI passes and independent review is approved (`review/approved`), merge into `dev` with **Create a merge commit**, then delete the branch.
 4. A fix that is merged into `dev` does not close its issue: `Fixes #<number>` acts only on the default branch. The issue stays open until the release, which means "fixed in `dev`, not released yet".
 
 Keep one pull request to one issue. Split a large change into several pull requests.
@@ -70,7 +72,7 @@ Keep one pull request to one issue. Split a large change into several pull reque
 
 ### Releases (maintainer)
 
-1. In a pull request into `dev`, set the version in `ds-bot/package.json` and write the `CHANGELOG.md` section from the Changelog sentences of the merged pull requests.
+1. In a pull request into `dev`, update the version in `ds-bot/package.json`, `app/package.json`, and the `README.md` / `README.zh.md` badges, and write the `CHANGELOG.md` section from the Changelog sentences of the merged pull requests.
 2. Open a pull request from `dev` into `main` titled `release: vX.Y.Z`. List every `Fixes #<number>` of the release in its description, so that these issues close when it is merged.
 3. Before you merge it, run the [release checklist](docs/dev/release-checklist.md) (in Chinese) on a real Windows machine, and on macOS when the change touches it, and post the result in the pull request. Merge it with a merge commit and publish a GitHub release `vX.Y.Z` on `main`, with "Set as the latest release" turned off: the workflow marks it latest itself once the installers, `SHA256SUMS.txt` and the download table are attached. The Release workflow checks that the tag matches the version and is on `main`, runs the checks and publishes the package to npm (a pre-release version under the npm tag `next`). Do not run `npm publish` by hand.
 4. For a hotfix, start `fix/hot-<name>` from `main`, open the pull request into `main`, release a patch version, then merge `main` into `dev`.
@@ -113,13 +115,16 @@ The `@deepseek-ai/*` packages are peer dependencies: in a real install, the DSH 
 
 | Path | What it is |
 |---|---|
-| `ds-bot/index.js`, `ds-bot/src/host/` | The server side: Bot roster and store, tools, turns and delivery, group chats, conversation parts and the search index, images, the Bot browser bridge, the `api/bot` channel |
-| `ds-bot/src/client/` | The browser side: sidebar, chat, panels and dialogs, themes, characters, the Bot browser panel |
-| `ds-bot/client.js` | Generated from `src/client/` by `scripts/build-client.mjs`. It is committed, so that Git installs need no build step |
-| `ds-bot/web-search.js` | The `auto` web-search provider. It does not depend on the Bot team code |
+| `ds-bot/index.js`, `ds-bot/src/host/` | The server side: Bot roster and store, tools, turns and delivery, background tasks, group chats and ledger, memory, capabilities and feature packs, connectors, IM, phone and MCP gateways, the `api/bot` channel |
+| `ds-bot/src/client/` | The browser side: sidebar, chat, settings console, panels and dialogs, themes, 8-language i18n, characters, the Bot browser panel |
+| `ds-bot/client.js` | Generated from `src/client/` by `scripts/build-client.mjs`. Committed so that Git installs need no build step |
+| `ds-bot/web-search.js` | The `auto` web-search provider. Independent of the Bot team code |
 | `ds-bot/cordis.patch.yml` | The profile patch that the plugin brings |
-| `ds-bot/test/` | Unit tests and fixtures |
-| `ds-bot/dev/` | The DSH packages for the unit tests (`harness/`), the mock model, the test bench, the smoke test, the character generator, the Desktop scripts for Linux, and two tools for real models: the steward evaluation and a logging pass-through |
+| `ds-bot/test/`, `ds-bot/dev/` | Unit tests, browser tests, mock model, test bench, smoke test, character generator and evaluation tools |
+| `app/` | Standalone desktop app (Electron main process, start window, import and move-data, auto-updates, installers) |
+| `mobile/`, `link/` | Mobile app (Expo React Native + browser remote export) and encrypted relay transport |
+| `browser-plugins/`, `docker/` | Optional interactive browser plugins (`refs` / `script` / `task`) and Docker deployment |
+| `docs/` | [Docs index](docs/README.md), vision, UI standard, decided design plans and release checklist |
 
 ## Test a change
 
@@ -132,7 +137,7 @@ node scripts/build-client.mjs --check  # client.js matches src/client
 npm run lint                           # oxlint
 ```
 
-CI runs the same three checks on every pull request, on Linux and Windows. It also scans the tracked files for keys, tokens, personal paths and e-mail addresses, and for material that must stay local. To run the scan yourself, from the repository root:
+CI runs `npm test` (including the generated-bundle checks) on Linux and Windows, and `npm run lint` on Linux, for pull requests that touch `ds-bot/`, `link/`, or `start.ps1` (and always on `dev`/`main`). It also scans the tracked files for keys, tokens, personal paths and e-mail addresses, and for material that must stay local. To run the scan yourself, from the repository root:
 
 ```sh
 mkdir -p /tmp/ds-bot-tree && git archive HEAD | tar -x -C /tmp/ds-bot-tree && node scripts/scan.mjs /tmp/ds-bot-tree
@@ -145,6 +150,13 @@ For a change to the server side (`index.js`, `src/host/`), also run the smoke te
 ```sh
 CONTEXT_WINDOW=100000 CHECK_RATIO=0.45 dev/bench.sh smoke 3096 8796 reset && node dev/smoke.mjs smoke 3096
 dev/bench.sh smoke 3096 8796 stop
+```
+
+For a change to the Bot browser (`src/host/browser/`), also run its tests. They drive a real Chromium and check what a Bot may not do on a page without the user (pay, delete, post, upload) and that Bots do not share cookies. CI runs them on Linux. Install Chromium once, then run them:
+
+```sh
+npx playwright-core install --only-shell chromium
+npm run test:browser
 ```
 
 To try the plugin by hand, start a bench and open the address that it prints:
@@ -171,7 +183,7 @@ For a change to the Bot browser, check it in DSH Desktop. On Linux, the scripts 
 
 ## Report a problem
 
-The easiest way is from Anbot itself: open **Settings → Feedback**, write what happened and select **Report on GitHub**. It opens a new issue with the Anbot and DSH versions, your system, the models and the recent errors already filled in. **Copy** puts the same text on the clipboard, and **Download** saves the full error log (`<DSH_HOME>/bot/logs/diagnostics.jsonl`).
+The easiest way is from Anbot itself: open **Settings → About Anbot → Feedback**, write what happened and select **Report on GitHub**. It opens a new issue with the Anbot and DSH versions, your system, the models and the recent errors already filled in. **Copy** puts the same text on the clipboard, and **Download** saves the full error log (`<DSH_HOME>/bot/logs/diagnostics.jsonl`).
 
 If you open an issue by hand, include:
 

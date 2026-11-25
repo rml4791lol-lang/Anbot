@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JsonRpcPeer, wireProcess, EventQueue } from './jsonrpc.js'
-import { cleanEnv, findEngineExecutable, spawnAgent, terminateChild } from './discover.js'
+import { PROBE_FORCE_KILL_AFTER_MS, cleanEnv, findEngineExecutable, probeEnv, spawnAgent, terminateChild } from './discover.js'
 import { acpMode } from './engines.js'
 
 const CLIENT = { name: 'ds-bot', version: '1' }
@@ -15,6 +15,7 @@ const CLIENT = { name: 'ds-bot', version: '1' }
 const MCP_SERVER = 'dsbot'
 const AUTH_ERROR = /not signed in|not logged in|login required|unauthorized|authentication/i
 const TIMEOUT_ERROR = /timed out|timeout/i
+const CANCEL_ACK_TIMEOUT_MS = 3_000
 const BUNDLED_MCP_STDIO = join(dirname(fileURLToPath(import.meta.url)), 'mcp-stdio.js')
 
 const extractedBridges = new Map()
@@ -36,6 +37,8 @@ export function stdioBridgePath(source = BUNDLED_MCP_STDIO) {
 const EFFORT_ORDER = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 const EFFORT_NAMES = { off: 'Off', minimal: 'Minimal', low: 'Low', medium: 'Medium', high: 'High', xhigh: 'Extra high', max: 'Max' }
 const STOP_REASONS = new Set(['end_turn', 'max_tokens', 'max_turn_requests', 'refusal', 'cancelled'])
+const TOOL_CALL_CACHE_MAX = 100
+const REPORTED_TOOL_CALLS_MAX = 1_000
 
 // Events a driver reports, normalized for the adapter:
 // {type:'text'|'thought',text} | {type:'activity',text} (one compact line of the
@@ -44,12 +47,15 @@ const STOP_REASONS = new Set(['end_turn', 'max_tokens', 'max_turn_requests', 're
 // {type:'context',used?,size?} (how full the CLI's own context is) |
 // {type:'compaction',status:'started'|'completed'|'failed'}
 export class AcpEngine {
-  constructor(route, engine, { findExecutable, defaultEfforts = new Map(), sessionEfforts = new Map() }) {
+  constructor(route, engine, { findExecutable, defaultEfforts = new Map(), sessionEfforts, cancelAckTimeoutMs = CANCEL_ACK_TIMEOUT_MS, onListedUpdate } = {}) {
     this.route = route
     this.engine = engine
     this.findExecutable = findExecutable
     this.defaultEfforts = defaultEfforts
-    this.sessionEfforts = sessionEfforts
+    this.ownsSessionEfforts = sessionEfforts === undefined
+    this.sessionEfforts = sessionEfforts ?? new Map()
+    this.cancelAckTimeoutMs = cancelAckTimeoutMs
+    this.onListedUpdate = onListedUpdate
     this.hasModelConfig = false
     this.child = undefined
     this.peer = undefined
@@ -58,24 +64,76 @@ export class AcpEngine {
     this.caps = {}
     // The modes, options and models this CLI listed last, for a reply that lists none.
     this.listed = { modes: [], configOptions: [], models: [] }
+    // Monotonic generation incremented on live updates and cache invalidations so a
+    // slow background probe never overwrites fresher capabilities or models.
+    this.listedEpoch = 0
     // The commands each agent session lists, by the agent's session id.
     this.commands = new Map()
     // For CLIs whose commands follow their process cwd (`cwdPerProcess`): one
     // worker AcpEngine per resolved workspace folder.
     this.workers = new Map()
     this.sessionWorkers = new Map()
-    this.ephemeral = false
+    this.pendingOpens = new Map()
+    this.probeWorkers = new Set()
+    // Lifecycle state for a child worker owned by a `cwdPerProcess` coordinator:
+    // a worker stays alive iff !retired && (inFlight > 0 || committed.size > 0 || keepWarm).
+    this.committed = new Map()
+    this.inFlight = 0
+    this.keepWarm = false
+    this.retired = false
   }
 
   activeWorker() {
-    return [...this.workers.values()].find(worker => worker.peer !== undefined)
+    let fallback
+    for (const worker of this.workers.values()) {
+      if (worker.retired || worker.peer === undefined) continue
+      if (worker.keepWarm) return worker
+      fallback ??= worker
+    }
+    return fallback
+  }
+
+  hasPersistentSession(worker) {
+    for (const entry of worker.committed.values()) if (!entry.ephemeral) return true
+    return false
+  }
+
+  detachWorker(worker) {
+    if (worker.retired) return false
+    worker.retired = true
+    for (const [key, entry] of this.workers) if (entry === worker) this.workers.delete(key)
+    return true
+  }
+
+  maybeRetireWorker(worker) {
+    if (worker.retired || worker.inFlight > 0 || worker.committed.size > 0 || worker.keepWarm) return false
+    return this.detachWorker(worker)
+  }
+
+  uncommitSession(worker, dshSessionId, { forget = false, expectedSession } = {}) {
+    const entry = worker.committed.get(dshSessionId)
+    if (entry !== undefined && (expectedSession === undefined || entry.session === expectedSession)) {
+      worker.committed.delete(dshSessionId)
+      if (this.sessionWorkers.get(dshSessionId) === worker) this.sessionWorkers.delete(dshSessionId)
+      if (forget && !entry.ephemeral && !this.hasPersistentSession(worker)) worker.keepWarm = false
+    }
+    if (expectedSession === undefined || worker.sessions.get(dshSessionId) === expectedSession) {
+      worker.forget(dshSessionId)
+    }
+    return this.maybeRetireWorker(worker) ? worker : undefined
   }
 
   spawnWorker(cwd) {
     return new AcpEngine(
       this.route,
       { ...this.engine, cwdPerProcess: false, ...(cwd ? { spawnCwd: cwd } : {}) },
-      { findExecutable: this.findExecutable, defaultEfforts: new Map(this.defaultEfforts), sessionEfforts: this.sessionEfforts },
+      {
+        findExecutable: this.findExecutable,
+        defaultEfforts: new Map(this.defaultEfforts),
+        sessionEfforts: this.sessionEfforts,
+        cancelAckTimeoutMs: this.cancelAckTimeoutMs,
+        onListedUpdate: update => this.remember(update),
+      },
     )
   }
 
@@ -83,11 +141,12 @@ export class AcpEngine {
     return session?._worker ?? (dshSessionId !== undefined ? this.sessionWorkers.get(dshSessionId) : undefined)
   }
 
-  async ensure() {
+  async ensure({ probe = false } = {}) {
+    if (this.retired) throw Object.assign(new Error(`${this.engine.name} worker is closed`), { code: 'LOCAL_AGENT_EXIT' })
     // A peer exists before its handshake has finished; other callers wait for it.
     if (this.starting !== undefined) return this.starting
     if (this.peer !== undefined) return this.peer
-    const starting = this.startPeer()
+    const starting = this.startPeer({ probe })
     this.starting = starting
     try {
       return await starting
@@ -96,13 +155,14 @@ export class AcpEngine {
     }
   }
 
-  async startPeer() {
+  async startPeer({ probe = false } = {}) {
     const bin = findEngineExecutable(this.engine, name => this.findExecutable(name))
     if (bin === undefined) throw Object.assign(new Error(`${this.engine.name} is not installed`), { code: 'NO_ADAPTER' })
+    this.bin = bin
     const spawnCwd = this.engine.spawnCwd && existsSync(this.engine.spawnCwd) ? this.engine.spawnCwd : undefined
     const child = spawnAgent(bin, this.engine.args ?? [], {
       ...(spawnCwd !== undefined ? { cwd: spawnCwd } : {}),
-      env: cleanEnv(this.engine.env ?? {}),
+      env: (probe ? probeEnv : cleanEnv)(this.engine.env ?? {}),
       stdio: ['pipe', 'pipe', 'inherit'],
       windowsHide: true,
     })
@@ -156,21 +216,32 @@ export class AcpEngine {
       if (this.child === child) {
         this.child = undefined
         this.peer = undefined
-        terminateChild(child)
+        terminateChild(child, probe ? { forceKillAfterMs: PROBE_FORCE_KILL_AFTER_MS } : undefined)
       }
       throw error
     }
   }
 
-  sessionFor(dshSessionId) {
-    let session = this.sessions.get(dshSessionId)
-    // A session whose process exited keeps its queue and, with it, the pump
-    // still waiting there: a reopened session needs a fresh one.
-    if (session === undefined || session.dead) {
-      const queue = new EventQueue()
-      session = { dshSessionId, acpSessionId: undefined, dead: false, modes: [], toolCalls: new Map(), push: event => queue.push(event), next: () => queue.next() }
-      this.sessions.set(dshSessionId, session)
+  createSession(dshSessionId) {
+    const queue = new EventQueue()
+    return {
+      dshSessionId,
+      acpSessionId: undefined,
+      dead: false,
+      modes: [],
+      toolCalls: new Map(),
+      reportedToolCalls: new Set(),
+      failedToolCalls: new Set(),
+      push: event => queue.push(event),
+      next: () => queue.next(),
     }
+  }
+
+  sessionFor(dshSessionId) {
+    // Each open owns its queue. A forgotten attempt may finish after its replacement;
+    // sharing this object would let the stale cleanup unregister the replacement.
+    const session = this.createSession(dshSessionId)
+    this.sessions.set(dshSessionId, session)
     return session
   }
 
@@ -179,44 +250,114 @@ export class AcpEngine {
     // kept by the agent's session id rather than on a session not known yet.
     if (params?.update?.sessionUpdate === 'available_commands_update') {
       this.commands.set(params.sessionId, (params.update.availableCommands ?? []).map(command => command?.name).filter(Boolean))
-      return
     }
     const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
-    if (session === undefined || session.activePrompt?.cancelled) return
+    if (session === undefined || session.promptTurn?.cancelled) return
     // Devin CLI 3000.12 reports its compaction this way, not as compaction_update.
     if (method === '_cognition.ai/compaction') {
+      if (session.running) session.promptTurn?.onProgress?.()
       session.push({ type: 'compaction', status: compactionStatus(params?.status) })
       return
     }
     if (method !== 'session/update') return
     const update = params?.update ?? {}
+    if (session.running && typeof update.sessionUpdate === 'string') session.promptTurn?.onProgress?.()
     switch (update.sessionUpdate) {
-      case 'agent_message_chunk': session.push({ type: 'text', text: textOf(update.content) }); break
-      case 'agent_thought_chunk': session.push({ type: 'thought', text: textOf(update.content) }); break
+      case 'agent_message_chunk':
+        if (session.promptTurn !== undefined) session.promptTurn.sawStepWork = true
+        session.push({ type: 'text', text: textOf(update.content) })
+        break
+      case 'agent_thought_chunk':
+        if (session.promptTurn !== undefined) session.promptTurn.sawStepWork = true
+        session.push({ type: 'thought', text: textOf(update.content) })
+        break
       case 'tool_call':
       case 'tool_call_update': {
+        if (session.promptTurn !== undefined) session.promptTurn.sawStepWork = true
         // A permission request names the call only by id; its title, kind and
         // input came with the call's own updates, so they are kept here.
         const id = update.toolCallId
         const known = id === undefined ? undefined : session.toolCalls.get(id)
         const call = mergeCall(known, update)
-        if (id !== undefined) session.toolCalls.set(id, call)
-        if (known === undefined) session.push({ type: 'activity', text: `▸ ${describeCall(call)}` })
-        else if (update.status === 'failed' && known.status !== 'failed') session.push({ type: 'activity', text: `▸ ${describeCall(call)} — failed` })
+        const alreadyFailed = id !== undefined && (known?.status === 'failed' || session.failedToolCalls.has(id))
+        const terminal = update.status === 'completed' || update.status === 'failed'
+        if (id !== undefined) {
+          if (terminal) {
+            session.toolCalls.delete(id)
+            if (update.status === 'failed') {
+              session.failedToolCalls.delete(id)
+              session.failedToolCalls.add(id)
+              if (session.failedToolCalls.size > REPORTED_TOOL_CALLS_MAX) {
+                session.failedToolCalls.delete(session.failedToolCalls.values().next().value)
+              }
+            }
+          } else {
+            session.toolCalls.delete(id)
+            session.toolCalls.set(id, call)
+            if (session.toolCalls.size > TOOL_CALL_CACHE_MAX) {
+              session.toolCalls.delete(session.toolCalls.keys().next().value)
+            }
+          }
+        }
+        if (call.status !== 'pending' && !['read', 'search', 'think'].includes(call.kind)) session.cwd = undefined
+        const team = ownToolCall(call)
+        const described = describeCall(call)
+        const reported = id !== undefined && session.reportedToolCalls.has(id)
+        const markReported = () => {
+          if (id === undefined) return
+          session.reportedToolCalls.delete(id)
+          session.reportedToolCalls.add(id)
+          if (session.reportedToolCalls.size > REPORTED_TOOL_CALLS_MAX) {
+            session.reportedToolCalls.delete(session.reportedToolCalls.values().next().value)
+          }
+        }
+        if (!reported) {
+          if (update.status === 'failed' && !alreadyFailed) {
+            markReported()
+            session.push({ type: 'activity', text: `▸ ${described} — failed`, failed: true, ...(team ? { team: true } : {}) })
+          } else if (id === undefined || !isAnonymousMcpPlaceholder(call)) {
+            markReported()
+            session.push({ type: 'activity', text: `▸ ${described}`, ...(team ? { team: true } : {}) })
+          }
+        } else if (update.status === 'failed' && !alreadyFailed) {
+          session.push({ type: 'activity', text: `▸ ${described} — failed`, failed: true, ...(team ? { team: true } : {}) })
+        } else if (update.status !== 'completed' && known !== undefined && described !== describeCall(known)) {
+          session.push({ type: 'status', text: described, ...(team ? { team: true } : {}) })
+        }
         break
       }
-      case 'plan': session.push({ type: 'thought', text: planText(update.entries) }); break
+      case 'plan':
+        if (session.promptTurn !== undefined) session.promptTurn.sawStepWork = true
+        session.push({ type: 'thought', text: planText(update.entries) })
+        break
       case 'usage_update': {
         // Devin sends each one twice, the second marked as a subagent's; a real
         // subagent's context is not the session's.
         if (update._meta?.['cognition.ai/subagent_context'] !== undefined) break
-        if (typeof update.used === 'number') session.push({ type: 'context', used: update.used, ...(typeof update.size === 'number' ? { size: update.size } : {}) })
+        if (typeof update.used === 'number') {
+          session.push({ type: 'context', used: update.used, ...(typeof update.size === 'number' ? { size: update.size } : {}) })
+          // Count internal LLM steps during an active prompt turn (ignoring session/load
+          // replays, zero-token placeholders, and back-to-back duplicate snapshots).
+          const turn = session.promptTurn
+          if (turn !== undefined && session.running === true && update.used > 0
+            && (turn.steps === 0 || update.used !== turn.lastUsed || turn.sawStepWork)) {
+            turn.steps += 1
+            turn.lastUsed = update.used
+            turn.sawStepWork = false
+          }
+        }
         break
       }
       case 'config_option_update': {
         if (Array.isArray(update.configOptions)) {
           session.configOptions = update.configOptions
           session.modes = update.modes?.availableModes ?? configOptionsOf(update.configOptions, 'mode')?.options ?? session.modes
+          if (update.configOptions.length > 0) {
+            this.remember(update)
+            this.onListedUpdate?.(update)
+            const discovered = modelsFromProbe(update)
+            if (discovered.length > 0) session.push({ type: 'models', models: discovered })
+          }
         }
         break
       }
@@ -231,7 +372,8 @@ export class AcpEngine {
     if (method === 'session/request_permission') {
       const session = [...this.sessions.values()].find(entry => entry.acpSessionId === params?.sessionId)
       if (session === undefined) return Promise.reject({ code: -32603, message: 'unknown session' })
-      if (session.activePrompt?.cancelled) return Promise.resolve({ outcome: { outcome: 'cancelled' } })
+      if (session.promptTurn?.cancelled) return Promise.resolve({ outcome: { outcome: 'cancelled' } })
+      if (session.running && !session.promptTurn?.cancelled) session.promptTurn?.onProgress?.()
       const options = (params?.options ?? []).map(option => ({ optionId: option.optionId, name: option.name, kind: option.kind }))
       const call = callOf(session, params?.toolCall)
       // Cursor, Devin and Antigravity ask before MCP tool calls. A call to DS Bot's
@@ -240,16 +382,22 @@ export class AcpEngine {
       const once = ownToolCall(call) ? options.find(option => option.kind === 'allow_once') : undefined
       if (once !== undefined) return Promise.resolve({ outcome: { outcome: 'selected', optionId: once.optionId } })
       const action = describeCall(call)
+      const evidence = JSON.stringify(call)
       return new Promise((resolve) => {
         const id = `perm-${Math.random().toString(36).slice(2)}`
         const reply = (optionId) => {
           if (optionId === null) resolve({ outcome: { outcome: 'cancelled' } })
-          else resolve({ outcome: { outcome: 'selected', optionId } })
+          else {
+            if (options.some(option => option.optionId === optionId && option.kind?.startsWith('allow'))
+              && !['read', 'search', 'think'].includes(call.kind)) session.cwd = undefined
+            resolve({ outcome: { outcome: 'selected', optionId } })
+          }
         }
         session.push({
-          type: 'permission', id, reply,
+          type: 'permission', id, reply, cwd: session.cwd,
           action,
           detail: detailText(call, action),
+          evidence,
           options,
           changes: CHANGE_KINDS.has(call.kind),
         })
@@ -259,28 +407,53 @@ export class AcpEngine {
   }
 
   async openInWorker(dshSessionId, openArgs) {
-    const existing = openArgs.ephemeral === true ? this.activeWorker() : undefined
+    const ephemeral = openArgs.ephemeral === true
+    const existing = ephemeral ? this.activeWorker() : undefined
     const key = openArgs.cwd ? resolve(openArgs.cwd) : ''
-    const reused = existing !== undefined
     let worker = existing ?? this.workers.get(key)
-    const created = worker === undefined
-    if (created) {
+    if (worker === undefined) {
       worker = this.spawnWorker(key)
-      if (openArgs.ephemeral === true) worker.ephemeral = true
       this.workers.set(key, worker)
     }
+    const openToken = { forgotten: false }
+    let pending = this.pendingOpens.get(dshSessionId)
+    if (pending === undefined) {
+      pending = new Set()
+      this.pendingOpens.set(dshSessionId, pending)
+    }
+    pending.add(openToken)
+    worker.inFlight += 1
     try {
       const session = await worker.open(dshSessionId, openArgs)
+      if (openToken.forgotten || worker.retired) {
+        if (worker.sessions.get(dshSessionId) === session) worker.forget(dshSessionId)
+        // Skip session/close if this worker will shut down right after in finally.
+        if (openToken.forgotten && !worker.retired && (worker.committed.size > 0 || worker.inFlight > 1 || worker.keepWarm)) {
+          await worker.closeSession(session).catch(() => {})
+        }
+        throw Object.assign(new Error(`${this.engine.name} session closed while opening`), { code: 'LOCAL_AGENT_EXIT' })
+      }
+      const prevWorker = this.sessionWorkers.get(dshSessionId)
+      const retiredPrev = prevWorker !== undefined && prevWorker !== worker
+        ? this.uncommitSession(prevWorker, dshSessionId, { forget: true })
+        : undefined
+      worker.committed.set(dshSessionId, { session, ephemeral })
+      if (!ephemeral) worker.keepWarm = true
       session._worker = worker
       this.sessionWorkers.set(dshSessionId, worker)
       this.caps.image = worker.caps.image
+      this.remember({
+        configOptions: worker.listed.configOptions,
+        modes: { availableModes: worker.listed.modes },
+        models: { availableModels: worker.listed.models },
+      })
+      if (retiredPrev !== undefined) void retiredPrev.close().catch(() => {})
       return session
-    } catch (error) {
-      if (created && !reused && ![...this.sessionWorkers.values()].includes(worker)) {
-        this.workers.delete(key)
-        await worker.close().catch(() => {})
-      }
-      throw error
+    } finally {
+      pending.delete(openToken)
+      if (pending.size === 0) this.pendingOpens.delete(dshSessionId)
+      worker.inFlight -= 1
+      if (this.maybeRetireWorker(worker)) await worker.close().catch(() => {})
     }
   }
 
@@ -323,7 +496,7 @@ export class AcpEngine {
   }
 
   // Resumes an ACP session across the same MCP transport fallback ladder as newSession.
-  async loadSession(peer, { cwd, mcp, resumeId }) {
+  async loadSession(peer, { cwd, mcp, resumeId, resumeOnly = false }) {
     const modes = this.mcpModes(mcp)
     for (let i = 0; i < modes.length; i++) {
       const mode = modes[i]
@@ -334,7 +507,10 @@ export class AcpEngine {
       } catch (error) {
         const text = String(error?.message ?? error)
         if (AUTH_ERROR.test(text) || TIMEOUT_ERROR.test(text)) throw error
-        if (i === modes.length - 1) return { reply: await this.newSession(peer, { cwd, mcp }), loaded: false }
+        if (i === modes.length - 1) {
+          if (resumeOnly) throw Object.assign(new Error('the saved local agent session could not be resumed for maintenance'), { code: 'LOCAL_AGENT_EXIT' })
+          return { reply: await this.newSession(peer, { cwd, mcp }), loaded: false }
+        }
       }
     }
   }
@@ -342,49 +518,56 @@ export class AcpEngine {
   // A new or resumed ACP session for one DS Bot Session.
   async open(dshSessionId, openArgs) {
     if (this.engine.cwdPerProcess) return this.openInWorker(dshSessionId, openArgs)
-    const { cwd, mcp, resumeId, preset, model } = openArgs
+    const { cwd, mcp, resumeId, resumeOnly = false, preset, model } = openArgs
     const peer = await this.ensure()
     const session = this.sessionFor(dshSessionId)
-    const { reply, loaded } = resumeId !== undefined
-      ? await this.loadSession(peer, { cwd, mcp, resumeId })
-      : { reply: await this.newSession(peer, { cwd, mcp }), loaded: false }
-    session.acpSessionId = reply?.sessionId ?? resumeId
-    const loadedEffort = configOptionsOf(reply?.configOptions ?? [], 'thought_level')?.currentValue
-    // Some agents list nothing on session/load: the session reads what this CLI
-    // listed before rather than guessing a mode or model list.
-    const listed = this.remember(reply)
-    session.configOptions = listed.configOptions
-    session.modes = listed.modes
-    session.models = listed.models
-    // The preset maps to a mode only once the agent has listed its own.
-    const mode = acpMode(preset, session.modes, this.engine.modes)
-    if (mode !== undefined) await this.setOption(session, 'mode', mode).catch(() => {})
-    // A model the agent does not take fails the turn: going on would answer with a
-    // model the user did not pick.
-    const modelKey = model !== undefined && model !== 'default' ? model : ''
-    let modelReply
-    if (modelKey !== '') {
-      modelReply = await this.setOption(session, 'model', modelKey).catch((error) => {
-        throw Object.assign(new Error(`${this.engine.name} did not switch to the model ${modelKey}: ${error?.message ?? error}. Pick another model in the Bot's settings.`), { code: 'LOCAL_AGENT_MODEL' })
-      })
+    try {
+      const { reply, loaded } = resumeId !== undefined
+        ? await this.loadSession(peer, { cwd, mcp, resumeId, resumeOnly })
+        : { reply: await this.newSession(peer, { cwd, mcp }), loaded: false }
+      session.acpSessionId = reply?.sessionId ?? resumeId
+      session.cwd = cwd
+      session.resumed = loaded
+      const loadedEffort = configOptionsOf(reply?.configOptions ?? [], 'thought_level')?.currentValue
+      // Some agents list nothing on session/load: the session reads what this CLI
+      // listed before rather than guessing a mode or model list.
+      const listed = this.remember(reply)
+      session.configOptions = listed.configOptions
+      session.modes = listed.modes
+      session.models = listed.models
+      // The preset maps to a mode only once the agent has listed its own.
+      const mode = acpMode(preset, session.modes, this.engine.modes)
+      if (mode !== undefined) await this.setOption(session, 'mode', mode).catch(() => {})
+      // A model the agent does not take fails the turn: going on would answer with a
+      // model the user did not pick.
+      const modelKey = model !== undefined && model !== 'default' ? model : ''
+      let modelReply
+      if (modelKey !== '') {
+        modelReply = await this.setOption(session, 'model', modelKey).catch((error) => {
+          throw Object.assign(new Error(`${this.engine.name} did not switch to the model ${modelKey}: ${error?.message ?? error}. Pick another model in the Bot's settings.`), { code: 'LOCAL_AGENT_MODEL' })
+        })
+      }
+      const switchedEffort = configOptionsOf(modelReply?.configOptions ?? [], 'thought_level')?.currentValue
+      if (!loaded) {
+        const freshDefault = switchedEffort ?? configOptionsOf(session.configOptions ?? [], 'thought_level')?.currentValue
+        if (freshDefault !== undefined && modelKey !== '') this.defaultEfforts.set(modelKey, freshDefault)
+        session.defaultEffort = freshDefault ?? this.defaultEfforts.get(modelKey) ?? this.defaultEfforts.get('')
+        session.effort = undefined
+        this.setSessionEffort(session.acpSessionId, undefined)
+      } else {
+        const priorEffort = loadedEffort ?? openArgs.effort ?? this.sessionEfforts.get(session.acpSessionId)
+        const resetDefault = switchedEffort !== undefined && (priorEffort === undefined || switchedEffort !== priorEffort) ? switchedEffort : undefined
+        if (resetDefault !== undefined && modelKey !== '') this.defaultEfforts.set(modelKey, resetDefault)
+        session.defaultEffort = resetDefault ?? openArgs.defaultEffort ?? this.defaultEfforts.get(modelKey) ?? this.defaultEfforts.get('') ?? loadedEffort
+        const currentEffort = switchedEffort ?? priorEffort
+        session.effort = currentEffort !== undefined && currentEffort !== session.defaultEffort ? currentEffort : undefined
+        this.setSessionEffort(session.acpSessionId, session.effort)
+      }
+      return session
+    } catch (error) {
+      if (this.sessions.get(dshSessionId) === session) this.sessions.delete(dshSessionId)
+      throw error
     }
-    const switchedEffort = configOptionsOf(modelReply?.configOptions ?? [], 'thought_level')?.currentValue
-    if (!loaded) {
-      const freshDefault = switchedEffort ?? configOptionsOf(session.configOptions ?? [], 'thought_level')?.currentValue
-      if (freshDefault !== undefined && modelKey !== '') this.defaultEfforts.set(modelKey, freshDefault)
-      session.defaultEffort = freshDefault ?? this.defaultEfforts.get(modelKey) ?? this.defaultEfforts.get('')
-      session.effort = undefined
-      this.setSessionEffort(session.acpSessionId, undefined)
-    } else {
-      const priorEffort = loadedEffort ?? openArgs.effort ?? this.sessionEfforts.get(session.acpSessionId)
-      const resetDefault = switchedEffort !== undefined && (priorEffort === undefined || switchedEffort !== priorEffort) ? switchedEffort : undefined
-      if (resetDefault !== undefined && modelKey !== '') this.defaultEfforts.set(modelKey, resetDefault)
-      session.defaultEffort = resetDefault ?? openArgs.defaultEffort ?? this.defaultEfforts.get(modelKey) ?? this.defaultEfforts.get('') ?? loadedEffort
-      const currentEffort = switchedEffort ?? priorEffort
-      session.effort = currentEffort !== undefined && currentEffort !== session.defaultEffort ? currentEffort : undefined
-      this.setSessionEffort(session.acpSessionId, session.effort)
-    }
-    return session
   }
 
   async setOption(session, category, value) {
@@ -419,12 +602,41 @@ export class AcpEngine {
     return (this.workerOf(session) ?? this).caps.image
   }
 
-  async prompt(session, blocks, { signal, effort } = {}) {
+  async waitForPrompt(session, signal) {
+    signal?.throwIfAborted()
+    if (session.pendingPrompt === undefined) return
+    const turn = session.promptTurn
+    let timer
+    let onAbort
+    try {
+      await Promise.race([
+        session.pendingPrompt.catch(() => {}),
+        new Promise((resolve, reject) => {
+          onAbort = () => reject(signal.reason ?? new Error('aborted'))
+          signal?.addEventListener('abort', onAbort, { once: true })
+          if (turn?.cancelled) timer = setTimeout(() => {
+            turn.controller.abort(new Error('cancel acknowledgement timed out'))
+            resolve()
+          }, this.cancelAckTimeoutMs)
+        }),
+      ])
+    } finally {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+    }
+    signal?.throwIfAborted()
+  }
+
+  async prompt(session, blocks, { signal, effort, onProgress } = {}) {
     const worker = this.workerOf(session)
-    if (worker !== undefined && worker !== this) return worker.prompt(session, blocks, { signal, effort })
+    if (worker !== undefined && worker !== this) return worker.prompt(session, blocks, { signal, effort, onProgress })
+    // ACP notices have no turn id. Give cancellation a bounded grace period
+    // before accepting notices for another prompt on the same session.
+    await this.waitForPrompt(session, signal)
+    signal?.throwIfAborted()
     const peer = await this.ensure()
     if (signal?.aborted) return true
-    if (session.activePrompt !== undefined) throw new Error('The previous local Agent turn is still stopping')
+    if (session.activePrompt !== undefined && !session.activePrompt.cancelled) throw new Error('The previous local Agent turn is still stopping')
     if (configOptionsOf(session.configOptions ?? [], 'thought_level') !== undefined || session.defaultEffort !== undefined || session.effort !== undefined) {
       const current = session.effort ?? session.defaultEffort
       const target = effort ?? session.defaultEffort
@@ -441,24 +653,46 @@ export class AcpEngine {
         session.push({ type: 'effort', defaultEffort: session.defaultEffort, effort: undefined })
       }
     }
+    signal?.throwIfAborted()
+    const turn = session.promptTurn = {
+      cancelled: false,
+      controller: new AbortController(),
+      onProgress,
+      steps: 0,
+      lastUsed: undefined,
+      sawStepWork: false,
+    }
+    const onAbort = () => { turn.cancelled = true }
+    signal?.addEventListener('abort', onAbort, { once: true })
     session.running = true
-    // ACP acknowledges cancellation by answering the original request. Keep that RPC
-    // alive when DSH aborts its stream, so an aborted signal cannot impersonate the reply.
-    const active = { cancelled: false }
-    session.activePrompt = active
-    active.done = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: acpPrompt(blocks) }, { timeout: 0 }).then(
-      result => {
-        session.running = false
-        if (!active.cancelled) session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn', ...(usageOf(result?.usage) ? { usage: usageOf(result.usage) } : {}) })
+    // ACP acknowledges cancellation by answering the original request. The RPC keeps a
+    // controller of its own, aborted only by a cancel-ack timeout or a close, so an
+    // aborted DSH signal marks the turn rather than impersonating the reply.
+    const reply = session.pendingPrompt = peer.request('session/prompt', { sessionId: session.acpSessionId, prompt: acpPrompt(blocks) }, { signal: turn.controller.signal, timeout: 0 })
+    session.activePrompt = turn
+    const done = reply.then(
+      (result) => {
+        if (!turn.cancelled) {
+          const calls = positiveInt(result?.usage?.calls)
+            ?? positiveInt(result?.numTurns)
+            ?? positiveInt(result?.num_turns)
+            ?? (turn.steps > 0 ? turn.steps : undefined)
+          const usage = usageOf(result?.usage, calls)
+          session.push({ type: 'done', reason: result?.stopReason ?? 'end_turn', ...(usage ? { usage } : {}) })
+        }
         return STOP_REASONS.has(result?.stopReason)
       },
-      error => {
-        session.running = false
-        if (!active.cancelled) session.push({ type: 'error', error })
+      (error) => {
+        if (!turn.cancelled) session.push({ type: 'error', error })
         return false
       },
-    ).finally(() => { if (session.activePrompt === active) delete session.activePrompt })
-    return active.done
+    ).finally(() => {
+      if (session.promptTurn === turn) session.running = false
+      if (session.activePrompt === turn) delete session.activePrompt
+      signal?.removeEventListener('abort', onAbort)
+    })
+    turn.done = done
+    return done
   }
 
   canSteer(session) {
@@ -483,12 +717,8 @@ export class AcpEngine {
       const worker = this.workerOf(session)
       if (worker === undefined) return
       await worker.closeSession(session)
-      worker.forget(session.dshSessionId)
-      this.sessionWorkers.delete(session.dshSessionId)
-      if (worker.ephemeral && worker.sessions.size === 0) {
-        for (const [key, entry] of this.workers) if (entry === worker) this.workers.delete(key)
-        await worker.close()
-      }
+      const retired = this.uncommitSession(worker, session.dshSessionId, { expectedSession: session })
+      if (retired !== undefined) await retired.close().catch(() => {})
       return
     }
     if (session?.acpSessionId === undefined) return
@@ -500,83 +730,194 @@ export class AcpEngine {
   cancel(session) {
     const worker = this.workerOf(session)
     if (worker !== undefined && worker !== this) return worker.cancel(session)
-    const active = session.activePrompt
-    if (active === undefined) return undefined
-    if (!active.cancelled) {
-      active.cancelled = true
-      this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+    const turn = session.promptTurn
+    if (turn !== undefined) {
+      // The DSH abort marks the turn before this call; only the notify is new.
+      turn.cancelled = true
+      if (!turn.cancelSent) {
+        turn.cancelSent = true
+        this.peer?.notify('session/cancel', { sessionId: session.acpSessionId })
+      }
     }
-    return active.done
+    return turn?.done
   }
 
   // The adapter stopped reading this session: a later open starts a new queue, or
   // the pump that waits on this one would swallow its first event.
   forget(dshSessionId) {
     if (this.engine.cwdPerProcess) {
+      const pending = this.pendingOpens.get(dshSessionId)
+      if (pending !== undefined) {
+        for (const token of pending) token.forgotten = true
+      }
       const worker = this.sessionWorkers.get(dshSessionId)
       if (worker === undefined) return
-      this.sessionWorkers.delete(dshSessionId)
-      worker.forget(dshSessionId)
-      if (worker.sessions.size === 0) {
-        for (const [key, entry] of this.workers) if (entry === worker) this.workers.delete(key)
-        void worker.close().catch(() => {})
-      }
+      const retired = this.uncommitSession(worker, dshSessionId, { forget: true })
+      if (retired !== undefined) void retired.close().catch(() => {})
       return
+    }
+    const session = this.sessions.get(dshSessionId)
+    const turn = session?.promptTurn
+    if (turn !== undefined) {
+      turn.cancelled = true
+      turn.controller.abort(new Error('the ACP session was closed'))
+    }
+    if (session?.acpSessionId !== undefined) {
+      this.commands.delete(session.acpSessionId)
+      this.sessionEfforts.delete(session.acpSessionId)
     }
     this.sessions.delete(dshSessionId)
   }
 
-  async close() {
-    for (const worker of this.workers.values()) await worker.close()
+  async close({ forceKillAfterMs } = {}) {
+    for (const pending of this.pendingOpens.values()) {
+      for (const token of pending) token.forgotten = true
+    }
+    this.pendingOpens.clear()
+    const toClose = new Set(this.probeWorkers)
+    this.probeWorkers.clear()
+    for (const worker of [...this.workers.values()]) {
+      this.detachWorker(worker)
+      toClose.add(worker)
+    }
     this.workers.clear()
     this.sessionWorkers.clear()
+    await Promise.all([...toClose].map(worker => worker.close({ forceKillAfterMs }).catch(() => {})))
+    for (const session of this.sessions.values()) {
+      if (session?.acpSessionId !== undefined) this.sessionEfforts.delete(session.acpSessionId)
+    }
+    this.sessions.clear()
+    this.commands.clear()
+    if (this.ownsSessionEfforts) this.sessionEfforts.clear()
     const child = this.child
+    const peer = this.peer
     this.child = undefined
     this.peer = undefined
     this.starting = undefined
-    terminateChild(child)
+    peer?.close?.(new Error(`${this.engine.name} closed`))
+    terminateChild(child, forceKillAfterMs === undefined ? undefined : { forceKillAfterMs })
   }
 
-  remember(reply) {
-    const configOptions = reply?.configOptions
+  invalidateListed() {
+    // Advance generation to reject late pre-refresh probes without wiping already-
+    // discovered modes needed by concurrent session/load resumes before re-probe completes.
+    this.listedEpoch += 1
+    this.listed = { ...this.listed, models: [] }
+    for (const worker of this.workers.values()) worker.invalidateListed()
+  }
+
+  remember(reply, { epoch } = {}) {
+    if (epoch !== undefined && epoch !== this.listedEpoch) return this.listed
+    const configOptions = Array.isArray(reply?.configOptions) && reply.configOptions.length > 0 ? reply.configOptions : undefined
     if (configOptionsOf(configOptions ?? [], 'model') !== undefined) this.hasModelConfig = true
-    const modes = reply?.modes?.availableModes ?? configOptionsOf(configOptions ?? [], 'mode')?.options
-    const models = reply?.models?.availableModels
-    this.listed = {
-      configOptions: configOptions ?? this.listed.configOptions,
-      modes: modes ?? this.listed.modes,
-      models: models ?? this.listed.models,
+    const rawModes = reply?.modes?.availableModes ?? configOptionsOf(configOptions ?? [], 'mode')?.options
+    const modes = Array.isArray(rawModes) && rawModes.length > 0 ? rawModes : undefined
+    const rawModels = reply?.models?.availableModels
+    const models = Array.isArray(rawModels) && rawModels.length > 0 ? rawModels : undefined
+    if (configOptions !== undefined || modes !== undefined || models !== undefined) {
+      this.listedEpoch += 1
+      this.listed = {
+        configOptions: configOptions ?? this.listed.configOptions,
+        modes: modes ?? this.listed.modes,
+        models: models ?? this.listed.models,
+      }
     }
     return this.listed
   }
 
+  discoveredModels(session) {
+    return modelsFromProbe({
+      configOptions: session?.configOptions,
+      models: Array.isArray(session?.models) ? { availableModels: session.models } : undefined,
+    })
+  }
+
+  async probeOnOwnPeer({ cwd, mcp, probe }) {
+    const peer = await this.ensure({ probe })
+    const reply = await this.newSession(peer, { cwd, mcp })
+    if (reply?.sessionId !== undefined) {
+      this.commands.delete(reply.sessionId)
+      if (this.caps.close) await peer.request('session/close', { sessionId: reply.sessionId }, { timeout: 15_000 }).catch(() => {})
+    }
+    return reply
+  }
+
   // Models (and per-model thinking levels) the agent advertises on a probe session.
   async listModels({ cwd, mcp }) {
+    const epoch = this.listedEpoch
     if (this.engine.cwdPerProcess) {
       const live = this.activeWorker()
       if (live !== undefined) {
-        const target = live.engine.spawnCwd && existsSync(live.engine.spawnCwd) ? live.engine.spawnCwd : cwd
-        const models = await live.listModels({ cwd: target, mcp })
-        this.caps.image = live.caps.image
-        return models
+        live.inFlight += 1
+        try {
+          const target = live.engine.spawnCwd && existsSync(live.engine.spawnCwd) ? live.engine.spawnCwd : cwd
+          const models = await live.listModels({ cwd: target, mcp })
+          if (this.listedEpoch === epoch) {
+            this.caps.image = live.caps.image
+            this.remember({
+              configOptions: live.listed.configOptions,
+              modes: { availableModes: live.listed.modes },
+              models: { availableModels: live.listed.models },
+            }, { epoch })
+            return models
+          }
+          const fresher = modelsFromProbe({ configOptions: this.listed.configOptions, models: { availableModels: this.listed.models } })
+          return fresher.length > 0 ? fresher : models
+        } finally {
+          live.inFlight -= 1
+          if (this.maybeRetireWorker(live)) await live.close().catch(() => {})
+        }
       }
       const temp = this.spawnWorker(cwd)
+      this.probeWorkers.add(temp)
       try {
-        const models = await temp.listModels({ cwd, mcp })
-        this.caps.image = temp.caps.image
-        return models
+        const reply = await temp.probeOnOwnPeer({ cwd, mcp, probe: true })
+        const models = modelsFromProbe(reply)
+        if (this.listedEpoch === epoch) {
+          this.caps.image = temp.caps.image
+          this.remember(reply, { epoch })
+          return models
+        }
+        const fresher = modelsFromProbe({ configOptions: this.listed.configOptions, models: { availableModels: this.listed.models } })
+        return fresher.length > 0 ? fresher : models
       } finally {
-        await temp.close()
+        this.probeWorkers.delete(temp)
+        await temp.close({ forceKillAfterMs: PROBE_FORCE_KILL_AFTER_MS }).catch(() => {})
       }
     }
-    const peer = await this.ensure()
-    const probe = await this.newSession(peer, { cwd, mcp })
-    if (probe?.sessionId !== undefined) {
-      this.commands.delete(probe.sessionId)
-      if (this.caps.close) await peer.request('session/close', { sessionId: probe.sessionId }, { timeout: 15_000 }).catch(() => {})
+    // Reuse an already-running live peer when present. Otherwise run the probe in
+    // an isolated temporary process with probeEnv so a concurrent live session open
+    // never inherits MISE_OFFLINE=1 on the shared engine peer.
+    if (this.peer !== undefined || this.starting !== undefined) {
+      const probe = await this.probeOnOwnPeer({ cwd, mcp, probe: false })
+      const stale = this.listedEpoch !== epoch
+      this.remember(probe, { epoch })
+      if (stale) {
+        const fresher = modelsFromProbe({ configOptions: this.listed.configOptions, models: { availableModels: this.listed.models } })
+        if (fresher.length > 0) return fresher
+      }
+      return modelsFromProbe(probe)
     }
-    this.remember(probe)
-    return modelsFromProbe(probe)
+    const temp = new AcpEngine(
+      this.route,
+      { ...this.engine, cwdPerProcess: false },
+      { findExecutable: this.findExecutable, defaultEfforts: new Map(this.defaultEfforts), sessionEfforts: this.sessionEfforts, cancelAckTimeoutMs: this.cancelAckTimeoutMs },
+    )
+    this.probeWorkers.add(temp)
+    try {
+      const probe = await temp.probeOnOwnPeer({ cwd, mcp, probe: true })
+      const stale = this.listedEpoch !== epoch
+      if (!stale) {
+        this.caps.image = temp.caps.image
+        this.remember(probe, { epoch })
+        return modelsFromProbe(probe)
+      }
+      const fresher = modelsFromProbe({ configOptions: this.listed.configOptions, models: { availableModels: this.listed.models } })
+      return fresher.length > 0 ? fresher : modelsFromProbe(probe)
+    } finally {
+      this.probeWorkers.delete(temp)
+      await temp.close({ forceKillAfterMs: PROBE_FORCE_KILL_AFTER_MS }).catch(() => {})
+    }
   }
 }
 
@@ -650,6 +991,7 @@ const ownToolCall = (call) => {
     || input.mcpServer === MCP_SERVER
     || call?._meta?.mcpServer === MCP_SERVER
     || call?._meta?.serverName === MCP_SERVER
+    || String(call?._meta?.['cognition.ai/toolName'] ?? '').startsWith(`mcp__${MCP_SERVER}__`)
     || String(call?._meta?.['cognition.ai/permissionRule'] ?? '').startsWith(`mcp__${MCP_SERVER}__`)
     || name.startsWith(`mcp__${MCP_SERVER}__`)
     || name.startsWith(`mcp_${MCP_SERVER}_`)
@@ -658,18 +1000,40 @@ const ownToolCall = (call) => {
     || name.startsWith(`${MCP_SERVER}/`)
     || (name === 'call_mcp_tool' && (input.ServerName === MCP_SERVER || args.ServerName === MCP_SERVER))
 }
+const ANONYMOUS_MCP_TITLE = /^mcp(?:\s*:\s*tool)?$/i
+// Cursor opens an MCP call as an empty placeholder (`MCP: tool`) and names the
+// provider only in a follow-up tool_call_update; defer activity until identity arrives.
+const isAnonymousMcpPlaceholder = (call) => {
+  if (ownToolCall(call)) return false
+  const title = typeof call?.title === 'string' ? call.title.trim() : ''
+  if (!ANONYMOUS_MCP_TITLE.test(title)) return false
+  if (call?.name !== undefined || call?.toolName !== undefined) return false
+  if (Object.keys(inputOf(call)).length > 0) return false
+  if ((call?.locations?.length ?? 0) > 0) return false
+  const meta = call?._meta
+  if (meta !== null && typeof meta === 'object' && (
+    meta.mcpServer !== undefined
+    || meta.serverName !== undefined
+    || meta['cognition.ai/toolName'] !== undefined
+    || meta['cognition.ai/permissionRule'] !== undefined
+  )) return false
+  return true
+}
 const configOptionsOf = (options, category) => options.find(option => (option.category ?? option.id) === category)
 const textOf = content => (Array.isArray(content) ? content : [content]).filter(block => block?.type === 'text').map(block => block.text).join('')
 const planText = entries => (entries ?? []).map(entry => `- ${entry.content ?? entry.title ?? ''}`).join('\n')
 const mergeCall = (known, update) => ({
   ...known,
   ...Object.fromEntries(Object.entries(update).filter(([key, value]) => key !== 'sessionUpdate' && value !== undefined && value !== null)),
+  ...(known?._meta !== null && typeof known?._meta === 'object' && update?._meta !== null && typeof update?._meta === 'object'
+    ? { _meta: { ...known._meta, ...update._meta } }
+    : {}),
 })
 const callOf = (session, toolCall) => mergeCall(toolCall?.toolCallId === undefined ? undefined : session.toolCalls.get(toolCall.toolCallId), toolCall ?? {})
 // ACP tool kinds that change files or run something.
 const CHANGE_KINDS = new Set(['edit', 'delete', 'move', 'execute'])
 const VERBS = { read: 'Read', edit: 'Edit', delete: 'Delete', move: 'Move', search: 'Search', execute: 'Run', think: 'Think', fetch: 'Fetch' }
-const inputOf = call => (call.rawInput !== null && typeof call.rawInput === 'object' ? call.rawInput : {})
+const inputOf = call => (call?.rawInput !== null && typeof call?.rawInput === 'object' ? call.rawInput : {})
 // One line a person can act on: what kind of action, on what.
 export const describeCall = (call) => {
   const input = inputOf(call)
@@ -696,21 +1060,24 @@ const detailText = (call, action = '') => {
   if (paths.length > 0) lines.push(paths.join(', '))
   return lines.join('\n').slice(0, 4_000)
 }
+const positiveInt = value => (Number.isSafeInteger(value) && value > 0 ? value : undefined)
 // A prompt's usage. Some CLIs fold cached input into inputTokens (Devin: totalTokens is
 // inputTokens + outputTokens), while others (Antigravity) count cachedReadTokens apart.
-export const usageOf = (usage) => {
+export const usageOf = (usage, calls) => {
   if (typeof usage?.inputTokens !== 'number' && typeof usage?.outputTokens !== 'number') return undefined
   const read = usage.cachedReadTokens ?? 0
   const write = usage.cachedWriteTokens ?? 0
   const input = usage.inputTokens ?? 0
   const output = usage.outputTokens ?? 0
   const separate = typeof usage.totalTokens === 'number' && read + write > 0 && usage.totalTokens >= input + read + write + output
+  const resolvedCalls = positiveInt(calls) ?? positiveInt(usage.calls)
   return {
     inputTokens: !separate && read + write <= input ? input - read - write : input,
     outputTokens: output,
     ...(read > 0 ? { cacheReadTokens: read } : {}),
     ...(write > 0 ? { cacheWriteTokens: write } : {}),
     ...(usage.thoughtTokens ? { reasoningTokens: usage.thoughtTokens } : {}),
+    ...(resolvedCalls !== undefined && resolvedCalls > 1 ? { calls: resolvedCalls } : {}),
   }
 }
 const compactionStatus = status => (status === 'completed' ? 'completed' : status === 'started' || status === 'in_progress' ? 'started' : 'failed')

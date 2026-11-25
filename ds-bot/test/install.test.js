@@ -6,6 +6,7 @@ import { test } from 'node:test'
 import * as dshSession from '@deepseek-ai/dsh-session'
 import { createRuntime } from '../index.js'
 import { fakeContext } from './fake-ctx.js'
+import { reviewContext } from '../src/host/approval-review.js'
 
 let rt
 function start(state, { config = {}, services, context } = {}) {
@@ -38,6 +39,20 @@ test('team board reads are buffered exact Fetch routes', (t) => {
   }
 })
 
+test('approval context reads full group messages through the ledger interface', async t => {
+  const { rt, stop } = start()
+  t.after(async () => { await rt.ledger.flush(); await stop() })
+  await rt.load()
+  const room = { id: 'r', name: 'Ops', members: [], sessions: {}, log: [], seq: 0 }
+  rt.state.rooms.r = room
+  const text = 'Report context. '.repeat(200) + 'Send only to Alice.'
+  rt.logRoom(room, { who: 'User', text })
+  rt.resolveAgent = async id => ({ session: { id }, inbox: { nextStep: [], nextTurn: [] } })
+  rt.eventsBackwards = async function* () { yield { type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text }] } } }
+  const context = await reviewContext(rt, { roomId: 'r' })
+  assert.deepEqual(context, [{ source: 'user', text }])
+})
+
 // Listeners run in registration order; the team tools are not in this list
 // because they are registered per Bot session scope, not globally.
 test('apply registers listeners and effects in a fixed order', (t) => {
@@ -48,28 +63,41 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: state lock',
     'effect ds-bot: owned Agent presets',
     'effect ds-bot: ledger',
+    'on agent/request-error (prepend)',
     'on llm/adapters-updated',
     'on credentials/reference-updated',
     'on credentials/record-updated',
     'on settings/document-updated',
+    'on agent/disposed',
     'effect ds-bot: auxiliary llm retry',
     ...(typeof dshSession.appendPluginRecord === 'function' ? ['on agent/created', 'on session/event'] : []),
+    'on tools/pre-execute (prepend)',
     'effect ds-bot: no-op turn backfill',
     'on subagent/start',
     'on subagent/end',
+    'on agent/inbox/claimed',
     'on session/event',
     'on subagent/start',
     'on subagent/end',
     'on tools/result',
+    'on agent/disposed',
     'on session/event',
     'effect ds-bot: lost hand-offs',
+    'on agent/pre-step',
     'on agent/status',
     'effect ds-bot: waiting notes',
     'effect ds-bot: inbox',
+    'effect ds-bot: privacy cache',
     'on tools/execute',
+    'on session-manager/session-deleted',
     'effect ds-bot: identity section',
-    'prompt bot-identity 640',
+    'prompt bot-team-rules 640',
+    'prompt bot-identity 10300',
     'on agent/pre-step (prepend)',
+    'on session/event',
+    'on agent/created',
+    'on llm/stream',
+    'effect ds-bot: built-in pack roles',
     'on tools/execute',
     'effect ds-bot: scoped team tools',
     'on tools/change',
@@ -78,6 +106,8 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on system-prompt/assemble',
     'on llm/stream',
     'on session/event',
+    'on agent/disposed',
+    'effect ds-bot: deepseek services',
     'effect ds-bot: chat index',
     'effect ds-bot: group rounds',
     'effect ds-bot: group step lines',
@@ -86,15 +116,24 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on agent/disposed',
     'on commands/change',
     'effect ds-bot: command shield cleanup',
+    'on session/event',
+    'on tools/pre-execute (prepend)',
+    'on tools/result',
     'on approval/request (prepend)',
+    'effect ds-bot: approval review',
+    'on tools/execute',
+    'on approval/request (prepend)',
+    'effect ds-bot: extra folders section',
+    'prompt bot-extra-folders 642',
     'on agent/inbox/discarded',
     'on session/event',
     'effect ds-bot: resume interrupted turns',
     'effect ds-bot: memory recovery',
     'effect ds-bot: memory section',
-    'prompt bot-memory 645',
+    'prompt bot-memory 10320',
     'on agent/pre-step',
     'on agent/status',
+    'on agent/disposed',
     'effect ds-bot: memory review',
     'effect ds-bot: memory tidy',
     'on agent/status',
@@ -112,20 +151,33 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on agent/status',
     'on llm/stream',
     'on session/event',
+    'on agent/disposed',
+    // bot-tasks.js: approval status bridge, foreground inbox handoff, and turn/end task settlement.
+    'effect ds-bot: bot-tasks approval bridge',
+    'on agent/inbox/inserted',
+    'on session/event',
+    'on agent/disposed',
     // changes.js: the announced workspace/changes turn, remembered for the group row.
     'on session/event',
     'on llm/stream',
+    'on session/event',
+    'on agent/disposed',
     'on agent/status',
+    'effect ds-bot: images cleanup',
     'on tools/execute',
     'on llm/stream',
     'effect ds-bot: load secrets',
     'effect ds-bot: connectors',
     'on agent/pre-step (prepend)',
     'on skills/change',
+    'prompt feature-packs 10310',
+    'on session/event',
     'on agent/created',
     'effect ds-bot: capabilities',
+    'effect ds-bot: plugins',
     'on agent/status',
     'effect ds-bot: learning',
+    'on agent/disposed',
     'on agent/pre-step',
     'on tools/pre-execute',
     'on tools/execute',
@@ -147,6 +199,7 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'on session/event',
     'effect ds-bot: mobile room signals',
     'on agent/status',
+    'on agent/disposed',
     'on session/event',
     'on agent/assistant-stream',
     'effect ds-bot: live feed route',
@@ -154,6 +207,7 @@ test('apply registers listeners and effects in a fixed order', (t) => {
     'effect ds-bot: live feed',
     'on session/event',
     'effect ds-bot: im',
+    'effect ds-bot: external API gateway',
     'effect ds-bot: Bot workflows',
     'effect ds-bot: phone link',
     'effect ds-bot: team board config',

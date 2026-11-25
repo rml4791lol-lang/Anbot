@@ -160,7 +160,9 @@ test('the Anbot workflow attaches its own packages and cannot publish to upstrea
   assert.match(text, /name: Anbot-linux-x64/u)
 })
 
-test('the release becomes Latest last, after all package uploaders', () => {
+// A releases/latest link must never reach a release whose files are still being attached,
+// and no installer asset may be uploaded to the release before the builds succeed.
+test('the release becomes Latest last, after every build and publish job', () => {
   const workflow = YAML.parse(read('../../.github/workflows/release.yml'))
   const runs = job => (job.steps ?? []).map(step => step.run ?? '').join('\n')
   const latest = Object.entries(workflow.jobs).filter(([, job]) => /gh release edit "\$TAG" --latest/u.test(runs(job)))
@@ -170,9 +172,19 @@ test('the release becomes Latest last, after all package uploaders', () => {
     for (const need of [workflow.jobs[jobName].needs ?? []].flat()) if (!seen.has(need)) before(need, seen.add(need))
     return seen
   }
-  const uploaders = Object.keys(workflow.jobs).filter(other => other !== name && /gh release upload/u.test(runs(workflow.jobs[other])))
-  assert.deepEqual(uploaders.sort(), ['app-android', 'app-linux', 'app-macos', 'app-windows', 'checks'])
-  for (const uploader of uploaders) assert.ok(before(name).has(uploader), `${name} must come after ${uploader}`)
+  const producers = Object.keys(workflow.jobs).filter((other) => {
+    if (other === name) return false
+    const steps = workflow.jobs[other].steps ?? []
+    return /gh release upload/u.test(runs(workflow.jobs[other]))
+      || steps.some(step => typeof step.uses === 'string' && step.uses.startsWith('actions/upload-artifact@'))
+  })
+  assert.ok(producers.length >= 5, `expected the build and publish jobs before ${name}, found ${producers.join(', ')}`)
+  for (const producer of producers) assert.ok(before(name).has(producer), `${name} must come after ${producer}`)
+  // No app build job may attach assets directly to the GitHub release before every build succeeds.
+  for (const [other, cfg] of Object.entries(workflow.jobs)) {
+    if (other === name || other === 'publish') continue
+    assert.doesNotMatch(runs(cfg), /gh release upload/u, `${other} must not upload directly to the release before the builds pass`)
+  }
   assert.match(job.steps.at(-1).run, /^gh release edit "\$TAG" --latest$/u)
   assert.match(runs(job), /node scripts\/release-notes\.mjs /u)
 })
@@ -181,4 +193,12 @@ test('the desktop README links only the Anbot release', () => {
   const text = read('../README.md')
   assert.match(text, /\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/latest\)/u)
   assert.doesNotMatch(text, /Fei2411\/DS-Bot\/releases|DS-Bot#v\d/u)
+})
+
+test('both READMEs link the latest release and do not hard-code release version numbers', () => {
+  for (const file of ['../../README.md', '../../README.zh.md']) {
+    const text = read(file)
+    assert.match(text, /\(https:\/\/github\.com\/(?:rml4791lol-lang\/Anbot|Fei-Craft\/DS-Bot|Fei2411\/DS-Bot)\/releases\/latest\)/u, file)
+    assert.doesNotMatch(text, /ds-bot-\d+\.\d+\.\d+\.tgz|DS-Bot#v\d/u, file)
+  }
 })

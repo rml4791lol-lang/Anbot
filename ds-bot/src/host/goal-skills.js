@@ -8,6 +8,7 @@ import { engineeringPresets } from '../shared/engineering-presets.js'
 const PROVIDER = 'ds-bot-goal'
 const ENGINEERING_PROVIDER = 'anbot-engineering'
 const SKILLS = join(dirname(fileURLToPath(import.meta.url)), 'skills')
+const GOAL_SKILLS = ['goal-grill', 'report-ds-bot-issue']
 
 function parseSkill(raw, path) {
   const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/u.exec(raw)
@@ -47,7 +48,7 @@ function bundledProvider(name, skills) {
   }
 }
 
-export const goalProvider = () => bundledProvider(PROVIDER, ['goal-grill'])
+export const goalProvider = () => bundledProvider(PROVIDER, GOAL_SKILLS)
 export const engineeringProvider = () => bundledProvider(ENGINEERING_PROVIDER,
   [...new Set(engineeringPresets.flatMap(preset => preset.skills.map(skill => skill.name)))])
 

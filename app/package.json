@@ -1,7 +1,7 @@
 {
   "name": "anbot",
   "productName": "Anbot",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "private": true,
   "description": "Anbot desktop app: the ds-bot team on its own pinned DeepSeek Harness.",
   "author": "rml4791lol-lang",
@@ -20,7 +20,7 @@
     "check-lifecycle": "node scripts/check-lifecycle.mjs",
     "shot": "node scripts/shot.mjs",
     "icon": "node scripts/icon.mjs",
-    "test": "node --import ./test/reset-env.mjs --test \"test/*.test.mjs\""
+    "test": "node --import ./test/reset-env.mjs --test --test-timeout=120000 --test-force-exit \"test/*.test.mjs\""
   },
   "dependencies": {
     "@changfenhuang/dsh-genui": "0.17.0",
@@ -65,7 +65,7 @@
     "@deepseek-ai/dsh-util-time": "0.2.2-rc.5",
     "@deepseek-ai/dsh-util-workspace-path": "0.2.2-rc.5",
     "@deepseek-ai/dsh-workflow": "0.2.2-rc.5",
-    "@deepseek-ai/libreoffice-kit": "0.1.5",
+    "@deepseek-ai/libreoffice-kit": "0.2.3",
     "deep-view": "0.1.2",
     "ds-bot": "file:../ds-bot",
     "electron-updater": "6.8.10",

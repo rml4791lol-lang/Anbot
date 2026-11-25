@@ -7,6 +7,7 @@ import * as store from './src/host/store.js'
 import * as models from './src/host/models.js'
 import * as modelRetry from './src/host/model-retry.js'
 import * as providers from './src/host/providers.js'
+import * as chatgpt from './src/host/chatgpt.js'
 import * as permissions from './src/host/permissions.js'
 import * as turns from './src/host/turns.js'
 import * as steer from './src/host/steer.js'
@@ -31,12 +32,14 @@ import * as agentCommands from './src/host/agent-commands.js'
 import * as tasks from './src/host/tasks.js'
 import * as approvals from './src/host/approvals.js'
 import * as shellApproval from './src/host/shell-approval.js'
+import * as extraFolders from './src/host/extra-folders.js'
 import * as resume from './src/host/resume.js'
 import * as memory from './src/host/memory.js'
 import * as projectRecords from './src/host/project-records.js'
 import * as siteDirectory from './src/host/site-directory.js'
 import * as overviewInsights from './src/host/overview-insights.js'
 import * as parts from './src/host/parts.js'
+import * as botTasks from './src/host/bot-tasks.js'
 import * as changes from './src/host/changes.js'
 import * as images from './src/host/images.js'
 import * as avatarLibrary from './src/host/avatar-library.js'
@@ -47,6 +50,7 @@ import * as secrets from './src/host/secrets.js'
 import * as connectors from './src/host/connectors/index.js'
 import * as projectIntegrations from './src/host/project-integrations.js'
 import * as capabilities from './src/host/capabilities.js'
+import * as plugins from './src/host/plugins/index.js'
 import * as learning from './src/host/learning.js'
 import * as schedules from './src/host/schedules.js'
 import * as usage from './src/host/usage.js'
@@ -59,12 +63,18 @@ import * as remote from './src/host/remote.js'
 import * as mobile from './src/host/mobile.js'
 import * as feed from './src/host/feed.js'
 import * as im from './src/host/im/index.js'
+import * as externalApi from './src/host/api/index.js'
 import * as officeSkills from './src/host/office-skills.js'
 import * as goalSkills from './src/host/goal-skills.js'
+import * as maintenanceSkills from './src/host/maintenance-skills.js'
+import * as issueReport from './src/host/issue-report.js'
+import * as manualSkills from './src/host/manual-skills.js'
 import * as localAgents from './src/host/local-agents/index.js'
 import * as webSearchGuard from './src/host/web-search-guard.js'
+import * as deepseekServices from './src/host/deepseek-services.js'
 
 export { COLORS } from './src/host/constants.js'
+export { defineBotPlugin, defineBrowserProvider } from './src/host/plugins/sdk.js'
 
 export { name, inject } from './src/host/entry.js'
 
@@ -73,7 +83,8 @@ export { name, inject } from './src/host/entry.js'
 // install. Listeners run and tools are listed in registration order, so this order holds:
 // usage meters model requests after every listener that rewrites them. privacy checks a
 // call before the hooks of tools do, so a closed call never reaches a card they show.
-const MODULES = [diagnostics, store, botPresets, ledger, models, modelRetry, providers, permissions, turns, steer, handoffs, requests, delivery, inbox, roster, folders, privacy, agents, prompt, timeContext, tools, chatIndex, groups, goals, agentCommands, tasks, approvals, resume, memory, projectRecords, siteDirectory, overviewInsights, parts, changes, images, avatarLibrary, secrets, connectors, projectIntegrations, capabilities, learning, schedules, shellApproval, browser, browserPlugins, computer, usage, update, dshUpdate, thinking, mobile, feed, phone, im, botWorkflow, channel, remote, officeSkills, goalSkills, localAgents, webSearchGuard]
+// extraFolders answers an approval ahead of approvals, which would show it to the user.
+const MODULES = [diagnostics, store, botPresets, ledger, models, modelRetry, providers, permissions, turns, steer, handoffs, requests, delivery, inbox, roster, folders, privacy, agents, prompt, timeContext, tools, issueReport, deepseekServices, chatIndex, groups, goals, agentCommands, tasks, approvals, extraFolders, resume, memory, projectRecords, siteDirectory, overviewInsights, parts, botTasks, changes, images, avatarLibrary, secrets, connectors, projectIntegrations, capabilities, plugins, learning, schedules, shellApproval, browser, browserPlugins, computer, usage, update, dshUpdate, thinking, mobile, feed, phone, im, externalApi, botWorkflow, channel, remote, officeSkills, goalSkills, maintenanceSkills, manualSkills, localAgents, webSearchGuard]
 
 export function apply(ctx, config = {}) {
   createRuntime(ctx, config)
@@ -91,12 +102,16 @@ export function createRuntime(ctx, config = {}) {
     // The Bot-only tools each module defines; tools.js registers them in each
     // Bot Session's own scope, never globally (see shareBotTools).
     teamTools: [],
+    // False while MODULES are still installing so per-agent `tools/execute` hooks
+    // (steer.js) defer until host-level privacy/secrets wrappers have registered.
+    installed: false,
     defaults: {
       mainName: config.mainName ?? 'Chief',
       mainRole: config.mainRole ?? 'Chief of Staff',
     },
   }
-  for (const module of MODULES) module.install(rt)
+  for (const module of [...MODULES, chatgpt]) module.install(rt)
+  rt.installed = true
   // A live Agent can be scoped before the last module has added its tools (the memory
   // module starts a load during install): complete the scope now that every tool is in.
   rt.syncScopedTools?.()

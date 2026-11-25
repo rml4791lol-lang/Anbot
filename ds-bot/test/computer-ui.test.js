@@ -7,7 +7,7 @@ import { build } from 'esbuild'
 const { outputFiles } = await build({
   stdin: {
     contents: [
-      "export { ComputerPage, BotComputerCard, ComputerView, PendingAppAccess, ComputerIndicator, ComputerCallRow } from './src/client/computer.js'",
+      "export { ComputerPage, BotComputerCard, ComputerView, PendingAppAccess, AppAccessDock, ComputerIndicator, ComputerCallRow } from './src/client/computer.js'",
     ].join('\n'),
     resolveDir: fileURLToPath(new URL('..', import.meta.url)),
   },
@@ -73,6 +73,22 @@ test('the app-access card orders its buttons Deny, This time, Always', () => {
   assert.deepEqual(buttons(tree), ['Deny', 'This time', 'Always'])
 })
 
+test('AppAccessDock in a Bot own chat skips group-session asks and shows own-chat asks (#1623)', () => {
+  const roster = { byId: { w1: { id: 'w1', name: 'Writer' } } }
+  const actions = { computerAppAnswer: async () => true }
+  const dock = asks => render('AppAccessDock', {
+    sessionId: 'w1',
+    useRoster: pick => pick(roster),
+    useCards: pick => pick({}),
+    useHeldCards: pick => pick({}),
+    useComputer: pick => pick({ asks }),
+    actions,
+  })
+  assert.equal(dock({ g1: { id: 'g1', botId: 'w1', sessionId: 'r1-w1', roomId: 'r1', appName: 'Notes' } }), null)
+  const own = dock({ o1: { id: 'o1', botId: 'w1', sessionId: 'w1', appName: 'Notes' } })
+  assert.ok(own !== null)
+})
+
 test('the settings page draws the switch, the provider line and one level picker per Bot', () => {
   const roster = { bots: [{ id: 'w1', name: 'Writer' }], computer: { enabled: false } }
   const hooks = { useComputer: pick => pick({ provider: { state: 'missing' } }) }
@@ -87,7 +103,7 @@ test('the settings page draws the switch, the provider line and one level picker
 })
 
 test('a missing provider package shows the install command and says the levels wait (#1050)', () => {
-  const install = { packages: ['@deepseek-ai/dsh-computer-use@0.2.2-rc.1'], command: 'pnpm --dir "/p" add @deepseek-ai/dsh-computer-use@0.2.2-rc.1' }
+  const install = { packages: ['@deepseek-ai/dsh-computer-use@0.2.2-rc.5'], command: 'pnpm --dir "/p" add @deepseek-ai/dsh-computer-use@0.2.2-rc.5' }
   const roster = { bots: [{ id: 'w1', name: 'Writer' }], computer: { enabled: true, provider: { state: 'missing', message: 'x is not installed in this DSH.', install } } }
   const Row = props => ({ type: 'row', props })
   const tree = render('ComputerPage', {
@@ -174,9 +190,11 @@ test('a computer call row names the app and the action', () => {
 test('the computer settings page sits inside the scroll container', () => {
   const src = new URL('../src/client/settings.js', import.meta.url)
   const code = String((process.getBuiltinModule('node:fs')).readFileSync(src))
-  const scroll = code.indexOf('bt-settings-scroll')
+  // Computer use is a part of Tools; every part renders inside the page's scroll box.
+  assert.match(code, /case 'computer': return h\(ComputerPage/)
+  const scroll = code.indexOf("className: 'bt-settings-scroll bt-settings-page bt-settings-parts'")
   assert.ok(scroll > 0)
-  assert.ok(code.indexOf('h(ComputerPage') > scroll)
+  assert.ok(code.indexOf('partPage(key)', scroll) > scroll)
 })
 
 // The computer styles register in their own effect, like the other style packs.

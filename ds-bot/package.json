@@ -1,6 +1,6 @@
 {
   "name": "ds-bot",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Anbot: a team of long-lived Bots for DeepSeek Harness, with Main Bots, Bot-to-Bot messages and group chats",
   "keywords": [
     "dsh-plugin",
@@ -26,6 +26,8 @@
   "exports": {
     ".": "./plugin.js",
     "./client": "./client.js",
+    "./plugin-sdk": "./src/host/plugins/sdk.js",
+    "./browser-provider": "./src/host/plugins/sdk.js",
     "./web-search": "./web-search.js",
     "./package.json": "./package.json"
   },
@@ -34,6 +36,9 @@
     "plugin.js",
     "index.js",
     "src/host/",
+    "src/client/agent-logos.js",
+    "src/client/agent-routes.js",
+    "src/client/inks.js",
     "src/shared/",
     "src/office/",
     "client.js",
@@ -47,6 +52,7 @@
   "scripts": {
     "build": "node scripts/build-client.mjs && node scripts/build-link.mjs",
     "test": "node --import ./test/harness-resolve.mjs --import ./test/drain.mjs --test --test-timeout=120000 \"test/*.test.js\"",
+    "test:browser": "node --import ./test/harness-resolve.mjs --test --test-concurrency=1 --test-timeout=120000 --test-force-exit \"test/browser/*.test.js\"",
     "lint": "node scripts/lint.mjs",
     "harness": "npm install --prefix dev/harness --legacy-peer-deps=false --no-package-lock --no-fund --no-audit",
     "setup": "sh ../scripts/setup.sh",
@@ -56,8 +62,10 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-fs-patch": "*",
     "@deepseek-ai/dsh-agent": "*",
     "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-sandbox-policy": "*",
     "@deepseek-ai/dsh-scope": "*",
     "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/dsh-tools": "*",
@@ -75,7 +83,9 @@
   "devDependencies": {
     "@xmldom/xmldom": "0.9.12",
     "esbuild": "0.28.2",
-    "qrcode-generator": "2.0.4"
+    "qrcode-generator": "2.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "dependencies": {
     "@modelcontextprotocol/client": "2.4.0",
@@ -98,9 +108,13 @@
     "esbuild": true
   },
   "bin": {
-    "ds-bot": "./bin/ds-bot-doctor.mjs"
+    "ds-bot": "./bin/ds-bot-cli.mjs",
+    "ds-bot-mcp": "./bin/ds-bot-mcp.mjs"
   },
   "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-fs-patch": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-agent": {
       "optional": true
     },

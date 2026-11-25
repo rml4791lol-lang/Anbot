@@ -127,7 +127,7 @@ test('replies that arrive while the Bot works are read as one message', async (t
   const calls = agentOf('b').calls
   assert.equal(calls.length, 1)
   const body = textOf(calls[0][1].content)
-  assert.match(body, /^\[Reply from Chief\]/)
+  assert.match(body, /^\[Work completed by Chief · closed;[^\n]*\n\[Reply from Chief · re r0/)
   assert.match(body, /\[Reply from Chief · re r0 · ex e0\]\none/)
   assert.match(body, /\[Reply from Chief · re r1 · ex e1\]\ntwo/)
   assert.match(body, /\[Reply from Chief · re r2 · ex e2\]\nthree/)
@@ -204,13 +204,17 @@ test('a message from the user is never folded', async (t) => {
 })
 
 test('a silent note does not wake the Bot and is not folded', async (t) => {
-  const { rt, agentOf, emit, home, stop } = await start(team())
+  const { rt, agentOf, emit, status, home, stop } = await start(team())
   t.after(async () => { await stop(); rmSync(home, { recursive: true, force: true, maxRetries: 5 }) })
 
   emit('b', 'turn/start', { turn: 1 })
   await rt.deliver({ fromId: 'a', toId: 'b', role: 'reply', replyTo: 'r0', exchangeId: 'e0', text: 'done already', silent: true })
-  assert.deepEqual(agentOf('b').calls.map(([kind]) => kind), ['send'])
-  assert.deepEqual(agentOf('b').calls[0].slice(2), ['next-turn', false])
+  // Busy target: the note is held until the turn ends, never folded and never waking it.
+  assert.deepEqual(agentOf('b').calls, [])
+  emit('b', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+  status('idle')
+  await settle(() => agentOf('b').calls.length === 1)
+  assert.deepEqual(agentOf('b').calls.map(([kind]) => kind), ['inject'])
 })
 
 test('every reply of a folded batch is marked delivered', async (t) => {

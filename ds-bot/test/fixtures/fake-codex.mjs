@@ -20,6 +20,8 @@ import { appendFileSync } from 'node:fs'
 const exitAfterTurn = process.argv.includes('--exit-after-turn')
 const textOnly = process.argv.includes('--text-only')
 const holdCompact = process.argv.includes('--hold-compact')
+const failResume = process.argv.includes('--fail-resume')
+const failStart = process.argv.includes('--fail-start')
 const recordAt = process.argv.indexOf('--record')
 const recordPath = recordAt === -1 ? undefined : process.argv[recordAt + 1]
 const record = (method, params) => {
@@ -65,6 +67,40 @@ async function elicitTurn(thread, turnId, text) {
 }
 
 function runTurn(thread, turnId, text, effort, images = []) {
+  if (text.includes('list-team-tools')) {
+    const finish = text => {
+      notice('item/completed', { threadId: thread.id, turnId, item: { id: 'i1', type: 'agentMessage', text } })
+      thread.turn = undefined
+      notice('turn/completed', { threadId: thread.id, turn: { id: turnId, status: 'completed' } })
+    }
+    const server = thread.params.config.mcp_servers.dsbot
+    // The streamable-HTTP server wants the handshake, an Accept header and the session id.
+    const post = async (body, sessionId) => {
+      const response = await fetch(server.url, {
+        method: 'POST',
+        headers: {
+          ...server.http_headers,
+          'content-type': 'application/json',
+          accept: 'application/json, text/event-stream',
+          ...(sessionId ? { 'mcp-session-id': sessionId } : {}),
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(5000),
+      })
+      const text = await response.text()
+      const data = text.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5).trim()).find(Boolean) ?? text.trim()
+      return { sessionId: response.headers.get('mcp-session-id') ?? sessionId, message: data === '' ? undefined : JSON.parse(data) }
+    }
+    void (async () => {
+      const init = await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'fake-codex', version: '1' } } })
+      await post({ jsonrpc: '2.0', method: 'notifications/initialized' }, init.sessionId)
+      return (await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, init.sessionId)).message
+    })().then(
+      result => finish(result?.result?.tools.map(tool => tool.name).join(', ') ?? 'MCP error'),
+      () => finish('MCP transport error'),
+    )
+    return
+  }
   if (/elicit \S+ \S+/.test(text)) return void elicitTurn(thread, turnId, text)
   // An approval request whose turn stays alive: an answer has to steer this turn.
   if (text.includes('late-double')) {
@@ -164,6 +200,7 @@ process.stdin.on('data', (chunk) => {
         break
       case 'thread/start': {
         record('thread/start', params)
+        if (failStart) { replyError(id, 'thread start failed'); break }
         const extra = unknownField(params, THREAD_START)
         if (extra !== undefined) { replyError(id, extra); break }
         const thread = { id: `thr-${++nextId}`, params }
@@ -173,10 +210,12 @@ process.stdin.on('data', (chunk) => {
       }
       case 'thread/resume': {
         record('thread/resume', params)
+        if (failResume) { replyError(id, 'thread not found'); break }
         const extra = unknownField(params, THREAD_RESUME)
         if (extra !== undefined) { replyError(id, extra); break }
         const thread = threads.get(params.threadId) ?? { id: params.threadId }
-        thread.params = params
+        // A warm resume uses the loaded thread's existing configuration (#2110).
+        thread.params ??= params
         threads.set(thread.id, thread)
         reply(id, { thread: { id: params.threadId } })
         break

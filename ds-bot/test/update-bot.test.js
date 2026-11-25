@@ -48,6 +48,7 @@ function start(team = TEAM) {
           // A profile notice carries no question: it is queued for the Bot's next turn
           // instead of waking it (see deliver's `silent`).
           send: (message, target, wakeup) => sent.push({ sessionId, message, target, wakeup }),
+          inject: message => sent.push({ sessionId, message, target: 'inject', wakeup: false }),
         },
       }),
       selectModel: async () => {},
@@ -100,14 +101,14 @@ test('a group Session changes its own Bot; a Session outside the team changes no
   assert.equal(await tool('update_bot', { name: 'King' }, 'stranger'), 'Only Bots on the team can use update_bot.')
 })
 
-test('every Bot sees the update_bot rule in its identity section', async (t) => {
+test('every Bot sees the update_bot rule in its team rules section', async (t) => {
   const { ctx, tool, stop } = start()
   t.after(stop)
   // The first load indexes the Sessions; without it selfOf finds no Bot.
   await tool('list_bots', {}, 'b2')
-  const text = ctx.sections.get('bot-identity').text({ agent: { id: 'b2' } })
+  const text = ctx.sections.get('bot-team-rules').text({ agent: { id: 'b2' } })
   assert.match(text, /update_bot changes your own settings/)
-  assert.match(ctx.sections.get('bot-identity').text({ agent: { id: 'm1' } }), /update_bot changes your own settings/)
+  assert.match(ctx.sections.get('bot-team-rules').text({ agent: { id: 'm1' } }), /update_bot changes your own settings/)
 })
 
 test('an instructions change is queued quietly and kept in the mailbox', async (t) => {
@@ -119,7 +120,7 @@ test('an instructions change is queued quietly and kept in the mailbox', async (
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.equal(sent.length, 1)
   assert.equal(sent[0].sessionId, 'b2')
-  assert.equal(sent[0].target, 'next-turn')
+  assert.equal(sent[0].target, 'inject')
   assert.equal(sent[0].wakeup, false)
   const text = sent[0].message.content[0].text
   assert.match(text, /profile was updated/)

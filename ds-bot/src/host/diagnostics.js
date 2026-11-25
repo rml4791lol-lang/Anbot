@@ -16,7 +16,9 @@ const LOG_MAX_BYTES = 1 << 20
 const STACK_LINES = 8
 const TEXT_MAX = 2000
 export const REPORT_ENTRIES = 20
-export const ISSUES_URL = 'https://github.com/rml4791lol-lang/Anbot/issues/new'
+// Anbot's own issues: bug reports from this build go to the Anbot repository, not upstream DS-Bot.
+export const ISSUES_REPOSITORY = 'rml4791lol-lang/Anbot'
+export const ISSUES_URL = `https://github.com/${ISSUES_REPOSITORY}/issues/new`
 
 const quote = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -253,5 +255,9 @@ export function install(rt) {
     await writing
   }
 
-  Object.assign(rt, { warn, noteFailure: note, diagnostics: { report, logText, clear, entries } })
+  const issueFacts = () => {
+    const { botVersion, dshVersion, os } = facts()
+    return [botVersion && `DS Bot: ${botVersion}`, dshVersion && `DSH: ${dshVersion}`, `OS: ${os}`].filter(Boolean).join('\n')
+  }
+  Object.assign(rt, { warn, noteFailure: note, diagnostics: { report, logText, clear, entries, issueFacts } })
 }

@@ -23,12 +23,14 @@
 // lists no compact command, `--no-usage` reports no usage.
 // `--cursor-modes` lists the modes cursor-agent 2026.11.05 does (agent, plan, ask)
 // and refuses any other, as it does.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 const exitAfterTurn = process.argv.includes('--exit-after-turn')
+const noCancelAck = process.argv.includes('--no-cancel-ack')
+const lateCancelReply = process.argv.includes('--late-cancel-reply')
 const cursorModes = process.argv.includes('--cursor-modes')
 const agyModes = process.argv.includes('--agy-modes')
 const thoughtLevels = process.argv.includes('--thought-levels')
@@ -42,6 +44,12 @@ const rejectHttpMcp = process.argv.includes('--reject-http-mcp')
 const rejectMcp = process.argv.includes('--reject-mcp')
 const noHttpMcp = process.argv.includes('--no-http-mcp')
 const failFirstInit = process.argv.includes('--fail-first-init')
+const failLoad = process.argv.includes('--fail-load')
+const recordAt = process.argv.indexOf('--record')
+const recordPath = recordAt === -1 ? undefined : process.argv[recordAt + 1]
+const record = (method, params) => {
+  if (recordPath !== undefined) appendFileSync(recordPath, `${JSON.stringify({ method, params })}\n`)
+}
 let initCount = 0
 const authRequired = process.argv.includes('--auth-required')
 const noImage = process.argv.includes('--no-image')
@@ -166,11 +174,11 @@ async function runPrompt(session, prompt, requestId) {
     }, 20)
     return
   }
+  if (text.includes('rpc-error-number')) { send({ jsonrpc: '2.0', id: requestId, error: { code: -32603, message: 'Internal error: approval was cancelled' } }); return }
+  if (text.includes('rpc-error-empty')) { send({ jsonrpc: '2.0', id: requestId, error: { code: '', message: 'Internal error: empty code' } }); return }
+  if (text.includes('rpc-error-object')) { send({ jsonrpc: '2.0', id: requestId, error: { code: -32603, message: { reason: 'stopped' } } }); return }
   if (text.includes('count-sessions')) { finish(`sessions: ${sessions.size}`); return }
-  if (/\bhang\b/.test(text)) {
-    session.hangingPrompt = requestId
-    return
-  }
+  if (/\bhang\b/.test(text)) { session.pendingPrompt = requestId; return }
   if (text.includes('wait-gate')) {
     // Keeps this turn open until the test writes $FAKE_ACP_GATE/open, so a
     // second message can arrive while the first turn still runs.
@@ -207,6 +215,13 @@ async function runPrompt(session, prompt, requestId) {
       ],
     })
     const outcome = answer?.result?.outcome
+    if (process.argv.includes('--stall-after-permission')) {
+      session.pendingPrompt = requestId
+      return
+    }
+    if (process.argv.includes('--compact-after-permission')) {
+      send({ jsonrpc: '2.0', method: '_cognition.ai/compaction', params: { status: 'completed', sessionId } })
+    }
     finish(outcome?.outcome === 'selected' && !outcome.optionId.startsWith('reject') ? `allowed via ${outcome.optionId}` : 'denied')
     return
   }
@@ -334,6 +349,7 @@ process.stdin.on('data', (chunk) => {
         break
       }
       case 'session/new': {
+        record('session/new', params)
         if (authRequired) { send({ jsonrpc: '2.0', id, error: { code: -32000, message: 'Authentication required' } }); break }
         const servers = params.mcpServers ?? []
         if (rejectMcp && servers.length > 0) { fail(id, 'Invalid params: mcpServers unsupported'); break }
@@ -376,6 +392,8 @@ process.stdin.on('data', (chunk) => {
         break
       }
       case 'session/load': {
+        record('session/load', params)
+        if (failLoad) { fail(id, 'session not found'); break }
         const servers = params.mcpServers ?? []
         if (rejectMcp && servers.length > 0) { fail(id, 'Invalid params: mcpServers unsupported'); break }
         if (rejectHttpMcp && servers.some(entry => entry.type === 'http')) { fail(id, 'Invalid params: http mcp unsupported'); break }
@@ -430,6 +448,14 @@ process.stdin.on('data', (chunk) => {
         else { sessions.get(params.sessionId).model = params.modelId; saveSaved(); reply(id, {}) }
         break
       case 'session/prompt':
+        record('session/prompt', params)
+        if (lateCancelReply) {
+          const session = sessions.get(params.sessionId)
+          if (session?.pendingPrompt !== undefined) {
+            reply(session.pendingPrompt, { stopReason: 'cancelled' })
+            delete session.pendingPrompt
+          }
+        }
         void runPrompt(sessions.get(params.sessionId) ?? { id: params.sessionId }, params.prompt, id)
           .then(() => { if (exitAfterTurn) setTimeout(() => process.exit(0), 50) })
         break
@@ -437,15 +463,17 @@ process.stdin.on('data', (chunk) => {
         sessions.delete(params.sessionId)
         reply(id, {})
         break
-      case 'session/cancel': {
-        const session = sessions.get(params.sessionId)
-        update(params.sessionId, { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: 'cancelled' } })
-        if (session?.hangingPrompt !== undefined) {
-          reply(session.hangingPrompt, { stopReason: 'cancelled' })
-          delete session.hangingPrompt
-        }
+      case 'session/cancel':
+        if (noCancelAck) break
+        setTimeout(() => {
+          update(params.sessionId, { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: 'cancelled' } })
+          const session = sessions.get(params.sessionId)
+          if (session?.pendingPrompt !== undefined) {
+            reply(session.pendingPrompt, { stopReason: 'cancelled' })
+            delete session.pendingPrompt
+          }
+        }, 30)
         break
-      }
       default:
         if (id !== undefined) fail(id, `method not found: ${method}`)
     }

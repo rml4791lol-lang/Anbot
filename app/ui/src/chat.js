@@ -1,4 +1,4 @@
-import { createElement as h, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createElement as h, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { call } from '../../../ds-bot/src/client/api.js'
 import { Bubbles, ChatRows, Shimmer } from '../../../ds-bot/src/client/cells.js'
 import { ComposerPlus, ComposerVoice } from '../../../ds-bot/src/client/composer.js'
@@ -7,57 +7,209 @@ import { t } from '../../../ds-bot/src/client/i18n.js'
 import { ArrowUpIcon } from '../../../ds-bot/src/client/icons.js'
 import { ModelChoiceDock } from '../../../ds-bot/src/client/model-menu.js'
 import { PendingQuestion } from '../../../ds-bot/src/client/questions.js'
-import { ReadOnlyDock } from '../../../ds-bot/src/client/read-only-dock.js'
 
 // The chat follows its end while the user is this close to it.
 const FOLLOW_PX = 80
-const sameItem = (a, b) => a.kind === b.kind && a.time === b.time && a.text === b.text
+const STREAM_FALLBACK_MS = 32
+const MAX_EARLY = 200
+const MemoChatRows = typeof memo === 'function' ? memo(ChatRows) : ChatRows
+const sameItem = (a, b) => (a.id !== undefined && b.id !== undefined
+  ? a.id === b.id && a.kind === b.kind && (a.time ?? null) === (b.time ?? null)
+  : a.kind === b.kind && a.time === b.time && a.text === b.text)
 
-// A Bot's own chat: pages from the `chat` endpoint, new entries and the reply being
-// written from the feed. Entries that arrive while the first page loads wait for it.
-function useChat(botId, part, feed) {
-  const [view, setView] = useState({ sessionId: null, items: [], cursor: null, loading: botId !== undefined, failed: false })
-  const [stream, setStream] = useState(null)
+// `room-chat` speaks the mobile API contract (kind: 'bot' with botId/name/color,
+// kind: 'event' with event: 'done'|'failed'|'schedule'|...). `ChatRows` expects
+// group rows as 'post' and 'relay' so members stay distinct and round events render
+// with RelayEvent instead of falling into the 1:1 'Message from a Bot' row.
+export function adaptRoomItem(item) {
+  if (!item || typeof item !== 'object') return item
+  if (item.kind === 'bot') {
+    return {
+      id: item.id,
+      kind: 'post',
+      seq: item.id,
+      botId: item.botId,
+      name: item.name,
+      color: item.color,
+      text: item.text,
+      time: item.time,
+      ...(Number.isFinite(item.duration) ? { duration: item.duration } : {}),
+      ...(item.whole?.file ? { file: item.whole.file, length: item.whole.length } : {}),
+    }
+  }
+  if (item.kind === 'event') {
+    return {
+      id: item.id,
+      kind: 'relay',
+      time: item.time,
+      reply: {
+        kind: item.event,
+        botId: item.botId,
+        name: item.name,
+        color: item.color,
+        text: item.text,
+        code: item.code,
+        time: item.time,
+      },
+    }
+  }
+  return item
+}
+
+export const adaptRoomItems = items => (Array.isArray(items) ? items.map(adaptRoomItem) : [])
+
+// Merges a refreshed newest page onto already-loaded history without discarding
+// earlier pages or rewinding the cursor.
+export function mergeLatestPage(currentItems, currentCursor, nextItems, nextCursor) {
+  if (currentItems.length === 0) return { items: nextItems, cursor: nextCursor }
+  if (nextItems.length === 0) return { items: [], cursor: nextCursor }
+  let cut = -1
+  for (const next of nextItems) {
+    for (let i = currentItems.length - 1; i >= 0; i -= 1) {
+      if (sameItem(currentItems[i], next)) { cut = i; break }
+    }
+    if (cut !== -1) break
+  }
+  if (cut > 0) return { items: [...currentItems.slice(0, cut), ...nextItems], cursor: currentCursor }
+  if (cut === 0) return { items: nextItems, cursor: nextCursor }
+  if (nextCursor && nextCursor.beforeSeq === undefined && Number.isInteger(nextCursor.part)) {
+    return { items: [...currentItems, ...nextItems], cursor: currentCursor }
+  }
+  return { items: nextItems, cursor: nextCursor }
+}
+
+const userItemKey = item => (item.id !== undefined ? `id:${item.id}` : `t:${item.time ?? ''}:${item.text}`)
+
+// A Bot's own chat or a group chat: pages from `chat` / `room-chat`, new entries from
+// the feed. Entries that arrive while the first page loads wait for it (capped).
+function useChat(botId, roomId, part, feed) {
+  const active = botId !== undefined || roomId !== undefined
+  const [view, setView] = useState({ sessionId: null, items: [], cursor: null, loading: active, failed: false })
   const [pending, setPending] = useState([])
   const ready = useRef(false)
   const early = useRef([])
   const busy = useRef(false)
+  const reloadQueued = useRef(false)
+  const gen = useRef(0)
+  const hasLoaded = useRef(false)
+  const knownUserIds = useRef(new Set())
   const keep = useRef(null)
 
-  const load = useCallback(async (cursor, scroller) => {
-    if (busy.current || botId === undefined) return
+  const load = useCallback(async (cursor, scroller, refresh = false) => {
+    if (!active) return
+    if (busy.current) {
+      if (cursor === undefined) reloadQueued.current = true
+      return
+    }
+    const myGen = gen.current
     busy.current = true
-    if (cursor === undefined) ready.current = false
-    setView(current => ({ ...current, loading: true, failed: false }))
+    if (cursor === undefined && !refresh) ready.current = false
+    if (!refresh) setView(current => ({ ...current, loading: true, failed: false }))
     try {
-      const page = await call('chat', { botId, ...(cursor ? { cursor } : {}) })
+      const page = roomId !== undefined
+        ? await call('room-chat', { roomId, ...(cursor ? { cursor } : {}) })
+        : await call('chat', { botId, ...(cursor ? { cursor } : {}) })
+      if (gen.current !== myGen) return
+      const pageItems = roomId !== undefined ? adaptRoomItems(page.items) : (Array.isArray(page.items) ? page.items : [])
+      const pageSessionId = page.sessionId ?? part
       if (cursor === undefined) {
-        const later = early.current.filter(entry => entry.sessionId === page.sessionId && !page.items.some(item => sameItem(item, entry.item)))
+        const later = roomId !== undefined
+          ? []
+          : early.current.filter(entry => entry.sessionId === pageSessionId && !pageItems.some(item => sameItem(item, entry.item)))
         early.current = []
         ready.current = true
-        setView({ sessionId: page.sessionId, items: [...page.items, ...later.map(entry => entry.item)], cursor: page.cursor, loading: false, failed: false })
+        const mergedItems = [...pageItems, ...later.map(entry => entry.item)]
+        setView((current) => {
+          if (refresh && current.sessionId === pageSessionId && current.items.length > 0) {
+            const merged = mergeLatestPage(current.items, current.cursor, mergedItems, page.cursor)
+            return { ...current, items: merged.items, cursor: merged.cursor, loading: false, failed: false }
+          }
+          return { sessionId: pageSessionId, items: mergedItems, cursor: page.cursor, loading: false, failed: false }
+        })
+        if (roomId !== undefined) {
+          const initial = !hasLoaded.current
+          hasLoaded.current = true
+          const freshUsers = []
+          for (const item of pageItems) {
+            if (item.kind !== 'user') continue
+            const key = userItemKey(item)
+            if (knownUserIds.current.has(key)) continue
+            knownUserIds.current.add(key)
+            freshUsers.push(item)
+          }
+          if (freshUsers.length > 0) {
+            setPending((list) => {
+              if (list.length === 0) return list
+              const next = list.slice()
+              for (const item of freshUsers) {
+                const at = next.findIndex(entry => entry.text === item.text
+                  && (!initial || !Number.isFinite(item.time) || item.time >= entry.time - 2000))
+                if (at >= 0) next.splice(at, 1)
+              }
+              return next.length === list.length ? list : next
+            })
+          }
+        }
       } else {
+        if (roomId !== undefined) {
+          for (const item of pageItems) {
+            if (item.kind === 'user') knownUserIds.current.add(userItemKey(item))
+          }
+        }
         // Content added above the viewport would push the view down; keep its distance from the end.
         if (scroller) keep.current = scroller.scrollHeight - scroller.scrollTop
-        setView(current => ({ ...current, items: [...page.items, ...current.items], cursor: page.cursor, loading: false }))
+        setView(current => ({ ...current, items: [...pageItems, ...current.items], cursor: page.cursor, loading: false }))
       }
     } catch {
-      ready.current = cursor !== undefined || ready.current
-      setView(current => ({ ...current, loading: false, failed: true }))
+      if (gen.current !== myGen) return
+      ready.current = cursor !== undefined || refresh || ready.current
+      if (!refresh) setView(current => ({ ...current, loading: false, failed: true }))
     } finally {
-      busy.current = false
+      if (gen.current === myGen) {
+        busy.current = false
+        if (reloadQueued.current) {
+          reloadQueued.current = false
+          void loadRef.current(undefined, undefined, true)
+        }
+      }
     }
-  }, [botId])
+  }, [active, botId, roomId, part])
+  const loadRef = useRef(load)
+  loadRef.current = load
 
   // A new part starts the chat over.
-  useEffect(() => { void load(undefined) }, [load, part])
+  useEffect(() => {
+    const myGen = ++gen.current
+    busy.current = false
+    reloadQueued.current = false
+    ready.current = false
+    hasLoaded.current = false
+    early.current = []
+    knownUserIds.current.clear()
+    setPending([])
+    setView({ sessionId: null, items: [], cursor: null, loading: active, failed: false })
+    if (active) void loadRef.current(undefined)
+    return () => {
+      if (gen.current === myGen) gen.current += 1
+      busy.current = false
+      reloadQueued.current = false
+    }
+  }, [active, botId, roomId, part])
 
   useEffect(() => feed.on((event, data) => {
     // The feed came back after a break: entries may have been missed.
-    if (event === 'hello') { if (ready.current) void load(undefined); return }
+    if (event === 'hello') { if (ready.current) void loadRef.current(undefined, undefined, true); return }
+    if (roomId !== undefined) {
+      if (event === 'room' && data?.roomId === roomId) void loadRef.current(undefined, undefined, true)
+      return
+    }
     if (botId === undefined || data?.botId !== botId || data.sessionId !== part) return
     if (event === 'message') {
-      if (!ready.current) { early.current.push(data); return }
+      if (!ready.current) {
+        if (early.current.length >= MAX_EARLY) early.current.splice(0, early.current.length - MAX_EARLY + 1)
+        early.current.push(data)
+        return
+      }
       setView(current => (data.sessionId !== current.sessionId || current.items.some(item => sameItem(item, data.item)) ? current : { ...current, items: [...current.items, data.item] }))
       if (data.item.kind === 'user') {
         setPending((list) => {
@@ -65,27 +217,103 @@ function useChat(botId, part, feed) {
           return at < 0 ? list : [...list.slice(0, at), ...list.slice(at + 1)]
         })
       }
-      if (data.item.kind === 'bot') setStream(null)
-    } else if (event === 'stream') {
-      if (data.phase === 'start') setStream({ attemptId: data.attemptId, text: '' })
-      else if (data.phase === 'end') setStream(current => (current?.attemptId === data.attemptId ? null : current))
-      else setStream(current => (current?.attemptId === data.attemptId ? { ...current, text: current.text + data.text } : current))
     }
-  }), [feed, botId, part, load])
+  }), [feed, botId, roomId, part])
 
   // Shown at once: the message can come back on the feed before the request returns.
-  const send = async (text, actions, sessionId) => {
+  const send = useCallback(async (text, actions, sessionId) => {
+    const myGen = gen.current
     const entry = { kind: 'user', text, time: Date.now() }
     setPending(list => [...list, entry])
     actions.noteSent(sessionId)
     try {
       await actions.send(sessionId, text)
     } catch (error) {
-      setPending(list => list.filter(item => item !== entry))
+      if (gen.current === myGen) setPending(list => list.filter(item => item !== entry))
       throw error
     }
+  }, [])
+  return { view, pending, load, send, keep }
+}
+
+// Isolated live streaming bubble: coalesces per-token deltas onto animation frames
+// so the full transcript does not re-render on every SSE token.
+function LiveStream({ botId, roomId, sessionId, feed, roster, actions, scroller, follow }) {
+  const [stream, setStream] = useState(null)
+  const draft = useRef(undefined)
+  const frame = useRef(undefined)
+  const lastFlush = useRef(0)
+
+  const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now())
+  const cancelFlush = () => {
+    const pending = frame.current
+    if (pending === undefined) return
+    frame.current = undefined
+    if (pending.kind === 'raf' && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(pending.id)
+    else if (pending.kind === 'timer') clearTimeout(pending.id)
   }
-  return { view, stream, pending, load, send, keep }
+  const flush = () => {
+    frame.current = undefined
+    lastFlush.current = nowMs()
+    const current = draft.current
+    if (current === undefined) { setStream(null); return }
+    current.shown = true
+    setStream({ attemptId: current.attemptId, text: current.text })
+  }
+  const scheduleFlush = () => {
+    if (frame.current !== undefined) return
+    if (typeof requestAnimationFrame === 'function') frame.current = { kind: 'raf', id: requestAnimationFrame(flush) }
+    else frame.current = { kind: 'timer', id: setTimeout(flush, STREAM_FALLBACK_MS) }
+  }
+
+  useEffect(() => {
+    cancelFlush()
+    draft.current = undefined
+    setStream(null)
+    return () => { cancelFlush() }
+  }, [botId, roomId, sessionId])
+
+  useEffect(() => feed.on((event, data) => {
+    if (event === 'hello') {
+      cancelFlush()
+      draft.current = undefined
+      setStream(null)
+      return
+    }
+    if (roomId !== undefined || botId === undefined || data?.botId !== botId || data.sessionId !== sessionId) return
+    if (event === 'message' && data.item?.kind === 'bot') {
+      cancelFlush()
+      draft.current = undefined
+      setStream(null)
+      return
+    }
+    if (event !== 'stream') return
+    if (data.phase === 'start') {
+      cancelFlush()
+      draft.current = { attemptId: data.attemptId, text: '', shown: false }
+      setStream({ attemptId: data.attemptId, text: '' })
+    } else if (data.phase === 'end') {
+      if (draft.current?.attemptId === data.attemptId) {
+        cancelFlush()
+        draft.current = undefined
+        setStream(null)
+      }
+    } else if (draft.current?.attemptId === data.attemptId && typeof data.text === 'string' && data.text !== '') {
+      draft.current.text += data.text
+      if (!draft.current.shown || (frame.current === undefined && nowMs() - lastFlush.current >= STREAM_FALLBACK_MS)) {
+        flush()
+      } else {
+        scheduleFlush()
+      }
+    }
+  }), [feed, botId, roomId, sessionId])
+
+  useLayoutEffect(() => {
+    const node = scroller.current
+    if (stream !== null && follow.current && node) node.scrollTop = node.scrollHeight
+  }, [stream])
+
+  return stream?.text ? h(Bubbles, { texts: [stream.text], roster, selfId: botId, actions, streaming: true, sessionId }) : null
 }
 
 // What the Bot views' voice button asks of a composer (DSH's composer in the plugin):
@@ -139,7 +367,7 @@ function Composer({ sessionId, placeholder, disabled, onSend, actions, useUi, us
           'data-composer-input': '',
           onChange: event => setText(event.target.value),
           onKeyDown: (event) => {
-            if (event.key === 'Enter' && enterToSend && !event.shiftKey && !event.nativeEvent.isComposing) {
+            if (event.key === 'Enter' && enterToSend && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) {
               event.preventDefault()
               void submit()
             }
@@ -155,17 +383,17 @@ export function Chat({ sessionId, team }) {
   const { actions, hooks, chat: feed } = team
   const roster = hooks.useRoster(value => value)
   const bot = roster.byId[sessionId]
-  const name = bot?.name ?? roster.roomsById[sessionId]?.name ?? ''
-  const { view, stream, pending, load, send, keep } = useChat(bot?.id, sessionId, feed)
+  const room = roster.roomsById[sessionId]
+  const name = bot?.name ?? room?.name ?? ''
+  const { view, pending, load, send, keep } = useChat(bot?.id, room?.id, sessionId, feed)
+  useEffect(() => {
+    document.body?.toggleAttribute?.('data-bt-room', room !== undefined)
+    return () => { document.body?.removeAttribute?.('data-bt-room') }
+  }, [room !== undefined])
   const scroller = useRef(null)
   const follow = useRef(true)
   const question = roster.questions?.[sessionId]
   const running = hooks.useSessionStatus(map => map.get(sessionId)?.running === true)
-  // A part the user opened while its turn runs takes no input until that turn ends or
-  // the user stops it: the same lock and the same dock the plugin puts in DSH.
-  const readOnlyPart = hooks.useUi(state => state.readOnlyPart ?? null)
-  const partRunning = hooks.useRoster(state => state.partsRunning?.[sessionId] === true)
-  const readOnly = readOnlyPart !== null && readOnlyPart === sessionId && partRunning
 
   useLayoutEffect(() => {
     const node = scroller.current
@@ -173,12 +401,13 @@ export function Chat({ sessionId, team }) {
       node.scrollTop = node.scrollHeight - keep.current
       keep.current = null
     } else if (follow.current) node.scrollTop = node.scrollHeight
-  }, [view.items, stream, pending, running, question])
+  }, [view.items, pending, running, question])
 
   const onScroll = () => {
     const node = scroller.current
     follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < FOLLOW_PX
   }
+  const onSend = useCallback(text => send(text, actions, sessionId), [send, actions, sessionId])
   const earlier = view.loading && view.sessionId !== null ? h(Shimmer, null, t('Loading earlier messages…'))
     : view.failed ? h('button', { type: 'button', className: 'bt-soft', onClick: () => load(view.cursor ?? undefined, scroller.current) }, t('Couldn’t load earlier messages · Retry'))
       : view.cursor ? h('button', { type: 'button', className: 'bt-soft', onClick: () => load(view.cursor, scroller.current) }, t('Load earlier')) : null
@@ -189,20 +418,19 @@ export function Chat({ sessionId, team }) {
       h('div', { className: 'dsb-column' },
         earlier ? h('div', { className: 'bt-earlier-top' }, earlier) : null,
         h('div', { className: 'dsb-flow', 'data-chat-flow': '', role: 'feed', 'aria-label': name, 'aria-busy': view.loading },
-          h(ChatRows, { items: view.items, sessionId, roster, actions, useUi: hooks.useUi, clock: true }),
-          pending.length ? h('div', { className: 'dsb-pending' }, h(ChatRows, { items: pending, sessionId, roster, actions })) : null,
-          stream?.text ? h(Bubbles, { texts: [stream.text], roster, selfId: bot?.id, actions, streaming: true, sessionId }) : null,
+          h(MemoChatRows, { items: view.items, sessionId, roster, actions, useUi: hooks.useUi, clock: true }),
+          pending.length ? h('div', { className: 'dsb-pending' }, h(MemoChatRows, { items: pending, sessionId, roster, actions })) : null,
+          h(LiveStream, { botId: bot?.id, roomId: room?.id, sessionId, feed, roster, actions, scroller, follow }),
           // The Bot views' activity row (from the header pill) draws itself in here.
           h('div', { 'data-chat-running': '' }),
           question ? h(PendingQuestion, { key: JSON.stringify([sessionId, question.id]), sessionId, question, actions, inline: true, enterToSend: sendsOnEnter(roster.prefs) }) : null))),
     h('div', { className: 'dsb-composer-root' },
       h(ModelChoiceDock, { sessionId, useRoster: hooks.useRoster, actions }),
-      h(ReadOnlyDock, { sessionId, useUi: hooks.useUi, useRoster: hooks.useRoster, actions }),
       h(Composer, {
         sessionId,
-        disabled: waiting || readOnly,
+        disabled: waiting,
         placeholder: waiting ? t('Pick a model and {name} can start.', { name }) : name ? t('Message {name}', { name }) : t('Message'),
-        onSend: text => send(text, actions, sessionId),
+        onSend,
         actions,
         useUi: hooks.useUi,
         useRoster: hooks.useRoster,

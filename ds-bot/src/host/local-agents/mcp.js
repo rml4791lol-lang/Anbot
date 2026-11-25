@@ -60,6 +60,7 @@ export class LoopbackMcp {
     this.calls = new Map()
     this.server = undefined
     this.sessions = new Map()
+    this.active = new Set()
     this.url = undefined
   }
 
@@ -76,10 +77,12 @@ export class LoopbackMcp {
         return
       }
       if (!validHost(request, response) || !validOrigin(request, response)) return
-      void this.handle(request, response).catch(() => {
+      const run = this.handle(request, response).catch(() => {
         if (!response.headersSent) response.writeHead(500)
         response.end()
       })
+      this.active.add(run)
+      void run.finally(() => this.active.delete(run))
     })
     await new Promise((resolve, reject) => {
       this.server.listen(0, '127.0.0.1', () => resolve()).once('error', reject)
@@ -155,11 +158,7 @@ export class LoopbackMcp {
     }
     const initializing = Array.isArray(parsed) ? parsed.some(isInitializeRequest) : isInitializeRequest(parsed)
     if (!initializing) {
-      writeJson(response, 400, {
-        jsonrpc: '2.0',
-        id: null,
-        error: { code: -32600, message: 'initialize first' },
-      })
+      await this.handleStateless(request, response, parsed)
       return
     }
 
@@ -185,6 +184,26 @@ export class LoopbackMcp {
       await server.close().catch(() => {})
       throw error
     }
+  }
+
+  // Bridges and CLIs that skip the handshake (upstream behaviour) get a one-request
+  // server: no session id, closed with the response.
+  async handleStateless(request, response, parsed) {
+    // The transport insists on both media types; a bare client sends `*/*` or nothing.
+    const accept = request.headers.accept ?? ''
+    if (!accept.includes('application/json') || !accept.includes('text/event-stream')) request.headers.accept = 'application/json, text/event-stream'
+    const mcpSession = { tools: new Map() }
+    const transport = new NodeStreamableHTTPServerTransport({ sessionIdGenerator: undefined, keepAliveMs: KEEPALIVE_MS })
+    const server = this.serverForRequest()
+    mcpSession.transport = transport
+    mcpSession.server = server
+    this.syncTools(mcpSession)
+    response.once('close', () => {
+      void transport.close().catch(() => {})
+      void server.close().catch(() => {})
+    })
+    await server.connect(transport)
+    await transport.handleRequest(request, response, parsed)
   }
 
   serverForRequest() {
@@ -271,16 +290,32 @@ export class LoopbackMcp {
 
   async close() {
     this.failAll(new Error('the session closed'))
+    // A caller waiting on a call gets its final error frame before its socket goes.
+    let grace
+    await Promise.race([
+      Promise.allSettled([...this.active]),
+      new Promise(resolve => { grace = setTimeout(resolve, 200) }),
+    ])
+    clearTimeout(grace)
     const sessions = [...this.sessions.values()]
     this.sessions.clear()
+    this.server?.closeIdleConnections?.()
     this.server?.closeAllConnections?.()
     await Promise.all(sessions.map(async ({ transport, server }) => {
       await transport.close().catch(() => {})
       await server.close().catch(() => {})
     }))
     await new Promise(resolve => {
-      if (this.server === undefined || !this.server.listening) resolve()
-      else this.server.close(() => resolve())
+      if (this.server === undefined || !this.server.listening) {
+        resolve()
+        return
+      }
+      // A connection that still idles would hold the server open; a bounded force
+      // close follows the graceful one.
+      const timer = setTimeout(() => this.server?.closeAllConnections?.(), 50)
+      timer.unref?.()
+      this.server.once('close', () => clearTimeout(timer))
+      this.server.close(() => resolve())
     })
   }
 }

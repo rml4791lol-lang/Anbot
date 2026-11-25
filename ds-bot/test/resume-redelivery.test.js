@@ -115,10 +115,10 @@ test('an exchange sent again under the same id is taken up once, and every note 
   writer.followup = send
   await settle(() => (notes(home).queued?.b ?? []).length === 1)
 
-  // The same exchange is sent again: the queue holds a note of each send, and the
-  // Session holds the one message that got through.
+  // The same exchange is sent again: the retry replaces its own note instead of
+  // stacking a second one, and the Session holds the one message that got through.
   await first.rt.deliver({ fromId: 'a', toId: 'b', role: 'reply', replyTo: 'r0', exchangeId: 'e0', text: 'Do it once.' })
-  await settle(() => (notes(home).queued?.b ?? []).length === 2)
+  await settle(() => (notes(home).queued?.b ?? []).length === 1 && notes(home).queued.b[0].args.exchangeId === 'e0')
   assert.equal(writer.calls.length, 1)
 
   // A turn takes that one message up: both notes of the exchange are done with, or the

@@ -1250,6 +1250,25 @@ test('requested Skill evidence keeps user examples after a long Bot output', asy
   assert.match(runtime.requests[0].messages[0].content[0].text, /Keep the third correction after a long answer/)
 })
 
+test('learning reads a user correction beyond ten pages after its saved cursor', async t => {
+  // Anbot reviews no Skill on a background pass (only a requested change is drafted), so
+  // the read is observed through the project AGENTS.md review that still consumes it.
+  const folder = projectFolder(t)
+  const seed = JSON.parse(JSON.stringify(TEAM))
+  seed.bots.b2.workDir = folder
+  const history = { b2: [
+    { event: { seq: 20, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Keep this older learning correction' }] } } },
+    ...Array.from({ length: 2001 }, (_, index) => ({ event: { seq: 21 + index, type: 'user/message', data: { source: { kind: 'plugin' }, content: [{ type: 'text', text: 'setup' }] } } })),
+    { event: { seq: 2022, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Latest work' }] } } },
+  ] }
+  const runtime = await startRuntime({ seed, history, learningSeed: { cursors: { b2: 19 } }, replies: [noneReply], config: { learningTimes: { tickMs: 100_000 } } })
+  t.after(() => runtime.stop())
+  await finishTurn(runtime.ctx)
+  await runtime.rt.learningRun()
+  assert.match(runtime.requests[0].messages[0].content[0].text, /Keep this older learning correction/)
+  assert.equal(runtime.learningState().cursors.b2, 2022)
+})
+
 test('a failed chat read keeps that Bot pending while other Bots advance', async t => {
   const seed = JSON.parse(JSON.stringify(TEAM))
   seed.bots.b3 = { id: 'b3', sessionId: 'b3', name: 'Coder', role: 'Coding', model: 'deepseek/v4', instructions: '', capabilities: [], createdAt: 3 }
@@ -1288,7 +1307,6 @@ test('a requested Skill retries TRANSPORT and TIMEOUT failures on the same route
   assert.equal(proposal.name, 'release-checks')
   assert.equal(Object.keys(runtime.learningState().proposals).length, 1)
 })
-
 
 test('a generic task improvement cannot create or update a named Skill', async t => {
   const runtime = await startRuntime({ seed: verifiedTaskSeed(), replies: [improvementReply], config: { learningTimes: { tickMs: 100_000 } } })

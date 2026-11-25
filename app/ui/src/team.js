@@ -18,6 +18,7 @@ import { openFeed } from './api.js'
 const CATCH_UP_MS = 15_000
 const READ_AGAIN = new Set(['hello', 'revision', 'live'])
 const NO_WORK = { bots: {}, approvals: [] }
+const EMPTY_PENDING = Object.freeze([])
 
 // A selection from a source. The value is kept per snapshot and selector, so React reads
 // one value until the source changes.
@@ -55,7 +56,7 @@ export function createTeam() {
   const seenStore = sharedMap(STORAGE.seen)
   let seenAt = seenStore.read()
   const roster = createSource(EMPTY_ROSTER)
-  const ui = createSource({ details: null, view: 'details', renaming: false, tab: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, settings: null, memory: null, toast: null, signIn: null, renameAgent: null, readOnlyPart: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {} })
+  const ui = createSource({ details: null, view: 'details', renaming: false, tab: null, newChat: null, exchange: null, menu: null, voice: null, palette: null, quote: null, settings: null, memory: null, toast: null, signIn: null, renameAgent: null, unread: unreadStore.read(), reactions: reactionStore.read(), visits: {} })
   const activity = createSource({})
   const work = createSource(NO_WORK)
   const memoryNews = createSource({})
@@ -73,6 +74,8 @@ export function createTeam() {
   const sent = createSource({})
   const shown = createSource(null)
   const chat = createBus()
+  const sessionHooks = new Map()
+  const streamingReply = new Set()
 
   const editRow = (id, edit) => sessions.set((list) => {
     const row = list.byId[id] ?? { id }
@@ -110,6 +113,40 @@ export function createTeam() {
     ui.set(state => (JSON.stringify(state.unread) === JSON.stringify(unread) ? state : { ...state, unread }))
   }
 
+  const pruneSessions = (indexed) => {
+    const activeShown = shown.getSnapshot()
+    const keep = id => id === activeShown || indexed.byId[id] !== undefined || indexed.roomsById[id] !== undefined || indexed.agentOf?.[id] !== undefined
+    sessions.set((list) => {
+      if (list.ids.every(keep)) return list
+      const ids = list.ids.filter(keep)
+      const byId = {}
+      for (const id of ids) byId[id] = list.byId[id]
+      return { ids, byId }
+    })
+    status.set((map) => {
+      let dirty = false
+      for (const id of map.keys()) { if (!keep(id)) { dirty = true; break } }
+      if (!dirty) return map
+      const next = new Map()
+      for (const [id, entry] of map) if (keep(id)) next.set(id, entry)
+      return next
+    })
+    sent.set((state) => {
+      const keys = Object.keys(state)
+      if (keys.every(keep)) return state
+      const next = {}
+      for (const id of keys) if (keep(id)) next[id] = state[id]
+      return next
+    })
+    for (const id of [...sessionHooks.keys()]) if (!keep(id)) sessionHooks.delete(id)
+    for (const id of [...streamingReply]) {
+      if (!keep(id)) {
+        streamingReply.delete(id)
+        actions.noteLive(id, 'reply', null)
+      }
+    }
+  }
+
   // Reads can overlap (the feed and a finished action); an older answer never wins.
   let pulls = 0
   let applied = 0
@@ -124,21 +161,24 @@ export function createTeam() {
     noteNews(value.memoryNews ?? {})
     const current = roster.getSnapshot()
     const changed = {}
-    // Which live parts run changes without a new revision; the session list's Running
-    // mark and the read-only composer read it.
-    if (value.partsRunning !== undefined && JSON.stringify(value.partsRunning) !== JSON.stringify(current.partsRunning ?? {})) changed.partsRunning = value.partsRunning
     if (value.connectors !== undefined && JSON.stringify(value.connectors) !== JSON.stringify(current.connectors ?? [])) changed.connectors = value.connectors
     if (value.capabilityStatuses !== undefined && JSON.stringify(value.capabilityStatuses) !== JSON.stringify(current.capabilityStatuses ?? {})) changed.capabilityStatuses = value.capabilityStatuses
+    if (value.plugins !== undefined && JSON.stringify(value.plugins) !== JSON.stringify(current.plugins ?? null)) changed.plugins = value.plugins
     if (Object.keys(changed).length > 0 && current.ready) roster.set({ ...current, ...changed })
     if (value.unchanged || (value.revision === current.revision && value.modelsKey === current.modelsKey)) return
     // In a window with no visit record yet, everything already there counts as seen.
     if (Object.keys(seenAt).length === 0) leaveVisits([...value.bots, ...value.rooms].map(entry => entry.id))
-    roster.set(indexRoster(value))
+    const indexed = indexRoster(value)
+    roster.set(indexed)
+    pruneSessions(indexed)
   }
   const after = promise => promise.then(async (value) => { await pull().catch(() => {}); return value })
   const partFor = (id) => {
-    const bot = roster.getSnapshot().byId[id]
-    return bot ? currentPart(bot) : id
+    const snap = roster.getSnapshot()
+    const bot = snap.byId[id]
+    if (bot) return currentPart(bot)
+    const room = snap.roomsById[id]
+    return room ? currentPart(room) : id
   }
 
   const actions = {
@@ -187,25 +227,37 @@ export function createTeam() {
     speech: () => undefined,
     voiceSetup: () => null,
     noteSent: (sessionId) => {
-      sent.set(state => ({ ...state, [sessionId]: [...(state[sessionId] ?? []), { placement: 'direct', time: Date.now() }] }))
+      sent.set(state => ({ ...state, [sessionId]: [...(state[sessionId] ?? EMPTY_PENDING), { placement: 'direct', time: Date.now() }] }))
     },
   }
 
   // Running and the tool at work come with the team's state; the plugin reads them from
   // DSH's Session status and its own tool cells.
   const followWork = () => {
-    const bots = work.getSnapshot().bots ?? {}
-    for (const bot of roster.getSnapshot().bots) {
+    const snap = work.getSnapshot()
+    const bots = snap.bots ?? {}
+    const rooms = snap.rooms ?? {}
+    const r = roster.getSnapshot()
+    for (const bot of r.bots) {
       const part = currentPart(bot)
       const doing = bots[bot.id]?.roomId === undefined ? bots[bot.id] : undefined
       setStatus(part, { running: doing !== undefined })
       actions.noteLive(part, 'tool', doing?.tool ? { label: workPhrase(doing), state: toolState(doing.tool) } : null)
+    }
+    for (const room of r.rooms ?? []) {
+      const part = currentPart(room)
+      const busy = (rooms[room.id]?.length ?? 0) > 0
+      setStatus(part, { running: busy })
     }
   }
   roster.subscribe(followWork)
   work.subscribe(followWork)
 
   const onFeed = (event, data) => {
+    if (event === 'hello') {
+      for (const sessionId of streamingReply) actions.noteLive(sessionId, 'reply', null)
+      streamingReply.clear()
+    }
     if (event === 'message' && data?.sessionId && data.item) {
       const { sessionId, item } = data
       const text = item.kind === 'bot' || item.kind === 'user' ? item.text : ''
@@ -215,16 +267,30 @@ export function createTeam() {
         // The sidebar's preview line; turn -1 is never a hidden exchange turn.
         projectionValues: text ? { turnOutline: [{ turn: -1, [item.kind === 'bot' ? 'response' : 'prompt']: text }] } : row.projectionValues,
       }))
-      if (item.kind === 'bot' && shown.getSnapshot() !== sessionId) setStatus(sessionId, { completionUnread: true })
+      if (item.kind === 'bot') {
+        if (streamingReply.delete(sessionId)) actions.noteLive(sessionId, 'reply', null)
+        if (shown.getSnapshot() !== sessionId) setStatus(sessionId, { completionUnread: true })
+      }
       if (item.kind === 'user') sent.set(state => (state[sessionId]?.length ? { ...state, [sessionId]: state[sessionId].slice(1) } : state))
     }
-    // While a reply streams in, it stands in for the activity row.
-    if (event === 'stream' && data?.sessionId) actions.noteLive(data.sessionId, 'reply', data.phase === undefined && data.text ? { text: true } : null)
+    // While a reply streams in, it stands in for the activity row; notify only on transitions.
+    if (event === 'stream' && data?.sessionId) {
+      const streaming = data.phase === undefined && Boolean(data.text)
+      if (streaming) {
+        if (!streamingReply.has(data.sessionId)) {
+          streamingReply.add(data.sessionId)
+          actions.noteLive(data.sessionId, 'reply', { text: true })
+        }
+      } else if (streamingReply.delete(data.sessionId)) {
+        actions.noteLive(data.sessionId, 'reply', null)
+      }
+    }
     chat.emit(event, data)
   }
 
   const start = () => {
     let stopped = false
+    let timer
     const read = () => {
       void pull().catch((error) => {
         if (stopped) return
@@ -232,18 +298,34 @@ export function createTeam() {
         if (!roster.getSnapshot().ready) actions.reportError(error, 'state')
       })
     }
+    const startTimer = () => {
+      if (timer !== undefined || stopped) return
+      timer = setInterval(read, CATCH_UP_MS)
+    }
+    const stopTimer = () => {
+      if (timer === undefined) return
+      clearInterval(timer)
+      timer = undefined
+    }
+    const onVisibility = () => {
+      if (stopped) return
+      if (document.hidden) stopTimer()
+      else { read(); startTimer() }
+    }
     read()
     const closeFeed = openFeed((event, data) => {
       if (READ_AGAIN.has(event)) read()
       onFeed(event, data)
     })
-    const timer = setInterval(read, CATCH_UP_MS)
+    if (typeof document === 'undefined' || !document.hidden) startTimer()
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
     const onPageHide = () => leaveVisits(Object.keys(ui.getSnapshot().visits ?? {}))
     window.addEventListener('pagehide', onPageHide)
     return () => {
       stopped = true
       closeFeed()
-      clearInterval(timer)
+      stopTimer()
+      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', onPageHide)
     }
   }
@@ -269,6 +351,22 @@ export function createTeam() {
     useShown: use(shown),
   }
   // The Session one view shows, as DSH hands it to a view: what was just sent there.
-  const sessionHook = sessionId => selector => useSelect(sent, state => selector({ pendingSubmissions: state[sessionId] ?? [] }))
+  const sessionHook = (sessionId) => {
+    let hook = sessionHooks.get(sessionId)
+    if (hook === undefined) {
+      let lastPending = EMPTY_PENDING
+      let lastSlice = { pendingSubmissions: EMPTY_PENDING }
+      hook = selector => useSelect(sent, (state) => {
+        const pending = state[sessionId] ?? EMPTY_PENDING
+        if (pending !== lastPending) {
+          lastPending = pending
+          lastSlice = { pendingSubmissions: pending }
+        }
+        return selector(lastSlice)
+      })
+      sessionHooks.set(sessionId, hook)
+    }
+    return hook
+  }
   return { actions, hooks, sessionHook, chat, start }
 }

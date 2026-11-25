@@ -124,11 +124,11 @@ const turn = (emit, id, message, text) => {
 test('a plain text answer wakes the Bot that asked: it gets a new turn (followup)', async (t) => {
   const { agents, emit, tool } = await start(t)
   // Writer asks Chief and ends its turn; Chief is idle, so the message goes in as a steer.
-  await tool('message_bot', { to: 'Chief', message: '就发还是换封面' }, 'b')
+  await tool('delegate_work', { to: 'Chief', goal: '就发还是换封面' }, 'b')
   const [kind, asked] = callsOf(agents, 'a')[0]
   assert.equal(kind, 'steer')
   assert.equal(asked.source.role, 'request')
-  assert.match(textOf(asked.content), /^\[Message from Writer\]\n就发还是换封面$/)
+  assert.match(textOf(asked.content), /^\[Work #W1 from Writer · reply closes work; call ask_back if blocked\]\n就发还是换封面$/)
 
   turn(emit, 'a', asked, '就发')
   assert.ok(await until(() => callsOf(agents, 'b').length > 0), 'Writer was never handed the answer')
@@ -138,7 +138,7 @@ test('a plain text answer wakes the Bot that asked: it gets a new turn (followup
   assert.equal(back, 'followup')
   assert.equal(reply.source.role, 'reply')
   assert.equal(reply.source.replyTo, asked.source.exchangeId)
-  assert.equal(textOf(reply.content), '[Reply from Chief]\n就发')
+  assert.equal(textOf(reply.content), '[Work #W1 completed by Chief · closed; reply [PASS] if nothing needs to be told to the user]\n就发')
 })
 
 test('a turn opened by a "[Reply from …]" hands its text back quietly, without a new turn', async (t) => {
@@ -154,10 +154,10 @@ test('a turn opened by a "[Reply from …]" hands its text back quietly, without
   assert.ok(await until(() => callsOf(agents, 'a').length > 0), 'the text evaporated')
 
   // A send is a queue entry read at the next turn: no turn is spent on it.
-  const [kind, note, when, wake] = callsOf(agents, 'a').at(-1)
-  assert.deepEqual([kind, when, wake], ['send', 'next-turn', false])
+  const [kind, note] = callsOf(agents, 'a').at(-1)
+  assert.equal(kind, 'inject')
   assert.equal(note.source.role, 'reply')
-  assert.equal(textOf(note.content), '[Reply from Writer]\n收到，我去换')
+  assert.equal(textOf(note.content), '[Reply from Writer · FYI only, no reply needed]\n收到，我去换')
 
   // On disk before it goes out: the pair's book holds the send line, so nothing passes
   // between two Bots without a record of it.
@@ -175,16 +175,16 @@ test('a turn opened by a "[Reply from …]" hands its text back quietly, without
 
 test('an answer the user sees still leaves the asker a quiet note', async (t) => {
   const { agents, emit, tool } = await start(t)
-  await tool('message_bot', { to: 'Writer', message: '告诉用户：明天发', reply_to: 'user', when: 'now' }, 'a')
+  await tool('delegate_work', { to: 'Writer', goal: '告诉用户：明天发', deliver_to: 'user', when: 'now' }, 'a')
   const [, asked] = callsOf(agents, 'b')[0]
   assert.equal(asked.source.audience, 'user')
 
   turn(emit, 'b', asked, '明天发')
   // The user sees it; the Bot that asked reads it at its next turn instead of opening one.
   assert.ok(await until(() => callsOf(agents, 'a').length > 0), 'the asker never learned the answer')
-  const [kind, note, when, wake] = callsOf(agents, 'a').at(-1)
-  assert.deepEqual([kind, when, wake], ['send', 'next-turn', false])
-  assert.equal(textOf(note.content), '[Reply from Writer]\n明天发')
+  const [kind, note] = callsOf(agents, 'a').at(-1)
+  assert.equal(kind, 'inject')
+  assert.equal(textOf(note.content), '[Reply from Writer · FYI only, no reply needed]\n明天发')
 })
 
 test('stop_bot still hands the reason to the stopped Bot', async (t) => {
@@ -192,8 +192,10 @@ test('stop_bot still hands the reason to the stopped Bot', async (t) => {
   // A running turn must be there for stop_bot to stop.
   emit('b', 'turn/start', { turn: 1 })
   await tool('stop_bot', { bot: 'Writer', reason: '先别发' }, 'a')
-  const receipt = callsOf(agents, 'b').at(-1)
+  emit('b', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+  assert.ok(await until(() => callsOf(agents, 'b').some(call => call[0] === 'inject')), 'the receipt never reached the stopped Bot')
+  const receipt = callsOf(agents, 'b').find(call => call[0] === 'inject')
   t.diagnostic(`stop_bot receipt delivered as: ${receipt[0]}`)
   assert.equal(receipt[1].source.role, 'stopped')
-  assert.equal(textOf(receipt[1].content), '[Stopped by Chief]\n先别发')
+  assert.equal(textOf(receipt[1].content), '[Stopped by Chief · no reply needed]\n先别发')
 })

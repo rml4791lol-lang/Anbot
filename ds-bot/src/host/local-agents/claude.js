@@ -4,8 +4,9 @@
 import { readdirSync, realpathSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { homedir } from 'node:os'
-import { join, sep } from 'node:path'
-import { cleanEnv, findEngineExecutable, spawnAgent } from './discover.js'
+import { isAbsolute, join, resolve, sep } from 'node:path'
+import { cleanEnv, findEngineExecutable, spawnAgent, terminateChild } from './discover.js'
+import { lineSplitter } from './lines.js'
 
 // Claude Code tools that only read; the rest may change files or run something.
 const READ_TOOLS = new Set(['Read', 'Glob', 'Grep', 'LS', 'WebFetch', 'WebSearch', 'TodoWrite', 'NotebookRead'])
@@ -97,8 +98,8 @@ export class ClaudeEngine {
     return session.activePrompt !== undefined
   }
 
-  steer(session, text) {
-    return session.prompt([{ type: 'text', text }])
+  steer(session, input) {
+    return session.steer(input)
   }
 
   cancel(session) {
@@ -122,6 +123,7 @@ export class ClaudeEngine {
 
   async close() {
     for (const session of this.sessions.values()) session.kill()
+    this.sessions.clear()
   }
 }
 
@@ -133,6 +135,7 @@ class ClaudeSession {
     this.waiters = []
     this.dead = false
     this.idWaiters = []
+    this.turnCalls = new Set()
   }
 
   emit(event) {
@@ -176,6 +179,9 @@ class ClaudeSession {
     // are admitted the same way, so a review never waits on a card.
     args.push('--allowedTools', ...(mcp === undefined ? [] : ['mcp__dsbot']), ...readOnlyTools())
     this.resumeId = resumeId
+    cwd = resolve(cwd ?? process.cwd())
+    // A resumed conversation may restore a shell directory we cannot observe.
+    this.cwd = resumeId === undefined ? cwd : undefined
     const child = this.child = spawnAgent(bin, args, {
       env: cleanEnv(this.engine.env ?? {}),
       cwd,
@@ -191,17 +197,8 @@ class ClaudeSession {
       new Error(stderr.trim() === '' ? message : `${message}: ${stderr.trim().split('\n').slice(-5).join(' ')}`),
       { code: 'LOCAL_AGENT_EXIT' },
     )
-    let rest = ''
     child.stdout.setEncoding('utf8')
-    child.stdout.on('data', (chunk) => {
-      rest += chunk
-      let at
-      while ((at = rest.indexOf('\n')) !== -1) {
-        const line = rest.slice(0, at).trim()
-        rest = rest.slice(at + 1)
-        if (line !== '') this.onLine(line)
-      }
-    })
+    child.stdout.on('data', lineSplitter(line => this.onLine(line)))
     // Writing to a CLI that has already exited fails asynchronously on stdin,
     // not on the child: without this listener the host dies with an unhandled
     // stream error. The failure goes into the session queue instead.
@@ -248,6 +245,7 @@ class ClaudeSession {
       case 'system':
         if (event.subtype === 'init') {
           this.cliSessionId = event.session_id
+          if (typeof event.cwd === 'string' && isAbsolute(event.cwd)) this.cwd = event.cwd
           this.model = event.model
           for (const resolve of this.idWaiters.splice(0)) resolve(this.cliSessionId)
         } else if (event.subtype === 'compact_boundary') this.emit({ type: 'compaction', status: 'completed' })
@@ -258,6 +256,7 @@ class ClaudeSession {
         // what the context holds now. A subagent's (parent_tool_use_id) is its own.
         const usage = event.message?.usage
         if (usage !== undefined && event.parent_tool_use_id == null) {
+          if (typeof event.message?.id === 'string' && event.message.id !== '') this.turnCalls.add(event.message.id)
           const used = ['input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens', 'output_tokens'].reduce((sum, key) => sum + (usage[key] ?? 0), 0)
           if (used > 0) this.emit({ type: 'context', used })
         }
@@ -265,7 +264,11 @@ class ClaudeSession {
         for (const block of event.message?.content ?? []) {
           if (block.type === 'text') this.emit({ type: 'text', text: block.text ?? '' })
           else if (block.type === 'thinking') this.emit({ type: 'thought', text: block.thinking ?? '' })
-          else if (block.type === 'tool_use') this.emit({ type: 'activity', text: `▸ ${block.name ?? 'tool'}` })
+          else if (block.type === 'tool_use') {
+            // Shells, subagents and custom tools may change cwd without reporting it.
+            if (!READ_TOOLS.has(block.name)) this.cwd = undefined
+            this.emit({ type: 'activity', text: `▸ ${claudeActivity(block)}`, ...(String(block.name ?? '').startsWith('mcp__dsbot__') ? { team: true } : {}) })
+          }
         }
         break
       }
@@ -278,10 +281,13 @@ class ClaudeSession {
           }
           const tool = request.tool_name ?? 'tool'
           this.emit({
-            type: 'permission', id: event.request_id,
-            reply: (optionId) => this.write(permissionResponse(event.request_id, optionId, request.input)),
+            type: 'permission', id: event.request_id, cwd: this.cwd,
+            reply: (optionId) => {
+              if (optionId === 'allow' && !READ_TOOLS.has(tool)) this.cwd = undefined
+              this.write(permissionResponse(event.request_id, optionId, request.input))
+            },
             action: `Run ${tool}`,
-            detail: JSON.stringify(request.input ?? {}).slice(0, 4_000),
+            detail: JSON.stringify(request),
             changes: !READ_TOOLS.has(tool),
             options: [{ optionId: 'allow', kind: 'allow_once', name: 'Allow' }, { optionId: 'deny', kind: 'reject_once', name: 'Deny' }],
           })
@@ -300,7 +306,7 @@ class ClaudeSession {
           break
         }
         if (this.activePrompt === undefined || !TERMINAL_RESULTS.has(event.subtype)
-          || typeof this.cliSessionId !== 'string' || event.session_id !== this.cliSessionId) break
+          || typeof this.cliSessionId !== 'string' || (event.session_id !== undefined && event.session_id !== this.cliSessionId)) break
         const cancelled = this.activePrompt.cancelled
         {
           // modelUsage names each model's window; the session's own model decides.
@@ -308,11 +314,14 @@ class ClaudeSession {
           const size = (models.find(([name]) => name === this.model) ?? models.toSorted((a, b) => (b[1]?.contextWindow ?? 0) - (a[1]?.contextWindow ?? 0))[0])?.[1]?.contextWindow
           if (typeof size === 'number' && size > 0) this.emit({ type: 'context', size })
         }
+        const observedCalls = this.turnCalls.size
+        this.turnCalls.clear()
+        const calls = positiveInt(event.num_turns) ?? (observedCalls > 0 ? observedCalls : undefined)
         this.running = false
         this.finishPrompt(true)
         if (cancelled) break
         this.emit(event.subtype === 'success' || event.is_error !== true
-          ? { type: 'done', reason: 'stop', usage: usageOf(event.usage) }
+          ? { type: 'done', reason: 'stop', usage: usageOf(event.usage, calls) }
           : { type: 'error', error: new Error(event.result ?? 'the agent failed') })
         break
       }
@@ -331,6 +340,7 @@ class ClaudeSession {
   prompt(blocks, signal) {
     if (signal?.aborted) return Promise.resolve(true)
     if (this.activePrompt !== undefined) throw new Error('The previous Claude Code prompt is still stopping')
+    if (this.running !== true) this.turnCalls.clear()
     this.running = true
     const active = { settled: Promise.withResolvers(), cancelled: false }
     this.activePrompt = active
@@ -342,8 +352,17 @@ class ClaudeSession {
     return active.settled.promise
   }
 
-  async steer(thread, input) {
-    return this.prompt(Array.isArray(input) ? input : [{ type: 'text', text: input }])
+  // Input for a turn that is still running joins it; the turn's own result settles
+  // the prompt, so the caller must not wait for it.
+  steer(input) {
+    const blocks = Array.isArray(input) ? input : [{ type: 'text', text: input }]
+    if (this.activePrompt === undefined) return this.prompt(blocks)
+    if (!this.write({ type: 'user', message: { role: 'user', content: claudeContent(blocks) } })) {
+      this.dead = true
+      this.finishPrompt(false)
+      this.emit({ type: 'error', error: Object.assign(new Error('Claude Code stopped reading input'), { code: 'LOCAL_AGENT_EXIT' }) })
+    }
+    return Promise.resolve()
   }
 
   // `/compact` in stream-json runs the CLI's own compaction and ends with a result.
@@ -373,10 +392,19 @@ class ClaudeSession {
     this.finishPrompt(false)
     const child = this.child
     this.child = undefined
-    if (child === undefined) return
-    child.kill('SIGTERM')
-    setTimeout(() => { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL') }, 5_000).unref?.()
+    terminateChild(child)
   }
+}
+
+function claudeActivity(block) {
+  const name = block.name ?? 'tool'
+  const input = block.input !== null && typeof block.input === 'object' ? block.input : {}
+  const command = input.command ?? input.cmd
+  const detail = typeof command === 'string' && command.trim() !== ''
+    ? `\`${command.trim().slice(0, 160)}\``
+    : [input.description, input.file_path, input.path, input.pattern, input.url, input.query]
+      .find(value => typeof value === 'string' && value.trim() !== '')?.trim().slice(0, 120)
+  return detail ? `${name} ${detail}` : name
 }
 
 function claudeContent(blocks) {
@@ -398,9 +426,12 @@ function claudeContent(blocks) {
   return out.length > 0 ? out : [{ type: 'text', text: '' }]
 }
 
-const usageOf = usage => (usage === undefined ? undefined : {
+const positiveInt = value => (Number.isSafeInteger(value) && value > 0 ? value : undefined)
+
+const usageOf = (usage, calls) => (usage === undefined ? undefined : {
   inputTokens: usage.input_tokens ?? 0,
   outputTokens: usage.output_tokens ?? 0,
   ...(usage.cache_read_input_tokens ? { cacheReadTokens: usage.cache_read_input_tokens } : {}),
   ...(usage.cache_creation_input_tokens ? { cacheWriteTokens: usage.cache_creation_input_tokens } : {}),
+  ...(calls !== undefined && calls > 1 ? { calls } : {}),
 })

@@ -5,6 +5,11 @@ import { join, resolve } from 'node:path'
 import { FileMatcher, getNodeModuleFileMatcher } from 'app-builder-lib/out/fileMatcher.js'
 import { parse } from 'yaml'
 
+test('packaged auto-updates use the Anbot GitHub release feed', () => {
+  const config = parse(readFileSync(new URL('../electron-builder.yml', import.meta.url), 'utf8'))
+  assert.deepEqual(config.publish, { provider: 'github', owner: 'rml4791lol-lang', repo: 'Anbot' })
+})
+
 // npm installs the peers that the DSH packages ask for, but electron-builder packs only the
 // dependencies it finds through `dependencies` and `optionalDependencies`. A package that npm
 // installed only as a peer would be left out of the installer, and the Host would not boot.
@@ -14,6 +19,19 @@ test('every package that the app runs on is a dependency, not only a peer', () =
     .filter(([path, entry]) => path !== '' && entry.peer && !entry.dev && !entry.devOptional)
     .map(([path, entry]) => `${path.replace(/^.*node_modules\//u, '')}@${entry.version}`)
   assert.deepEqual(peerOnly, [], `add these to "dependencies" in app/package.json: ${peerOnly.join(' ')}`)
+})
+
+// npm ci installs what the lockfile records for the file dependency, not what ds-bot/package.json
+// asks for. A merge that keeps a stale record leaves the plugin's imports out of the package, and
+// electron-builder only warns "cannot find path for dependency"; the Host then fails at load.
+test('the lockfile records the ds-bot plugin with its current dependencies', () => {
+  const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'))
+  const plugin = JSON.parse(readFileSync(new URL('../../ds-bot/package.json', import.meta.url), 'utf8'))
+  const entry = lock.packages['node_modules/ds-bot']
+  assert.equal(entry?.version, plugin.version, 'run npm install in app/ after changing ds-bot/package.json')
+  assert.deepEqual(entry.dependencies, plugin.dependencies, 'run npm install in app/ after changing ds-bot/package.json')
+  const missing = Object.keys(plugin.dependencies).filter(name => lock.packages[`node_modules/${name}`] === undefined)
+  assert.deepEqual(missing, [], `the lockfile installs none of: ${missing.join(' ')}`)
 })
 
 test('sharp native modules and versioned libvips libraries are unpacked together', () => {
@@ -30,6 +48,10 @@ test('sharp native modules and versioned libvips libraries are unpacked together
     '@img/sharp-libvips-darwin-arm64/lib/libvips-cpp.8.18.7.dylib',
     '@img/sharp-win32-x64/lib/libvips-42.dll',
     'pnpm/bin/pnpm.cjs',
+    'ds-bot/src/host/skills/ds-bot-maintenance/references/online-inspection.md',
+    'ds-bot/src/host/skills/ds-bot-plugin-dev/references/capabilities-and-mcp.md',
+    'ds-bot/src/host/skills/ds-bot-manual/SKILL.md',
+    'ds-bot/src/host/skills/ds-bot-manual/references/settings.md',
   ]) assert.equal(filter(join(root, 'node_modules', file), stat), true, file)
   assert.equal(filter(join(root, 'node_modules/yaml/dist/index.js'), stat), false)
 })

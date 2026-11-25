@@ -11,6 +11,7 @@ import {
   releaseBotProjectWorkspace,
 } from '../src/host/bot-project-workspace.js'
 import { linkedWorktree } from '../src/host/bot-worktree.js'
+import { install as installExtraFolders } from '../src/host/extra-folders.js'
 import { install as installFolders } from '../src/host/folders.js'
 import { install as installRoster } from '../src/host/roster.js'
 
@@ -61,6 +62,11 @@ function rosterRuntime(root, team) {
     },
     sessionTitle: { rename: async () => {} },
     get: name => name === 'agents' ? { get: id => agents.get(id), list: () => [...agents.values()] } : undefined,
+    // extra-folders registers an approval hook and a prompt section; this runtime
+    // makes no tool or approval calls, so they stay idle.
+    on: () => () => {},
+    effect: execute => { execute() },
+    systemPrompt: { section: () => () => {} },
   }
   const rt = {
     ctx,
@@ -95,6 +101,7 @@ function rosterRuntime(root, team) {
     capabilityChanged: async () => {},
   }
   installFolders(rt)
+  installExtraFolders(rt)
   installRoster(rt)
   return { rt, state, requests, archived, resolves: () => resolves }
 }

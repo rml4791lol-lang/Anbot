@@ -132,7 +132,7 @@ test('plain notes that pile up while a Bot works are read as one message', async
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup'])
   const body = textOf(agents.get('b').calls[0][1].content)
-  assert.match(body, /^\[Message from Chief\][^\n]*\nthree\n\n2 more messages came along in this batch\.$/)
+  assert.match(body, /^\[Work from Chief[^\]]*\]\nthree\n\n2 more messages came along in this batch\.$/)
 })
 
 test('a flood of notes is read five at a time, the rest at the next turn', async (t) => {
@@ -213,5 +213,5 @@ test('a queued task is never folded: it goes out on its own', async (t) => {
 
   await flush(agents, ctx, 'b')
   assert.deepEqual(agents.get('b').calls.map(([kind]) => kind), ['followup', 'followup'])
-  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Message from Chief\][^\n]*\nplain three\n\n2 more messages came along in this batch\.$/)
+  assert.match(textOf(agents.get('b').calls[1][1].content), /^\[Work from Chief[^\]]*\]\nplain three\n\n2 more messages came along in this batch\.$/)
 })

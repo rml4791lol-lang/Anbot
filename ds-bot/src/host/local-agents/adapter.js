@@ -4,16 +4,40 @@
 // adapter turns each request into a prompt for the CLI session the Session is
 // mapped to, and the CLI's output back into stream chunks.
 import { createHash, randomUUID } from 'node:crypto'
-import { LlmAdapter, LlmError, offloadedImageText, resolveImageAttachmentAccess, textOnlyImageText } from '@deepseek-ai/dsh-llm'
+import { rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { basename, dirname, resolve } from 'node:path'
+import { LlmAdapter, LlmError, offloadedImageText, resolveImageAttachmentAccess, resolveRetryPolicy, textOnlyImageText } from '@deepseek-ai/dsh-llm'
+import { SOURCE_KIND } from '../constants.js'
+import { GROUP_MEMORY_SOURCE, MEMORY_UPDATE_SOURCE } from '../memory-copy.js'
 import { textOf } from '../text.js'
-import { cliMode, confirmsPromptStop, engineOf } from './engines.js'
+import { cliMode, confirmsPromptStop, engineOf, signInFor } from './engines.js'
+import { PROBE_FORCE_KILL_AFTER_MS } from './discover.js'
 import { LoopbackMcp } from './mcp.js'
 
+async function cleanupProbeDir(dir) {
+  if (typeof dir !== 'string' || dir === '') return
+  const resolved = resolve(dir)
+  if (dirname(resolved) !== resolve(tmpdir()) || !basename(resolved).startsWith('dsb-probe-')) return
+  await rm(resolved, { recursive: true, force: true }).catch(() => {})
+}
+
 export const DEFAULT_CONTEXT_WINDOW = 200_000
-// The replay window when a CLI session is new or its resume failed.
+// A window belongs to the model, not to the Session that reported it, and the model
+// card reads it from resolveModel rather than from the Session's own figures.
+const windowKey = (route, model) => `${route}\u0000${model}`
+// The replay window when a CLI session is new or its resume failed: 12 recent user/assistant
+// turns (not counting tool results or memory snapshots) within a 24 KB cap, plus a
+// dedicated bounded cap for incremental memory updates.
 const REPLAY_MESSAGES = 12
+const REPLAY_TOTAL_MAX = 36
 const REPLAY_BYTES = 24 * 1024
+const REPLAY_LINE_MAX = 2_000
+const MEMORY_UPDATE_REPLAY_MAX = 4
+const MEMORY_UPDATE_REPLAY_BYTES = 8 * 1024
 const IDLE_CLOSE_MS = 10 * 60_000
+// A local CLI may have already performed actions before its request fails.
+const LOCAL_RETRY_POLICY = resolveRetryPolicy({ mode: 'normal', maxRetries: 0 }, 'local-agent')
 const APPROVE_TOOL = 'approve_agent_action'
 // A CLI that answers its compaction command first and condenses after (Devin) says
 // that it started within this long, or it is taken to have condensed without a word.
@@ -32,19 +56,20 @@ function titleChunk(text) {
   ]
 }
 
-// A compaction request neither: a deterministic digest of the messages.
+// A compaction request neither: a deterministic digest of the newest messages.
 function digestChunks(messages) {
   const lines = []
   let used = 0
-  for (const message of messages ?? []) {
+  for (const message of [...(messages ?? [])].reverse()) {
+    if (message?.role === 'system') continue
     const text = textOf(message.content).replace(/\s+/g, ' ').trim()
     if (text === '') continue
     const line = `${message.role}: ${text.slice(0, 300)}`
-    if (used + line.length > 8 * 1024) break
+    if (lines.length > 0 && used + line.length > 8 * 1024) break
     lines.push(line)
     used += line.length
   }
-  const text = `[Earlier conversation, condensed]\n${lines.join('\n')}`
+  const text = `[Earlier conversation, condensed]\n${lines.reverse().join('\n')}`
   return [
     { type: 'block-start', index: 0, blockType: 'text' },
     { type: 'text-delta', index: 0, text },
@@ -67,7 +92,12 @@ export class LocalAgentAdapter extends LlmAdapter {
     this.live = new Map()      // sessionId -> live session
     this.nativePrompts = new Map() // sessionId -> native prompt terminal evidence
     this.modelCache = new Map()
-    this.probes = new Map()    // route -> the probe under way
+    this.nextModelEpoch = 0
+    this.globalModelEpoch = 0
+    this.modelEpochs = new Map() // route -> monotonic epoch for modelCache writes
+    this.windows = new Map()   // route\0model -> the window the CLI reported for it
+    this.probes = new Map()    // route -> { epoch, promise }
+    this.activeProbes = new Set() // active askModels runs, so superseding probes stay protected
     this.sideRequests = new Set()
     this.disposed = false
   }
@@ -76,7 +106,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     const engine = engineOf(route, this.deps.customAgents())
     return { id: route, name: engine?.name ?? route }
   }
-  providerRetryPolicy() { return undefined }
+  providerRetryPolicy() { return LOCAL_RETRY_POLICY }
   imageRequestPricing() { return undefined }
 
   engine(route) {
@@ -93,10 +123,36 @@ export class LocalAgentAdapter extends LlmAdapter {
   // What DS Bot knows of a route without starting its CLI: the CLI's default, what a
   // probe found, and what a Bot runs on. DSH and the catalog ask this for every route.
   async listModels(route) {
-    if (engineOf(route, this.deps.customAgents()) === undefined) return []
+    const spec = engineOf(route, this.deps.customAgents())
+    if (spec === undefined) return []
+    const supportsImage = spec.kind !== 'acp' || this.engines.get(route)?.supportsImages?.() !== false
+    const inputModalities = supportsImage ? ['text', 'image'] : ['text']
     const listed = [{ provider: route, id: 'default', name: 'CLI default' }, ...(this.modelCache.get(route) ?? [])]
     const used = (this.deps.usedModels?.(route) ?? []).filter(id => !listed.some(model => model.id === id))
     return [...listed, ...used.map(id => ({ provider: route, id, name: id }))]
+      .map(entry => ({ ...entry, inputModalities }))
+  }
+
+  modelEpochOf(route) {
+    return Math.max(this.globalModelEpoch, this.modelEpochs.get(route) ?? 0)
+  }
+
+  bumpModelEpoch(route) {
+    const next = ++this.nextModelEpoch
+    this.modelEpochs.set(route, next)
+    return next
+  }
+
+  recordDiscoveredModels(route, models, { epoch } = {}) {
+    const current = this.modelEpochOf(route)
+    if (epoch !== undefined && epoch !== current) return false
+    if (epoch === undefined) {
+      this.bumpModelEpoch(route)
+      this.probes.delete(route)
+    }
+    this.modelCache.set(route, (models ?? []).filter(model => model.id !== 'default')
+      .map(model => ({ provider: route, id: model.id, name: model.name ?? model.id, ...(model.reasoning ? { reasoning: model.reasoning } : {}) })))
+    return true
   }
 
   // Asks one CLI what it serves, once. A failure is not kept, so the next look tries
@@ -104,28 +160,50 @@ export class LocalAgentAdapter extends LlmAdapter {
   async probeModels(route) {
     if (this.modelCache.has(route)) return this.listModels(route)
     if (engineOf(route, this.deps.customAgents()) === undefined) return []
-    let probe = this.probes.get(route)
-    if (probe === undefined) {
-      probe = this.askModels(route).finally(() => this.probes.delete(route))
-      this.probes.set(route, probe)
+    const epoch = this.modelEpochOf(route)
+    let entry = this.probes.get(route)
+    if (entry === undefined || entry.epoch !== epoch) {
+      entry = { epoch, promise: undefined }
+      entry.promise = this.askModels(route, epoch).finally(() => {
+        if (this.probes.get(route) === entry) this.probes.delete(route)
+      })
+      this.probes.set(route, entry)
     }
-    await probe
+    await entry.promise
+    while (this.probes.get(route) !== undefined && this.probes.get(route) !== entry) {
+      entry = this.probes.get(route)
+      await entry.promise
+    }
     return this.listModels(route)
   }
 
-  async askModels(route) {
+  async askModels(route, epoch = this.modelEpochOf(route)) {
     const engine = this.engine(route)
+    const token = { route, engine, epoch }
+    const cwd = this.deps.probeCwd()
+    this.activeProbes.add(token)
     try {
-      const models = await engine.listModels({ cwd: this.deps.probeCwd(), mcp: undefined })
-      this.modelCache.set(route, (models ?? []).filter(model => model.id !== 'default')
-        .map(model => ({ provider: route, id: model.id, name: model.name ?? model.id, ...(model.reasoning ? { reasoning: model.reasoning } : {}) })))
-    } catch { /* the menu still has the CLI's default */ }
-    if (!this.engineInUse(engine)) await engine.close?.().catch(() => {})
+      const models = await engine.listModels({ cwd, mcp: undefined })
+      this.recordDiscoveredModels(route, models, { epoch })
+    } catch { /* the menu still has the CLI's default */ } finally {
+      this.activeProbes.delete(token)
+      if (!this.engineInUse(engine, token)) await engine.close?.({ forceKillAfterMs: PROBE_FORCE_KILL_AFTER_MS }).catch(() => {})
+      await cleanupProbeDir(cwd)
+    }
   }
 
   dropModelCache(route) {
-    if (route === undefined) this.modelCache.clear()
-    else this.modelCache.delete(route)
+    if (route === undefined) {
+      this.globalModelEpoch = ++this.nextModelEpoch
+      this.modelCache.clear()
+      this.probes.clear()
+      for (const engine of this.engines.values()) engine.invalidateListed?.()
+    } else {
+      this.bumpModelEpoch(route)
+      this.modelCache.delete(route)
+      this.probes.delete(route)
+      this.engines.get(route)?.invalidateListed?.()
+    }
   }
 
   async resolveModel(route, model) {
@@ -137,7 +215,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       id: model,
       name: listed?.name ?? model,
       inputModalities: supportsImage ? ['text', 'image'] : ['text'],
-      context: { contextWindow: spec?.contextWindow ?? DEFAULT_CONTEXT_WINDOW },
+      context: { contextWindow: spec?.contextWindow ?? this.windows.get(windowKey(route, model)) ?? DEFAULT_CONTEXT_WINDOW },
       // The thinking levels the engine advertises for this model, if any.
       ...(listed?.reasoning ? { reasoning: listed.reasoning } : {}),
     }
@@ -169,7 +247,9 @@ export class LocalAgentAdapter extends LlmAdapter {
     } else if (live !== undefined) await this.closeLive(live)
     const spec = engineOf(route, this.deps.customAgents())
     if (spec === undefined) throw new LlmError(`Unknown local agent ${route}`, 'LOCAL_AGENT_MISSING')
-    const engine = this.engine(route)
+    // Codex warm-resumes a loaded thread with its old MCP address (#2110).
+    // Let closing this bridge stop its app-server without stopping other Sessions.
+    const engine = spec.kind === 'codex' ? this.deps.spawnEngine(spec.kind, route, spec) : this.engine(route)
     live = {
       sessionId, route, spec, engine, dead: false,
       record,
@@ -202,16 +282,35 @@ export class LocalAgentAdapter extends LlmAdapter {
       // "Context compacted"); until the next prompt, text, thoughts and activity drop.
       mute: false,
     }
-    live.push = (event) => {
-      this.observe(live, event)
-      if (live.mute && live.state === 'idle' && (event?.type === 'text' || event?.type === 'thought' || event?.type === 'activity')) return
+    const idleCloseMs = this.deps.idleCloseMs ?? IDLE_CLOSE_MS
+    live.scheduleIdle = () => {
       clearTimeout(live.idle)
-      live.idle = setTimeout(() => void this.closeLive(live, { idle: true }), IDLE_CLOSE_MS)
+      if (live.dead || !(idleCloseMs > 0)) return
+      live.idle = setTimeout(() => {
+        if (live.dead) return
+        if (live.state === 'suspended') {
+          live.scheduleIdle()
+          return
+        }
+        const error = live.state === 'running'
+          ? new LlmError(`${live.spec.name} stalled: no activity before the local-agent idle timeout.`, 'LOCAL_AGENT_EXIT')
+          : undefined
+        void this.closeLive(live, { idle: true, error })
+      }, idleCloseMs)
       live.idle.unref?.()
+    }
+    live.push = (event) => {
+      if (live.dead) return
+      this.observe(live, event)
+      if (event?.type === 'models') return
+      if (live.mute && live.state === 'idle' && (event?.type === 'text' || event?.type === 'thought' || event?.type === 'activity' || event?.type === 'status')) return
+      live.scheduleIdle()
       const waiter = live.waiters.shift()
       if (waiter !== undefined) waiter(event)
       else live.events.push(event)
     }
+    // The next event for readers outside drain (a test, a maintenance read).
+    live.next = () => (live.events.length > 0 ? Promise.resolve(live.events.shift()) : new Promise(resolve => live.waiters.push(resolve)))
     this.live.set(sessionId, live)
     return live
   }
@@ -238,6 +337,10 @@ export class LocalAgentAdapter extends LlmAdapter {
   // window; a compaction makes the last figure stale until the CLI reports again,
   // except where it reported during the compaction itself (Codex).
   observe(live, event) {
+    if (event?.type === 'models') {
+      if (Array.isArray(event.models) && event.models.length > 0) this.recordDiscoveredModels(live.route, event.models)
+      return
+    }
     if (event?.type === 'effort') {
       if (event.defaultEffort !== undefined) live.defaultEffort = event.defaultEffort
       live.effort = event.effort
@@ -245,10 +348,20 @@ export class LocalAgentAdapter extends LlmAdapter {
       return
     }
     if (event?.type === 'context') {
-      const size = Number.isFinite(event.size) && event.size > 0 ? event.size : live.context?.size
+      // A size the CLI reports now, as against one carried by the Session from its
+      // record: only the former is this model's window.
+      const reported = Number.isFinite(event.size) && event.size > 0 ? event.size : undefined
+      const size = reported ?? live.context?.size
       live.context = Number.isFinite(event.used)
         ? { used: event.used, ...(size === undefined ? {} : { size }) }
         : { ...live.context, ...(size === undefined ? {} : { size }) }
+      // The same figure is the model's window: the model card and the percentage it
+      // renders read it from resolveModel, so it is kept for the route and model this
+      // Session runs, not for this Session alone (#1823). A usage-only report carries
+      // no size, and the Session may still hold the size of the model it ran before:
+      // publishing that one under this model's key would give the new model a window
+      // nothing has reported for it.
+      if (reported !== undefined) this.windows.set(windowKey(live.route, live.model), reported)
       this.deps.patchRecord?.(live.sessionId, { context: live.context })
       return
     }
@@ -290,14 +403,20 @@ export class LocalAgentAdapter extends LlmAdapter {
   engineInUse(engine, except) {
     return [...this.live.values()].some(other => other.engine === engine && !other.dead)
       || [...this.sideRequests].some(request => request !== except && request.engine === engine)
+      || [...this.activeProbes].some(probe => probe !== except && probe.engine === engine)
   }
 
-  async closeLive(live, { idle = false } = {}) {
+  async closeLive(live, { idle = false, error } = {}) {
     if (live.dead) return
     live.dead = true
     clearTimeout(live.idle)
+    if (error !== undefined) {
+      live.closeFailure = { type: 'error', error }
+      void this.stopTurn(live, error.message)
+    }
     this.live.delete(live.sessionId)
     live.engine.forget?.(live.sessionId)
+    if (error !== undefined && Object.hasOwn(live, 'handedBefore')) this.rollbackUnread(live, live.sessionId)
     await live.mcp?.close().catch(() => {})
     if (idle) {
       // The CLI session survives on the agent side; the process leaves and the
@@ -305,14 +424,22 @@ export class LocalAgentAdapter extends LlmAdapter {
       live.engineSession = undefined
       live.started = false
     }
-    for (const waiter of live.waiters.splice(0)) waiter({ type: 'done', reason: 'stop' })
+    for (const waiter of live.waiters.splice(0)) waiter(live.closeFailure ?? { type: 'done', reason: 'stop' })
     const stillUsed = this.engineInUse(live.engine)
     if (!stillUsed) await live.engine.close?.().catch(() => {})
+  }
+
+  // Only driver permission callbacks populate this evidence; MCP/model arguments cannot.
+  approvalEvidence(sessionId, callId) {
+    const live = this.live.get(String(sessionId))
+    if (!live || live.dead || !live.engineSession || live.engineSession.dead) return undefined
+    return live.pending.get(callId)?.approvalEvidence
   }
 
   // The turn under way ends: the CLI stops, and a call it waits on gets an answer.
   stopTurn(live, reason) {
     live.state = 'idle'
+    live.stopped = true
     live.queue.length = 0
     const stopped = live.engineSession === undefined ? undefined : live.engine.cancel?.(live.engineSession)
     live.mcp?.failAll(new Error(reason))
@@ -360,6 +487,8 @@ export class LocalAgentAdapter extends LlmAdapter {
     if (session.resumeMissing === true) {
       live.cliSessionId = undefined
       live.handed = undefined
+      live.context = live.context?.size === undefined ? undefined : { size: live.context.size }
+      live.compactions = 0
       live.resumeLost = true
     } else live.handed = live.handedBefore
     this.deps.saveRecord(sessionId, this.recordOf(live))
@@ -411,6 +540,9 @@ export class LocalAgentAdapter extends LlmAdapter {
       yield* digestChunks(options.messages)
       return
     }
+    if (options.purpose === 'aside') {
+      throw new LlmError('aside requests must not run on a live local-agent session', 'INVALID_REQUEST')
+    }
     const sessionId = options.sessionId
     if (sessionId === undefined) throw new LlmError('a local agent request needs a session', 'INVALID_REQUEST')
     const preset = this.deps.presetFor(sessionId)
@@ -419,8 +551,10 @@ export class LocalAgentAdapter extends LlmAdapter {
     // What the request carries past the last handed message. When the marker is
     // gone the CLI session is stale or new: it gets a replay instead of a delta.
     const messages = options.messages ?? []
-    const at = live.handed === undefined ? -1 : messages.findIndex(message => message.id === live.handed)
-    const fresh = live.handed === undefined || at === -1
+    const queuedDelivery = live.queue.at(-1)?.delivery
+    const handed = queuedDelivery?.id ?? live.handed
+    const at = handed === undefined ? -1 : messages.findIndex(message => message.id === handed)
+    const fresh = at === -1
     const delta = fresh ? [] : messages.slice(at + 1)
 
     // Results of the calls the last step emitted answer the suspended CLI calls.
@@ -437,12 +571,17 @@ export class LocalAgentAdapter extends LlmAdapter {
       pending.resolve({ text, isError: message.isError === true })
       settled.push({ name: pending.name, text, isError: message.isError === true })
     }
-    // The loop's runtime-context user messages are context, not input: they
-    // fold into the next prompt or steer, never start a prompt on their own.
+    // The loop's runtime-context user messages and silent Bot notices (note/cancelled/stopped)
+    // are context, not input: they fold into the next prompt or steer, never start a prompt
+    // on their own, and never hijack an open ask_user / bridged MCP call.
+    const isContextOnly = message => message.role === 'user' && (
+      message.source?.kind === 'runtime-context'
+      || (message.source?.kind === SOURCE_KIND && (message.source?.silent === true || ['note', 'cancelled', 'stopped'].includes(message.source?.role)))
+    )
     const contextText = delta
-      .filter(message => message.role === 'user' && message.source?.kind === 'runtime-context')
+      .filter(isContextOnly)
       .map(message => textOf(message.content)).filter(text => text !== '').join('\n')
-    const users = delta.filter(message => message.role === 'user' && message.source?.kind !== 'runtime-context')
+    const users = delta.filter(message => message.role === 'user' && !isContextOnly(message))
     // The first open bridged call that is not an approval may take the user's
     // next message as its answer; the rest of the input is new.
     const openCall = [...live.pending.entries()].find(([, entry]) => entry.name !== APPROVE_TOOL)
@@ -463,42 +602,87 @@ export class LocalAgentAdapter extends LlmAdapter {
       }
     }
 
-    const system = messages.filter(message => message.role === 'system').map(message => textOf(message.content)).join('\n').trim()
-    const promptHash = system === '' ? undefined : createHash('sha256').update(system).digest('hex')
+    const rawSystem = messages.filter(message => message.role === 'system').map(message => textOf(message.content)).join('\n').trim()
+    const hasMemoryDelta = messages.some(message => message.source?.kind === MEMORY_UPDATE_SOURCE || message.source?.kind === GROUP_MEMORY_SOURCE)
     const mcp = await this.ensureMcp(live, () => this.deps.toolsFor(options), () => options.tools ?? [])
     const cwd = live.cwd ?? await this.deps.cwdFor(sessionId)
     live.cwd = cwd
 
     const mode = cliMode(live.spec.kind, preset)
-    const instructions = system === '' ? undefined : system
-
-    const freshCli = live.cliSessionId === undefined
+    const priorCliId = live.cliSessionId
+    const freshCli = priorCliId === undefined
+    let freshMemory
+    let memoryRefreshed = false
+    let appliedMemory = { system: rawSystem, note: '' }
+    let system = rawSystem
+    let promptHash = system === '' ? undefined : createHash('sha256').update(system).digest('hex')
+    let instructions = system === '' ? undefined : system
+    const refreshMemory = () => {
+      if (memoryRefreshed) return
+      memoryRefreshed = true
+      freshMemory = this.deps.freshMemoryView?.(sessionId)
+      if (freshMemory === undefined) return
+      appliedMemory = applyFreshMemory(rawSystem, freshMemory)
+      system = appliedMemory.system
+      instructions = system === '' ? undefined : system
+      promptHash = system === '' ? undefined : createHash('sha256').update(system).digest('hex')
+    }
+    // When starting a fresh CLI session that replays history with memory changes
+    // (including Claude's post-resumeMissing retry), refresh the authorized memory
+    // snapshot before open() so deleted entries never resurrect from an old prompt.
+    if ((fresh || options[RESUME_RETRIED] === true) && (options[RESUME_RETRIED] === true || hasMemoryDelta)) {
+      refreshMemory()
+    }
+    let resumeDropped = false
     if (live.engineSession === undefined) {
       const openArgs = {
         cwd,
         mcp,
-        resumeId: live.cliSessionId,
+        resumeId: priorCliId,
         mode,
         preset,
+        review: this.deps.reviewFor?.(sessionId) === true,
         model: options.model,
         defaultEffort: live.defaultEffort,
         effort: live.effort,
         // Codex carries the team instructions as developer config on a new
-        // thread; Claude gets them appended at spawn; ACP reads them in the
-        // first prompt below.
-        instructions: live.spec.kind === 'codex' && freshCli ? instructions : undefined,
+        // thread (including when thread/resume falls back to thread/start, where
+        // the callback refreshes memory before thread/start sends startup config;
+        // thread/resume itself ignores `instructions`); Claude gets them
+        // appended at spawn; ACP reads them in the first prompt below.
+        instructions: live.spec.kind === 'codex'
+          ? () => {
+              if (!freshCli) refreshMemory()
+              return instructions
+            }
+          : undefined,
         system: live.spec.kind === 'claude' ? instructions : undefined,
       }
       live.engineSession = await live.engine.open(sessionId, openArgs)
-        .catch(error => { throw toLlmError(error, live) })
+        .catch(async error => {
+          if (live.spec.kind === 'codex') await this.closeLive(live)
+          throw toLlmError(error, live)
+        })
       // A resumed CLI reports its id only with `system/init`: keep the saved one
-      // in the meantime, or a resume that fails would erase it.
+      // in the meantime, or a resume that fails would erase it. If ACP or Codex
+      // could not resume and opened a fresh session instead, replay conversation
+      // history and team instructions rather than sending only the latest delta.
       const reportedId = live.engineSession.acpSessionId ?? live.engineSession.threadId ?? live.engineSession.cliSessionId
+      if (!freshCli && (live.engineSession.resumed === false || (reportedId !== undefined && reportedId !== priorCliId))) {
+        resumeDropped = true
+        live.context = live.context?.size === undefined ? undefined : { size: live.context.size }
+        live.compactions = 0
+        live.promptHash = undefined
+        refreshMemory()
+        this.deps.rt?.warn?.('local-agents: %s did not resume session %s for %s (opened %s); replaying conversation history', live.spec.kind, priorCliId, sessionId, reportedId ?? 'new')
+      }
       if (reportedId !== undefined) live.cliSessionId = reportedId
       if (live.spec.kind === 'acp') {
         if (live.engineSession.defaultEffort !== undefined) live.defaultEffort = live.engineSession.defaultEffort
         live.effort = live.engineSession.effort
       }
+      const discovered = live.engine.discoveredModels?.(live.engineSession)
+      if (Array.isArray(discovered) && discovered.length > 0) this.recordDiscoveredModels(live.route, discovered)
       live.started = true
       // The session's events feed this Session's queue: a call from any engine
       // kind reaches drain() through the live queue.
@@ -510,8 +694,9 @@ export class LocalAgentAdapter extends LlmAdapter {
           if (live.pumpToken === token && !live.dead) live.push(event)
         }
       })()
-      if (live.spec.kind !== 'acp' && instructions !== undefined) live.promptHash = promptHash
-      this.deps.saveRecord(sessionId, this.recordOf(live, { cwd, promptHash: live.promptHash ?? promptHash, model: options.model }))
+      if (live.spec.kind === 'claude' && instructions !== undefined) live.promptHash = promptHash
+      else if (live.spec.kind === 'codex' && (freshCli || resumeDropped) && instructions !== undefined) live.promptHash = promptHash
+      this.deps.saveRecord(sessionId, this.recordOf(live, { cwd, model: options.model }))
       // Claude reports its session id with `system/init`, after start() resolved:
       // the record above has no id yet, so persist it when it lands or the next
       // host has nothing to resume and the conversation starts over.
@@ -520,20 +705,24 @@ export class LocalAgentAdapter extends LlmAdapter {
         void pendingId.then((id) => {
           if (id === undefined || live.dead) return
           live.cliSessionId = id
-          this.deps.saveRecord(sessionId, this.recordOf(live, { cliSessionId: id, cwd, promptHash: live.promptHash ?? promptHash, model: options.model }))
+          this.deps.saveRecord(sessionId, this.recordOf(live, { cliSessionId: id, cwd, model: options.model }))
         })
       }
     }
 
+    const startedFreshCli = freshCli || resumeDropped
+    const needsReplay = fresh || resumeDropped
     const supportsImages = live.spec.kind !== 'acp' || live.engine.supportsImages?.(live.engineSession) !== false
     const resolveImage = block => this.resolveImageBlock(block, { supportsImages, signal: options.signal })
-    let promptBlocks = fresh
-      ? await renderReplay(messages, system, resolveImage)
+    let promptBlocks = needsReplay
+      ? await renderReplay(messages, system, resolveImage, { preserve: remaining, freshMemory, memoryNote: appliedMemory.note })
       : await renderDelta(contextText, remaining, resolveImage)
-    let sentInstructions = live.spec.kind !== 'acp' && freshCli && instructions !== undefined
+    let sentInstructions = live.spec.kind !== 'acp' && startedFreshCli && instructions !== undefined
+    let nextPromptHash = live.promptHash
+    const expectedPromptHash = live.queue.findLast(entry => entry.delivery?.promptHash !== undefined)?.delivery.promptHash ?? live.promptHash
     // A new CLI session gets its instructions in the open args or the replay;
     // the "updated" line is only for a session that saw older ones.
-    if (instructions !== undefined && !freshCli && live.promptHash !== promptHash) {
+    if (instructions !== undefined && !startedFreshCli && expectedPromptHash !== promptHash) {
       const updated = `Updated team instructions (replace earlier ones):\n\n${instructions}`
       if (live.spec.kind === 'codex') {
         await live.engine.instruct?.(live.engineSession, updated)
@@ -558,7 +747,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       // message — because context alone would carry the turn without the decision.
       const blocks = mergeTextBlocks([{ type: 'text', text: settledText }, ...promptBlocks])
       this.discardTurnOutput(live)
-      if (sentInstructions) live.promptHash = promptHash
+      if (sentInstructions) nextPromptHash = promptHash
       promptBlocks = []
       await this.startTurn(live, blocks, options.signal, options.reasoningEffort)
     } else if (settledText !== '') {
@@ -568,26 +757,30 @@ export class LocalAgentAdapter extends LlmAdapter {
     }
     if (promptBlocks.length > 0) {
       await this.sendInput(live, promptBlocks, options.signal, options.reasoningEffort, settledText)
-      if (sentInstructions) live.promptHash = promptHash
+      if (sentInstructions) nextPromptHash = promptHash
       // ACP only counts instructions once they reach the agent with a prompt.
-      if (live.spec.kind === 'acp' && (freshCli || sentInstructions)) live.promptHash = promptHash
+      if (live.spec.kind === 'acp' && (startedFreshCli || sentInstructions)) nextPromptHash = promptHash
     }
-    if (live.spec.kind === 'acp' && freshCli && promptBlocks.length === 0 && instructions !== undefined) {
+    if (live.spec.kind === 'acp' && startedFreshCli && promptBlocks.length === 0 && instructions !== undefined) {
       await this.sendInput(live, `Follow these instructions from the user's team for everything you do here. They sit on top of your own; when they conflict, these win.\n\n${instructions}`, options.signal, options.reasoningEffort)
-      live.promptHash = promptHash
+      nextPromptHash = promptHash
     }
 
-    // The last DSH message is handed now; a later call sends only what follows.
-    // The marker before it is kept: a start that fails before the CLI reads
-    // anything must not count that message as delivered.
+    // A queued ACP input is not handed until drain sends its prompt.
     const last = messages.at(-1)
-    if (last !== undefined) {
-      live.handedBefore = live.handed
-      live.handed = last.id
-      this.deps.saveRecord(sessionId, this.recordOf(live, { cwd, promptHash: live.promptHash ?? promptHash, model: options.model }))
+    const queued = live.queue.at(-1)
+    if (queued !== undefined) {
+      if (last !== undefined) queued.delivery = { id: last.id, promptHash: sentInstructions ? nextPromptHash : undefined }
+    } else {
+      live.promptHash = nextPromptHash
+      if (last !== undefined && live.closeFailure === undefined) this.markHanded(live, last.id, nextPromptHash ?? promptHash)
     }
 
     try {
+      if (settled.length > 0 && live.state === 'suspended' && live.pending.size === 0) {
+        live.state = 'running'
+        live.scheduleIdle()
+      }
       yield* this.drain(live, options)
     } catch (error) {
       // The caller sees the failure now: a start that died before reading its
@@ -595,13 +788,19 @@ export class LocalAgentAdapter extends LlmAdapter {
       this.rollbackUnread(live, sessionId)
       // The saved conversation is gone: start over in a new one with the
       // history, once, so the user sees the answer instead of this failure.
-      if (live.resumeLost === true && options[RESUME_RETRIED] !== true) {
+      if (live.closeFailure === undefined && live.resumeLost === true && options[RESUME_RETRIED] !== true) {
         live.resumeLost = false
         yield* this.stream({ ...options, [RESUME_RETRIED]: true })
         return
       }
       throw error
     }
+  }
+
+  markHanded(live, id, promptHash) {
+    live.handedBefore = live.handed
+    live.handed = id
+    this.deps.saveRecord(live.sessionId, this.recordOf(live, { promptHash }))
   }
 
   // Input for the CLI: a fresh prompt while it is idle; while a turn runs or
@@ -623,7 +822,9 @@ export class LocalAgentAdapter extends LlmAdapter {
       ? blocks
       : mergeTextBlocks([{ type: 'text', text: settled }, ...blocks])
     if (live.state !== 'idle') {
-      if (live.spec.kind !== 'codex') { live.queue.push(body); return Promise.resolve() }
+      // ACP takes one prompt at a time and carries a settled answer in live.continuation.
+      // Claude and Codex steer a running turn.
+      if (live.spec.kind === 'acp') { live.queue.push({ blocks }); return Promise.resolve() }
       // Steering lands on a turn that is still running. When the CLI finished the
       // turn behind a card — the usual case for an answer that arrives late — the
       // steer has nothing to land on, and dropping it leaves the user's answer
@@ -656,13 +857,20 @@ export class LocalAgentAdapter extends LlmAdapter {
 
   // Codex resolves on acceptance; ACP resolves only when the entire turn ends.
   startTurn(live, input, signal, effort) {
+    if (live.dead) return Promise.resolve()
+    if (live.stopped) {
+      this.discardTurnOutput(live)
+      live.stopped = false
+    }
     const blocks = typeof input === 'string' ? [{ type: 'text', text: input }] : input
     live.state = 'running'
+    live.scheduleIdle()
     // The turn an engine names is the one this stream reads: a finished turn's late
     // events carry another id and are dropped instead of answering this one (#1513).
     live.turnTag = undefined
     try {
-      const prompt = Promise.resolve(live.engine.prompt(live.engineSession, blocks, { signal, effort }))
+      const prompt = Promise.resolve(live.engine.prompt(live.engineSession, blocks, { signal, effort, onProgress: live.scheduleIdle }))
+        .catch(error => { if (!signal?.aborted) live.push({ type: 'error', error }) })
       if (confirmsPromptStop(live.spec.kind)) {
         const proof = prompt.then(terminal => terminal === true, () => false)
         this.nativePrompts.set(live.sessionId, proof)
@@ -670,7 +878,6 @@ export class LocalAgentAdapter extends LlmAdapter {
           if (terminal && this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
         })
       }
-      void prompt.catch(error => live.push({ type: 'error', error }))
       return Promise.resolve()
     } catch (error) {
       live.push({ type: 'error', error })
@@ -723,10 +930,11 @@ export class LocalAgentAdapter extends LlmAdapter {
     let thinkBuf = ''
     let thinkIndex = -1
     // DSH keeps the last usage chunk of a request, and a CLI may report each of its
-    // model calls (Codex): the chunk carries the sum.
+    // model calls (Codex) or queue prompts in one drain (ACP): carry both the running
+    // billed token sum and the accumulated internal call count.
     let usage
     const addUsage = (more) => {
-      usage = usage === undefined ? { ...more } : Object.fromEntries([...new Set([...Object.keys(usage), ...Object.keys(more)])].map(key => [key, (usage[key] ?? 0) + (more[key] ?? 0)]))
+      usage = mergeUsage(usage, more)
       return { type: 'usage', usage }
     }
     // Open text and reasoning stay open in parallel; each closes when it has to.
@@ -754,14 +962,14 @@ export class LocalAgentAdapter extends LlmAdapter {
     const onAbort = () => abortReject(options.signal?.reason ?? new Error('aborted'))
     if (options.signal?.aborted) onAbort()
     else options.signal?.addEventListener('abort', onAbort)
+    const report = payload => this.deps.rt?.noteLocalAgentEvent?.(live.sessionId, payload)
     try {
     for (;;) {
-      const next = live.events.length === 0 ? Promise.withResolvers() : undefined
-      if (next !== undefined) live.waiters.push(next.resolve)
-      const event = await Promise.race([next?.promise ?? live.events.shift(), abortPromise]).catch(error => ({ type: 'abort', error }))
+      const next = this.take(live)
+      const event = await Promise.race([next.event, abortPromise])
+        .catch(error => ({ type: 'abort', error }))
+        .finally(() => next.drop())
       if (event.type === 'abort') {
-        const waiting = next === undefined ? -1 : live.waiters.indexOf(next.resolve)
-        if (waiting !== -1) live.waiters.splice(waiting, 1)
         this.stopTurn(live, 'the turn was stopped')
         yield { type: 'finish', reason: { kind: 'aborted', failure: { code: 'ABORTED', message: 'the turn was stopped' } } }
         return
@@ -770,6 +978,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       if (event.type !== 'permission' && event.type !== 'call' && event.turnId !== undefined && live.turnTag !== undefined && event.turnId !== live.turnTag) continue
       switch (event.type) {
         case 'text': {
+          report(event)
           if (textIndex === -1) {
             if (thinkIndex !== -1) { yield { type: 'block-end', index: thinkIndex, block: { type: 'reasoning', text: thinkBuf } }; thinkIndex = -1; thinkBuf = '' }
             yield { type: 'block-start', index: index++, blockType: 'text' }
@@ -781,6 +990,7 @@ export class LocalAgentAdapter extends LlmAdapter {
         }
         case 'thought':
         case 'activity': {
+          report(event)
           // An activity line stands on its own line of the reasoning, which is
           // how the chat tells it from the thought around it.
           const text = event.type === 'activity' ? `${thinkBuf === '' || thinkBuf.endsWith('\n') ? '' : '\n'}${event.text}\n` : event.text
@@ -793,6 +1003,9 @@ export class LocalAgentAdapter extends LlmAdapter {
           yield { type: 'reasoning-delta', index: thinkIndex, text }
           break
         }
+        case 'status':
+          report(event)
+          break
         case 'usage': yield addUsage(event.usage); break
         case 'call': {
           yield* closeBlocks()
@@ -805,13 +1018,24 @@ export class LocalAgentAdapter extends LlmAdapter {
         case 'permission': {
           // The preset answers what it already decides, also on an agent with no
           // matching mode of its own: full access allows, read-only refuses a change.
-          const answer = presetAnswer(this.deps.presetFor(live.sessionId), event)
+          const preset = this.deps.presetFor(live.sessionId)
+          const answer = this.deps.reviewFor?.(live.sessionId) && preset !== 'read-only' ? undefined : presetAnswer(preset, event)
           if (answer !== undefined) { event.reply(answer); break }
+          // Without a single-use grant, Allow once would be reported to the user but
+          // cancelled at the CLI. Fail closed instead of converting it to a saved grant.
+          if (!event.options?.some(option => option.kind === 'allow_once')) {
+            event.reply(optionOf(event.options, 'reject') ?? null)
+            break
+          }
           yield* closeBlocks()
           live.state = 'suspended'
           // The CLI's own permission prompt, bridged as an approval tool call.
-          const call = { name: APPROVE_TOOL, args: { action: event.action, ...(event.detail ? { detail: event.detail } : {}) }, dshCallId: event.id }
-          live.pending.set(event.id, { name: APPROVE_TOOL, resolve: (result) => event.reply(pickAllowOption(event.options, result)) })
+          const call = { name: APPROVE_TOOL, args: { action: event.action, ...(event.detail ? { detail: event.detail } : {}), ...(event.evidence ? { evidence: event.evidence } : {}) }, dshCallId: event.id }
+          live.pending.set(event.id, {
+            name: APPROVE_TOOL,
+            approvalEvidence: { kind: 'external-agent', cwd: event.cwd, action: call.args },
+            resolve: (result) => event.reply(pickAllowOption(event.options, result)),
+          })
           for (const chunk of emitCalls([call])) yield chunk
           yield { type: 'finish', reason: { kind: 'tool-calls' } }
           return
@@ -835,7 +1059,11 @@ export class LocalAgentAdapter extends LlmAdapter {
           // inside the same drain, one prompt at a time.
           const next = live.queue.shift()
           if (next !== undefined) {
-            this.sendInput(live, next, options.signal, options.reasoningEffort)
+            this.sendInput(live, next.blocks, options.signal, options.reasoningEffort)
+            if (next.delivery !== undefined) {
+              live.promptHash = next.delivery.promptHash ?? live.promptHash
+              this.markHanded(live, next.delivery.id, live.promptHash)
+            }
             break
           }
           yield { type: 'finish', reason: { kind: 'stop' } }
@@ -849,6 +1077,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       }
     }
     } finally {
+      report({ type: 'idle' })
       options.signal?.removeEventListener('abort', onAbort)
     }
   }
@@ -868,6 +1097,7 @@ export class LocalAgentAdapter extends LlmAdapter {
         live.state = 'idle'
         return 'unsupported'
       }
+      live.scheduleIdle()
       this.meter(live, await this.collect(live, () => this.take(live), signal, { compaction: true }))
       return 'done'
     })
@@ -892,10 +1122,18 @@ export class LocalAgentAdapter extends LlmAdapter {
     let opened = false
     if (live === undefined || live.engineSession === undefined || live.engineSession.dead === true) {
       live ??= await this.liveFor({ sessionId, provider: record.route, model: record.model }, this.deps.presetFor(sessionId))
-      await this.openFor(live, sessionId)
       opened = true
+      try {
+        await this.openFor(live, sessionId)
+      } catch (error) {
+        await this.closeLive(live, { idle: true }).catch(() => {})
+        throw error
+      }
     }
-    if (live.state !== 'idle' || live.pending.size > 0) throw new LlmError('the local agent is in the middle of a turn', 'LOCAL_AGENT_BUSY')
+    if (live.state !== 'idle' || live.pending.size > 0) {
+      if (opened) await this.closeLive(live, { idle: true }).catch(() => {})
+      throw new LlmError('the local agent is in the middle of a turn', 'LOCAL_AGENT_BUSY')
+    }
     // What a finished turn left behind is not this request's answer.
     live.events.length = 0
     try {
@@ -912,10 +1150,12 @@ export class LocalAgentAdapter extends LlmAdapter {
   async openFor(live, sessionId) {
     const cwd = live.cwd ?? await this.deps.cwdFor(sessionId)
     live.cwd = cwd
+    const priorCliId = live.cliSessionId
     live.engineSession = await live.engine.open(sessionId, {
       cwd,
       mcp: undefined,
-      resumeId: live.cliSessionId,
+      resumeId: priorCliId,
+      resumeOnly: priorCliId !== undefined,
       mode: cliMode(live.spec.kind, live.preset),
       preset: live.preset,
       model: live.model,
@@ -923,6 +1163,14 @@ export class LocalAgentAdapter extends LlmAdapter {
       effort: live.effort,
     })
       .catch(error => { throw toLlmError(error, live) })
+    const reportedId = live.engineSession.acpSessionId ?? live.engineSession.threadId ?? live.engineSession.cliSessionId
+    if (priorCliId !== undefined && (live.engineSession.resumed === false || (reportedId !== undefined && reportedId !== priorCliId))) {
+      const opened = live.engineSession
+      live.engineSession = undefined
+      await live.engine.closeSession?.(opened).catch(() => {})
+      live.engine.forget?.(sessionId)
+      throw new LlmError('the saved local agent session could not be resumed for maintenance', 'LOCAL_AGENT_EXIT')
+    }
     if (live.spec.kind === 'acp') {
       if (live.engineSession.defaultEffort !== undefined) live.defaultEffort = live.engineSession.defaultEffort
       live.effort = live.engineSession.effort
@@ -940,6 +1188,7 @@ export class LocalAgentAdapter extends LlmAdapter {
   // The next event of a live session, as a wait that can be given up: a wait left
   // behind would take the first event of the next turn.
   take(live) {
+    if (live.closeFailure !== undefined) return { event: Promise.resolve(live.closeFailure), drop: () => {} }
     if (live.events.length > 0) return { event: Promise.resolve(live.events.shift()), drop: () => {} }
     let resolver
     const event = new Promise((resolve) => { resolver = resolve; live.waiters.push(resolve) })
@@ -954,7 +1203,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     let usage
     const add = (more) => {
       if (more === undefined) return
-      usage = usage === undefined ? { ...more } : Object.fromEntries([...new Set([...Object.keys(usage), ...Object.keys(more)])].map(key => [key, (usage[key] ?? 0) + (more[key] ?? 0)]))
+      usage = mergeUsage(usage, more)
     }
     let ended = false
     let started = false
@@ -1019,17 +1268,18 @@ export class LocalAgentAdapter extends LlmAdapter {
   }
 
   // What a request DS Bot made for itself spent, on the Session it served.
-  meter(live, result) {
-    if (result.usage !== undefined) this.deps.recordUsage?.({ sessionId: live.sessionId, kind: 'compaction', provider: live.route, model: live.model, usage: result.usage })
+  meter(live, result, kind = 'compaction') {
+    if (result.usage !== undefined) this.deps.recordUsage?.({ sessionId: live.sessionId, kind, provider: live.route, model: live.model, usage: result.usage })
     return result
   }
 
   // A one-off request on the CLI a Session runs on, in a session of its own with no
   // team tools and read-only access, which is let go of after: the context steward's
-  // call for a Bot whose team has no model of its own.
-  async ask(sessionId, { system, prompt, signal }) {
+  // call, and the memory review's. `route` and `model` name the CLI when the
+  // request serves a Bot rather than one of its conversations.
+  async ask(sessionId, { system, prompt, signal, route: named, model: namedModel, kind }) {
     if (this.disposed) throw new LlmError('the local agents adapter is disposed', 'NO_ADAPTER')
-    const record = this.live.get(sessionId) ?? this.deps.record(sessionId)
+    const record = named !== undefined ? { route: named, model: namedModel } : this.live.get(sessionId) ?? this.deps.record(sessionId)
     const route = record?.route
     const spec = route === undefined ? undefined : engineOf(route, this.deps.customAgents())
     if (spec === undefined) throw new LlmError('this conversation has no local agent', 'LOCAL_AGENT_MISSING')
@@ -1040,10 +1290,12 @@ export class LocalAgentAdapter extends LlmAdapter {
     signal = AbortSignal.any([request.controller.signal, ...(signal === undefined ? [] : [signal])])
     const sideId = `dsbot-side-${randomUUID()}`
     let session
+    let probeDir
     try {
       signal.throwIfAborted()
+      probeDir = this.deps.probeCwd()
       session = await engine.open(sideId, {
-        cwd: this.deps.probeCwd(), mcp: undefined, mode: cliMode(spec.kind, 'read-only'), preset: 'read-only', model: record.model, ephemeral: true,
+        cwd: probeDir, mcp: undefined, mode: cliMode(spec.kind, 'read-only'), preset: 'read-only', model: record.model, ephemeral: true,
         instructions: spec.kind === 'codex' ? system : undefined,
         system: spec.kind === 'claude' ? system : undefined,
       }).catch(error => { throw toLlmError(error, { spec }) })
@@ -1057,7 +1309,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       const refused = Promise.resolve(engine.prompt(session, [{ type: 'text', text: spec.kind === 'acp' ? `${system}\n\n${prompt}` : prompt }], { signal, effort }))
         .then(() => new Promise(() => {}), error => ({ type: 'error', error }))
       const result = await this.collect(side, () => ({ event: Promise.race([session.next(), refused]), drop: () => {} }), signal)
-      return this.meter({ sessionId, route, model: record.model }, result).text
+      return this.meter({ sessionId, route, model: record.model }, result, kind).text
     } finally {
       try {
         if (session !== undefined) {
@@ -1067,6 +1319,7 @@ export class LocalAgentAdapter extends LlmAdapter {
       } finally {
         engine.forget?.(sideId)
         if (isolated || !this.engineInUse(engine, request)) await engine.close?.().catch(() => {})
+        await cleanupProbeDir(probeDir)
         this.sideRequests.delete(request)
         request.done.resolve()
       }
@@ -1077,7 +1330,7 @@ export class LocalAgentAdapter extends LlmAdapter {
     this.disposed = true
     const requests = [...this.sideRequests]
     for (const request of requests) request.controller.abort(new LlmError('the local agents adapter is disposed', 'NO_ADAPTER'))
-    await Promise.all(requests.filter(request => request.isolated).map(request => request.engine.close?.().catch(() => {})))
+    await Promise.all([...new Set(requests.map(request => request.engine))].map(engine => engine.close?.().catch(() => {})))
     await Promise.all(requests.map(request => request.done.promise))
     for (const live of Array.from(this.live.values())) await this.closeLive(live)
     for (const engine of Array.from(this.engines.values())) await engine.close?.().catch(() => {})
@@ -1093,7 +1346,7 @@ function pickAllowOption(options, result) {
   let decision
   try { decision = JSON.parse(result.text ?? '')?.decision } catch { decision = undefined }
   if (decision !== 'allow') return null
-  return optionOf(options, 'allow') ?? null
+  return (options ?? []).find(entry => entry.kind === 'allow_once')?.optionId ?? null
 }
 
 // The agent's one-time option of a kind ('allow' or 'reject'), else any of it.
@@ -1125,7 +1378,27 @@ function mergeTextBlocks(blocks) {
   return out
 }
 
-async function blocksOfMessage(message, { maxText, resolveImage }) {
+const REPLAY_ARG_KEYS = ['path', 'file_path', 'file', 'command', 'cmd', 'query', 'pattern', 'url', 'to', 'task', 'topic']
+
+function briefToolCall(block) {
+  const name = typeof block?.name === 'string' ? block.name : 'tool'
+  let args = block?.arguments ?? block?.input
+  if (typeof args === 'string') {
+    try { args = JSON.parse(args) } catch { args = undefined }
+  }
+  if (args !== null && typeof args === 'object') {
+    for (const key of REPLAY_ARG_KEYS) {
+      const value = args[key]
+      if (typeof value === 'string' && value.trim() !== '') {
+        const clean = value.replace(/\s+/g, ' ').trim()
+        return `[tool: ${name}(${clean.length > 100 ? `${clean.slice(0, 100)}…` : clean})]`
+      }
+    }
+  }
+  return `[tool: ${name}]`
+}
+
+async function blocksOfMessage(message, { maxText, resolveImage, includeToolCalls = false }) {
   const raw = Array.isArray(message.content) ? message.content : []
   const out = []
   let textParts = []
@@ -1140,6 +1413,11 @@ async function blocksOfMessage(message, { maxText, resolveImage }) {
       const piece = textLeft === Infinity ? block.text : block.text.slice(0, textLeft)
       if (textLeft !== Infinity) textLeft = Math.max(0, textLeft - piece.length)
       textParts.push(piece)
+    } else if (includeToolCalls && block?.type === 'tool-call') {
+      const note = briefToolCall(block)
+      const piece = textLeft === Infinity ? note : note.slice(0, textLeft)
+      if (textLeft !== Infinity) textLeft = Math.max(0, textLeft - piece.length)
+      if (piece !== '') textParts.push(piece)
     } else if (block?.type === 'image') {
       flushText()
       out.push(await resolveImage(block))
@@ -1158,51 +1436,173 @@ async function renderDelta(contextText, remaining, resolveImage) {
   return mergeTextBlocks(parts)
 }
 
+function applyFreshMemory(system, freshMemory) {
+  if (freshMemory === undefined) return { system, note: '' }
+  if (freshMemory.previous !== undefined && system.includes(freshMemory.previous)) {
+    const updated = system.replace(freshMemory.previous, () => freshMemory.own)
+    return {
+      system: updated,
+      note: updated === system ? '' : 'Note: The "# Your memory" section above reflects current memory and supersedes any earlier memory snapshot or updates.',
+    }
+  }
+  if (system.includes(freshMemory.own)) return { system, note: '' }
+  return {
+    system,
+    note: `Current memory (supersedes any earlier memory section or updates):\n${freshMemory.own}`,
+  }
+}
+
 // The replay a fresh CLI session stands up on: the system prompt, then the
-// recent messages rendered as text and images, newest first, always with the latest input
-// and the handoff a new part opens with, both word for word.
-async function renderReplay(messages, system, resolveImage) {
+// recent messages rendered as text and images, newest first, always keeping the
+// current unread input, the latest group memory snapshot, and the latest handoff
+// word for word while bounding historical messages and incremental memory updates.
+async function renderReplay(messages, system, resolveImage, { preserve = [], freshMemory, memoryNote = '' } = {}) {
   const picked = []
   let used = 0
+  let conversationCount = 0
+  let memoryUpdates = 0
+  let memoryUpdateBytes = 0
   const body = (messages ?? []).filter(message => message.role !== 'system')
   const latest = body.at(-1)
+  const latestNonClock = [...body].reverse().find(message => message.source?.kind !== 'runtime-context')
+  const latestGroupMem = freshMemory?.group !== undefined ? undefined : [...body].reverse().find(message => message.source?.kind === GROUP_MEMORY_SOURCE)
+  const latestHandoff = [...body].reverse().find(message => message.source?.handoff === true)
+  const preserveSet = new Set(preserve)
   let full = false
   for (const message of [...body].reverse()) {
-    const whole = message === latest || message.source?.handoff === true
+    const sourceKind = message.source?.kind
+    const isCurrentInput = message === latest || message === latestNonClock || preserveSet.has(message)
+    if (!isCurrentInput && sourceKind === 'runtime-context') continue
+    if (sourceKind === GROUP_MEMORY_SOURCE && message !== latestGroupMem) continue
     const text = textOf(message.content)
     const prefix = `${message.role === 'assistant' ? 'You' : message.role === 'tool' ? `Tool result (${message.toolCallId ?? 'call'})` : 'User'}:`
-    const approxLen = prefix.length + 1 + (whole ? text.length : Math.min(text.length, 2_000))
+    if (sourceKind === MEMORY_UPDATE_SOURCE) {
+      if (freshMemory !== undefined) continue
+      const len = prefix.length + 1 + text.length
+      if (memoryUpdates >= MEMORY_UPDATE_REPLAY_MAX || (memoryUpdates > 0 && memoryUpdateBytes + len > MEMORY_UPDATE_REPLAY_BYTES)) continue
+      const maxText = Math.max(500, MEMORY_UPDATE_REPLAY_BYTES - memoryUpdateBytes)
+      const blocks = await blocksOfMessage(message, { maxText, resolveImage, includeToolCalls: true })
+      if (blocks.length === 0) continue
+      const entry = blocks[0].type === 'text'
+        ? [{ type: 'text', text: `${prefix} ${blocks[0].text}` }, ...blocks.slice(1)]
+        : [{ type: 'text', text: prefix }, ...blocks]
+      picked.unshift(entry)
+      memoryUpdates += 1
+      memoryUpdateBytes += Math.min(len, maxText)
+      continue
+    }
+    const whole = isCurrentInput || message === latestHandoff || message === latestGroupMem
+    const approxLen = prefix.length + 1 + (whole ? text.length : Math.min(text.length, REPLAY_LINE_MAX))
     if (!whole) {
-      full ||= picked.length >= REPLAY_MESSAGES || used + approxLen > REPLAY_BYTES
+      full ||= conversationCount >= REPLAY_MESSAGES || picked.length >= REPLAY_TOTAL_MAX || used + approxLen > REPLAY_BYTES
       if (full) continue
     }
-    const blocks = await blocksOfMessage(message, { maxText: whole ? Infinity : 2_000, resolveImage })
+    const blocks = await blocksOfMessage(message, { maxText: whole ? Infinity : REPLAY_LINE_MAX, resolveImage, includeToolCalls: true })
+    if (blocks.length === 0 && !whole) continue
     const entry = blocks.length > 0 && blocks[0].type === 'text'
       ? [{ type: 'text', text: `${prefix} ${blocks[0].text}` }, ...blocks.slice(1)]
       : blocks.length > 0
         ? [{ type: 'text', text: prefix }, ...blocks]
         : [{ type: 'text', text: `${prefix} ` }]
     picked.unshift(entry)
-    used += approxLen
+    if (!whole) used += approxLen
+    if (message.role !== 'tool' && sourceKind !== GROUP_MEMORY_SOURCE && sourceKind !== 'runtime-context') {
+      conversationCount += 1
+    }
   }
   if (picked.length === 0) return []
-  const head = system === '' ? '' : `The team instructions for this conversation:\n${system}\n\n`
-  return mergeTextBlocks([{ type: 'text', text: `${head}The conversation so far (oldest first):` }, ...picked.flat()])
+  const headerParts = []
+  if (system !== '') headerParts.push(`The team instructions for this conversation:\n${system}`)
+  if (memoryNote !== '') headerParts.push(memoryNote)
+  if (freshMemory?.group !== undefined) headerParts.push(freshMemory.group)
+  headerParts.push('The conversation so far (oldest first):')
+  return mergeTextBlocks([{ type: 'text', text: headerParts.join('\n\n') }, ...picked.flat()])
 }
 
 // Process exits, missing CLIs, quota and sign-in failures get typed codes so DS
 // Bot's repair card can act on them.
 function toLlmError(error, live) {
   if (error instanceof LlmError) return error
-  const text = String(error?.message ?? error)
+  const upstream = [error?.data?.error, error?.data].filter(value => value !== null && typeof value === 'object' && !Array.isArray(value))
+  const text = [...new Set([errorText(error), ...upstream.flatMap(value => [value.message, value.detail]).filter(nonEmptyString)])].join('\n')
+  const upstreamCode = upstream.map(value => value?.code).find(nonEmptyString)
   // A CLI whose context is past its window: the part moves on the way an overflow does.
   const overflow = /prompt is too long|context.?(window|length).?(exceeded|is full)|context_length_exceeded|exceeds the (model's )?(maximum )?context|too many tokens/i
   const code = error?.code === 'NO_ADAPTER' ? 'LOCAL_AGENT_MISSING'
-    : overflow.test(text) ? 'CONTEXT_WINDOW_EXCEEDED'
-      : /not signed in|not logged in|login required|unauthorized|authentication/i.test(text) ? 'LOCAL_AGENT_SIGNIN'
-        : /quota|rate.?limit|usage limit|exceeded/i.test(text) ? 'LOCAL_AGENT_QUOTA'
-          : /exited|spawn|ENOENT/i.test(text) ? 'LOCAL_AGENT_EXIT'
-            : error?.code ?? 'LOCAL_AGENT_ERROR'
-  const hint = code === 'LOCAL_AGENT_SIGNIN' ? ` Sign in with: ${live?.spec?.signIn ?? `${live?.spec?.command ?? 'the CLI'} login`}.` : ''
-  return new LlmError(`${text}${hint}`, code, error?.status === undefined ? {} : { status: error.status })
+    : upstreamCode !== undefined ? repairCode(upstreamCode) ?? upstreamCode
+      : repairCode(error?.code) ?? (
+        overflow.test(text) ? 'CONTEXT_WINDOW_EXCEEDED'
+          : /not signed in|not logged in|login required|unauthorized|authentication|auth failed/i.test(text) ? 'LOCAL_AGENT_SIGNIN'
+            : /quota|rate.?limit|usage limit|exceeded/i.test(text) ? 'LOCAL_AGENT_QUOTA'
+              : /exited|spawn|ENOENT/i.test(text) ? 'LOCAL_AGENT_EXIT'
+                : nonEmptyString(error?.code) ? error.code : 'LOCAL_AGENT_ERROR')
+  const hint = code === 'LOCAL_AGENT_SIGNIN' ? ` Sign in with: ${signInFor(live?.spec, live?.engine?.bin) ?? `${live?.spec?.command ?? 'the CLI'} login`}.` : ''
+  const rpcCode = code === 'LOCAL_AGENT_ERROR' && typeof error?.code === 'number' ? ` (JSON-RPC ${error.code})` : ''
+  const status = [...upstream, error].map(value => value?.status).find(value => Number.isInteger(value) && value >= 100 && value <= 599)
+  return new LlmError(`${text}${rpcCode}${hint}`, code, status === undefined ? {} : { status })
+}
+
+function repairCode(code) {
+  switch (typeof code === 'string' ? code.toLowerCase().replace(/-/g, '_') : undefined) {
+    case 'auth_failed':
+    case 'unauthorized':
+    case 'unauthenticated':
+    case 'authentication_failed':
+    case 'not_logged_in':
+      return 'LOCAL_AGENT_SIGNIN'
+    case 'rate_limit_exceeded':
+    case 'quota_exceeded':
+    case 'insufficient_quota':
+    case 'usage_limit_exceeded':
+      return 'LOCAL_AGENT_QUOTA'
+    case 'context_length_exceeded':
+      return 'CONTEXT_WINDOW_EXCEEDED'
+    default:
+      return undefined
+  }
+}
+
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim() !== ''
+}
+
+// JSON-RPC errors carry numeric codes and may arrive as plain objects; LlmError
+// needs a non-empty string message and code, or it throws and hides the cause.
+function errorText(error) {
+  const message = error?.message
+  if (typeof message === 'string' && message !== '') return message
+  if (typeof error === 'string' && error !== '') return error
+  if (message !== undefined && message !== null && typeof message !== 'string') return safeJson(message)
+  if (error !== null && typeof error === 'object' && !(error instanceof Error)) return safeJson(error)
+  if (error !== undefined && error !== null && typeof error !== 'object' && error !== '') return String(error)
+  return 'The local agent failed without an error message.'
+}
+
+function safeJson(value) {
+  try { return JSON.stringify(value) || String(value) } catch { return String(value) }
+}
+
+const USAGE_ADDITIVE_KEYS = ['inputTokens', 'outputTokens', 'cacheReadTokens', 'cacheWriteTokens', 'reasoningTokens']
+const usageCallCount = usage => (Number.isSafeInteger(usage?.calls) && usage.calls > 0 ? usage.calls : 1)
+
+// Sums billed token fields and internal model call counts across multiple usage
+// chunks in one DSH step (Codex multi-step turns, ACP queued prompts). Single-call
+// records omit `calls` so existing single-step consumers see the exact same shape.
+export function mergeUsage(prev, more) {
+  if (more === undefined || more === null) return prev
+  if (prev === undefined || prev === null) {
+    const calls = usageCallCount(more)
+    const next = { ...more }
+    if (calls <= 1) delete next.calls
+    else next.calls = calls
+    return next
+  }
+  const next = {}
+  for (const key of USAGE_ADDITIVE_KEYS) {
+    if (prev[key] !== undefined || more[key] !== undefined) next[key] = (prev[key] ?? 0) + (more[key] ?? 0)
+  }
+  if (prev.totalTokens !== undefined && more.totalTokens !== undefined) next.totalTokens = prev.totalTokens + more.totalTokens
+  const calls = usageCallCount(prev) + usageCallCount(more)
+  if (calls > 1) next.calls = calls
+  return next
 }

@@ -141,8 +141,8 @@ layer, applied after the profile's own — with an `llm-pi-ai` provider and an
           - id: my-model
             contextWindow: 131072
             maxTokens: 8192
-# New Bots made from the Create Bot form start on DSH's default model;
-# point it at the relay too, or they start on deepseek-official without a key.
+# Without a usable team default, Create Bot falls back to DSH's default model
+# (then the first usable model). Point the default at the relay too.
 - id: agent-default-model
   config:
     provider: relay
@@ -186,7 +186,7 @@ The packed plugin stays at `/opt/ds-bot/ds-bot.tgz` for later dependency
 installs. `/tmp/ds-bot.tgz` links to it for profiles created by older images.
 A manual dependency install can therefore pick up the plugin bundled in the
 current image; restarting alone does not update the persisted profile.
-The image is built and tested with dsh `0.2.2-rc.1`, the version
+The image is built and tested with dsh `0.2.2-rc.5`, the version
 DS Bot is verified with. The entrypoint translates the default wildcard setting
 to the concrete container address this release requires. A `DSH_VERSION` build
 arg exists, but other releases are untested.

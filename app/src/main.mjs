@@ -5,7 +5,10 @@
 // the team window hides it; the tray brings it back and its Quit ends the app (shell.mjs). Only
 // what the start window and the tray need is imported up front; the rest loads once the start
 // window is up (docs/plans/2026-10-26-start-window.md §11).
-import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, screen, session, shell as electronShell, systemPreferences, Tray, WebContentsView } from 'electron'
+import { app, BrowserWindow, clipboard, ipcMain, Menu, nativeImage, nativeTheme, Notification, powerMonitor, safeStorage, screen, session, shell as electronShell, systemPreferences, Tray, WebContentsView } from 'electron'
+import { createChatGPTSignIn } from './chatgpt-signin.mjs'
+import { createChatGPTRelay } from './chatgpt-relay.mjs'
+import { createChatGPTBridge } from './chatgpt-bridge.mjs'
 import { createComputerIndicator, indicatorHtml } from './computer-indicator.mjs'
 import { createComputerCursor } from './computer-cursor.mjs'
 import { badgeCount, createNotifications } from './notifications.mjs'
@@ -28,6 +31,7 @@ import { explainOf, StartWindow } from './start-window.mjs'
 import { langOf } from './start/text.mjs'
 import { createDeferredPrompt } from './update-prompt.mjs'
 import { CAPTION_HEIGHT, cssColor, frameOptions, framelessOn, keepVibrancy, materialOf, nativeThemeSource } from './window-frame.mjs'
+import { zoomKey, zoomLevel } from './zoom-keys.mjs'
 
 const { rm } = disk.promises
 
@@ -42,11 +46,15 @@ const IPC = {
   browserViewNavigate: 'ds-bot:browser-view-navigate', browserViewCommand: 'ds-bot:browser-view-command',
   browserViewFocus: 'ds-bot:browser-view-focus', browserViewRead: 'ds-bot:browser-view-read',
   browserViewClose: 'ds-bot:browser-view-close', browserViewHold: 'ds-bot:browser-view-hold',
-  browserImportSources: 'ds-bot:browser-import-sources', browserImportPick: 'ds-bot:browser-import-pick',
+  browserImportSources: 'ds-bot:browser-import-sources', browserImportProbe: 'ds-bot:browser-import-probe',
+  browserImportPick: 'ds-bot:browser-import-pick',
+  browserImportPaste: 'ds-bot:browser-import-paste', browserImportLaunch: 'ds-bot:browser-import-launch',
+  browserImportOpenPermission: 'ds-bot:browser-import-open-permission',
   browserImportLive: 'ds-bot:browser-import-live', browserImportApply: 'ds-bot:browser-import-apply',
   browserImportCancel: 'ds-bot:browser-import-cancel',
   appUpdateState: 'ds-bot:app-update-state', appUpdateCheck: 'ds-bot:app-update-check',
   appUpdateInstall: 'ds-bot:app-update-install', appUpdateOpen: 'ds-bot:app-update-open',
+  appUpdateDownload: 'ds-bot:app-update-download', appUpdateAuto: 'ds-bot:app-update-auto',
   appUpdateChanged: 'ds-bot:app-update-changed',
   idleSeconds: 'ds-bot:idle-seconds', computer: 'ds-bot:computer', computerAction: 'ds-bot:computer-action', computerCursor: 'ds-bot:computer-cursor',
   notify: 'ds-bot:notify', notifyStatus: 'ds-bot:notify-status', badge: 'ds-bot:badge', openSession: 'ds-bot:open-session',
@@ -67,6 +75,10 @@ const here = dirname(fileURLToPath(import.meta.url))
 const assets = join(here, '..', 'assets')
 // Drawn by scripts/icon.mjs. Windows takes the .ico for its several sizes.
 const iconFile = join(assets, process.platform === 'win32' ? 'icon.ico' : 'icon.png')
+// Linux (X11) drops _NET_WM_ICON when the image is too big for one X property: a
+// 1024x1024 RGBA image is about 4 MB, the property limit is about 256 KB. The 128 px
+// hicolor file is small enough, but on Windows and macOS the full size stays.
+const windowIcon = process.platform === 'linux' ? join(assets, 'icons', '128x128.png') : iconFile
 // The tray icon of this platform: Windows takes the .ico, macOS the template and its @2x,
 // Linux the plain png.
 const trayIconFile = () => join(assets, process.platform === 'win32' ? 'tray.ico' : process.platform === 'darwin' ? 'trayTemplate.png' : 'tray.png')
@@ -79,10 +91,10 @@ if (explicitShellData) app.setPath('userData', explicitShellData)
 const frameFile = join(app.getPath('userData'), 'start-frame.json')
 
 // Loaded once the start window is up (loadModules).
-let BotBrowserGuests, partitionOf, BotViews, isBotId, importFromBrowser, listSources, applyCookies, CookieImports, parseCookieFile
+let BotBrowserGuests, partitionOf, BotViews, isBotId, probeSource, importFromBrowser, launchBrowserForDebug, listSources, SAFARI_FULL_DISK_ACCESS_URL, safariContainerLibrary, applyCookies, seedOriginsInPartition, CookieImports, parseCookieFile
 let downloadSaver, chooseLocations, defaultPlaces, lang, pickerLabels, pickRoot, programFolder, saveLocations, teamIn, teamsAt, tx, HostProcess
 let copySessions, findTeam, importTeam, restoreSessions, teamInUse, teamSizes, userDshHome, copyData, copyReason, moveProblem, BUNDLES, CHECK_PROFILE, PROFILE, ImportFlow
-let watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv, getDshRuntimeVersion, electronUpdater
+let watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv, readAutoUpdate, writeAutoUpdate, getDshRuntimeVersion, electronUpdater
 
 let mainWindow
 // Settles once the hidden team window exists.
@@ -92,6 +104,7 @@ let logs
 // Writers to the console that bypass the log: the Host's output goes into the log on its own.
 let rawOutput
 let host
+let chatgpt
 // The Host's loopback origin, which the window loads.
 let origin
 let port
@@ -147,6 +160,9 @@ const copyAbort = new AbortController()
 let browserGuests
 let botViews
 let cookieImports
+const cachedImportSources = new Map()
+const activeLiveImports = new Map()
+let liveImportSeq = 0
 // The app's own folder and file picker, on the page of the window that asks (picker-host.mjs).
 const pickers = new Pickers({ ipcMain, getPath: name => app.getPath(name) })
 
@@ -182,7 +198,7 @@ const shell = createShell({
   fallback: { show: options => boxInWindow(options, options.cancelId) },
 })
 // The tray icon goes away with the app, and a late answer to the close notice hides nothing.
-app.once('will-quit', () => { shell.dispose(); botViews?.dispose(); updates?.stop() })
+app.once('will-quit', () => { shell.dispose(); botViews?.dispose(); updates?.stop(); void chatgpt?.close() })
 
 // A packaged app started through an 8.3 short path or a junction restarts once on the
 // canonical path: the lock below and every path the Host sees then agree with the long
@@ -202,7 +218,7 @@ if (canonical !== undefined) {
     electron: { BrowserWindow, ipcMain, screen, shell: electronShell, clipboard, nativeTheme, systemPreferences },
     // 〔保存日志…〕 on the start window's failure cards.
     saveAs: (win, name) => askPicker(win, { mode: 'save', title: tx('dialog.saveLog'), start: knownFolder('desktop'), name }),
-    page: join(here, 'start', 'start.html'), preload: join(here, 'preload.cjs'), icon: iconFile, material, devTools: !app.isPackaged,
+    page: join(here, 'start', 'start.html'), preload: join(here, 'preload.cjs'), icon: windowIcon, material, devTools: !app.isPackaged,
     css: readFileSync(join(here, 'page-card.css'), 'utf8'),
     // On Windows the locale is known only once the app is ready.
     lang: () => langOf(app.getLocale()), motion: readStartFrame(frameFile).motion, effects: readStartFrame(frameFile).effects,
@@ -299,6 +315,13 @@ async function start() {
 
 // What the boot needs; a retry after a failure here does what is still missing.
 async function prepare() {
+  if (!chatgpt) {
+    const signIn = await createChatGPTSignIn({ userData: app.getPath('userData'), safeStorage,
+      onChange: status => host?.send({ type: 'chatgpt:changed', status }),
+    })
+    const relay = await createChatGPTRelay({ signIn })
+    chatgpt = createChatGPTBridge({ signIn, relay, openExternal: url => electronShell.openExternal(url) })
+  }
   // Before the windows: the team window's page is told the Host's origin.
   if (port === undefined) {
     port = await hostPort(join(app.getPath('userData'), 'host-port.json'))
@@ -316,16 +339,16 @@ async function prepare() {
 }
 
 async function loadModules() {
-  const [browser, views, sources, cookies, cookieFiles, downloads, firstRun, hostProcess, imports, flows, moves, profile, updatesModule, boot, updater] = await Promise.all([
+  const [browser, views, sources, cookies, cookieFiles, downloads, firstRun, hostProcess, imports, flows, moves, profile, updatesModule, updatePrefsModule, boot, updater] = await Promise.all([
     import('./bot-browser.mjs'), import('./bot-views.mjs'), import('./browser-sources.mjs'), import('./cookie-import.mjs'),
     import('./cookie-parse.mjs'), import('./downloads.mjs'), import('./first-run.mjs'), import('./host-process.mjs'),
     import('./import.mjs'), import('./import-flow.mjs'), import('./move-data.mjs'), import('./profile.mjs'), import('./updates.mjs'),
-    import('@deepseek-ai/dsh-app-boot'), import('electron-updater'),
+    import('./update-prefs.mjs'), import('@deepseek-ai/dsh-app-boot'), import('electron-updater'),
   ])
   ;({ BotBrowserGuests, partitionOf } = browser)
   ;({ BotViews, isBotId } = views)
-  ;({ importFromBrowser, listSources } = sources)
-  ;({ applyCookies, CookieImports } = cookies)
+  ;({ probeSource, importFromBrowser, launchBrowserForDebug, listSources, SAFARI_FULL_DISK_ACCESS_URL, safariContainerLibrary } = sources)
+  ;({ applyCookies, seedOriginsInPartition, CookieImports } = cookies)
   ;({ parseCookieFile } = cookieFiles)
   ;({ downloadSaver } = downloads)
   ;({ chooseLocations, defaultPlaces, lang, pickerLabels, pickRoot, programFolder, saveLocations, teamIn, teamsAt, tx } = firstRun)
@@ -335,6 +358,7 @@ async function loadModules() {
   ;({ copyData, copyReason, moveProblem } = moves)
   ;({ BUNDLES, CHECK_PROFILE, PROFILE } = profile)
   ;({ watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv } = updatesModule)
+  ;({ readAutoUpdate, writeAutoUpdate } = updatePrefsModule)
   ;({ getDshRuntimeVersion } = boot)
   electronUpdater = updater.default
   browserGuests = new BotBrowserGuests({ session, origin: () => origin, devTools: !app.isPackaged })
@@ -592,27 +616,30 @@ const pnpmEntry = () => join(app.getAppPath(), 'node_modules', 'pnpm', 'bin', 'p
 const runtimeDir = () => app.isPackaged ? process.resourcesPath : join(here, '..', 'build', 'runtime')
 const hostOutput = (stream, chunk) => {
   logs.write('engine', chunk)
-  rawOutput[stream](chunk)
+  rawOutput[stream](/token=/iu.test(chunk) ? logs.redact(chunk) : chunk)
 }
 
 function newHost() {
   // A Host of an attempt that a retry has replaced no longer stands for the start.
   const mine = attempt
-  return new HostProcess({
+  const child = new HostProcess({
     entry: join(here, 'host.mjs'),
     cwd: profileDir(),
     env: { ...process.env, DSH_HOME: places.dataDir, DS_BOT_PORT: String(port), DS_BOT_APP: '1', DS_BOT_USER_DSH_HOME: userDshHome(), DS_BOT_RUNTIME_DIR: runtimeDir(), ...(app.isPackaged && process.platform === 'darwin' ? { DS_BOT_COMPUTER_HELPER_HOME: join(app.getPath('userData'), 'computer-use') } : {}), ...(places.workspace ? { DS_BOT_WORKSPACE: places.workspace } : {}) },
     pnpm: pnpmEntry(),
     onFailure: (error) => { if (mine === attempt) void fail(error) },
     output: hostOutput,
+    redactOutput: false,
   })
+  child.onMessage(message => { chatgpt?.handle(message, response => child.send(response)) })
+  return child
 }
 
 // A failed check is not a failed start: start() rejects, and the copy goes on unchecked.
 function newCheck(home, list) {
   const cwd = join(home, 'profiles', CHECK_PROFILE)
   mkdirSync(cwd, { recursive: true })
-  return new HostProcess({ entry: join(here, 'host.mjs'), cwd, env: { ...process.env, DSH_HOME: home, DS_BOT_CHECK: list, DS_BOT_RUNTIME_DIR: runtimeDir() }, pnpm: pnpmEntry(), onFailure: () => {}, output: hostOutput })
+  return new HostProcess({ entry: join(here, 'host.mjs'), cwd, env: { ...process.env, DSH_HOME: home, DS_BOT_CHECK: list, DS_BOT_RUNTIME_DIR: runtimeDir() }, pnpm: pnpmEntry(), onFailure: () => {}, output: hostOutput, redactOutput: false })
 }
 
 /**
@@ -814,7 +841,27 @@ function handleIpc() {
     if (!fromWindow(event)) return
     void computerCursor.update(entry)
   })
-  app.once('will-quit', () => { computerIndicator.dispose(); computerCursor.dispose() })
+  let systemSuspended = false
+  let systemLocked = false
+  const syncSystemPaused = () => {
+    botViews?.setSystemPaused(systemSuspended || systemLocked)
+  }
+  const onSuspend = () => { systemSuspended = true; computerCursor.pause(); syncSystemPaused() }
+  const onResume = () => { systemSuspended = false; syncSystemPaused() }
+  const onLockScreen = () => { systemLocked = true; computerCursor.pause(); syncSystemPaused() }
+  const onUnlockScreen = () => { systemLocked = false; syncSystemPaused() }
+  powerMonitor.on('suspend', onSuspend)
+  powerMonitor.on('lock-screen', onLockScreen)
+  powerMonitor.on('resume', onResume)
+  powerMonitor.on('unlock-screen', onUnlockScreen)
+  app.once('will-quit', () => {
+    powerMonitor.off?.('suspend', onSuspend)
+    powerMonitor.off?.('lock-screen', onLockScreen)
+    powerMonitor.off?.('resume', onResume)
+    powerMonitor.off?.('unlock-screen', onUnlockScreen)
+    computerIndicator.dispose()
+    computerCursor.dispose()
+  })
   ipcMain.on(IPC.ready, (event, report) => { if (fromWindow(event)) startWindow.ready(report) })
   // It has drawn the whale the start window hands over: the windows cross-fade.
   ipcMain.on(IPC.handoffReady, (event) => { if (fromWindow(event)) startWindow.teamReady() })
@@ -867,11 +914,50 @@ function handleIpc() {
   ipcMain.handle(IPC.browserViewRead, (event, botId, tabId, script) => { assertWindow(event); return botViews.operate(String(botId), 'read', { tabId: String(tabId), script }) })
   ipcMain.handle(IPC.browserViewClose, (event, botId, tabId) => { assertWindow(event); return botViews.operate(String(botId), 'close', { tabId: String(tabId) }) })
   ipcMain.handle(IPC.browserViewHold, (event, botId, held) => { assertWindow(event); return botViews.hold(String(botId), held === true) })
-  // Cookie imports: a file or an installed browser's profile is parsed or harvested into a
-  // pending set first; only apply (the user's confirm) writes into the Bot's partition.
-  ipcMain.handle(IPC.browserImportSources, (event) => {
+  // Cookie imports: a file, pasted payload, or installed browser profile is parsed or
+  // harvested into a pending set first; only apply (the user's confirm) writes into the
+  // Bot's partition.
+  const refreshImportSources = async () => {
+    const list = await listSources()
+    cachedImportSources.clear()
+    for (const s of list) cachedImportSources.set(s.id, s)
+    return list
+  }
+  const resolveImportSource = async (sourceId) => {
+    const id = String(sourceId ?? '')
+    const cached = cachedImportSources.get(id)
+    if (cached) return cached
+    const list = await refreshImportSources()
+    return list.find((item) => item.id === id) ?? null
+  }
+  ipcMain.handle(IPC.browserImportSources, async (event) => {
     assertWindow(event)
-    return listSources()
+    return (await refreshImportSources()).map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      engine: s.engine,
+      name: s.name,
+      label: s.label,
+      profileName: s.profileName,
+      email: s.email ?? null,
+      hasCookies: s.hasCookies,
+      cookieCount: typeof s.cookieCount === 'number' ? s.cookieCount : null,
+      needsPermission: s.needsPermission === true,
+      inspectUrl: s.inspectUrl ?? null,
+      liveDebugReady: s.liveDebugReady === true,
+      hasExe: Boolean(s.exe),
+    }))
+  })
+  ipcMain.handle(IPC.browserImportProbe, async (event, sourceId) => {
+    assertWindow(event)
+    const id = String(sourceId ?? '')
+    let source = await resolveImportSource(id)
+    if (!source && id === 'safari:permission' && process.platform === 'darwin') {
+      source = { engine: 'safari', userDataDir: safariContainerLibrary(), needsPermission: true }
+    }
+    if (!source) return { liveDebugReady: false, permissionGranted: false }
+    // Keep probe read-only: do not overwrite cachedImportSources here.
+    return probeSource(source)
   })
   ipcMain.handle(IPC.browserImportPick, async (event) => {
     assertWindow(event)
@@ -884,35 +970,147 @@ function handleIpc() {
     if (!parsed.ok) return { error: parsed.error ?? 'unreadable', format: parsed.format }
     return cookieImports.store(parsed, { kind: 'file', label: basename(picked) })
   })
-  ipcMain.handle(IPC.browserImportLive, async (event, sourceId, close) => {
+  ipcMain.handle(IPC.browserImportPaste, async (event, text, defaultUrl) => {
     assertWindow(event)
-    const source = (await listSources()).find((item) => item.id === sourceId)
-    if (!source) throw new Error('Anbot: an unknown browser profile')
-    let outcome
-    try {
-      outcome = await importFromBrowser(source, { close: close === true })
-    } catch (error) {
-      if (error?.code === 'app-bound') return { error: 'app-bound' }
-      throw error
-    }
-    if (outcome.running) return { running: true, label: source.label, kind: source.kind }
-    const result = {
-      format: 'live', entries: outcome.result.cookies.length + outcome.result.skipped.length,
-      cookies: outcome.result.cookies, skipped: outcome.result.skipped, warnings: [], info: {},
-    }
-    return { ...cookieImports.store(result, { kind: source.kind, label: source.label }), restarted: outcome.restarted }
+    const raw = typeof text === 'string' ? text : ''
+    if (Buffer.byteLength(raw, 'utf8') > IMPORT_FILE_MAX) return { error: 'too-large' }
+    const parsed = parseCookieFile(raw, { defaultUrl: typeof defaultUrl === 'string' ? defaultUrl : undefined })
+    if (!parsed.ok) return { error: parsed.error ?? 'unreadable', format: parsed.format }
+    const label = parsed.format === 'curl' ? 'cURL' : parsed.format === 'header-string' ? 'Cookie header' : 'Pasted cookies'
+    return cookieImports.store(parsed, { kind: 'paste', label })
   })
-  ipcMain.handle(IPC.browserImportApply, async (event, key, id) => {
+  ipcMain.handle(IPC.browserImportLaunch, async (event, sourceId) => {
+    assertWindow(event)
+    const source = await resolveImportSource(sourceId)
+    if (!source) return { launched: false }
+    return { launched: launchBrowserForDebug(source) }
+  })
+  ipcMain.handle(IPC.browserImportOpenPermission, async (event) => {
+    assertWindow(event)
+    if (process.platform !== 'darwin') return { opened: false }
+    try {
+      await electronShell.openExternal(SAFARI_FULL_DISK_ACCESS_URL)
+      return { opened: true }
+    } catch {
+      return { opened: false }
+    }
+  })
+  ipcMain.handle(IPC.browserImportLive, async (event, sourceId, close, requestId) => {
+    assertWindow(event)
+    // Abort any older in-flight live import so Keychain / browser Allow prompts never stack.
+    for (const [prevKey, prevCtrl] of activeLiveImports) {
+      activeLiveImports.delete(prevKey)
+      prevCtrl.abort()
+    }
+    const reqKey = typeof requestId === 'string' && requestId ? requestId : `live:${++liveImportSeq}`
+    const controller = new AbortController()
+    activeLiveImports.set(reqKey, controller)
+    try {
+      const id = String(sourceId ?? '')
+      let source = await resolveImportSource(id)
+      if (controller.signal.aborted) return { canceled: true }
+      // The pre-permission placeholder has its own dedicated id ('safari:permission') distinct
+      // from real Safari profiles ('safari:Default', 'safari:<UUID>'), so retrying it always
+      // re-enumerates Safari profiles cleanly and can never accidentally bypass profile choice.
+      if (id === 'safari:permission') {
+        const fresh = await refreshImportSources()
+        if (controller.signal.aborted) return { canceled: true }
+        const safariSources = fresh.filter((item) => item.engine === 'safari')
+        if (safariSources.length === 1) {
+          source = safariSources[0]
+        } else if (safariSources.length > 1) {
+          return { needsProfileChoice: true }
+        } else {
+          return {
+            ...cookieImports.store({ format: 'live', entries: 0, cookies: [], origins: [], skipped: [], warnings: [], info: {} }, { kind: 'safari', label: 'Safari', id: 'safari:Default' }),
+            restarted: false,
+            method: 'safari-binarycookies',
+          }
+        }
+      }
+      if (!source) throw new Error('Anbot: an unknown browser profile')
+      let outcome
+      try {
+        outcome = await importFromBrowser(source, { close: close === true, signal: controller.signal })
+      } catch (error) {
+        if (error?.code === 'import-cancelled' || controller.signal.aborted) return { canceled: true }
+        if (['app-bound', 'browser-locked', 'keychain-denied', 'devtools-denied', 'devtools-timeout', 'devtools-wrong-profile', 'safari-corrupt'].includes(error?.code)) {
+          return { error: error.code }
+        }
+        throw error
+      }
+      if (controller.signal.aborted) return { canceled: true }
+      if (outcome.needsFullDiskAccess) {
+        return {
+          needsFullDiskAccess: true,
+          sourceId: source.id,
+          browserName: outcome.browserName ?? source.name,
+          label: source.label,
+          kind: source.kind,
+        }
+      }
+      if (outcome.needsRemoteDebugging) {
+        return {
+          needsRemoteDebugging: true,
+          sourceId: source.id,
+          inspectUrl: outcome.inspectUrl,
+          browserName: outcome.browserName ?? source.name,
+          label: source.label,
+          kind: source.kind,
+          running: outcome.running === true,
+          hasExe: Boolean(source.exe),
+          lockedCount: outcome.lockedCount ?? 0,
+        }
+      }
+      if (outcome.running) return { running: true, label: source.label, kind: source.kind }
+      const result = {
+        format: 'live',
+        entries: outcome.result.cookies.length + outcome.result.skipped.length,
+        cookies: outcome.result.cookies,
+        origins: outcome.result.origins ?? [],
+        skipped: outcome.result.skipped,
+        warnings: [],
+        info: {},
+      }
+      return {
+        ...cookieImports.store(result, { kind: source.kind, label: source.label, id: source.id }),
+        restarted: outcome.restarted,
+        method: outcome.method,
+      }
+    } finally {
+      if (activeLiveImports.get(reqKey) === controller) activeLiveImports.delete(reqKey)
+    }
+  })
+  ipcMain.handle(IPC.browserImportApply, async (event, key, id, options) => {
     assertWindow(event)
     if (typeof key !== 'string' || !key.startsWith('bot:')) throw new Error('Anbot: a Bot storage key is required')
     const pending = cookieImports.take(typeof id === 'string' ? id : '')
     if (!pending) throw new Error('Anbot: this import is no longer pending')
-    const storage = session.fromPartition(partitionOf(key))
-    return applyCookies(storage, pending.cookies)
+    const sites = Array.isArray(options?.sites) ? options.sites.map(String) : undefined
+    const persistSession = options?.persistSession === true
+    const partition = partitionOf(key)
+    const storage = session.fromPartition(partition)
+    const report = await applyCookies(storage, pending.cookies, { sites, persistSession })
+    const storageReport = (pending.origins ?? []).length > 0
+      ? await seedOriginsInPartition(BrowserWindow, partition, pending.origins, { sites })
+      : { originsStored: 0, entriesStored: 0, failedOrigins: [] }
+    return { ...report, ...storageReport }
   })
   ipcMain.handle(IPC.browserImportCancel, (event, id) => {
     assertWindow(event)
-    if (typeof id === 'string') cookieImports.drop(id)
+    if (typeof id === 'string' && id) {
+      cookieImports.drop(id)
+      const controller = activeLiveImports.get(id)
+      if (controller) {
+        activeLiveImports.delete(id)
+        controller.abort()
+      }
+    } else {
+      for (const [reqKey, controller] of activeLiveImports) {
+        activeLiveImports.delete(reqKey)
+        controller.abort()
+      }
+    }
   })
   // The app's own update state, for the About row. `updates` exists once the engine's first
   // start created it; before that (and in runs without an updater) the state is null.
@@ -934,6 +1132,21 @@ function handleIpc() {
     if (state?.phase === 'available' && typeof state.page === 'string' && state.page.startsWith('https://')) {
       void electronShell.openExternal(state.page)
     }
+  })
+  ipcMain.handle(IPC.appUpdateDownload, (event) => {
+    assertWindow(event)
+    updates?.download?.()
+  })
+  ipcMain.handle(IPC.appUpdateAuto, (event, enabled) => {
+    assertWindow(event)
+    if (typeof enabled !== 'boolean') throw new Error('Anbot: autoUpdate must be a boolean')
+    if (updates === undefined) return null
+    writeAutoUpdate(updatePrefsFile(), enabled)
+    if (!enabled) {
+      restartPrompt.clear()
+      downloadPrompt.clear()
+    }
+    return updates.setAutoUpdate(enabled)
   })
   // The plugin keeps the team workspace; the app remembers it for its own checks.
   ipcMain.on(IPC.teamWorkspace, (event, path) => {
@@ -1163,15 +1376,18 @@ async function runMove(to, workspace) {
   app.quit()
 }
 
+const updatePrefsFile = () => join(app.getPath('userData'), 'update-prefs.json')
+
 // Windows and a Linux AppImage update themselves; macOS and a Linux deb ask to download the new
 // version. Throwaway runs check only a given feed and never ask.
 function startUpdates() {
   const feed = updateFeedFromEnv()
   const throwaway = Boolean(homeFromEnv())
   if (!app.isPackaged || (throwaway && feed === undefined)) return undefined
+  const autoUpdate = readAutoUpdate(updatePrefsFile())
   if (process.platform === 'darwin') {
     return watchReleases({
-      current: app.getVersion(), arch: process.arch, feed, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
+      current: app.getVersion(), arch: process.arch, feed, autoUpdate, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
     })
   }
   // electron-updater's Linux updater works only from inside an AppImage (APPIMAGE is set there);
@@ -1180,7 +1396,7 @@ function startUpdates() {
   if (process.platform === 'linux' && process.env.APPIMAGE === undefined) {
     const debArch = { x64: 'amd64', arm64: 'arm64' }[process.arch] ?? process.arch
     return watchReleases({
-      current: app.getVersion(), arch: process.arch, feed, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
+      current: app.getVersion(), arch: process.arch, feed, autoUpdate, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
       asset: version => `Anbot-${version}-linux-${debArch}.deb`,
     })
   }
@@ -1188,7 +1404,7 @@ function startUpdates() {
     // The update ends the app: the window closes for good, and the Host stops before the
     // installer replaces its files.
     return watchUpdates({
-      updater: electronUpdater.autoUpdater, feed, ask: throwaway ? undefined : (version) => restartPrompt.prompt(version),
+      updater: electronUpdater.autoUpdater, feed, autoUpdate, ask: throwaway ? undefined : (version) => restartPrompt.prompt(version),
       beforeInstall: () => { shell.beginQuit(); return stopHost() },
     })
   }
@@ -1208,12 +1424,12 @@ const afterHandoff = async () => { await startWindow.teamShown; return !failed }
 // An update question that the page cannot show counts as 「以后再说」: the update installs at the
 // next quit, and the About row still offers it.
 async function askRestartNow(version) {
-  if (failed || !await afterHandoff()) return false
+  if (failed || updates?.state()?.autoUpdate === false || !await afterHandoff() || updates?.state()?.autoUpdate === false) return false
   return await askInWindow({ message: tx('dialog.update.ready', { version }), detail: tx('dialog.update.readyDetail'), buttons: [{ label: tx('btn.restart'), primary: true }, { label: tx('btn.notNowRestart') }], cancel: 1 }) === 0
 }
 
 async function askDownloadNow(version) {
-  if (failed || !await afterHandoff()) return false
+  if (failed || updates?.state()?.autoUpdate === false || !await afterHandoff() || updates?.state()?.autoUpdate === false) return false
   return await askInWindow({ message: tx('dialog.update.available', { version }), detail: tx('dialog.update.availableDetail'), buttons: [{ label: tx('btn.download'), primary: true }, { label: tx('btn.notNowDownload') }], cancel: 1 }) === 0
 }
 
@@ -1333,7 +1549,7 @@ function createWindow() {
     // The window never squeezes the chat: RAIL_WIDTH + MIN_CHAT from ds-bot's
     // src/client/frame-layout.js is the avatar rail plus the smallest chat column.
     ...startWindow.mainBounds(), minWidth: 508, minHeight: 480,
-    title: 'Anbot', show: false, icon: iconFile,
+    title: 'Anbot', show: false, icon: windowIcon,
     backgroundColor: material ? '#00000000' : dark ? '#1b1b1c' : '#ffffff',
     // Frameless as in DSH Desktop: the window controls overlay the page's band. On Windows the
     // caption buttons keep the sidebar's colors until the page sends the colors of the surface
@@ -1380,7 +1596,7 @@ function createWindow() {
     win.on('leave-full-screen', sendFullscreen)
     contents.on('did-finish-load', sendFullscreen)
   }
-  for (const [on, file] of [[material !== undefined, 'material.css'], [process.platform === 'darwin', 'macos.css']]) {
+  for (const [on, file] of [[material !== undefined, 'material.css'], [process.platform === 'darwin', 'macos.css'], [process.platform === 'win32', 'windows.css']]) {
     if (!on) continue
     const css = readFileSync(join(here, file), 'utf8')
     contents.on('dom-ready', () => { void contents.insertCSS(css) })
@@ -1396,11 +1612,20 @@ function createWindow() {
     return { action: 'deny' }
   })
   contents.on('did-create-window', (child) => {
+    const destroyChild = () => { if (!child.isDestroyed()) child.destroy() }
+    const timer = setTimeout(destroyChild, 30_000)
+    timer.unref?.()
+    const cleanup = () => {
+      clearTimeout(timer)
+      win.off?.('closed', destroyChild)
+    }
+    child.once('closed', cleanup)
+    win.once('closed', destroyChild)
     const away = (event, url) => {
       if (url === 'about:blank') return
       event.preventDefault()
       openOutside(url)
-      child.destroy()
+      destroyChild()
     }
     child.webContents.on('will-navigate', away)
     child.webContents.on('will-redirect', away)
@@ -1410,15 +1635,32 @@ function createWindow() {
     event.preventDefault()
     openOutside(url)
   })
+  if (process.platform !== 'darwin') {
+    contents.on('before-input-event', (event, input) => {
+      const action = zoomKey(input, process.platform)
+      if (action === null) return
+      event.preventDefault()
+      contents.setZoomLevel(zoomLevel(contents.getZoomLevel(), action))
+    })
+  }
   if (!app.isPackaged) {
     contents.on('before-input-event', (_event, input) => {
       if (input.type === 'keyDown' && (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i'))) contents.toggleDevTools()
     })
   }
+  // Hidden or minimized windows pause Bot browser views so off-screen pages stay silent and idle.
+  win.on('hide', () => { botViews?.setWindowHidden(true) })
+  win.on('minimize', () => { botViews?.setWindowHidden(true) })
   // The window that is shown again asks for the update that waited for it. A window that was
   // minimized asks for it when it comes back.
-  win.on('show', () => { void flushDeferredUpdate().catch((error) => { console.error(error) }) })
-  win.on('restore', () => { void flushDeferredUpdate().catch((error) => { console.error(error) }) })
+  win.on('show', () => {
+    botViews?.setWindowHidden(false)
+    void flushDeferredUpdate().catch((error) => { console.error(error) })
+  })
+  win.on('restore', () => {
+    botViews?.setWindowHidden(false)
+    void flushDeferredUpdate().catch((error) => { console.error(error) })
+  })
   return win
 }
 
@@ -1542,8 +1784,9 @@ async function fail(error) {
 // version that cannot install itself (macOS, a Linux deb); one that can is downloading already,
 // and installs once it is downloaded, unless the user has tried again meanwhile.
 async function offerUpdate(mine) {
+  if (updates?.state()?.autoUpdate === false) return
   const found = await Promise.race([updates?.latest() ?? null, sleep(UPDATE_CHECK_WAIT_MS).then(() => null)])
-  const still = () => failed && mine === attempt
+  const still = () => failed && mine === attempt && updates?.state()?.autoUpdate !== false
   offered = found ?? undefined
   if (!found || !still()) return
   const { version } = found

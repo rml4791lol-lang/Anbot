@@ -4,17 +4,36 @@ import { createElement as h, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ChatsIcon, DownloadIcon, GearIcon, PeopleIcon, SlidersIcon, StarLineIcon } from '../../../ds-bot/src/client/icons.js'
+import { ArchiveIcon, DownloadIcon, GearIcon, PersonIcon, SlidersIcon, SpinnerIcon, StackIcon } from '../../../ds-bot/src/client/icons.js'
 import { MENTION_ORIGIN } from '../../../ds-bot/src/client/text.js'
 
 // The DSH Agent's mark. The app has no DSH Agent, so nothing asks for it.
 export const FishLogo = () => null
 
+function fallbackCopy(text) {
+  if (typeof document === 'undefined' || !document.body) return false
+  const area = document.createElement('textarea')
+  area.value = String(text ?? '')
+  area.setAttribute('readonly', '')
+  area.style.position = 'fixed'
+  area.style.top = '-9999px'
+  area.style.opacity = '0'
+  document.body.appendChild(area)
+  const previous = document.activeElement
+  area.focus()
+  area.select()
+  let ok = false
+  try { ok = document.execCommand('copy') } catch { ok = false }
+  area.remove()
+  if (previous instanceof HTMLElement) previous.focus()
+  return ok
+}
+
 // writeClipboard in the plugin is DSH's (navigator.clipboard with an execCommand
 // fallback off-HTTPS); the window keeps the same contract.
 export const writeClipboard = text => (navigator.clipboard === undefined
-  ? Promise.resolve(document.execCommand('copy', false, text))
-  : navigator.clipboard.writeText(text).then(() => true, () => false))
+  ? Promise.resolve(fallbackCopy(text))
+  : navigator.clipboard.writeText(text).then(() => true, () => fallbackCopy(text)))
 
 const plugins = [remarkGfm]
 
@@ -22,7 +41,8 @@ function CodeBlock({ children, labels }) {
   const [copied, setCopied] = useState(false)
   const block = useRef(null)
   const copy = () => {
-    void navigator.clipboard?.writeText(block.current?.innerText ?? '').then(() => {
+    void writeClipboard(block.current?.innerText ?? '').then((ok) => {
+      if (!ok) return
       setCopied(true)
       setTimeout(() => setCopied(false), 1000)
     })
@@ -48,16 +68,14 @@ export function MarkdownText({ text, labels, variant }) {
 
 export const projectUserText = text => text
 
-export const fileExtension = name => {
-  const part = String(name ?? '').split('.').at(-1)
-  return part === String(name ?? '') || part === undefined ? '' : part
-}
-
-export const fileSizeText = bytes => {
+export const fileExtension = name => /\.([^./\\]+)$/.exec(String(name ?? ''))?.[1] ?? ''
+const UNITS = ['B', 'KB', 'MB', 'GB']
+export function fileSizeText(bytes) {
   if (!Number.isFinite(bytes) || bytes < 0) return ''
-  if (bytes < 1000) return `${String(bytes)} B`
-  if (bytes < 1_000_000) return `${(bytes / 1000).toFixed(bytes < 10_000 ? 1 : 0)} KB`
-  return `${(bytes / 1_000_000).toFixed(bytes < 10_000_000 ? 1 : 0)} MB`
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < UNITS.length - 1) { value /= 1024; unit += 1 }
+  return `${unit === 0 ? value : value.toFixed(value < 10 ? 1 : 0)} ${UNITS[unit]}`
 }
 
 export const FileTypeIcon = ({ path, className }) => h('span', { className, 'aria-hidden': true }, (fileExtension(path) || 'file').slice(0, 4).toUpperCase())
@@ -102,10 +120,18 @@ export function Modal({ open, onClose, title, closeLabel, description, children,
       footer === undefined ? null : h('div', { className: 'ui-modal-footer' }, footer))), document.body)
 }
 
-export const IconAgentPresetOutlineMedium = StarLineIcon
-export const IconArchiveOutlineMedium = ChatsIcon
-export const IconDownloadOutlineRegular = DownloadIcon
-export const IconPersonalizationOutlineMedium = SlidersIcon
-export const IconSettingsOutlineMedium = GearIcon
-export const IconUserOutlineMedium = PeopleIcon
-export const IconLoadingOutlineRegular = () => h('span', { className: 'ui-spin', 'aria-hidden': true }, '…')
+// Settings icons, drawn by DS Bot (ds-bot/src/client/icons.js). DSH's take a `size`.
+const sized = Icon => function SizedIcon({ size, className }) {
+  return h('span', { className, style: size ? { display: 'inline-flex', width: size, height: size } : undefined }, h(Icon))
+}
+export const IconSettingsOutlineMedium = sized(GearIcon)
+export const IconUserOutlineMedium = sized(PersonIcon)
+export const IconArchiveOutlineMedium = sized(ArchiveIcon)
+export const IconPersonalizationOutlineMedium = sized(SlidersIcon)
+export const IconAgentPresetOutlineMedium = sized(StackIcon)
+export const IconDownloadOutlineRegular = sized(DownloadIcon)
+export const IconLoadingOutlineRegular = sized(SpinnerIcon)
+
+// The window does not draw DSH's permission confirmation; the name still resolves for
+// settings-preferences.js, which the settings dialog loads.
+export const RiskConfirmation = () => null
