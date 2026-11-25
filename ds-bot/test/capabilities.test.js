@@ -827,6 +827,53 @@ test('a creator that is not a Main Bot cannot change a capability another Bot us
   assert.equal(rt.state.capabilities.items.guide.content, 'Settings edit.')
 })
 
+test('deleting a skill capability removes its name from every shortlist that lists it', async t => {
+  const state = team()
+  // Bots that already keep a shortlist, as an attach writes into it.
+  for (const bot of Object.values(state.bots)) bot.skillShortlist = []
+  const env = await setup({ state })
+  t.after(() => env.dispose())
+  const { rt } = env
+  for (const name of ['guide', 'other']) {
+    await rt.capabilitySave({ name, kind: 'skill', description: name, content: 'Do the work.' }, { botId: 'chief' })
+  }
+  // An attach puts the skill in the shortlist as well as the attachment list.
+  await rt.capabilityEndpoint('bot-capability', { botId: 'chief', name: 'guide', attached: true })
+  await rt.capabilityEndpoint('bot-capability', { botId: 'chief', name: 'other', attached: true })
+  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['guide', 'other'])
+
+  await rt.capabilityDelete('guide', { ui: true })
+
+  // The attachment and the shortlist entry go together: nothing may keep naming a
+  // skill that no longer exists.
+  assert.deepEqual(rt.state.bots.chief.capabilities, ['other'])
+  assert.deepEqual(rt.state.bots.chief.skillShortlist.map(skill => skill.name), ['other'])
+  // A detach is the same removal for the Bot that had it.
+  await rt.capabilityEndpoint('bot-capability', { botId: 'chief', name: 'other', attached: false })
+  assert.deepEqual(rt.state.bots.chief.skillShortlist, [])
+})
+
+test('a Bot can delete its own learned skill once the shortlist entry is all that is left', async t => {
+  // A creator that is not a Main Bot may delete a skill nobody else uses. Its own
+  // shortlist entry is its own use, not another Bot's.
+  const env = await setup()
+  t.after(() => env.dispose())
+  const { rt } = env
+  rt.state.bots.worker.skillShortlist = []
+  rt.state.bots.chief.skillShortlist = []
+  await rt.capabilitySave({ name: 'release-checks', kind: 'skill', description: 'Checks', content: 'Run the checks.' }, { botId: 'worker' })
+  await rt.capabilityEndpoint('bot-capability', { botId: 'worker', name: 'release-checks', attached: true })
+  assert.deepEqual(rt.state.bots.worker.skillShortlist.map(skill => skill.name), ['release-checks'])
+  await rt.capabilityDelete('release-checks', { botId: 'worker' })
+  assert.equal(rt.state.capabilities.items['release-checks'], undefined)
+  assert.deepEqual(rt.state.bots.worker.skillShortlist, [])
+  // Another Bot's shortlist still protects the skill.
+  await rt.capabilitySave({ name: 'team-guide', kind: 'skill', description: 'Guide', content: 'Do it.' }, { botId: 'worker' })
+  rt.state.bots.worker.skillShortlist = []
+  rt.state.bots.chief.skillShortlist = [{ name: 'team-guide', purpose: 'use the guide' }]
+  await assert.rejects(rt.capabilityDelete('team-guide', { botId: 'worker' }), /Another Bot uses team-guide, so only a Main Bot can delete it/)
+})
+
 test('a new Bot Agent waits for its capabilities before creation finishes', async t => {
   const state = team()
   state.capabilities = { items: { echo: { ...mcp('echo'), approved: true, createdBy: 'chief', createdAt: 1, updatedAt: 1 } } }

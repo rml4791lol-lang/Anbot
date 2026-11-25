@@ -1106,6 +1106,8 @@ test('deleting a learned skill clears ownership before a recreated same-name ski
     history: { b2: [...ownChat] },
     replies: [requestedCreateReply(), updateReply],
     config: { learningTimes: { tickMs: 100_000 } },
+    // A Bot that already keeps a shortlist: an approved skill is attached into it.
+    seed: { ...TEAM, bots: { ...TEAM.bots, b2: { ...TEAM.bots.b2, skillShortlist: [] } } },
   })
   t.after(() => runtime.stop())
   const proposal = await requestCreate(runtime)
@@ -1113,10 +1115,14 @@ test('deleting a learned skill clears ownership before a recreated same-name ski
   const answer = await runtime.call('learning-answer', { id: proposal.id, approve: true })
   assert.equal(answer.value.applied, true)
   assert.deepEqual(runtime.learningState().learned.b2, ['release-checks'])
+  assert.deepEqual(runtime.teamState().bots.b2.skillShortlist.map(skill => skill.name), ['release-checks'])
 
   const deleted = await runtime.call('capability-delete', { name: 'release-checks' })
   assert.equal(deleted.ok, true)
   assert.deepEqual(runtime.learningState().learned.b2, [])
+  // The deleted skill leaves the shortlist too; otherwise it stays as a name with no
+  // skill behind it, and no other Bot may delete the library entry.
+  assert.deepEqual(runtime.teamState().bots.b2.skillShortlist, [])
   await runtime.rt.capabilitySave({
     name: 'release-checks',
     kind: 'skill',

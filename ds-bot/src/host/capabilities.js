@@ -493,6 +493,9 @@ export function install(rt) {
     for (const bot of Object.values(state.bots)) {
       bot.capabilities = (bot.capabilities ?? []).filter(attached => attached !== item.name)
       bot.packs = (bot.packs ?? []).filter(attached => attached !== item.name)
+      // An attach adds a skill to the shortlist too, so the delete takes it back out.
+      // Left behind, the name stays in the prompt with no skill behind it.
+      if (Array.isArray(bot.skillShortlist)) bot.skillShortlist = bot.skillShortlist.filter(skill => skill.name !== item.name)
     }
     await rt.save()
     return true
