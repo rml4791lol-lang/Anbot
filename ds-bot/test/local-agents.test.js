@@ -1535,6 +1535,18 @@ test('codex app-server: an answer whose turn already ended starts a new turn', a
   assert.equal(second.finish?.kind, 'stop')
 })
 
+test('codex app-server: a stale event from an earlier turn does not answer the next turn', async (t) => {
+  const adapter = makeAdapter({ codexArgs: ['--text-only'] })
+  t.after(() => adapter.dispose())
+  const messages = [user('m1', 'first')]
+  const first = await collect(adapter.stream(options('s1', messages, { provider: 'local-codex-cli' })))
+  assert.match(first.text, /User: first/)
+  // The CLI sends the finished turn's item before it names the new turn.
+  const second = await collect(adapter.stream(options('s1', [...messages, user('m2', 'stale-before-start')], { provider: 'local-codex-cli' })))
+  assert.equal(second.text.includes('stale: earlier turn'), false, JSON.stringify(second))
+  assert.match(second.text, /ok: stale-before-start/)
+})
+
 test('codex app-server: a steer refused while the turn ends still gets a turn of its own', async (t) => {
   const adapter = makeAdapter()
   t.after(() => adapter.dispose())

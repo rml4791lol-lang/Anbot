@@ -846,8 +846,7 @@ export class LocalAgentAdapter extends LlmAdapter {
         return recover()
       }
     }
-    this.startTurn(live, blocks, signal, effort)
-    return Promise.resolve()
+    return this.startTurn(live, blocks, signal, effort)
   }
 
   discardTurnOutput(live) {
@@ -871,6 +870,9 @@ export class LocalAgentAdapter extends LlmAdapter {
     try {
       const prompt = Promise.resolve(live.engine.prompt(live.engineSession, blocks, { signal, effort, onProgress: live.scheduleIdle }))
         .catch(error => { if (!signal?.aborted) live.push({ type: 'error', error }) })
+      // Codex names the turn only in its start reply. Waiting for that name here
+      // keeps a finished turn's queued events from answering the new one.
+      const turnStarted = live.spec.kind === 'codex' ? live.engineSession?.turnStarted?.promise : undefined
       if (confirmsPromptStop(live.spec.kind)) {
         const proof = prompt.then(terminal => terminal === true, () => false)
         this.nativePrompts.set(live.sessionId, proof)
@@ -878,7 +880,10 @@ export class LocalAgentAdapter extends LlmAdapter {
           if (terminal && this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
         })
       }
-      return Promise.resolve()
+      if (turnStarted === undefined) return Promise.resolve()
+      return Promise.resolve(turnStarted).then(turnId => {
+        if (typeof turnId === 'string' && turnId !== '' && live.state === 'running') live.turnTag = turnId
+      })
     } catch (error) {
       live.push({ type: 'error', error })
       return Promise.resolve()

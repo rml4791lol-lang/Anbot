@@ -293,9 +293,17 @@ export class CodexEngine {
   }
 
   async prompt(thread, blocks, { signal, effort }) {
-    const peer = await this.ensure()
-    if (signal?.aborted) return true
-    if (thread.activeTurn !== undefined) throw new Error('The previous Codex turn is still stopping')
+    // The adapter sets `live.turnTag` from this before it reads the turn's stream:
+    // the app-server names the turn only in its start reply, and events from the
+    // finished turn may already be queued ahead of that reply.
+    const started = Promise.withResolvers()
+    thread.turnStarted = started
+    const peer = await this.ensure().catch(error => { started.resolve(undefined); throw error })
+    if (signal?.aborted) { started.resolve(undefined); return true }
+    if (thread.activeTurn !== undefined) {
+      started.resolve(undefined)
+      throw new Error('The previous Codex turn is still stopping')
+    }
     thread.awaitingFirstPrompt = false
     const active = { settled: Promise.withResolvers(), early: new Map(), id: undefined, cancelled: false, interruptSent: false, peer }
     thread.activeTurn = active
@@ -311,6 +319,7 @@ export class CodexEngine {
       this.activateTurn(thread, id)
     }).catch(error => {
       if (thread.activeTurn !== active) return
+      started.resolve(undefined)
       if (!active.cancelled) thread.push({ type: 'error', error })
       active.settled.resolve(false)
     })
@@ -332,6 +341,7 @@ export class CodexEngine {
       if (active.id !== undefined && active.id !== turnId) return
       active.id = turnId
       thread.turnId = turnId
+      thread.turnStarted?.resolve(turnId)
       const terminal = active.early.get(turnId)
       active.early.clear()
       if (terminal !== undefined) this.finishTurn(thread, active, terminal)
@@ -339,6 +349,7 @@ export class CodexEngine {
       return
     }
     thread.turnId = turnId
+    thread.turnStarted?.resolve(turnId)
     thread.pendingCompaction = false
     const cancelled = thread.compactionCancel
     thread.compactionCancel = undefined
