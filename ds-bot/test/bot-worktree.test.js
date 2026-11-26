@@ -148,6 +148,7 @@ test('local takeover keeps the worktree stopping until the original executor con
     botWorkflowView: () => ({ status: workflowStatus }),
     engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode', localAgentCanConfirmStop: () => true,
     stopLocalAgentForTakeover: () => { called.resolve(); return proof },
+    localAgentProcessId: () => 4321,
     localAgentHasUnsettledPrompt: id => id === 's2' ? otherHasPrompt : ownHasPrompt,
     save: async () => {
       if (bot.worktreeHold === undefined && saveRelease) await saveRelease()
@@ -161,6 +162,7 @@ test('local takeover keeps the worktree stopping until the original executor con
   const taking = ownership.change('b1', true)
   await called.promise
   assert.equal(ownership.view('b1').status, 'stopping')
+  assert.equal(bot.worktreeHold.pid, 4321)
   assert.throws(() => ownership.assertUnheld('s1'), /paused/)
   native.resolve(false)
   await assert.rejects(taking, /has not confirmed it stopped/)
@@ -170,6 +172,7 @@ test('local takeover keeps the worktree stopping until the original executor con
 
   proof = Promise.resolve(true)
   assert.equal((await ownership.change('b1', true)).status, 'held')
+  assert.equal(Object.hasOwn(bot.worktreeHold, 'pid'), false)
   agent.status = 'running'
   await assert.rejects(ownership.change('b1', false), /Session.*idle/)
   agent.status = 'idle'
