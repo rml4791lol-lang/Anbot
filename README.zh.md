@@ -29,18 +29,46 @@ Anbot 源于 [DS Bot](https://github.com/Fei2411/DS-Bot)，保留了它的 Bot �
 
 ## 安装
 
-**桌面应用（Windows、macOS、Linux）**
+### 前置依赖
 
-安装包还没有发布，准备中。现在可以从源码构建：
+- Node.js 22.19 或更高版本（推荐 24），npm 11 或更高版本，以及 Git。app 的 lockfile 由 npm 11 生成；npm 10 会在 `npm ci` 时报 lockfile 不同步。
+- macOS：Xcode Command Line Tools（`xcode-select --install`）。
+- Linux：`build-essential` 与 `python3`（Debian/Ubuntu：`sudo apt-get install build-essential python3`）。
+- Windows：Visual Studio Build Tools 的「使用 C++ 的桌面开发」工作负载，以及 Python 3。
+
+在代理或镜像网络后安装前，先设置 `npm_config_proxy` / `npm_config_https_proxy`；Electron 下载设置 `ELECTRON_MIRROR`，electron-builder 自身工具下载设置 `ELECTRON_BUILDER_BINARIES_MIRROR`。
+
+### 桌面应用（Windows、macOS、Linux）
+
+安装包还没有发布；已发布的安装包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。现在可以从源码构建：
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
 cd Anbot
-sh scripts/setup.sh        # 装三处依赖：插件、手机链路、测试用的 DSH 包
-(cd app && npm test && npm run build && npm run pack)
+sh scripts/setup.sh        # 安装 ds-bot、link、app 依赖，生成 client.js
+(cd app && npm run build && npm run pack)
 ```
 
+Windows 上把 `sh scripts/setup.sh` 换成 `pwsh scripts/setup.ps1`。
+
 产物在 `app/dist-pack/`。桌面应用自带锁定版本的 DSH，不需要先装 DSH；第一次启动时可以从你现有的 DSH 里复制 Bot 团队。
+
+`scripts/setup.sh` 按 lockfile 安装插件、手机链路和桌面应用依赖，重新生成 `ds-bot/client.js` 与 `ds-bot/link.js`，并校验已提交的 bundle 与 `src/client` 一致；重复执行是安全的。`--plugin-only` 跳过桌面应用依赖，`--without-harness` 跳过仅测试用的 DSH 包。
+
+### 什么时候必须重新构建客户端 bundle
+
+`ds-bot/client.js` 与 `ds-bot/link.js` 已提交进仓库。Git clone 或 `npm pack` 安装会直接使用它们；只有改动 `ds-bot/src/client/` 或 `link/src/` 下的内容后才需要重新构建：
+
+```sh
+(cd ds-bot && npm run build)
+node scripts/build-client.mjs --check   # 已提交 bundle 过期时退出 1
+```
+
+单元测试在 `client.js` 过期时也会失败。不跑构建步骤，也可以用已提交的 bundle 跑插件测试，或把插件打成 tgz 装进 DSH。
+
+### 签名与 Gatekeeper
+
+从源码构建不需要任何证书。本地编译出的 app 不带 macOS `quarantine` 属性，Gatekeeper 不会按「未识别开发者」拦截。签名、公证的预编译安装包是单独的发布议题；本源码构建流程不会对 app 做签名。
 
 **作为 DSH 插件**
 
@@ -178,7 +206,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 - **协调层**：你对 Main Bot 说一个目标，它自己拆任务、选 Bot、准备工作区、跟踪依赖、汇总验收。派活目前仍要你自己安排。
 - **多 Bot 工作流视图**：一张图看到所有 Bot 的依赖、进度和审批。
 - **Bot 锻造器与自举工程器**：用对话组装新 Bot、让 Anbot 改自己的代码。
-- **公开安装包、自动更新和代码签名**。
+- **代码签名与分发**：Windows 安装包已做 Authenticode 签名，但当前用的是自签证书，未被商业 CA 信任，其他机器首次打开仍提示「未知发布者」；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换；Linux 包未签名；iOS 还没有 Apple 账号，不出包。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
 
 ## 文档与开发
 
@@ -191,7 +219,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 
 ## 致谢
 
-Anbot 源于 Fei2411 与贡献者维护的 [DS Bot](https://github.com/Fei2411/DS-Bot)，并在它的基础上继续开发。
+Anbot 在 [DS Bot](https://github.com/Fei2411/DS-Bot) 基础上继续开发；上游原由 Fei2411 与贡献者维护。
 
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：Anbot 建在 DSH 的插件系统和 Session 上。模型 Bot 用它的 Agent 循环和模型服务；本地智能体 Bot 用 CLI 自己的工具和模型访问。辅助模型调用不经过 Agent 循环，搜索 / 抓取和 DeepSeek OCR、TTS、ASR 则直接请求服务。
 - [esbuild](https://esbuild.github.io/)：用来打包插件的界面代码。
@@ -202,7 +230,7 @@ Anbot 源于 Fei2411 与贡献者维护的 [DS Bot](https://github.com/Fei2411/D
   - [Hermes Agent](https://github.com/NousResearch/hermes-agent) 和 [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode)：每个成员在每个群里一个会话，以及交接时带上用户之前的原话。
   - [OpenCode](https://github.com/sst/opencode)、[goose](https://github.com/block/goose)、[pi](https://github.com/badlogic/pi-mono)、[Gemini CLI](https://github.com/google-gemini/gemini-cli)：长对话什么时候压缩，交接笔记写哪些内容。
   - [obelisk](https://github.com/tommy0103/obelisk)：用 SQLite 全文索引搜索聊天记录。
-- DS Bot 的每一位使用者和贡献者。
+- Anbot 的每一位使用者和贡献者。
 
 ## 许可
 

@@ -1,0 +1,54 @@
+name: Clean checkout setup
+
+# Proves a fresh clone reaches a buildable state on all three desktop platforms, independent of
+# the per-change test matrix. It runs the setup script, checks the generated client bundle, and
+# builds the desktop app's web UI. It does not package an installer or launch a window.
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: setup-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      # This job installs dependencies and builds the web UI only; no Electron binary is needed.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            ds-bot/package-lock.json
+            link/package-lock.json
+            app/package-lock.json
+      - name: Install dependencies and generate bundles (Unix)
+        if: runner.os != 'Windows'
+        run: sh scripts/setup.sh
+      - name: Install dependencies and generate bundles (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: scripts/setup.ps1
+      - name: Verify client.js matches src/client
+        working-directory: ds-bot
+        run: node scripts/build-client.mjs --check
+      - name: Build the desktop app web UI
+        working-directory: app
+        run: npm run build

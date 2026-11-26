@@ -1,7 +1,9 @@
-DS Bot
-Copyright 2026 Fei2411 and the DS Bot contributors
+Anbot
+Copyright 2026 Anbot contributors
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+Anbot is based on DS Bot (https://github.com/Fei2411/DS-Bot), Copyright 2026 Fei2411 and
+the DS Bot contributors; that upstream attribution is retained under the Apache License,
+Version 2.0 (see LICENSE).
 
 ==============================================================================
 Third-party code in this repository
@@ -125,8 +127,8 @@ DSH Remote (https://github.com/liguobao/deepseek-harness-remote)
 MIT License, Copyright (c) 2026 DSH Remote contributors
 
   The phone link code in link/ adapts code from commit 4d888ad of DSH Remote.
-  DS Bot changed the names, the Noise prologue label, the fragment marker, the
-  hello and the pairing, so the protocol is DS Bot's own and does not talk to
+  Anbot changed the names, the Noise prologue label, the fragment marker, the
+  hello and the pairing, so the protocol is Anbot's own and does not talk to
   DSH Remote.
   - link/src/noise.ts adapts packages/crypto/src/noise.ts (the Noise
     IK session and the remote-key check).
@@ -148,7 +150,7 @@ MIT License, Copyright (c) 2026 DSH Remote contributors
     limits). It drops accounts and WebRTC signaling.
   - link/src/host.ts follows the flow of HostServerConnection in
     packages/plugin/src/server-connection.ts (reconnect, connect.incoming,
-    the responder handshake, Relay sends), written again for DS Bot.
+    the responder handshake, Relay sends), written again for Anbot.
   - mobile/src/polyfills.ts copies apps/android/src/polyfills.ts.
 
   Full license text: the same MIT terms as printed under DeepSeek Harness
@@ -249,7 +251,7 @@ Arnout Kazemier and contributors, (c) 2016 Luigi Pinca and contributors).
 Projects that gave us ideas (no code copied)
 ==============================================================================
 
-We thank these projects for the designs they published. DS Bot learned from
+We thank these projects for the designs they published. Anbot learned from
 their ideas; it does not contain their code.
 
   - AgentMemoryRepo (https://github.com/AgentMemoryRepo/agentmemoryrepo), MIT:
@@ -281,7 +283,7 @@ The logos name the agent CLI a Bot runs on. Each is a trademark of its owner:
 Claude (Anthropic), Cursor (Anysphere), Gemini and Antigravity (Google), OpenCode (SST),
 Cline (Cline Bot Inc.), Qwen (Alibaba Cloud), Devin (Cognition AI),
 GitHub Copilot (GitHub), Kimi (Moonshot AI), MiniMax (MiniMax), Mistral AI (Mistral AI),
-OpenAI (OpenAI). DS Bot is not affiliated with or endorsed by these owners.
+OpenAI (OpenAI). Anbot is not affiliated with or endorsed by these owners.
 Vector marks from Simple Icons (https://simpleicons.org), CC0-1.0.
 Devin, OpenAI and Antigravity marks from the vendors' application icons.
 
@@ -289,4 +291,4 @@ Plugin logos (ds-bot/src/client/plugin-marks.js)
 The browser plugin marks identify their respective projects. Each is a trademark
 of its owner: Playwright (Microsoft, official SVG mark from playwright.dev,
 Apache-2.0), Ego (CitroLabs, official geometric mark from citrolabs/ego-lite),
-and Chrome (Google). DS Bot is not affiliated with or endorsed by these owners.
+and Chrome (Google). Anbot is not affiliated with or endorsed by these owners.
