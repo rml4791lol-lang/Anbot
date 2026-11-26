@@ -229,26 +229,27 @@ test('a stopping local worktree hold left by a previous host is reconciled at st
     botOf: id => bots[id], selfOf: id => id, chatOf: id => id,
     load: async () => {}, readOnly: () => undefined,
     save: async () => { saved.push(Object.values(bots).map(bot => bot.worktreeHold.status)) },
-    // The adapter proves only s1 stopped; s2's executor may still be writing.
-    stopLocalAgentForTakeover: (id) => { stops.push(id); return Promise.resolve(id === 's1') },
+    // The real adapter answers true for a Session this host is not running.
+    stopLocalAgentForTakeover: (id) => { stops.push(id); return Promise.resolve(true) },
   }
   const ownership = createWorktreeHold(rt)
   await ownership.recoverPendingRestores()
-  assert.deepEqual(stops, ['s1', 's2'])
-  assert.equal(bots.b1.worktreeHold.status, 'held')
+  assert.deepEqual(stops, [], 'a missing process id cannot be proven stopped')
+  assert.equal(bots.b1.worktreeHold.status, 'stopping')
+  assert.match(bots.b1.worktreeHold.reason, /did not record the local Agent process/)
   assert.equal(bots.b2.worktreeHold.status, 'stopping')
-  assert.match(bots.b2.worktreeHold.reason, /did not prove it stopped/)
+  assert.match(bots.b2.worktreeHold.reason, /did not record the local Agent process/)
   assert.equal(bots.b3.worktreeHold.status, 'held')
   assert.equal(Object.hasOwn(bots.b3.worktreeHold, 'pid'), false)
   assert.equal(bots.b4.worktreeHold.status, 'stopping')
-  assert.match(bots.b4.worktreeHold.reason, /did not prove it stopped/)
-  assert.equal(ownership.view('b1').status, 'held')
-  assert.match(ownership.view('b2').reason, /did not prove it stopped/)
+  assert.match(bots.b4.worktreeHold.reason, /still running/)
+  assert.equal(ownership.view('b1').status, 'stopping')
+  assert.match(ownership.view('b1').reason, /did not record the local Agent process/)
   assert.deepEqual(saved, [
-    ['held', 'stopping', 'stopping', 'stopping'],
-    ['held', 'stopping', 'stopping', 'stopping'],
-    ['held', 'stopping', 'held', 'stopping'],
-    ['held', 'stopping', 'held', 'stopping'],
+    ['stopping', 'stopping', 'stopping', 'stopping'],
+    ['stopping', 'stopping', 'stopping', 'stopping'],
+    ['stopping', 'stopping', 'held', 'stopping'],
+    ['stopping', 'stopping', 'held', 'stopping'],
   ])
 })
 

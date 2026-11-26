@@ -283,23 +283,17 @@ export function createWorktreeHold(rt) {
       const hold = bot.worktreeHold
       if (hold === undefined || hold.status !== 'stopping' || hold.hostRun === hostRun || changing.has(bot.id)) continue
       let stopped = true
-      if (hold.local === true) {
-        if (Number.isSafeInteger(hold.pid) && hold.pid > 0) stopped = !pidAlive(hold.pid)
-        else {
-          // Holds written before the process id was recorded have no durable handle.
-          stopped = false
-          try {
-            stopped = await Promise.resolve(rt.stopLocalAgentForTakeover?.(hold.sessionId)) === true
-          } catch {}
-        }
-      }
+      if (hold.local === true) stopped = Number.isSafeInteger(hold.pid) && hold.pid > 0 && !pidAlive(hold.pid)
       if (stopped) {
         const held = { ...hold, status: 'held', at: Date.now() }
         delete held.pid
         delete held.reason
         await persist(bot, held)
-      } else if (hold.reason === undefined) {
-        await persist(bot, { ...hold, reason: 'The previous host’s local Agent did not prove it stopped; keep this worktree reserved.' })
+      } else {
+        const reason = Number.isSafeInteger(hold.pid) && hold.pid > 0
+          ? 'The previous host’s local Agent process is still running; keep this worktree reserved until it exits.'
+          : 'The previous host did not record the local Agent process; keep this worktree reserved until its executor is confirmed stopped.'
+        if (hold.reason !== reason) await persist(bot, { ...hold, reason })
       }
     }
   }
