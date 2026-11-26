@@ -7,7 +7,7 @@ import { isMainOf } from './sources.js'
 import { currentPart, previewOf, relativeShort } from './text.js'
 import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, PlugIcon, SwitchIcon, CloudDownloadIcon, SignInIcon, SignOutIcon, SlidersIcon, ChevronRightIcon, DotsIcon, FolderIcon } from './icons.js'
 import { lookOf, MAIN_LOOK } from './characters.js'
-import { ANBOT_MARK_SVG } from './marks/anbot-assets.js'
+import { ANBOT_MARKS } from './marks/anbot-assets.js'
 import { botState, BotMark, BotAvatar, RoomAvatar } from './mark.js'
 import { AgentBadge } from './agent-badge.js'
 import { SidebarTaskPill, taskCountsOf } from './bot-tasks.js'
@@ -1432,10 +1432,11 @@ export const RETURN_CSS = `
 .bt-return-swap svg{width:16px;height:16px}
 `
 
-// The main brand seat uses the true-vector Anbot tile; the about and usage pages
-// keep the raster fallback BotMark.
+// The main brand seat renders the same bitmap slot as the rest of the team; the
+// about and usage pages already use the raster BotMark.
 function BrandTile({ size }) {
-  return h('span', { className: 'bt-brand-whale', style: { width: size, height: size }, dangerouslySetInnerHTML: { __html: ANBOT_MARK_SVG } })
+  return h('span', { className: 'bt-brand-whale', style: { width: size, height: size } },
+    h('img', { className: 'bt-mark-img bt-mark-built', src: ANBOT_MARKS.anbot.open, alt: '', draggable: false }))
 }
 export function BrandMark({ size = 24 }) {
   return h(BrandTile, { size })

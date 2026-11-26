@@ -2,9 +2,14 @@
 //
 //   node dev/anbot-assets.mjs        writes src/client/marks/anbot-assets.js
 //
-// The source frames live in assets/marks/ (160px webp, open + closed). The 512px
-// frames are not bundled in this phase; no static asset route is served to the
-// browser yet. The generated module is committed, like characters.js.
+// Frame pipeline:
+//   source cutout PNG (anbot-whale.png, 1536x1536 RGBA)
+//     -> dev/anbot-render-mark.py  (contain with uniform margin, LANCZOS)
+//     -> assets/marks/<slot>-160.webp  (bundled) and anbot-320.webp (retina spare)
+//
+// Only the 160px open/closed frames are inlined here; the 320px frame is kept on
+// disk for future 2x retina avatars and is not bundled. The generated module is
+// committed, like characters.js.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -37,17 +42,12 @@ const entries = SLOTS.map(([id, label]) => {
   return [id, { label, open, closed }]
 })
 
-const markSvg = readFileSync(join(ASSETS, 'anbot-mark.svg'), 'utf8').trim()
-
 const body = `// Generated from assets/marks by \`node dev/anbot-assets.mjs\`. Do not edit by hand.
 // Built-in bitmap marks: 160px open/closed webp frames inlined as data URLs.
 // \`closed\` is null when the slot ships no blink frame (the main mark).
 export const ANBOT_MARKS = {
 ${entries.map(([id, slot]) => `  ${id}: { label: ${JSON.stringify(slot.label)}, open: ${JSON.stringify(slot.open)}, closed: ${slot.closed ? JSON.stringify(slot.closed) : 'null'} },`).join('\n')}
 }
-
-// True-vector main brand tile (dark plate baked in), used by the sidebar brand seat.
-export const ANBOT_MARK_SVG = ${JSON.stringify(markSvg)}
 `
 
 writeFileSync(OUT, body)

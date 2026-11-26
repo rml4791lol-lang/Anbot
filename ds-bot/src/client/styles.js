@@ -127,7 +127,6 @@ body[data-bt-motion=quiet] .bt-mark[data-poke]{cursor:default}
 .bt-side-top{display:flex;flex-wrap:wrap;container-type:inline-size;container-name:bt-side-top;justify-content:flex-start;align-items:center;gap:8px;padding:6px 5px 0 0}
 .bt-brand{display:inline-flex;align-items:center;gap:6px;margin-right:auto;padding:4px 8px 4px 4px;border:0;border-radius:8px;background:none;cursor:pointer;font-family:inherit;font-size:15px;line-height:20px;font-weight:600;letter-spacing:-.01em;color:var(--bt-ink);white-space:nowrap}
 .bt-brand-whale{display:inline-flex;color:var(--bt-accent)}
-.bt-brand-whale svg{width:100%;height:100%;display:block}
 .bt-round{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--bt-line);background:var(--bt-main);color:var(--bt-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background-color .12s ease,transform .12s ease}
 /* A narrow column must wrap its header instead of squeezing round controls. */
 @container bt-side-top (max-width:300px){.bt-side-top>.bt-brand{flex-basis:100%}}
