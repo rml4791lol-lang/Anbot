@@ -115,7 +115,7 @@ async function fixture(t, options = {}) {
 
 test('first registration persists encrypted credentials, PKCE, account, scopes and host before opening browser', async t => {
   const f = await fixture(t)
-  assert.deepEqual(f.client.status(), { state: 'signed-out' })
+  assert.deepEqual(f.client.status(), { state: 'unknown' })
   await f.login()
   const params = f.authorization.searchParams
   assert.equal(params.get('client_id'), 'dynamic_agent_client')
@@ -428,11 +428,12 @@ test('boot construction never reads or decrypts the stored sign-in record', asyn
 
   const client = await createChatGPTSignIn({ userData, safeStorage: spyingStorage, fs: spyingFs,
     platform: 'darwin', fetch: () => assert.fail('network must not be touched at boot') })
+  // Plain status queries at boot must stay pure in-memory: no read, no decrypt.
+  for (let i = 0; i < 3; i++) assert.equal(client.status().state, 'unknown')
   assert.equal(reads.filter(file => file.endsWith('chatgpt-signin.enc')).length, 0, 'the record file is not read at boot')
   assert.equal(decrypts.length, 0, 'the record is not decrypted at boot')
-  assert.equal(client.status().state, 'signed-out')
 
-  // Opening the ChatGPT panel primes the lazy load; the stored session is restored only then.
+  // An explicit action primes the lazy load; the stored session is restored only then.
   await client.prime()
   assert.equal(client.status().state, 'connected')
   assert.equal(decrypts.length, 1, 'the record is decrypted once on first use')
@@ -450,7 +451,9 @@ test('a denied or failing secure storage degrades without throwing at boot', asy
   }
   const client = await createChatGPTSignIn({ userData, safeStorage: deniedStorage, platform: 'darwin',
     fetch: () => assert.fail('network must not be touched') })
-  // Construction and the first prime must not reject; the degraded state looks signed-out-ish.
+  // Before the first explicit action the status stays a plain in-memory value, no throw.
+  assert.deepEqual(client.status(), { state: 'unknown' })
+  // Construction and the first prime must not reject; the degraded state exposes no account/token.
   await assert.doesNotReject(client.prime())
   assert.equal(client.status().state, 'temporarily-unavailable')
   assert.equal(client.status().account, undefined)

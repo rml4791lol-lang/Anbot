@@ -26,6 +26,7 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
   const store = createChatGPTStore({ userData, safeStorage, fs, platform })
   let record
   let state = store.supported() ? 'signed-out' : 'unsupported'
+  let loaded = false
   let loadPromise
   let publish = () => {}
   const setState = next => { state = next; publish() }
@@ -45,17 +46,18 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
   }
   const connectionState = () => record?.tokens ? (record.tokens.scopes.includes(PLAN_SCOPE) ? 'connected' : 'plan-usage-off')
     : record?.needsSignIn ? 'needs-sign-in' : 'signed-out'
-  // The stored record is read lazily: booting must not unlock the Keychain. The first status
-  // query or signed-in action primes it; a denied/unavailable store degrades to a signed-out-ish
-  // state without throwing out of startup.
+  // The stored record is read lazily: booting must not unlock the Keychain. Only an explicit
+  // sign-in / sign-out / model-refresh action primes it; a denied/unavailable store degrades
+  // without throwing out of startup. status() itself never reads.
   const ensureLoaded = () => {
     if (loadPromise) return loadPromise
     loadPromise = (async () => {
-      if (!store.supported()) { state = 'unsupported'; return }
+      if (!store.supported()) { loaded = true; state = 'unsupported'; return }
       try { record = await store.read() }
-      catch { state = 'temporarily-unavailable'; record = undefined; publish(); return }
+      catch { loaded = true; state = 'temporarily-unavailable'; record = undefined; publish(); return }
+      loaded = true
       if (record) { state = connectionState(); publish() }
-    })().catch(() => { state = 'temporarily-unavailable'; publish() })
+    })().catch(() => { loaded = true; state = 'temporarily-unavailable'; publish() })
     return loadPromise
   }
   const save = async next => {
@@ -72,10 +74,13 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     const { tokens: _tokens, ...mapping } = record
     await save({ ...mapping, needsSignIn })
   }
+  // Pure in-memory snapshot: reading this must never touch the Keychain. Before the first
+  // explicit action has loaded the record, the state is `unknown` ("not checked yet").
   const status = () => {
-    void ensureLoaded()
+    if (!store.supported()) return { state: 'unsupported' }
+    if (!loaded) return { state: 'unknown' }
     return {
-      state: store.supported() ? state : 'unsupported',
+      state,
       ...(record?.account ? { account: {
         ...(typeof record.account.email === 'string' ? { email: record.account.email } : {}),
         ...(typeof record.account.name === 'string' ? { name: record.account.name } : {}),

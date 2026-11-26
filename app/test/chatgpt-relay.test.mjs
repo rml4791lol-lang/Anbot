@@ -244,7 +244,9 @@ test('disconnecting an SSE client aborts the upstream request', async t => {
 test('IPC bridge correlates requests, sanitizes failures and cancels an active sign-in', async () => {
   const replies = []
   let options
+  let primeCalls = 0
   const signIn = { status: () => ({ state: 'signed-out' }),
+    prime: () => { primeCalls += 1 },
     signIn: input => { options = input; return new Promise((_, reject) => input.signal.addEventListener('abort', () => reject(new Error('synthetic-secret')), { once: true })) },
     listModels: async () => [], signOut: async () => ({ state: 'signed-out', remoteRevocationConfirmed: false }),
   }
@@ -257,7 +259,11 @@ test('IPC bridge correlates requests, sanitizes failures and cancels an active s
   assert.ok(options.signal.aborted)
   assert.equal(replies.find(item => item.id === 'chatgpt:sign-in').error.state, 'signed-out')
   assert.ok(!JSON.stringify(replies).includes('synthetic-secret'))
-  for (const method of ['chatgpt:status', 'chatgpt:route', 'chatgpt:models', 'chatgpt:sign-out']) call(method)
+  // The status query must not prime (read) the stored session.
+  const primesBeforeStatus = primeCalls
+  call('chatgpt:status'); await tick()
+  assert.equal(primeCalls, primesBeforeStatus, 'chatgpt:status does not call prime')
+  for (const method of ['chatgpt:route', 'chatgpt:models', 'chatgpt:sign-out']) call(method)
   await tick()
   assert.ok(replies.find(item => item.id === 'chatgpt:route').result.secret)
   assert.equal(replies.find(item => item.id === 'chatgpt:sign-out').result.remoteRevocationConfirmed, false)

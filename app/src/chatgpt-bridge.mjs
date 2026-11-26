@@ -4,7 +4,7 @@ export function createChatGPTBridge({ signIn, relay, openExternal }) {
   let signingIn
   const request = async (method, body = {}) => {
     switch (method) {
-      case 'chatgpt:status': await signIn.prime(); return signIn.status()
+      case 'chatgpt:status': return signIn.status()
       case 'chatgpt:route': return relay.route()
       case 'chatgpt:models': return signIn.listModels()
       case 'chatgpt:cancel': signingIn?.abort(); return signIn.status()
