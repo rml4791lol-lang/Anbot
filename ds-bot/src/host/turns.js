@@ -1910,7 +1910,10 @@ export function install(rt) {
           const text = rt.answerText(work, reply, name)
           // A work request that ends with only an acknowledgement closes its ledger
           // entry, but does not wake the asker for a line with no result.
-          if (toolCount === 0 && isAcknowledgementOnlyText(text)) return
+          if (toolCount === 0 && isAcknowledgementOnlyText(text)) {
+            rt.closeWork?.(work, name, text, { worked: workToolCount > 0 })
+            return
+          }
           const opts = { worked: workToolCount > 0 }
           if (text.length <= MESSAGE_INLINE_MAX) return tellSender(id, asker, text, undefined, opts)
           void rt.attachLong(text, `Answer from ${name}.txt`)

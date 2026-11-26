@@ -450,6 +450,17 @@ test('a request answered only with an acknowledgement does not wake its sender',
   assert.deepEqual(rt.state.exchangeTurns.b, [1])
 })
 
+test('a work request answered only with an acknowledgement closes its work', async (t) => {
+  const { rt, emit, stop } = await start(team())
+  t.after(stop)
+  await rt.openWork('e0', { from: 'a', to: 'b' })
+  emit('b', 'turn/start', { turn: 1 })
+  emit('b', 'user/message', { content: textBlock('[Message from Chief]\ntask'), source: replySource('request', { exchangeId: 'e0' }) })
+  emit('b', 'assistant/message', assistantText('收到'))
+  emit('b', 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+  assert.equal(rt.state.works.e0, undefined)
+})
+
 // What the turn hands back for a joined request: the request itself, to answer next.
 const deferredOf = job => [job.fromId, job.toId, job.sessionId, job.role, job.exchangeId, job.deferred, job.text]
 
