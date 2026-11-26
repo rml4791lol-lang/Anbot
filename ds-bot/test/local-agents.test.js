@@ -58,6 +58,19 @@ test('Codex defers interrupt until the start reply identifies the turn, then wai
   assert.equal(await prompt, true)
 })
 
+test('Codex prompt settles the turn name when the CLI exits during turn/start', async (t) => {
+  const engine = new CodexEngine('local-codex-cli', { name: 'Codex', command: process.execPath, args: [FIXTURES.codex] }, { findExecutable: path => path })
+  t.after(() => engine.close?.())
+  const thread = await engine.open('s1', { cwd: mkdtempSync(join(tmpdir(), 'dsb-start-exit-')), mode: 'workspace-write' })
+  const prompt = engine.prompt(thread, [{ type: 'text', text: 'exit-on-start' }], {})
+  const started = await Promise.race([thread.turnStarted.promise, delay(500, 'pending')])
+  assert.notEqual(started, 'pending', 'the turn name settles when the start request cannot')
+  assert.equal(await prompt, false)
+  const event = await thread.next()
+  assert.equal(event.type, 'error')
+  assert.match(event.error.message, /exited/)
+})
+
 test('Codex accepts a matching terminal notification that precedes the start reply', async () => {
   const engine = new CodexEngine('local-codex-cli', { name: 'Codex' }, {})
   const thread = engine.threadFor('dsh-session')

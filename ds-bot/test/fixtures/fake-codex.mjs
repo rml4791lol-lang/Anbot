@@ -228,6 +228,9 @@ process.stdin.on('data', (chunk) => {
         if (badImage !== undefined) { replyError(id, 'Invalid image input: missing url or fileId'); break }
         const images = input.filter(item => item.type === 'image').map(item => ({ type: item.type, url: item.url }))
         const text = input.filter(item => item.type === 'text').map(item => item.text ?? '').join('\n')
+        // Exit before the start reply, as a broken CLI can: the client sees the
+        // turn/start rejection without a turn id.
+        if (text.includes('exit-on-start')) process.exit(0)
         const thread = threads.get(params.threadId)
         const turnId = `turn-${++nextId}`
         if (thread !== undefined) {

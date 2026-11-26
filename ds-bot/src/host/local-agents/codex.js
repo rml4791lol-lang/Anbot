@@ -307,22 +307,34 @@ export class CodexEngine {
     thread.awaitingFirstPrompt = false
     const active = { settled: Promise.withResolvers(), early: new Map(), id: undefined, cancelled: false, interruptSent: false, peer }
     thread.activeTurn = active
-    void peer.request('turn/start', {
-      threadId: thread.threadId,
-      input: codexInput(blocks),
-      // The app-server takes the level per turn and keeps it for the next ones.
-      ...(effort === undefined ? {} : { effort }),
-    }, { timeout: 60_000 }).then(reply => {
-      if (thread.activeTurn !== active) return
-      const id = reply?.turn?.id ?? reply?.id
-      if (typeof id !== 'string' || id === '') throw new Error('Codex did not identify the started turn')
-      this.activateTurn(thread, id)
-    }).catch(error => {
-      if (thread.activeTurn !== active) return
-      started.resolve(undefined)
-      if (!active.cancelled) thread.push({ type: 'error', error })
-      active.settled.resolve(false)
-    })
+    void Promise.resolve()
+      .then(() => peer.request('turn/start', {
+        threadId: thread.threadId,
+        input: codexInput(blocks),
+        // The app-server takes the level per turn and keeps it for the next ones.
+        ...(effort === undefined ? {} : { effort }),
+      }, { timeout: 60_000 }))
+      .then(reply => {
+        const id = reply?.turn?.id ?? reply?.id
+        if (typeof id !== 'string' || id === '') {
+          started.resolve(undefined)
+          throw new Error('Codex did not identify the started turn')
+        }
+        if (thread.activeTurn !== active) {
+          started.resolve(undefined)
+          return
+        }
+        this.activateTurn(thread, id)
+        started.resolve(undefined)
+      }).catch(error => {
+        // The process can exit before the start reply: the request rejects after
+        // `gone()` already resolved the active turn, so this must settle the turn
+        // name before the guard or the adapter would wait forever.
+        started.resolve(undefined)
+        if (thread.activeTurn !== active) return
+        if (!active.cancelled) thread.push({ type: 'error', error })
+        active.settled.resolve(false)
+      })
     try { return await active.settled.promise } finally { if (thread.activeTurn === active) delete thread.activeTurn }
   }
 
