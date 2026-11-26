@@ -12,7 +12,7 @@ It ships as a desktop app for Windows, macOS and Linux, a plugin, and a Docker s
 
 ## Key facts
 
-- **Open source:** Apache 2.0. The app, the plugin, presets, skills, MCP entries and plugins are inspectable and replaceable.
+- **Open source:** Apache 2.0. The app and plugin code are open; presets, skills and the MCP/plugin index are readable and replaceable.
 - **Shape:** a team of persistent Bots: a Main Bot, specialist Bots, group chats and shared memory.
 - **Multi-agent:** Bots message each other, share context and run in parallel; a new Bot in a Git team workspace gets its own worktree.
 - **Workspace:** a real folder. X-Ray, checkpoints, takeover and high-risk approval keep the work visible and recoverable.
