@@ -1893,6 +1893,7 @@ var JA = {
   "{share}% of all usage in the last {range}": "過去 {range} の全使用量の {share}%",
   "Calls": "呼び出し回数",
   "Cache hit rate": "キャッシュヒット率",
+  "Cost": "コスト",
   "Tokens over time": "トークン使用量の推移",
   "{count} tokens": "{count} トークン",
   "{tokens} tokens · {calls} calls": "{tokens} トークン · {calls} 回",
@@ -5343,6 +5344,7 @@ var KO = {
   "{share}% of all usage in the last {range}": "최근 {range} 전체 사용량의 {share}%",
   Calls: "호출 횟수",
   "Cache hit rate": "캐시 적중률",
+  "Cost": "비용",
   "Tokens over time": "시간별 토큰 추이",
   "{count} tokens": "{count} 토큰",
   "{tokens} tokens · {calls} calls": "{tokens} 토큰 · {calls}회 호출",
@@ -8801,6 +8803,7 @@ var ES = {
   "{share}% of all usage in the last {range}": "{share}% de todo el uso en el último periodo ({range})",
   Calls: "Llamadas",
   "Cache hit rate": "Tasa de acierto de caché",
+  "Cost": "Costo",
   "Tokens over time": "Tokens a lo largo del tiempo",
   "{count} tokens": "{count} tokens",
   "{tokens} tokens · {calls} calls": "{tokens} tokens · {calls} llamadas",
@@ -12223,6 +12226,7 @@ var FR = {
   "{share}% of all usage in the last {range}": "{share} % de l’utilisation totale sur les derniers {range}",
   "Calls": "Appels",
   "Cache hit rate": "Taux de succès du cache",
+  "Cost": "Coût",
   "Tokens over time": "Jetons au fil du temps",
   "{count} tokens": "{count} jetons",
   "{tokens} tokens · {calls} calls": "{tokens} jetons · {calls} appels",
@@ -15674,6 +15678,7 @@ var DE = {
   "{share}% of all usage in the last {range}": "{share}% der Gesamtnutzung in den letzten {range}",
   Calls: "Aufrufe",
   "Cache hit rate": "Cache-Trefferquote",
+  "Cost": "Kosten",
   "Tokens over time": "Token-Verlauf",
   "{count} tokens": "{count} Tokens",
   "{tokens} tokens · {calls} calls": "{tokens} Tokens · {calls} Aufrufe",
@@ -19213,6 +19218,7 @@ var ZH = {
   "{share}% of all usage in the last {range}": "占最近 {range}全部用量的 {share}%",
   Calls: "调用次数",
   "Cache hit rate": "缓存命中率",
+  Cost: "成本",
   "Tokens over time": "Token 走势",
   "{count} tokens": "{count} Token",
   "{tokens} tokens · {calls} calls": "{tokens} Token · {calls} 次调用",
@@ -41886,6 +41892,82 @@ function KeptPrivateSection({ roster, actions, run: run2, Section: Section2, Row
   );
 }
 
+// src/client/usage-prices.js
+var PRICE_SOURCES = {
+  deepseek: {
+    url: "https://api-docs.deepseek.com/quick_start/pricing/",
+    accessed: "2026-11-26",
+    note: "Peak-hour rates, USD per 1M tokens. Off-peak is half the peak rate."
+  },
+  openai: {
+    url: "https://developers.openai.com/api/docs/pricing/",
+    accessed: "2026-11-26",
+    note: "Standard tier, short context, USD per 1M tokens. Long-context surcharge above 272K input tokens is not priced."
+  },
+  anthropic: {
+    url: "https://docs.anthropic.com/en/docs/about-claude/pricing",
+    accessed: "2026-11-26",
+    note: "USD per 1M tokens. Cache write carries the 5-minute write rate; the 1-hour write rate is not split out in the ledger."
+  },
+  xai: {
+    url: "https://docs.x.ai/docs/models",
+    accessed: "2026-11-26",
+    note: "USD per 1M tokens, below the long-context threshold. The above-threshold tier is not priced."
+  },
+  moonshotai: {
+    url: "https://www.kimi.com/resources/kimi-k3-pricing",
+    accessed: "2026-11-26",
+    note: "USD per 1M tokens for the K3 API listing."
+  },
+  "moonshotai-cn": {
+    url: "https://platform.kimi.com/docs/pricing/chat",
+    accessed: "2026-11-26",
+    note: "USD per 1M tokens. The CN console lists CNY; this table carries the USD snapshot from the Kimi K3 USD listing."
+  },
+  "kimi-coding": {
+    url: "https://platform.kimi.com/docs/pricing/chat",
+    accessed: "2026-11-26",
+    note: "USD per 1M tokens, K3 coding-plan listing."
+  }
+};
+var RATES = {
+  // DeepSeek — source: api-docs.deepseek.com/quick_start/pricing/ (peak).
+  "deepseek/deepseek-flash": { input: 0.3, output: 1.2, cacheRead: 6e-3, cacheWrite: 0 },
+  // Legacy alias still accepted by the API; served and billed at the Flash price.
+  "deepseek/deepseek-v4-flash": { input: 0.3, output: 1.2, cacheRead: 6e-3, cacheWrite: 0 },
+  "deepseek/deepseek-v4-pro": { input: 1.32, output: 3.96, cacheRead: 0.044, cacheWrite: 0 },
+  // OpenAI — source: developers.openai.com/api/docs/pricing/ (Standard, short context).
+  "openai/gpt-5.4": { input: 2.5, output: 15, cacheRead: 0.25, cacheWrite: 0 },
+  "openai/gpt-5.4-pro": { input: 30, output: 180, cacheRead: 0, cacheWrite: 0 },
+  // Anthropic — source: docs.anthropic.com/en/docs/about-claude/pricing (5m cache write).
+  "anthropic/claude-opus-4-5": { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  "anthropic/claude-opus-4-5-20251101": { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  "anthropic/claude-opus-4-6": { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  "anthropic/claude-sonnet-4-5": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+  "anthropic/claude-sonnet-4-5-20250929": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+  "anthropic/claude-sonnet-4-6": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+  "anthropic/claude-haiku-4-5": { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
+  "anthropic/claude-haiku-4-5-20251001": { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
+  // xAI — source: docs.x.ai/docs/models (below the long-context threshold).
+  "xai/grok-4.3": { input: 1.25, output: 2.5, cacheRead: 0.2, cacheWrite: 0 },
+  // Moonshot / Kimi — source: kimi-k3-pricing and platform.kimi.com/docs/pricing/chat.
+  "moonshotai/kimi-k3": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 0 },
+  "moonshotai-cn/kimi-k3": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 0 },
+  "kimi-coding/k3": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 0 },
+  "kimi-coding/k3-256k": { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 0 }
+};
+function priceFor(ref) {
+  return typeof ref === "string" ? RATES[ref] : void 0;
+}
+function costOf(rate, tokens) {
+  if (rate === void 0 || rate === null) return 0;
+  const input = Number.isSafeInteger(tokens.input) ? tokens.input : 0;
+  const cacheRead = Number.isSafeInteger(tokens.cacheRead) ? tokens.cacheRead : 0;
+  const cacheWrite = Number.isSafeInteger(tokens.cacheWrite) ? tokens.cacheWrite : 0;
+  const output = Number.isSafeInteger(tokens.output) ? tokens.output : 0;
+  return (input * (rate.input ?? 0) + cacheRead * (rate.cacheRead ?? 0) + cacheWrite * (rate.cacheWrite ?? 0) + output * (rate.output ?? 0)) / 1e6;
+}
+
 // src/client/usage-data.js
 var HOUR = 0;
 var OWNER = 1;
@@ -41955,17 +42037,20 @@ function bucketsOf(range, now) {
   return buckets;
 }
 var tokensOf = (row) => row[4] + row[5] + row[6] + row[7];
-var blank2 = () => ({ input: 0, cacheRead: 0, output: 0, calls: 0, total: 0 });
-function addRow(sum, row) {
+var blank2 = () => ({ input: 0, cacheRead: 0, cacheWrite: 0, output: 0, calls: 0, total: 0, cost: 0, unknown: false });
+function addRow(sum, row, price) {
   sum.input += row[4] + row[6];
   sum.cacheRead += row[5];
+  sum.cacheWrite += row[6];
   sum.output += row[7];
   sum.calls += row[8];
   sum.total += tokensOf(row);
+  if (price === void 0) sum.unknown = true;
+  else sum.cost += costOf(price, { input: row[4], cacheRead: row[5], cacheWrite: row[6], output: row[7] });
   return sum;
 }
-function addTo(map, key, row) {
-  map.set(key, addRow(map.get(key) ?? blank2(), row));
+function addTo(map, key, row, price) {
+  map.set(key, addRow(map.get(key) ?? blank2(), row, price));
 }
 function summarize(view, range, keep = () => true, seriesOf = () => "all") {
   const { buckets, from, to, before } = spanOf(range, view.now);
@@ -41991,14 +42076,16 @@ function summarize(view, range, keep = () => true, seriesOf = () => "all") {
     }
     const at = index.get(keyOf(hour));
     if (at === void 0) continue;
+    const model = view.models?.[row[MODEL]];
+    const price = model ? priceFor(model.key) : void 0;
     const bucket = current2[at];
-    addRow(bucket.sum, row);
-    addRow(result.total, row);
+    addRow(bucket.sum, row, price);
+    addRow(result.total, row, price);
     const series = seriesOf(row);
     bucket.stacks.set(series, (bucket.stacks.get(series) ?? 0) + tokensOf(row));
-    addTo(result.owners, row[OWNER], row);
-    addTo(result.models, row[MODEL], row);
-    addTo(result.kinds, row[KIND], row);
+    addTo(result.owners, row[OWNER], row, price);
+    addTo(result.models, row[MODEL], row, price);
+    addTo(result.kinds, row[KIND], row, price);
   }
   return result;
 }
@@ -42044,6 +42131,14 @@ var full = (count) => {
   return fmt.format(Math.round(count));
 };
 var hitRate = (sum) => percent2(sum.cacheRead, sum.input + sum.cacheRead);
+var pricedText = (sum) => !sum.unknown && sum.cost > 0 ? money(sum.cost) : null;
+function money(value) {
+  if (!(value > 0)) return "$0.00";
+  if (value < 0.01) return "<$0.01";
+  if (value < 1) return `$${value.toFixed(3)}`;
+  if (value < 100) return `$${value.toFixed(2)}`;
+  return `$${compact(value)}`;
+}
 var dateCache = /* @__PURE__ */ new Map();
 var dates = (options) => {
   const locale = dateLocale();
@@ -42177,10 +42272,11 @@ function Stats({ range, total, previous }) {
   const rangeKey = `${range.id}:${range.from ?? ""}:${range.to ?? ""}`;
   const shown = useTween(total.total, rangeKey);
   const change = previous > 0 ? Math.round((total.total - previous) / previous * 100) : null;
+  const priced = !total.unknown && total.cost > 0;
   const cell = (label, value) => (0, import_react44.createElement)("div", { className: "bt-us-stat" }, (0, import_react44.createElement)("span", { className: "bt-us-stat-label" }, label), (0, import_react44.createElement)("span", { className: "bt-us-stat-value" }, value));
   return (0, import_react44.createElement)(
     "section",
-    { className: "bt-us-stats", style: { "--i": 0 } },
+    { className: "bt-us-stats", style: { "--i": 0, ...priced ? { gridTemplateColumns: "1.6fr 1fr 1fr 1fr 1fr" } : null } },
     (0, import_react44.createElement)(
       "div",
       { className: "bt-us-stat bt-us-stat-main" },
@@ -42198,7 +42294,8 @@ function Stats({ range, total, previous }) {
     ),
     cell(t("Cache hit rate"), `${hitRate(total)}%`),
     cell(t("Output"), compact(total.output)),
-    cell(t("Calls"), full(total.calls))
+    cell(t("Calls"), full(total.calls)),
+    priced ? cell(t("Cost"), money(total.cost)) : null
   );
 }
 function niceTop(max) {
@@ -42281,7 +42378,7 @@ function Chart({ range, columns: columns2, series, tipSeries, by, onBy, onPick }
     ) : null
   );
 }
-function Row2({ kind, glyph, name, sub, sum, whole, fill: fill2, index, onClick }) {
+function Row2({ kind, glyph, name, sub, sum, whole, fill: fill2, index, onClick, cost }) {
   const width = whole > 0 ? Math.max(sum.total > 0 ? 2 : 0, sum.total / whole * 100) : 0;
   return (0, import_react44.createElement)(
     onClick ? "button" : "div",
@@ -42304,7 +42401,13 @@ function Row2({ kind, glyph, name, sub, sum, whole, fill: fill2, index, onClick 
       ),
       (0, import_react44.createElement)("span", { className: "bt-us-track" }, (0, import_react44.createElement)("span", { style: { width: `${width}%`, background: fill2 } }))
     ),
-    (0, import_react44.createElement)("span", { className: "bt-us-row-num" }, (0, import_react44.createElement)("b", null, compact(sum.total)), (0, import_react44.createElement)("small", null, `${percent2(sum.total, whole)}%`))
+    (0, import_react44.createElement)(
+      "span",
+      { className: "bt-us-row-num" },
+      (0, import_react44.createElement)("b", null, compact(sum.total)),
+      (0, import_react44.createElement)("small", null, `${percent2(sum.total, whole)}%`),
+      cost ? (0, import_react44.createElement)("small", { className: "bt-us-row-cost" }, cost) : null
+    )
   );
 }
 function ListCard({ title, count, index, children }) {
@@ -42315,7 +42418,7 @@ function ListCard({ title, count, index, children }) {
     (0, import_react44.createElement)("div", { className: "bt-us-rows" }, children)
   );
 }
-function Profile({ face, share, range }) {
+function Profile({ face, share, range, cost }) {
   const arc = Math.max(0, Math.min(1, share)) * RING;
   return (0, import_react44.createElement)(
     "section",
@@ -42341,7 +42444,8 @@ function Profile({ face, share, range }) {
       { className: "bt-us-profile-copy" },
       (0, import_react44.createElement)("h3", null, face.name),
       face.sub ? (0, import_react44.createElement)("span", { className: "bt-us-profile-sub" }, face.sub) : null,
-      (0, import_react44.createElement)("span", { className: "bt-us-profile-share" }, range.from ? t("{share}% of all usage from {span}", { share: percent2(share, 1), span: spanText(range.from, range.to) }) : t("{share}% of all usage in the last {range}", { share: percent2(share, 1), range: rangeLabel(range.id) }))
+      (0, import_react44.createElement)("span", { className: "bt-us-profile-share" }, range.from ? t("{share}% of all usage from {span}", { share: percent2(share, 1), span: spanText(range.from, range.to) }) : t("{share}% of all usage in the last {range}", { share: percent2(share, 1), range: rangeLabel(range.id) })),
+      cost ? (0, import_react44.createElement)("span", { className: "bt-us-profile-cost" }, cost) : null
     )
   );
 }
@@ -42705,6 +42809,7 @@ function UsagePage({ roster, actions, focusId }) {
     sum,
     whole: total,
     index,
+    cost: pricedText(sum),
     fill: face ? soften(face.paint, 0.8) : fillOf.get(`o${at}`) ?? soften(faces[at].paint),
     onClick: () => pick2({ kind: "owner", key: view.owners[at].key })
   });
@@ -42717,6 +42822,7 @@ function UsagePage({ roster, actions, focusId }) {
     sum,
     whole,
     index,
+    cost: pricedText(sum),
     fill: face ? soften(face.paint, 0.8) : fillOf.get(`m${at}`) ?? soften(models[at].paint),
     onClick: () => pick2({ kind: "model", key: view.models[at].key })
   });
@@ -42727,7 +42833,7 @@ function UsagePage({ roster, actions, focusId }) {
     const usedModels = ranked(part.models);
     const owners2 = ranked(part.owners);
     body = [
-      (0, import_react44.createElement)(Profile, { key: "profile", face, range, share: all.total.total > 0 ? whole / all.total.total : 0 }),
+      (0, import_react44.createElement)(Profile, { key: "profile", face, range, share: all.total.total > 0 ? whole / all.total.total : 0, cost: pricedText(part.total) }),
       (0, import_react44.createElement)(
         "div",
         { key: "sheet", className: "bt-us-sheet" },
@@ -42740,7 +42846,7 @@ function UsagePage({ roster, actions, focusId }) {
           (0, import_react44.createElement)(
             ListCard,
             { title: t("What for"), index: 3 },
-            kinds.length > 0 ? kinds.map(([at, sum], index) => (0, import_react44.createElement)(Row2, { key: at, name: kindLabel(view.kinds[at], ownerAt >= 0 && isBot(ownerAt)), sum, whole, index, fill: soften(face.paint, 0.8) })) : nothing
+            kinds.length > 0 ? kinds.map(([at, sum], index) => (0, import_react44.createElement)(Row2, { key: at, name: kindLabel(view.kinds[at], ownerAt >= 0 && isBot(ownerAt)), sum, whole, index, cost: pricedText(sum), fill: soften(face.paint, 0.8) })) : nothing
           )
         ),
         (0, import_react44.createElement)(Heat, { key: "heat", view, ownerAt, modelAt, paint: face.paint, index: 4 })
@@ -42894,6 +43000,8 @@ button.bt-us-row:hover{background:var(--bt-hover)}
 .bt-us-row-num{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:52px;font-variant-numeric:tabular-nums}
 .bt-us-row-num b{font-size:13px;line-height:18px;font-weight:600}
 .bt-us-row-num small{font-size:11px;line-height:14px;color:var(--bt-ink-3)}
+.bt-us-row-num small.bt-us-row-cost{color:var(--bt-ink-2);font-weight:500}
+.bt-us-profile-cost{font-size:13px;line-height:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--bt-ink)}
 .bt-us-split{height:1px;margin:6px 8px;background:var(--bt-line)}
 .bt-us-none{padding:18px 8px;font-size:12px;color:var(--bt-ink-3);text-align:center}
 .bt-us-glyph{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;corner-shape:round;background:var(--bt-hover);color:var(--bt-ink-2)}

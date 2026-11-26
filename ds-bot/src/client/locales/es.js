@@ -1787,6 +1787,7 @@ export const ES = {
   '{share}% of all usage in the last {range}': '{share}% de todo el uso en el último periodo ({range})',
   Calls: 'Llamadas',
   'Cache hit rate': 'Tasa de acierto de caché',
+  'Cost': 'Costo',
   'Tokens over time': 'Tokens a lo largo del tiempo',
   '{count} tokens': '{count} tokens',
   '{tokens} tokens · {calls} calls': '{tokens} tokens · {calls} llamadas',

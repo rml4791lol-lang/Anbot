@@ -1,4 +1,5 @@
 // The Usage page's numbers: the host's hourly rows, summed by hour, day, week, or month.
+import { priceFor, costOf } from './usage-prices.js'
 
 // A view row: [hour, owner, model, kind, input, cacheRead, cacheWrite, output, calls].
 export const HOUR = 0
@@ -88,18 +89,22 @@ export function bucketsOf(range, now) {
 }
 
 export const tokensOf = row => row[4] + row[5] + row[6] + row[7]
-const blank = () => ({ input: 0, cacheRead: 0, output: 0, calls: 0, total: 0 })
-// Cache writes are billed as input, so they show as input.
-function addRow(sum, row) {
+const blank = () => ({ input: 0, cacheRead: 0, cacheWrite: 0, output: 0, calls: 0, total: 0, cost: 0, unknown: false })
+// Cache writes show in the input token count for display, but carry their own write rate
+// in the cost. `price` is the row's model rate, or undefined when the model is unknown.
+function addRow(sum, row, price) {
   sum.input += row[4] + row[6]
   sum.cacheRead += row[5]
+  sum.cacheWrite += row[6]
   sum.output += row[7]
   sum.calls += row[8]
   sum.total += tokensOf(row)
+  if (price === undefined) sum.unknown = true
+  else sum.cost += costOf(price, { input: row[4], cacheRead: row[5], cacheWrite: row[6], output: row[7] })
   return sum
 }
-function addTo(map, key, row) {
-  map.set(key, addRow(map.get(key) ?? blank(), row))
+function addTo(map, key, row, price) {
+  map.set(key, addRow(map.get(key) ?? blank(), row, price))
 }
 
 // One range of the view, narrowed by `keep`. `seriesOf` names the stack a row joins in
@@ -128,14 +133,16 @@ export function summarize(view, range, keep = () => true, seriesOf = () => 'all'
     }
     const at = index.get(keyOf(hour))
     if (at === undefined) continue
+    const model = view.models?.[row[MODEL]]
+    const price = model ? priceFor(model.key) : undefined
     const bucket = current[at]
-    addRow(bucket.sum, row)
-    addRow(result.total, row)
+    addRow(bucket.sum, row, price)
+    addRow(result.total, row, price)
     const series = seriesOf(row)
     bucket.stacks.set(series, (bucket.stacks.get(series) ?? 0) + tokensOf(row))
-    addTo(result.owners, row[OWNER], row)
-    addTo(result.models, row[MODEL], row)
-    addTo(result.kinds, row[KIND], row)
+    addTo(result.owners, row[OWNER], row, price)
+    addTo(result.models, row[MODEL], row, price)
+    addTo(result.kinds, row[KIND], row, price)
   }
   return result
 }

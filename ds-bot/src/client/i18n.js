@@ -1882,6 +1882,7 @@ const ZH = {
   '{share}% of all usage in the last {range}': '占最近 {range}全部用量的 {share}%',
   Calls: '调用次数',
   'Cache hit rate': '缓存命中率',
+  Cost: '成本',
   'Tokens over time': 'Token 走势',
   '{count} tokens': '{count} Token',
   '{tokens} tokens · {calls} calls': '{tokens} Token · {calls} 次调用',

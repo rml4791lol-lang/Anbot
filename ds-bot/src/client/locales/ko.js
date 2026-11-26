@@ -1787,6 +1787,7 @@ export const KO = {
   '{share}% of all usage in the last {range}': '최근 {range} 전체 사용량의 {share}%',
   Calls: '호출 횟수',
   'Cache hit rate': '캐시 적중률',
+  'Cost': '비용',
   'Tokens over time': '시간별 토큰 추이',
   '{count} tokens': '{count} 토큰',
   '{tokens} tokens · {calls} calls': '{tokens} 토큰 · {calls}회 호출',

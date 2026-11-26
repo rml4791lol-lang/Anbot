@@ -40,6 +40,15 @@ const full = (count) => {
   return fmt.format(Math.round(count))
 }
 const hitRate = sum => percent(sum.cacheRead, sum.input + sum.cacheRead)
+// USD amount for a priced sum; unknown sums carry no amount.
+const pricedText = sum => (!sum.unknown && sum.cost > 0 ? money(sum.cost) : null)
+function money(value) {
+  if (!(value > 0)) return '$0.00'
+  if (value < 0.01) return '<$0.01'
+  if (value < 1) return `$${value.toFixed(3)}`
+  if (value < 100) return `$${value.toFixed(2)}`
+  return `$${compact(value)}`
+}
 
 const dateCache = new Map()
 const dates = (options) => {
@@ -168,8 +177,9 @@ export function Stats({ range, total, previous }) {
   const rangeKey = `${range.id}:${range.from ?? ''}:${range.to ?? ''}`
   const shown = useTween(total.total, rangeKey)
   const change = previous > 0 ? Math.round(((total.total - previous) / previous) * 100) : null
+  const priced = !total.unknown && total.cost > 0
   const cell = (label, value) => h('div', { className: 'bt-us-stat' }, h('span', { className: 'bt-us-stat-label' }, label), h('span', { className: 'bt-us-stat-value' }, value))
-  return h('section', { className: 'bt-us-stats', style: { '--i': 0 } },
+  return h('section', { className: 'bt-us-stats', style: { '--i': 0, ...(priced ? { gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1fr' } : null) } },
     h('div', { className: 'bt-us-stat bt-us-stat-main' },
       h('div', { className: 'bt-us-stat-head' },
         h('span', { className: 'bt-us-stat-label' }, lastText(range)),
@@ -178,7 +188,8 @@ export function Stats({ range, total, previous }) {
       h('span', { className: 'bt-us-stat-value' }, compact(shown), h('small', null, t('tokens')))),
     cell(t('Cache hit rate'), `${hitRate(total)}%`),
     cell(t('Output'), compact(total.output)),
-    cell(t('Calls'), full(total.calls)))
+    cell(t('Calls'), full(total.calls)),
+    priced ? cell(t('Cost'), money(total.cost)) : null)
 }
 
 function niceTop(max) {
@@ -231,7 +242,7 @@ function Chart({ range, columns, series, tipSeries, by, onBy, onPick }) {
       }, h('i', { className: 'bt-us-dot', style: { background: entry.fill } }), entry.name))) : null)
 }
 
-function Row({ kind, glyph, name, sub, sum, whole, fill, index, onClick }) {
+function Row({ kind, glyph, name, sub, sum, whole, fill, index, onClick, cost }) {
   const width = whole > 0 ? Math.max(sum.total > 0 ? 2 : 0, (sum.total / whole) * 100) : 0
   return h(onClick ? 'button' : 'div', {
     className: 'bt-us-row', 'data-kind': kind, style: { '--i': index },
@@ -244,7 +255,10 @@ function Row({ kind, glyph, name, sub, sum, whole, fill, index, onClick }) {
       h('span', { className: 'bt-us-row-name' }, name),
       sub ? h('span', { className: 'bt-us-row-sub' }, sub) : null),
     h('span', { className: 'bt-us-track' }, h('span', { style: { width: `${width}%`, background: fill } }))),
-  h('span', { className: 'bt-us-row-num' }, h('b', null, compact(sum.total)), h('small', null, `${percent(sum.total, whole)}%`)))
+  h('span', { className: 'bt-us-row-num' },
+    h('b', null, compact(sum.total)),
+    h('small', null, `${percent(sum.total, whole)}%`),
+    cost ? h('small', { className: 'bt-us-row-cost' }, cost) : null))
 }
 
 function ListCard({ title, count, index, children }) {
@@ -254,7 +268,7 @@ function ListCard({ title, count, index, children }) {
 }
 
 // One Bot, group chat, or model: its face inside a ring as long as its share of the range.
-function Profile({ face, share, range }) {
+function Profile({ face, share, range, cost }) {
   const arc = Math.max(0, Math.min(1, share)) * RING
   return h('section', { className: 'bt-us-profile' },
     h('span', { className: 'bt-us-ring' },
@@ -269,7 +283,8 @@ function Profile({ face, share, range }) {
       face.sub ? h('span', { className: 'bt-us-profile-sub' }, face.sub) : null,
       h('span', { className: 'bt-us-profile-share' }, range.from
         ? t('{share}% of all usage from {span}', { share: percent(share, 1), span: spanText(range.from, range.to) })
-        : t('{share}% of all usage in the last {range}', { share: percent(share, 1), range: rangeLabel(range.id) }))))
+        : t('{share}% of all usage in the last {range}', { share: percent(share, 1), range: rangeLabel(range.id) })),
+      cost ? h('span', { className: 'bt-us-profile-cost' }, cost) : null))
 }
 
 const monthOf = ms => Date.UTC(yearOf(ms), new Date(ms).getUTCMonth(), 1)
@@ -592,12 +607,12 @@ export function UsagePage({ roster, actions, focusId }) {
   ]
   const whole = part.total.total
   const ownerRow = ([at, sum], index, total = whole) => h(Row, {
-    key: `o${at}`, kind: faces[at].kind, glyph: faces[at].glyph(32), name: faces[at].name, sub: faces[at].sub, sum, whole: total, index,
+    key: `o${at}`, kind: faces[at].kind, glyph: faces[at].glyph(32), name: faces[at].name, sub: faces[at].sub, sum, whole: total, index, cost: pricedText(sum),
     fill: face ? soften(face.paint, 0.8) : fillOf.get(`o${at}`) ?? soften(faces[at].paint),
     onClick: () => pick({ kind: 'owner', key: view.owners[at].key }),
   })
   const modelRow = ([at, sum], index) => h(Row, {
-    key: `m${at}`, kind: 'model', glyph: models[at].glyph(32), name: models[at].name, sub: models[at].sub, sum, whole, index,
+    key: `m${at}`, kind: 'model', glyph: models[at].glyph(32), name: models[at].name, sub: models[at].sub, sum, whole, index, cost: pricedText(sum),
     fill: face ? soften(face.paint, 0.8) : fillOf.get(`m${at}`) ?? soften(models[at].paint),
     onClick: () => pick({ kind: 'model', key: view.models[at].key }),
   })
@@ -609,7 +624,7 @@ export function UsagePage({ roster, actions, focusId }) {
     const usedModels = ranked(part.models)
     const owners = ranked(part.owners)
     body = [
-      h(Profile, { key: 'profile', face, range, share: all.total.total > 0 ? whole / all.total.total : 0 }),
+      h(Profile, { key: 'profile', face, range, share: all.total.total > 0 ? whole / all.total.total : 0, cost: pricedText(part.total) }),
       h('div', { key: 'sheet', className: 'bt-us-sheet' },
         h(Stats, { key: 'stats', range, total: part.total, previous: part.previous }),
         h(Chart, { key: 'chart', range, columns, series, tipSeries, onPick: pick }),
@@ -619,7 +634,7 @@ export function UsagePage({ roster, actions, focusId }) {
             : h(ListCard, { title: t('Who used it'), count: owners.length, index: 2 }, owners.length > 0 ? owners.map((entry, index) => ownerRow(entry, index)) : nothing),
           h(ListCard, { title: t('What for'), index: 3 },
             kinds.length > 0
-              ? kinds.map(([at, sum], index) => h(Row, { key: at, name: kindLabel(view.kinds[at], ownerAt >= 0 && isBot(ownerAt)), sum, whole, index, fill: soften(face.paint, 0.8) }))
+              ? kinds.map(([at, sum], index) => h(Row, { key: at, name: kindLabel(view.kinds[at], ownerAt >= 0 && isBot(ownerAt)), sum, whole, index, cost: pricedText(sum), fill: soften(face.paint, 0.8) }))
               : nothing)),
         h(Heat, { key: 'heat', view, ownerAt, modelAt, paint: face.paint, index: 4 })),
     ]
@@ -758,6 +773,8 @@ button.bt-us-row:hover{background:var(--bt-hover)}
 .bt-us-row-num{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:52px;font-variant-numeric:tabular-nums}
 .bt-us-row-num b{font-size:13px;line-height:18px;font-weight:600}
 .bt-us-row-num small{font-size:11px;line-height:14px;color:var(--bt-ink-3)}
+.bt-us-row-num small.bt-us-row-cost{color:var(--bt-ink-2);font-weight:500}
+.bt-us-profile-cost{font-size:13px;line-height:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--bt-ink)}
 .bt-us-split{height:1px;margin:6px 8px;background:var(--bt-line)}
 .bt-us-none{padding:18px 8px;font-size:12px;color:var(--bt-ink-3);text-align:center}
 .bt-us-glyph{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;corner-shape:round;background:var(--bt-hover);color:var(--bt-ink-2)}

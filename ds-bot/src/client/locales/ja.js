@@ -1766,6 +1766,7 @@ export const JA = {
   "{share}% of all usage in the last {range}": "過去 {range} の全使用量の {share}%",
   "Calls": "呼び出し回数",
   "Cache hit rate": "キャッシュヒット率",
+  "Cost": "コスト",
   "Tokens over time": "トークン使用量の推移",
   "{count} tokens": "{count} トークン",
   "{tokens} tokens · {calls} calls": "{tokens} トークン · {calls} 回",

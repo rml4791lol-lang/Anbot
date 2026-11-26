@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { build } from 'esbuild'
 import { RANGES, bucketsOf, compact, percent, spanOf, spanRange, summarize } from '../src/client/usage-data.js'
+import { priceFor, costOf } from '../src/client/usage-prices.js'
 
 const range = id => RANGES.find(item => item.id === id)
 // [hour, owner, model, kind, input, cacheRead, cacheWrite, output, calls]
@@ -43,8 +44,9 @@ test('a summary sums the range, the span before it, and each owner, model, and s
   }
   const week = summarize(view, range('7d'), undefined, item => `o${item[1]}`)
   assert.equal(week.total.total, 172)
-  // The cache write counts as input.
-  assert.deepEqual(week.total, { input: 122, cacheRead: 30, output: 20, calls: 4, total: 172 })
+  // The cache write counts as input. The view has no priced model catalog here, so every
+  // row is unknown: no cost is claimed, and the group flags itself unknown.
+  assert.deepEqual(week.total, { input: 122, cacheRead: 30, cacheWrite: 5, output: 20, calls: 4, total: 172, cost: 0, unknown: true })
   assert.equal(week.previous, 50)
   assert.equal(week.buckets[2].key, '2026-10-05')
   assert.equal(week.buckets[2].sum.total, 165)
@@ -58,6 +60,72 @@ test('a summary sums the range, the span before it, and each owner, model, and s
   assert.equal(one.buckets.find(bucket => bucket.key === '2026-08-31').sum.total, 999)
   assert.equal(one.buckets.at(-1).sum.total, 107)
   assert.equal(one.buckets.at(-2).sum.total, 50)
+})
+
+test('priced rows cost input, cache read, cache write, and output at their own rates; unknown models stay token-only', () => {
+  const view = {
+    now: '2026-10-09 22',
+    models: [
+      { key: 'deepseek/deepseek-flash', provider: 'deepseek', model: 'deepseek-flash', name: 'Flash' },
+      { key: 'openai/gpt-5.4', provider: 'openai', model: 'gpt-5.4', name: 'gpt-5.4' },
+      { key: 'local-claude-code/sonnet', provider: 'local-claude-code', model: 'sonnet', name: 'Sonnet' },
+    ],
+    rows: [
+      // Flash: 1M input @ $0.30, 500K cache read @ $0.006, 100K cache write @ $0, 200K output @ $1.20.
+      ['2026-10-09 21', 0, 0, 0, 1_000_000, 500_000, 100_000, 200_000, 1],
+      // gpt-5.4: 400K input @ $2.50, 100K output @ $15.
+      ['2026-10-08 10', 0, 1, 0, 400_000, 0, 0, 100_000, 2],
+      // Unknown local CLI: tokens count, no amount.
+      ['2026-10-09 20', 1, 2, 0, 1_000, 0, 0, 1_000, 1],
+    ],
+  }
+  const week = summarize(view, range('7d'))
+  const approx = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} ≈ ${expected}`)
+
+  const flash = week.models.get(0)
+  approx(flash.cost, 0.30 + 0.003 + 0 + 0.24)
+  assert.equal(flash.unknown, false)
+  assert.equal(flash.cacheWrite, 100_000)
+  assert.equal(flash.total, 1_800_000)
+
+  const gpt = week.models.get(1)
+  approx(gpt.cost, 1.00 + 1.50)
+  assert.equal(gpt.unknown, false)
+
+  const unknown = week.models.get(2)
+  assert.equal(unknown.cost, 0)
+  assert.equal(unknown.unknown, true)
+  assert.equal(unknown.total, 2_000)
+
+  // Owner 0 mixes two priced models; its cost is their summed priced tokens.
+  const owner0 = week.owners.get(0)
+  approx(owner0.cost, 0.543 + 2.50)
+  assert.equal(owner0.unknown, false)
+  // Owner 1 holds only an unknown model, so it carries no amount.
+  assert.equal(week.owners.get(1).unknown, true)
+
+  // The total mixes priced and unknown rows: the priced portion adds up, but the group
+  // flags itself unknown so the UI does not present a full cost.
+  approx(week.total.cost, 3.043)
+  assert.equal(week.total.unknown, true)
+  assert.equal(week.total.total, 2_302_000)
+  // Cache hit rate keeps the existing cache_read / (input + cache_read) definition;
+  // the folded cache write still counts in the input side.
+  assert.equal(percent(flash.cacheRead, flash.input + flash.cacheRead), '31')
+})
+
+test('priceFor resolves known refs and leaves everything else unknown; costOf multiplies the four rates', () => {
+  assert.equal(priceFor('deepseek/deepseek-flash').input, 0.30)
+  assert.equal(priceFor('openai/gpt-5.4').output, 15)
+  assert.equal(priceFor('local-claude-code/sonnet'), undefined)
+  assert.equal(priceFor('not-a-ref'), undefined)
+
+  const flash = priceFor('deepseek/deepseek-flash')
+  const direct = costOf(flash, { input: 1_000_000, cacheRead: 500_000, cacheWrite: 100_000, output: 200_000 })
+  assert.ok(Math.abs(direct - 0.543) < 1e-9)
+  assert.equal(costOf(undefined, { input: 1000, cacheRead: 0, cacheWrite: 0, output: 1000 }), 0)
+  // Missing rate fields read as zero, never NaN.
+  assert.equal(costOf({}, { input: 1000, cacheRead: 0, cacheWrite: 0, output: 1000 }), 0)
 })
 
 test('a picked span sums by hour, day, week, or month by its length', () => {
@@ -240,7 +308,7 @@ async function mountStats({ reduced = false } = {}) {
 // lives in the header row decoupled from the animated figure's width.
 test('Stats snaps total immediately on range switch, eases within one range, and decouples the delta badge from the figure', async () => {
   const m = await mountStats()
-  const statsOf = total => ({ input: total, cacheRead: 0, output: 0, calls: 1, total })
+  const statsOf = total => ({ input: total, cacheRead: 0, output: 0, calls: 1, total, cost: 0, unknown: false })
   const mainValue = () => m.text(m.find(m.tree, n => n.props?.className === 'bt-us-stat-value'))
   const head = () => m.find(m.tree, n => n.props?.className === 'bt-us-stat-head')
   const valueNode = () => m.find(m.tree, n => n.props?.className === 'bt-us-stat-value')
@@ -282,5 +350,18 @@ test('Stats snaps total immediately on range switch, eases within one range, and
   assert.ok(deltaInHead, '.bt-us-delta must render in .bt-us-stat-head')
   assert.equal(deltaInValue, null, '.bt-us-delta must not sit inline inside .bt-us-stat-value')
   assert.match(m.USAGE_CSS, /\.bt-us-stat-head\{[^}]*display:flex[^}]*justify-content:space-between/)
+  m.unmount()
+})
+
+test('Stats shows the cost for a priced total and omits it when the model is unknown', async () => {
+  const m = await mountStats()
+  const priced = { input: 1000, cacheRead: 0, output: 500, calls: 1, total: 1500, cost: 1.25, unknown: false }
+  m.render({ range: range('24h'), total: priced, previous: 0 })
+  assert.ok(m.find(m.tree, n => n.props?.className === 'bt-us-stat-label' && m.text(n) === 'Cost'), 'priced total renders a Cost label')
+  assert.ok(m.find(m.tree, n => n.props?.className === 'bt-us-stat-value' && m.text(n) === '$1.25'), 'priced total renders its cost')
+
+  const unknown = { ...priced, cost: 0, unknown: true }
+  m.render({ range: range('24h'), total: unknown, previous: 0 })
+  assert.equal(m.find(m.tree, n => n.props?.className === 'bt-us-stat-label' && m.text(n) === 'Cost'), null, 'unknown total shows no amount')
   m.unmount()
 })

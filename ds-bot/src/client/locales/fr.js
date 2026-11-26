@@ -1767,6 +1767,7 @@ export const FR = {
   "{share}% of all usage in the last {range}": "{share} % de l’utilisation totale sur les derniers {range}",
   "Calls": "Appels",
   "Cache hit rate": "Taux de succès du cache",
+  "Cost": "Coût",
   "Tokens over time": "Jetons au fil du temps",
   "{count} tokens": "{count} jetons",
   "{tokens} tokens · {calls} calls": "{tokens} jetons · {calls} appels",
