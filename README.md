@@ -2,32 +2,30 @@
 
 English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/vision.md) · [Known issues](docs/known-issues.md) · [Contributing](CONTRIBUTING.md)
 
-![Status](https://img.shields.io/badge/release-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![License](https://img.shields.io/badge/license-Apache_2.0-green)
+![Status](https://img.shields.io/badge/release-v0.0.1-green) ![License](https://img.shields.io/badge/license-Apache_2.0-green) ![Bot team](https://img.shields.io/badge/team-multi--agent-2F6BFF)
 
-**Anbot is a DSH-native personal agent and engineering workspace.** DSH ([DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)) is the runtime: every Bot runs in a DSH Session with the tools, model routes and plugin API that DSH provides. Anbot adds the team and workspace layer on top: long-lived Bot identities, group chats, memory, approvals, checkpoints and a desktop app.
+**Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.** A Main Bot splits the job; specialist Bots pick it up; the team shares memory, group chats and the same workspace. It shows what it understood, who is working, which files changed, and why it counts as done. You can pause, take over the folder yourself, and hand it back.
 
-You hand it a job; it does the job in a real working folder, and it shows you what it understood, who is working on it, which files changed, and why it counts as done. You can pause it at any point, take over the same working folder and edit it yourself, then hand it back.
-
-It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it also runs in Docker. Your team, chats, memory, credentials and execution records stay on your own computer.
+It ships as a desktop app for Windows, macOS and Linux, a plugin for DSH, and a Docker service. Your team, chats, memory, credentials and execution records stay on your own computer.
 
 > The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
 ## Key facts
 
-- **What it is:** Anbot is a DSH-native personal agent and engineering workspace.
-- **Runtime:** [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) supplies the Session, the tools, the model routes and the plugin API.
-- **Forms:** desktop app for Windows, macOS and Linux, a DSH plugin, and Docker. v0.0.1 also ships an Android APK.
+- **Open source:** Apache 2.0. The app, the plugin, presets, skills, MCP entries and plugins are inspectable and replaceable.
+- **Shape:** a team of persistent Bots: a Main Bot, specialist Bots, group chats and shared memory.
+- **Multi-agent:** Bots message each other, share context and run in parallel; a new Bot in a Git team workspace gets its own worktree.
+- **Workspace:** a real folder. X-Ray, checkpoints, takeover and high-risk approval keep the work visible and recoverable.
 - **Data:** local-first. Teams, chats, memory, credentials and execution records stay on your computer; model requests go to the provider you configure.
-- **License:** Apache 2.0.
 
-## What Anbot adds, in practice
+## What the Bot team does, in practice
 
-DSH provides the Session, the tools, the model routes and the plugin API. Anbot adds the parts that make a long task usable in a real project:
+Anbot is not one chat window with one assistant. It is a multi-agent team: a Main Bot that splits the job, specialist Bots that pick it up, group chats that share context, and a real workspace where the work lands. The additions below are what make that team usable on a long task:
 
-| When this gets in the way | What Anbot does about it |
+| When this gets in the way | What the Bot team does about it |
 |---|---|
 | You cannot tell what the Bot understood | **X-Ray** shows the objective and constraints, an editable subtask checklist, the actual executor, the model and permissions in force, the context budget, the workspace state and the checkpoints. Chat stays the default; X-Ray is one click away. |
-| You need to change the work yourself | **Takeover and return** waits for the executor to confirm it stopped, refuses new messages while you hold the workspace, and on return checks that it is still the same Session and the same folder. It works for DSH-native Bots and local agents such as Codex, Claude Code and OpenCode. |
+| You need to change the work yourself | **Takeover and return** waits for the executor to confirm it stopped, refuses new messages while you hold the workspace, and on return checks that it is still the same Session and the same folder. It works for Anbot's own Bots and local agents such as Codex, Claude Code and OpenCode. |
 | A long run fails or goes wrong | **Checkpoints** save the conversation position and the workspace files as a pair. Preview read-only, restore into a new writable workspace, keep the original and later edits, and undo memory writes made after the checkpoint one by one. |
 | You do not know what is actually loaded | **Runtime probes** report the skills, plugins and MCP the Session loaded, the sandbox permissions in force, the route the last request took, and whether a local agent is installed and signed in. If it cannot tell, it says "unverified" instead of guessing. |
 | Context pressure is invisible | **Context view** shows the current pressure, the usable window, check thresholds, and which original records each piece of context came from. |
@@ -226,16 +224,35 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
 - **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. No Linux package or `latest-linux.yml` is attached in this release, so the Linux targets build from source only. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer updates through electron-updater; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
 
+## How Anbot compares
+
+Grok Bot is the closest product: both are teams of persistent Bots with memory, group chats and approvals. The difference is ownership. Grok Bot runs its team on computers in SpaceXAI's cloud and is a paid beta; Anbot is Apache 2.0, runs the team in your real folder, and lets you take over.
+
+| | Anbot | Grok Bot | Big-tech agents |
+|---|---|---|---|
+| Source | Apache 2.0; open code and extension index | Proprietary | Proprietary |
+| Shape | Multi-agent team: Main Bot, specialists, group chats | Persistent Bot team | Single agent or vendor subagents |
+| Where the work runs | Your real folder, on your desktop, DSH or Docker | Its own cloud computer, 24/7 | Vendor cloud sandbox, or a vendor CLI on your machine |
+| Data | Local-first | Cloud | Mostly vendor cloud or account |
+| Models | Any DSH provider, including local models | Grok | Vendor models |
+| Control | X-Ray, checkpoints, takeover and return | Approvals; the work stays on its cloud computer | Plans and approvals; varies by product |
+| Extensions | Open presets, skills, MCP and plugins | Vendor presets and routines | Vendor marketplace or SDK |
+| Availability (Nov 2026) | Public v0.0.1 | Paid beta | Paid plans |
+
+Big-tech agents here means OpenAI's agent, Anthropic's Claude Code, Google's Gemini CLI and Microsoft's Copilot agents. They are strong at single-agent execution and deep product integration; the runtime, model and extension surface are vendor-owned. Anbot keeps the code, the model choice and the extension surface open.
+
+These are positioning summaries, not feature-by-feature audits. Check each vendor for current details.
+
 ## FAQ
 
 **What is Anbot?**
-Anbot is an open-source, DSH-native personal agent and engineering workspace. It runs a team of long-lived Bots on DeepSeek Harness, works in a real folder, shows its plan and evidence, and lets you pause, take over and hand back.
+Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder. A Main Bot splits the job, specialist Bots pick it up, and the team shares memory, group chats and the same workspace. It ships as a desktop app, a plugin and a Docker service.
 
-**How is Anbot related to DSH?**
-DSH is the runtime. Every Bot runs in a DSH Session with DSH's tools, model routes and plugin API. Anbot is the team and workspace layer on top; it is not a second agent runtime.
+**Is Anbot a Grok Bot alternative?**
+Yes, for people who want a team of persistent Bots without handing the runtime and the workspace to a vendor cloud. Grok Bot is a paid beta running on SpaceXAI's cloud computers; Anbot is Apache 2.0, runs the team in your real folder, and lets you take over. See [How Anbot compares](#how-anbot-compares).
 
-**How is Anbot different from DS Bot?**
-Anbot is developed from DS Bot and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. It adds trusted execution and takeover: X-Ray, checkpoints, runtime probes, context view, ten presets, automatic worktrees and high-risk approval. DS Bot remains the upstream project.
+**How does Anbot compare with OpenAI, Anthropic, Google and Microsoft agents?**
+Those are strong vendor agents with deep product integration. Their runtime, model and extension surface are vendor-owned. Anbot is open source and multi-agent: you choose the model provider, the workspace stays local, and the code and extension index are open. See [How Anbot compares](#how-anbot-compares).
 
 **Does my data leave my computer?**
 No. Teams, chats, memory, credentials and execution records stay local. Model requests go to the model provider you configure; Anbot does not upload your workspace.
