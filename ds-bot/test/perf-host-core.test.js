@@ -1073,6 +1073,12 @@ test('handoffs.js sweeps expired pairLoops, clears whole cache on adopt, and dro
   }
   installHandoffs(rt)
   t.after(() => ctx.dispose())
+  // The startup sweep lists handoff-results on the next tick and deletes what the team file does
+  // not name. It has to finish on an empty folder first, or a slow runner lets it run after this
+  // test writes a result and drops the work that names it, and it deletes the file the test means
+  // to retain.
+  mkdirSync(join(home, 'handoff-results'), { recursive: true })
+  await new Promise(resolve => setTimeout(resolve, 100))
 
   // Sweeps expired pairLoops entry on write.
   rt.noteWorkCompleted('b', 'c', { worked: false, id: 'w1', text: 'hello' })
