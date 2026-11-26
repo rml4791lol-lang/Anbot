@@ -115,6 +115,9 @@ const releasesUrl = () => {
 }
 
 export const STARS_TTL_MS = 60 * 60_000
+// A refused or rate-limited star request is not repeated on every visit; the
+// last count stands until this long after the failed attempt.
+export const STARS_RETRY_MS = 15 * 60_000
 
 export function install(rt) {
   const { ctx, config } = rt
@@ -162,15 +165,20 @@ export function install(rt) {
 
   // Asked only while the About page is open, so a closed page never calls GitHub.
   // A failed answer keeps the last count and is asked again next time.
-  let stars = { count: null, at: 0 }
+  let stars = { count: null, at: 0, failedAt: 0 }
   let starring = null
   async function repoStars() {
     const repo = repoSlug()
     if (repo === null) return null
-    if (Date.now() - stars.at < STARS_TTL_MS) return stars.count
+    const now = Date.now()
+    if (now - stars.at < STARS_TTL_MS) return stars.count
+    if (stars.failedAt !== 0 && now - stars.failedAt < STARS_RETRY_MS) return stars.count
     starring ??= fetchJson(`https://api.github.com/repos/${repo}`, { 'user-agent': `${PKG.name}/${PKG.version}` })
-      .then((info) => { if (Number.isInteger(info?.stargazers_count)) stars = { count: info.stargazers_count, at: Date.now() } })
-      .catch(error => rt.warn('ds-bot: star count failed: %s', error?.message ?? error))
+      .then((info) => { if (Number.isInteger(info?.stargazers_count)) stars = { count: info.stargazers_count, at: Date.now(), failedAt: 0 } })
+      .catch((error) => {
+        stars = { ...stars, failedAt: Date.now() }
+        rt.warn('ds-bot: star count failed: %s', error?.message ?? error)
+      })
       .finally(() => { starring = null })
     await starring
     return stars.count
