@@ -1,9 +1,33 @@
 import assert from 'node:assert/strict'
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import { DEFAULT_COLORS, DEFAULT_SHAPES, FALLBACK_SHAPE, MAIN_LOOK, PICKER_SHAPES, defaultColor, defaultShape, lookOf, resolveShape } from '../src/client/characters.js'
 import { ANBOT_MARKS } from '../src/client/marks/anbot-assets.js'
 import { indexRoster } from '../src/client/sources.js'
+
+const ASSETS = join(import.meta.dirname, '..', 'assets', 'marks')
+// Mean per-channel abs diff (64x64 RGBA) below this means the open and closed frames
+// are effectively the same image, so the blink would show no change.
+const BLINK_DIFF_MIN = 2
+// Frames known to be defective in the current source drop: their open frame reads as
+// closed-eyed and needs re-rendering. Listed here so the check can still flag any
+// *new* regression; do not add slots without a re-issued source frame.
+const KNOWN_BLINK_DEFECTS = ['headphone', 'gardener']
+
+const resolveSharp = () => {
+  const candidates = [
+    join(process.env.DSH_HARNESS ?? '', 'node_modules', 'sharp'),
+    join(import.meta.dirname, '..', 'dev', 'harness', 'node_modules', 'sharp'),
+  ]
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      try { return createRequire(import.meta.url)(candidate) } catch { /* try next */ }
+    }
+  }
+  return undefined
+}
 
 const ids = Array.from({ length: 3000 }, (_, index) => `session-${index.toString(16).padStart(8, '0')}-look`)
 
@@ -30,34 +54,65 @@ test('the whale is only a stored look: the browser gives no Bot a look by its pl
   assert.equal(photo.shape, defaultShape('chief'))
 })
 
-test('the picker lists the fifteen Anbot presets, girl first, with no vendor slots', () => {
+test('the picker lists the fifteen Anbot presets, anbot first, with no vendor slots', () => {
   assert.deepEqual(PICKER_SHAPES, [
-    'anbot-girl', 'ds-headphone', 'ds-glasses', 'ds-scarf', 'ds-nightcap',
-    'ds-overalls', 'ds-chef', 'ds-wizard', 'ds-astro', 'ds-detective',
-    'ds-painter', 'ds-gardener', 'ds-barista', 'ds-skater', 'ds-raincoat',
+    'anbot', 'headphone', 'glasses', 'scarf', 'nightcap',
+    'overalls', 'chef', 'wizard', 'astro', 'detective',
+    'painter', 'gardener', 'barista', 'skater', 'raincoat',
   ])
   assert.equal(Object.keys(ANBOT_MARKS).length, 15)
   assert.deepEqual(Object.keys(ANBOT_MARKS), PICKER_SHAPES)
-  for (const slot of Object.values(ANBOT_MARKS)) assert.equal(slot.closed, null)
-  for (const retired of ['gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'anbot']) {
+  for (const slot of Object.values(ANBOT_MARKS)) {
+    assert.ok(slot.open && slot.closed, 'every slot bundles open and closed frames')
+    assert.notEqual(slot.open, slot.closed, 'open and closed frames must differ')
+  }
+  for (const retired of ['gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'anbot-girl', 'ds-headphone']) {
     assert.ok(!PICKER_SHAPES.includes(retired), retired)
     assert.ok(!Object.hasOwn(ANBOT_MARKS, retired), retired)
   }
 })
 
-test('default and fallback look resolve to the girl preset', () => {
-  assert.equal(FALLBACK_SHAPE, 'anbot-girl')
-  assert.equal(MAIN_LOOK.shape, 'anbot-girl')
-  assert.equal(resolveShape(undefined), 'anbot-girl')
-  assert.equal(resolveShape(null), 'anbot-girl')
+test('default and fallback look resolve to the anbot preset', () => {
+  assert.equal(FALLBACK_SHAPE, 'anbot')
+  assert.equal(MAIN_LOOK.shape, 'anbot')
+  assert.equal(resolveShape(undefined), 'anbot')
+  assert.equal(resolveShape(null), 'anbot')
 })
 
-test('retired vendor and vector shapes remap to one of the current presets', () => {
-  for (const legacy of ['anbot', 'gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'whale', 'star', 'moon', 'wave', 'squircle', 'zed', 'hex']) {
-    const resolved = resolveShape(legacy, 'writer')
-    assert.ok(PICKER_SHAPES.includes(resolved), `${legacy} -> ${resolved}`)
+test('retired v1, vendor, and vector shapes remap to one of the current presets', () => {
+  const legacy = [
+    'anbot-girl', 'ds-headphone', 'ds-glasses', 'ds-scarf', 'ds-nightcap',
+    'ds-overalls', 'ds-chef', 'ds-wizard', 'ds-astro', 'ds-detective',
+    'ds-painter', 'ds-gardener', 'ds-barista', 'ds-skater', 'ds-raincoat',
+    'anbot', 'gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'whale',
+    'star', 'moon', 'wave', 'squircle', 'zed', 'hex',
+  ]
+  for (const item of legacy) {
+    const resolved = resolveShape(item, 'writer')
+    assert.ok(PICKER_SHAPES.includes(resolved), `${item} -> ${resolved}`)
   }
-  assert.equal(resolveShape('anbot'), 'anbot-girl')
+  assert.equal(resolveShape('anbot-girl'), 'anbot')
+  assert.equal(resolveShape('ds-headphone'), 'headphone')
+  assert.equal(resolveShape('anbot'), 'anbot')
+})
+
+test('open and closed blink frames are not the same image', async t => {
+  const sharp = resolveSharp()
+  if (sharp === undefined) {
+    t.skip('sharp unavailable; install dev/harness to run the blink pixel check')
+    return
+  }
+  const suspicious = []
+  for (const id of PICKER_SHAPES) {
+    const open = await sharp(join(ASSETS, `${id}-160.webp`)).resize(64, 64).raw().toBuffer({ resolveWithObject: true })
+    const closed = await sharp(join(ASSETS, `${id}-closed-160.webp`)).resize(64, 64).raw().toBuffer({ resolveWithObject: true })
+    let diff = 0
+    for (let i = 0; i < open.data.length; i += 1) diff += Math.abs(open.data[i] - closed.data[i])
+    const mean = diff / open.data.length
+    if (mean < BLINK_DIFF_MIN) suspicious.push(`${id} (${mean.toFixed(2)})`)
+  }
+  const unknown = suspicious.filter(entry => !KNOWN_BLINK_DEFECTS.includes(entry.split(' ')[0]))
+  assert.deepEqual(unknown, [], `suspicious blink frames: ${suspicious.join(', ')}`)
 })
 
 test('Bot settings is the only settings entry; nothing is called Team settings', () => {

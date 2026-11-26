@@ -1436,7 +1436,7 @@ export const RETURN_CSS = `
 // about and usage pages already use the raster BotMark.
 function BrandTile({ size }) {
   return h('span', { className: 'bt-brand-whale', style: { width: size, height: size } },
-    h('img', { className: 'bt-mark-img bt-mark-built', src: ANBOT_MARKS['anbot-girl'].open, alt: '', draggable: false }))
+    h('img', { className: 'bt-mark-img bt-mark-built', src: ANBOT_MARKS[MAIN_LOOK.shape].open, alt: '', draggable: false }))
 }
 export function BrandMark({ size = 24 }) {
   return h(BrandTile, { size })

@@ -43,16 +43,16 @@ export const CHARACTERS = {
 // vector table is kept for tooling, fixtures and plugin registration but never
 // offered. A Bot with no choice gets one of these fifteen from its id.
 export const PICKER_SHAPES = [
-  'anbot-girl', 'ds-headphone', 'ds-glasses', 'ds-scarf', 'ds-nightcap',
-  'ds-overalls', 'ds-chef', 'ds-wizard', 'ds-astro', 'ds-detective',
-  'ds-painter', 'ds-gardener', 'ds-barista', 'ds-skater', 'ds-raincoat',
+  'anbot', 'headphone', 'glasses', 'scarf', 'nightcap',
+  'overalls', 'chef', 'wizard', 'astro', 'detective',
+  'painter', 'gardener', 'barista', 'skater', 'raincoat',
 ]
 export const PICKER_COLUMNS = 5
 export const DEFAULT_SHAPES = [...PICKER_SHAPES]
-export const FALLBACK_SHAPE = 'anbot-girl'
+export const FALLBACK_SHAPE = 'anbot'
 // The team's first Main Bot, and the plugin's own mark in the sidebar. Bitmap slots
 // do not take a color; deepseek is kept only so legacy ink lookups stay valid.
-export const MAIN_LOOK = Object.freeze({ shape: 'anbot-girl', color: 'deepseek' })
+export const MAIN_LOOK = Object.freeze({ shape: 'anbot', color: 'deepseek' })
 // Character colors in picker order. Black, the gradients, and the dull gray and brown
 // are never defaults; the user must pick them.
 export const CHARACTER_COLORS = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'magenta', 'gray', 'aurora']
@@ -83,17 +83,32 @@ export function defaultShape(id) {
 export const colorOf = bot => (isColor(bot?.color) ? bot.color : bot?.id ? defaultColor(String(bot.id)) : 'black')
 
 // Retired built-in slot → current preset. Old state strings are left on disk; the
-// remap is applied at lookup time only. The old vendor bitmaps (gpt, qwen, kimi,
-// claude, gemini, glm, anbot) and the vector slots that mapped to them all land on
-// one of the fifteen current presets.
+// remap is applied at lookup time only. The previous v1 slot ids (anbot-girl, ds-*)
+// and the older vendor bitmaps (gpt, qwen, kimi, claude, gemini, glm, anbot) plus the
+// vector slots that mapped to them all land on one of the fifteen current presets.
 const LEGACY_REMAP = {
-  anbot: 'anbot-girl', whale: 'anbot-girl',
-  gpt: 'ds-headphone', hex: 'ds-headphone',
-  qwen: 'ds-glasses', wave: 'ds-glasses',
-  kimi: 'ds-scarf', moon: 'ds-scarf',
-  claude: 'ds-nightcap', squircle: 'ds-nightcap',
-  gemini: 'ds-overalls', star: 'ds-overalls',
-  glm: 'ds-chef', zed: 'ds-chef',
+  'anbot-girl': 'anbot',
+  'ds-headphone': 'headphone',
+  'ds-glasses': 'glasses',
+  'ds-scarf': 'scarf',
+  'ds-nightcap': 'nightcap',
+  'ds-overalls': 'overalls',
+  'ds-chef': 'chef',
+  'ds-wizard': 'wizard',
+  'ds-astro': 'astro',
+  'ds-detective': 'detective',
+  'ds-painter': 'painter',
+  'ds-gardener': 'gardener',
+  'ds-barista': 'barista',
+  'ds-skater': 'skater',
+  'ds-raincoat': 'raincoat',
+  anbot: 'anbot', whale: 'anbot',
+  gpt: 'headphone', hex: 'headphone',
+  qwen: 'glasses', wave: 'glasses',
+  kimi: 'scarf', moon: 'scarf',
+  claude: 'nightcap', squircle: 'nightcap',
+  gemini: 'overalls', star: 'overalls',
+  glm: 'chef', zed: 'chef',
 }
 
 // Resolve a stored avatar.shape to a current slot. Retired legacy vectors are not
