@@ -1,8 +1,9 @@
 // Writes the generated blocks of the start page in src/start from the plugin's client modules
 // in ../ds-bot (read only, as scripts/icon.mjs does):
-// - start.html, between <!-- whale --> markers: the Main Bot's whale from characterMarkup('whale',
-//   'deepseek'), cut at the tail stock into two copies so the tail can move on its own. The mask
-//   is st-eyes, the clips st-tail-cut and st-torso-cut; the fill stays var(--bt-ink-deepseek).
+// - start.html, between <!-- whale --> markers: the Anbot papercut whale as a static bitmap.
+//   The raster itself is regenerated from the committed master assets/anbot-whale.png into
+//   src/start/whale@2x.png and whale@3x.png (224 and 336 px for the 112 px on-screen box).
+// - start.css, between /* image */ markers: the bitmap's background rules.
 // - start.css, between /* tokens */ markers: the DeepSeek theme's light and dark colors.
 // - start.css, between /* springs */ markers: motion.js's springs as linear() curves.
 // - ../page-card.css, between the same two markers: the same colors and springs, scoped to the
@@ -10,12 +11,19 @@
 // Usage: node scripts/start-assets.mjs [--check]   (--check exits 1 when a block is stale and
 // writes nothing)
 import { readFileSync, writeFileSync } from 'node:fs'
-import { CHARACTERS, characterMarkup, MASK_ID } from '../../ds-bot/src/client/characters.js'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { INKS } from '../../ds-bot/src/client/inks.js'
 import { allThemes, themeCss } from '../../ds-bot/src/client/themes.js'
 
+const require = createRequire(import.meta.url)
+const sharp = require('sharp')
+
 const client = new URL('../../ds-bot/src/client/', import.meta.url)
 const page = new URL('../src/start/', import.meta.url)
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const assetsDir = join(root, 'assets')
 
 const THEME_TOKENS = ['--bt-main', '--bt-card', '--bt-ink', '--bt-ink-2', '--bt-line', '--bt-line-2', '--bt-hover', '--bt-accent', '--bt-accent-ink']
 // The status colors are the same in both modes; the plugin's base sheet defines them.
@@ -24,59 +32,29 @@ const SPRINGS = ['shape', 'tap', 'pop', 'stretch', 'list']
 // The layer of the team window's card (preload.cjs).
 const CARD_SCOPE = '.dsb-card-layer'
 
-// Wraps the one self-closing element that starts with `start` in <g id>.
-function wrap(markup, id, start) {
-  const at = markup.indexOf(start)
-  if (at < 0 || markup.indexOf(start, at + 1) >= 0) throw new Error(`${id}: expected exactly one match`)
-  const stop = markup.indexOf('/>', at) + 2
-  return `${markup.slice(0, at)}<g id="${id}">${markup.slice(at, stop)}</g>${markup.slice(stop)}`
-}
-function group(markup, start) {
-  const at = markup.indexOf(start)
-  const tags = /<g[\s>]|<\/g>/gu
-  tags.lastIndex = at
-  let depth = 0
-  for (let match = tags.exec(markup); match !== null; match = tags.exec(markup)) {
-    depth += match[0] === '</g>' ? -1 : 1
-    if (depth === 0) return markup.slice(at, match.index + 4)
-  }
-  throw new Error('unclosed group')
+// The on-screen box is 112 px; the rasters are 2x and 3x of it.
+const WHALE_SIZES = [224, 336]
+const whaleFile = size => `whale@${String(size / 112)}x.png`
+
+// The start whale markup: a static bitmap, sized by the rules in the /* image */ block.
+const rig = () => '<div class="whale-img" aria-hidden="true"></div>'
+
+// Regenerate one raster from the committed master: trim the transparent border, then fit the
+// cutout on a transparent square at the target size.
+async function whaleRaster(size) {
+  const trimmed = await sharp(join(assetsDir, 'anbot-whale.png')).ensureAlpha().trim().toBuffer({ resolveWithObject: true })
+  return sharp(trimmed.data)
+    .resize(size, size, { kernel: 'lanczos3', fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ compressionLevel: 9 })
+    .toBuffer()
 }
 
-function rig() {
-  const whale = CHARACTERS.whale
-  const raw = characterMarkup('whale', 'deepseek').replaceAll(MASK_ID, 'st-eyes')
-  if (!raw.includes('fill="var(--bt-ink-deepseek)"')) throw new Error('the whale no longer fills with var(--bt-ink-deepseek)')
-  const mask = raw.slice(raw.indexOf('<mask'), raw.indexOf('</mask>') + 7)
-    .replace('<g class="bt-gaze">', '<g id="gaze" class="bt-gaze">')
-    .replace('<g class="bt-eyes" fill="#000">', '<g id="eye-pair" class="bt-eyes" fill="#000">')
-  // The start whale keeps the highlight layer and the stronger shade it was designed
-  // with; the runtime characters draw the body without them.
-  let layers = `<g fill-rule="evenodd"><path d="${whale.body}" fill="var(--bt-ink-deepseek)"/>`
-    + (whale.paints ?? []).map(([d, fill, opacity]) => `<path d="${d}" fill="${fill}" fill-opacity="${opacity}"/>`).join('')
-    + `<path d="${whale.shade}" fill="#000" fill-opacity=".14"/>`
-    + `<path d="${whale.light}" fill="#fff" fill-opacity=".16"/></g>`
-  layers = wrap(layers, 'w-body', `<path d="${whale.body}"`)
-  layers = wrap(layers, 'w-belly', `<path d="${whale.paints[0][0]}"`)
-  layers = wrap(layers, 'w-shade', `<path d="${whale.shade}"`)
-  layers = wrap(layers, 'w-light', `<path d="${whale.light}"`)
-  layers = layers.replace('<g fill-rule="evenodd">', '<g id="whale-layers" fill-rule="evenodd">')
-  // The cut runs from the notch behind the upper fluke down through the bottom contour at the
-  // pivot (27.9, 61.1), where the tail turns. The tail copy reaches 4 units past the cut under
-  // the torso, so tipping the flukes opens no gap; at rest the two copies draw the plain whale.
-  const top = [32.45, 52.05]
-  const bottom = [23.35, 70.15]
-  const pivot = [27.9, 61.1]
-  const length = Math.hypot(bottom[0] - top[0], bottom[1] - top[1])
-  const normal = [-(bottom[1] - top[1]) / length, (bottom[0] - top[0]) / length]
-  const notch = [top[0] - normal[0] * 4, top[1] - normal[1] * 4].map(n => n.toFixed(2))
-  const tailCut = `M-100 -100H${top[0]}V${top[1]}L${notch[0]} ${notch[1]}L${pivot[0]} ${pivot[1]}L${bottom[0]} ${bottom[1]}L${bottom[0]} 200H-100Z`
-  const torsoCut = `M${top[0]} -100H200V200H-100V${bottom[1]}H${bottom[0]}L${top[0]} ${top[1]}Z`
-  return `<svg class="whale-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs>${mask}`
-    + `<clipPath id="st-tail-cut" clipPathUnits="userSpaceOnUse"><path d="${tailCut}"/></clipPath>`
-    + `<clipPath id="st-torso-cut" clipPathUnits="userSpaceOnUse"><path d="${torsoCut}"/></clipPath>${layers}</defs>`
-    + '<g class="bt-b"><g mask="url(#st-eyes)"><g id="tail"><use href="#whale-layers" clip-path="url(#st-tail-cut)"/></g>'
-    + '<g id="torso"><use href="#whale-layers" clip-path="url(#st-torso-cut)"/></g></g></g></svg>'
+function imageCss() {
+  return [
+    '/* Generated from assets/anbot-whale.png by scripts/start-assets.mjs; do not edit. */',
+    `.whale-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('${whaleFile(224)}')}`,
+    `@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img{background-image:url('${whaleFile(336)}')}}`,
+  ]
 }
 
 const rules = css => [...css.matchAll(/\{([^}]*)\}/gu)].map(([, body]) => new Map(body.split(';').filter(Boolean).map(item => item.split(/:(.*)/su).slice(0, 2))))
@@ -143,7 +121,7 @@ function between(text, open, close, block) {
 
 const files = {
   'start.html': html => between(html, '<!-- whale -->', '<!-- /whale -->', rig()),
-  'start.css': async css => between(between(css, '/* tokens */', '/* /tokens */', tokens()), '/* springs */', '/* /springs */', await springs()),
+  'start.css': async css => between(between(between(css, '/* tokens */', '/* /tokens */', tokens()), '/* image */', '/* /image */', imageCss()), '/* springs */', '/* /springs */', await springs()),
   '../page-card.css': async css => between(between(css, '/* tokens */', '/* /tokens */', tokens(CARD_SCOPE)), '/* springs */', '/* /springs */', await springs(CARD_SCOPE)),
 }
 const check = process.argv.includes('--check')
@@ -154,6 +132,16 @@ for (const [name, generate] of Object.entries(files)) {
   const next = await generate(text)
   if (next === text) continue
   stale.push(name)
+  if (!check) writeFileSync(file, next)
+}
+// The whale rasters: stale when the committed bytes differ from a fresh regeneration.
+for (const size of WHALE_SIZES) {
+  const file = new URL(whaleFile(size), page)
+  const next = await whaleRaster(size)
+  let current = null
+  try { current = readFileSync(file) } catch { /* missing */ }
+  if (current && current.equals(next)) continue
+  stale.push(whaleFile(size))
   if (!check) writeFileSync(file, next)
 }
 if (check && stale.length) {

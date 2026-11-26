@@ -4,10 +4,10 @@
 // fills as its stage is done, and the ring closes at the hand-off. The director keeps the arcs
 // (.arc data-state) and the hidden stage list (.station data-state, aria-current) for the live
 // region and screen readers. A click on the whale makes it spout.
-// Layers (start.html): .whale-x the box (gaze, spout) > .whale-gaze pointer > .whale scale >
-// .whale-move one-shots > .whale-loop CSS state loops > svg (#tail, #eye-pair, #gaze, .bt-eye).
+// Layers (start.html): .whale-x the box > .whale-breath breath scale > .whale scale >
+// .whale-move one-shots > .whale-loop CSS state loops > .whale-img bitmap.
 // One-shots run on WAAPI and end with commitStyles() + cancel(); loops are CSS keyed on
-// html[data-whale] and html[data-tail]. Every await is raced against a timer, because a
+// html[data-whale]. Every await is raced against a timer, because a
 // hidden document stops ticking animations.
 const root = document.documentElement
 const rm = matchMedia('(prefers-reduced-motion: reduce)')
@@ -21,7 +21,6 @@ export const reduced = () => rm.matches || effectsNow() === 'off'
 export const reducedFx = () => rm.matches || effectsNow() !== 'full'
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const cs = el => getComputedStyle(el)
-const clamp = v => Math.max(-1, Math.min(1, v))
 const IDENTITY = /^(none|1|0px|0px 0px|matrix\(1, 0, 0, 1, 0, 0\))$/u
 const CLEAR = ['transform', 'scale', 'translate']
 const OUT = 'cubic-bezier(.4,0,.2,1)'
@@ -58,7 +57,7 @@ const MORE_HOPS = [2600, 5200]
 const HOP_EVERY = 9000
 // Acts that only open, fold or copy something on the card; every other card button answers it.
 const LOCAL = new Set(['toggleDetails', 'toggleMore', 'toggleModels', 'copyDetails'])
-// Waits get calmer on the card's own clock: rates and blink gaps after 30 s and after 90 s.
+// Waits get calmer on the card's own clock: rates after 30 s and after 90 s.
 const calmer = ms => (ms >= 90000 ? [0.6, 2] : ms >= 30000 ? [0.8, 1.4] : [1, 1])
 
 const springs = {}
@@ -113,9 +112,8 @@ export const clamped = easing => easing.replace(/\d+\.\d+/gu, value => String(Ma
 
 export function createDirector({ start, resume, act, label, announce, onCheck, onActive, begin = Promise.resolve() }) {
   const $ = selector => document.querySelector(selector)
-  const x = $('.whale-x'), gazeLayer = $('.whale-gaze'), body = $('.whale'), move = $('.whale-move'), loop = $('.whale-loop')
-  const tail = $('#tail'), pair = $('#eye-pair'), lane = $('.lane'), ripple = $('.ripple'), hit = $('.whale-hit')
-  const eyes = [...document.querySelectorAll('.bt-eye')], happy = [...document.querySelectorAll('.bt-eye-happy')]
+  const x = $('.whale-x'), breathLayer = $('.whale-breath'), body = $('.whale'), move = $('.whale-move'), loop = $('.whale-loop')
+  const lane = $('.lane'), ripple = $('.ripple'), hit = $('.whale-hit')
   const stations = [...document.querySelectorAll('.station')]
   const ring = $('.ring'), importArc = $('.arc[data-phase=import]')
   // The stages of this start, in order (the snapshot's phases).
@@ -132,9 +130,9 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   // The entrance's clock starts once the window is on screen (`begin`, start.js).
   let t0 = performance.now()
   const entranceMs = resume ? 0 : first ? 560 : 290
-  const D = { at: 0, checks: 0, passed: 0, pose: 'enter', loop: '', card: '', slow: 0, bx: 0, by: 0, since: [t0], activeAt: [], loopAt: 0, hop: null, pet: null, handed: false, workReady: first, missed: false, sinking: false,
-    // Rest on a card: its clock, the lean, the breath, the lively hops; the last glance and press.
-    clockKind: '', cardAt: 0, lean: false, leanDue: false, leanOff: false, leanMine: -1, restMine: -1, breath: null, hopsStopped: false, legging: false, glanceAt: -Infinity, press: null, nodAt: 0 }
+  const D = { at: 0, checks: 0, passed: 0, pose: 'enter', loop: '', card: '', slow: 0, since: [t0], activeAt: [], loopAt: 0, hop: null, pet: null, handed: false, workReady: first, missed: false, sinking: false,
+    // Rest on a card: its clock, the lean, the breath, the lively hops; the press.
+    clockKind: '', cardAt: 0, lean: false, leanDue: false, leanOff: false, leanMine: -1, restMine: -1, breath: null, hopsStopped: false, legging: false, press: null, nodAt: 0 }
   const rnd = Math.random
   let want = { station: 0, view: 'boot', phase: 'data', done: [], card: '', missed: false, celebrate: first, update: '' }
   let token = 0
@@ -217,9 +215,9 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   }
 
   // ---- loops ----
-  const capture = () => ({ loop: cs(loop).transform, tail: cs(tail).transform, pair: cs(pair).transform, eyes: eyes.map(eye => cs(eye).transform) })
+  const capture = () => ({ loop: cs(loop).transform })
   // Every pose change starts here and then slides .whale-loop from where it is, lean included.
-  const stopLoop = () => { delete root.dataset.whale; delete root.dataset.tail; D.loop = ''; D.lean = false; clearTimeout(D.wander) }
+  const stopLoop = () => { delete root.dataset.whale; D.loop = ''; D.lean = false }
   function slide(el, from, target, opts) {
     drop(el)
     if (from === 'none' && target === 'none') return null
@@ -229,13 +227,9 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   }
   function release(pose, opts) {
     slide(loop, pose.loop, 'none', opts)
-    slide(tail, pose.tail, 'none', opts)
-    slide(pair, pose.pair, 'none', opts)
-    eyes.forEach((eye, k) => slide(eye, pose.eyes[k], 'none', opts))
   }
-  const START = { searching: { loop: 'rotate(-4deg)', pair: 'translateX(-12%)' }, pondering: { loop: 'rotate(4deg)', eye: 'translate(0,-4%) scaleY(.7)' } }
+  const START = { searching: { loop: 'rotate(-4deg)' }, pondering: { loop: 'rotate(4deg)' } }
   async function startLoop(name) {
-    const tailName = first && tier() !== 'quiet' ? ({ working: 'beat', sending: 'dash' }[name] ?? '') : ''
     if (D.loop === name) return
     const mine = token
     const pose = capture()
@@ -244,66 +238,21 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
       const shape = spring('shape')
       const begin = START[name] ?? {}
       slide(loop, pose.loop, begin.loop ?? 'none', shape)
-      slide(pair, pose.pair, begin.pair ?? 'none', { duration: 240, easing: 'ease-out' })
-      slide(tail, pose.tail, 'none', { duration: 240, easing: 'ease-out' })
-      eyes.forEach((eye, k) => slide(eye, pose.eyes[k], begin.eye ?? 'none', { duration: 240, easing: 'ease-out' }))
       await until(wait(shape.duration))
       if (mine !== token) return
     }
     // The slides end on the loop's first frame, so dropping them in the same task as the
     // switch shows no jump.
-    for (const el of [loop, pair, tail, ...eyes]) { for (const a of scripted(el)) a.cancel(); el.style.removeProperty('transform') }
+    for (const a of scripted(loop)) a.cancel()
+    loop.style.removeProperty('transform')
     root.dataset.whale = name
-    if (tailName) root.dataset.tail = tailName
     D.loop = name
     D.loopAt = performance.now()
     if (D.slow === 1) calm()
-    if (name === 'working') wanderLater()
-  }
-  // While it works on the second stage, the whale glances left or right now and then (§3, the
-  // small reactions): every 5 to 9 s, a 600 ms look to one side at random, over the bob. Not in
-  // the quiet tier, with reduced motion or while thinking, and not while the eyes follow the
-  // pointer or a control, or look at the user.
-  // Only the second stage of a first start: later and moving starts, and the copying cards, use
-  // the working loop too.
-  const wandering = () => first && D.at === 1 && !D.card && playful() && D.loop === 'working' && D.slow < 2
-  function wanderLater() {
-    clearTimeout(D.wander)
-    if (!wandering()) return
-    D.wander = setTimeout(() => { wander(); wanderLater() }, 5000 + 4000 * rnd())
-  }
-  function wander() {
-    if (!wandering() || D.gazeHold || D.pet || D.hop || D.handed || document.hidden) return
-    if (pointer || (focused && focused === document.activeElement)) return
-    const side = `translateX(${rnd() < 0.5 ? -14 : 14}%)`
-    D.wanderAnim = play(pair, kf([{ transform: 'none' }, { transform: side, offset: 0.25 }, { transform: side, offset: 0.7 }, { transform: 'none' }], 'ease-in-out'), { duration: 600, fill: 'none' })
-  }
-  // A look at the user takes the eyes back from a glance to the side first.
-  function unwander() {
-    const a = D.wanderAnim
-    if (!a) return
-    D.wanderAnim = null
-    if (a.playState !== 'running') return
-    const from = cs(pair).transform
-    a.cancel()
-    if (from !== 'none') slide(pair, from, 'none', { duration: 120, easing: 'ease-out' })
   }
   // Calmer, never faster (S6): every running whale animation at .85, no phase jump.
   function calm() {
-    for (const el of [loop, tail, pair, move, ...eyes]) for (const a of el.getAnimations()) if (a.playbackRate === 1) a.updatePlaybackRate(0.85)
-  }
-  // The 10 s glance and the return glance share one budget: at most one every 20 s.
-  async function glance(poses = ['loop']) {
-    const now = performance.now()
-    if (!playful() || !poses.includes(D.pose) || D.gazeHold || now - D.glanceAt < 20000) return
-    D.glanceAt = now
-    D.gazeHold = true
-    unwander()
-    setGaze(0, -0.3)
-    for (const eye of eyes) play(eye, kf([{ transform: 'none' }, { transform: 'scaleY(.03)', offset: 1 / 3 }, { transform: 'scaleY(.03)', offset: 5 / 9 }, { transform: 'none' }], 'ease-in-out'), { duration: 360, fill: 'none' })
-    await sleep(600)
-    D.gazeHold = false
-    applyGaze()
+    for (const el of [loop, move]) for (const a of el.getAnimations()) if (a.playbackRate === 1) a.updatePlaybackRate(0.85)
   }
 
   // ---- one-shots ----
@@ -320,9 +269,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
       const b = play(move, [{ transform: from }, { transform: 'none' }], spring('shape'))
       b.done.then(() => settle(b, move))
     }, 160)
-    const keep = [D.bx, D.by]
-    setBase(keep[0], 0.6)
-    setTimeout(() => { if (D.by === 0.6) setBase(keep[0], keep[1]) }, 300)
   }
   function hop(count) {
     const lift = `translateY(${(-8.1 * u).toFixed(2)}px) scale(.96,1.05)`
@@ -338,10 +284,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     a.cancel()
     if (from !== 'none') slide(move, from, 'none', spring('shape'))
   }
-  function happyEyes(on, ms = 140) {
-    eyes.forEach(eye => to(eye, { transform: on ? 'scaleY(0)' : 'none' }, { duration: ms, easing: on ? 'ease-in' : 'ease-out' }))
-    happy.forEach(arc => to(arc, { opacity: on ? '1' : '0' }, { duration: 120, delay: on ? 100 : 0, easing: 'ease-out' }))
-  }
   function petStart() {
     if (!playful() || !['alert', 'rest'].includes(D.pose) || D.pet || D.handed) return
     stopHop()
@@ -351,7 +293,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     const nuzzle = `translate(${(7.4 * u).toFixed(2)}px, ${(-1.74 * u).toFixed(2)}px) rotate(14deg) scale(1.03, .97)`
     const a = to(move, { transform: lean }, spring('pop'))
     const b = play(move, [{ transform: lean }, { transform: nuzzle, offset: 0.5 }, { transform: lean }], { duration: 780, delay: 320, iterations: Infinity, easing: 'ease-in-out', fill: 'none' })
-    happyEyes(true)
     D.pet = [a, b]
   }
   function petEnd() {
@@ -360,17 +301,15 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     for (const a of D.pet) a.cancel()
     D.pet = null
     slide(move, from, 'none', spring('pop'))
-    happyEyes(false)
     leanIn()
   }
   // ---- the spout: a click on the whale ----
   // A column rises from the blowhole, opens into two curls and lifts off, and drops fall from the
   // curls back into the water, with a ripple where they land. Four clicks within 2.5 s make a
-  // bigger one; a whale that is down only puffs. Reduced motion: the ^ ^ eyes only.
+  // bigger one; a whale that is down only puffs.
   const plume = $('.plume')
   const spoutEl = $('.spout')
   let clicks = []
-  let happyTimer = 0
   function fallDrop(dx0, dy0, { dx, fall, delay, size = 5.5 }) {
     const el = document.createElement('span')
     el.className = 'drop'
@@ -414,8 +353,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     drop(body)
     const a = play(body, kf([{ scale: '1' }, { scale: big ? '1.12 .88' : '1.07 .93', offset: 0.3 }, { scale: '.96 1.05', offset: 0.62 }, { scale: '1' }], OUT), { duration: 460, fill: 'none' })
     a.done.then(() => a.cancel())
-    const t = play(tail, [{ transform: 'none' }, { transform: 'rotate(12deg)' }, { transform: 'none' }], { duration: 380, easing: 'ease-in-out', fill: 'none' })
-    t.done.then(() => t.cancel())
   }
   // No spout once the team is ready: the hand-off spouts by itself.
   function spoutClick() {
@@ -427,25 +364,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     const big = clicks.length >= 4
     if (big) clicks = []
     if (!reduced()) squash(big)
-    if (!D.pet && (!root.dataset.eyes || root.dataset.eyes === 'happy')) {
-      clearTimeout(happyTimer)
-      const ms = big ? 900 : 480
-      // Reduced motion swaps the eyes (ui-standard 9.6) and so leaves no inline transform on
-      // them that would hide the heavy eyes of a failure.
-      if (reduced()) {
-        root.dataset.eyes = 'happy'
-        happyTimer = setTimeout(() => { if (root.dataset.eyes === 'happy') delete root.dataset.eyes }, ms)
-      } else {
-        happyEyes(true)
-        happyTimer = setTimeout(() => { if (!D.pet && !D.handed && !['down', 'lift', 'dive'].includes(D.pose)) happyEyes(false) }, ms)
-      }
-    }
     spout({ big })
-  }
-  function lookAround() {
-    if (!playful()) return
-    const side = v => `translateX(${v}%)`
-    play(pair, kf([{ transform: 'none' }, { transform: side(-14), offset: 0.15 }, { transform: side(-14), offset: 0.4 }, { transform: side(14), offset: 0.55 }, { transform: side(14), offset: 0.85 }, { transform: 'none' }], 'ease-in-out'), { duration: 900, fill: 'none' })
   }
   function sendRipple() {
     if (!playful()) return
@@ -453,7 +372,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     play(ripple, [{ opacity: 0.9 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'none' })
   }
 
-  // ---- rest on a card: lean, breath, blinks, lively hops (none in quiet, reduced or failure) ----
+  // ---- rest on a card: lean, breath, lively hops (none in quiet, reduced or failure) ----
   const stirs = () => playful() && !failure()
   const px = v => (v * u / 0.88).toFixed(2)
   // Nose 2.5° down toward the sheet, 1.5 px forward, 1 px up (at 88 px), on .whale-loop, which
@@ -480,7 +399,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   function breathe(mine) {
     if (D.breath || instant || !stirs() || D.pose !== 'rest' || reducedFx()) return
     // Compositor-only: the scale property on an HTML wrapper that nothing else scales.
-    const a = gazeLayer.animate(kf([{ scale: '1' }, { scale: '1.008 1.018', offset: 0.45 }, { scale: '1' }], 'ease-in-out'), { duration: 4200, iterations: Infinity })
+    const a = breathLayer.animate(kf([{ scale: '1' }, { scale: '1.008 1.018', offset: 0.45 }, { scale: '1' }], 'ease-in-out'), { duration: 4200, iterations: Infinity })
     D.breath = a
     const age = performance.now() - D.cardAt
     a.updatePlaybackRate(calmer(age)[0])
@@ -491,32 +410,14 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     const a = D.breath
     if (!a) return
     D.breath = null
-    const from = cs(gazeLayer).scale
+    const from = cs(breathLayer).scale
     a.cancel()
-    if (!reduced() && from !== 'none' && from !== '1') play(gazeLayer, [{ scale: from }, { scale: '1' }], { duration: 240, easing: 'ease-out', fill: 'none' })
-  }
-  const canBlink = () => stirs() && D.pose === 'rest' && !D.pet && !D.hop && !D.gazeHold && !D.handed && !root.dataset.eyes && !document.hidden && eyes.every(eye => !eye.style.transform && scripted(eye).length === 0)
-  function blink() {
-    if (!canBlink()) return
-    for (const eye of eyes) {
-      const a = play(eye, kf([{ transform: 'none' }, { transform: 'scaleY(.03)', offset: 0.48 }, { transform: 'scaleY(1.06)', offset: 0.78 }, { transform: 'none' }], 'ease-in-out'), { duration: 270, fill: 'none' })
-      a.done.then(() => a.cancel())
-    }
-  }
-  function blinkLater(mine, firstOne) {
-    const gap = firstOne ? 1400 + 800 * rnd() : (3200 + 3600 * rnd()) * calmer(performance.now() - D.cardAt)[1]
-    const double = rnd() < 0.2
-    later(mine, gap, () => {
-      blink()
-      if (double) later(mine, 340, blink)
-      blinkLater(mine, false)
-    })
+    if (!reduced() && from !== 'none' && from !== '1') play(breathLayer, [{ scale: from }, { scale: '1' }], { duration: 240, easing: 'ease-out', fill: 'none' })
   }
   function resting(mine) {
     D.restMine = mine
     if (!stirs()) return
     later(mine, 600, () => breathe(mine))
-    blinkLater(mine, true)
   }
   // Lively: after the two hops (starts 0 and 1.3 s), more at +2.6 s, +5.2 s, then every 9 s.
   function moreHops(mine, began) {
@@ -538,7 +439,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   }
 
   // ---- poses ----
-  // A stage done: its arc fills while the whale, which stays where it is, gives a tail stroke
+  // A stage done: its arc fills while the whale, which stays where it is, gives a small surge
   // and a small surge forward. Stages done together follow each other faster.
   async function leg(i, queued) {
     D.legging = true
@@ -546,8 +447,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     petEnd()
     stopHop()
     if (playful() && !instant) {
-      const strokes = play(tail, [{ transform: 'none' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'none' }], { duration: 200, iterations: 2, easing: 'ease-in-out', fill: 'none' })
-      strokes.done.then(() => strokes.cancel())
       const surge = play(move, kf([{ transform: 'none' }, { transform: `translateX(${px(4)}px) rotate(-3deg)`, offset: 0.4 }, { transform: 'none' }], OUT), { duration: 420, fill: 'none' })
       surge.done.then(() => surge.cancel())
     }
@@ -608,8 +507,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     if (['down', 'lift'].includes(D.pose)) return
     stopHop()
     petEnd()
-    // A spout's ^ ^ eyes give way to the heavy ones, and their timer cannot undo them.
-    clearTimeout(happyTimer)
     D.pose = 'down'
     D.card = ''
     D.clockKind = ''
@@ -617,40 +514,30 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     else if (want.card === 'importFailed') failImport()
     const pose = capture()
     stopLoop()
-    setBase(0.2, 0.6)
-    // Reduced motion: no inline opacity on the ^ ^ arcs, which would hide them from a later
-    // html[data-eyes=happy] (a celebrating hand-off after a retry).
-    if (reduced()) { root.dataset.eyes = 'heavy'; return }
-    happy.forEach(arc => to(arc, { opacity: '0' }, { duration: 120, easing: 'ease-out' }))
+    if (reduced()) return
     const shape = spring('shape')
     release(pose, shape)
-    eyes.forEach((eye, k) => slide(eye, pose.eyes[k], 'translateY(1.5px) scaleY(.55)', shape))
     to(body, { scale: '1' }, shape)
     await until(to(move, { transform: 'translateY(4px) rotate(4deg)' }, shape).done)
   }
   async function lift() {
     if (D.pose !== 'down') return
     D.pose = 'lift'
-    setBase(0.4, -0.4)
     if (reduced()) return
     const shape = spring('shape')
-    eyes.forEach(eye => to(eye, { transform: 'translateY(1px) scaleY(.8)' }, shape))
     await until(to(move, { transform: 'translateY(2px)' }, shape).done)
   }
   async function shakeOff() {
     D.pose = 'loop'
-    delete root.dataset.eyes
-    setBase(0, 0)
     if (D.failed !== undefined) {
       const i = D.failed
       D.failed = undefined
       setStation(i, 'pending')
       armActive()
     }
-    if (reduced()) { for (const el of [move, ...eyes]) el.style.removeProperty('transform'); return }
+    if (reduced()) { move.style.removeProperty('transform'); return }
     const shape = spring('shape')
     to(move, { transform: 'none' }, shape)
-    eyes.forEach(eye => to(eye, { transform: 'none' }, shape))
     drop(body)
     const s = play(body, kf([{ scale: '1' }, { scale: '.94 1.08', offset: 0.4 }, { scale: '1.03 .97', offset: 0.75 }, { scale: '1' }], OUT), { duration: 800 })
     await s.done
@@ -680,11 +567,9 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     D.failed = undefined
     D.since = [performance.now()]
     D.activeAt = []
-    delete root.dataset.eyes
-    for (const el of [move, body, lane, ...eyes]) { for (const a of scripted(el)) a.cancel(); el.style.removeProperty('transform'); el.style.removeProperty('opacity'); el.style.removeProperty('scale') }
+    for (const el of [move, body, lane]) { for (const a of scripted(el)) a.cancel(); el.style.removeProperty('transform'); el.style.removeProperty('opacity'); el.style.removeProperty('scale') }
     D.sinking = false
     D.pose = 'loop'
-    setBase(0, 0)
     if (!reduced()) {
       const up = play(move, [{ transform: `translateY(${SINK}px) rotate(-12deg)` }, { transform: 'none' }], { ...spring('stretch'), fill: 'none' })
       await up.done
@@ -707,16 +592,15 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     if (kind !== D.clockKind) { D.clockKind = kind; D.cardAt = performance.now(); D.hopsStopped = false }
     if (kind === 'missing' && want.missed && !D.missed) {
       D.missed = true
-      if (previous === 'missing') { lookAround(); restAgain(mine); return }
+      if (previous === 'missing') { restAgain(mine); return }
     }
     if (kind !== 'missing') D.missed = false
-    if (kind === 'copying' || kind === 'newerUpdating') { stopHop(); D.pose = 'loop'; setBase(0, 0); await startLoop('working'); return }
+    if (kind === 'copying' || kind === 'newerUpdating') { stopHop(); D.pose = 'loop'; await startLoop('working'); return }
     if (kind === 'importFailed') return goDown()
     stopHop()
     const pose = capture()
     stopLoop()
     if (!reduced()) release(pose, spring('shape'))
-    setBase(0.2, 0.6)
     // Cards the user caused (picked, rejected, the stop confirmation) do not hop; they lean in
     // as the morph starts (the content veils in 70 ms later).
     const count = { recommend: 2, missing: 2, import: 2, newer: 2, watchdog: 2, importSpace: 1 }[kind] ?? 0
@@ -740,8 +624,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     D.clockKind = ''
     D.missed = false
     D.pose = 'loop'
-    setBase(0, 0)
-    if (reduced()) root.dataset.eyes = D.slow >= 2 ? 'squint' : ''
     const name = D.slow >= 2 ? 'pondering' : !first ? (D.workReady ? 'working' : '') : ({ data: 'searching', engine: 'working', team: 'sending' }[want.phase] ?? '')
     if (name) await startLoop(name)
     else if (D.loop || D.lean) { const pose = capture(); stopLoop(); release(pose, { duration: 240, easing: 'ease-out' }) }
@@ -769,8 +651,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     root.dataset.ring = 'closed'
     D.handed = true
     D.pose = 'dive'
-    clearTimeout(happyTimer)
-    applyGaze()
     const begin = performance.now()
     const at = ms => sleep(Math.max(0, begin + ms - performance.now()))
     const pose = capture()
@@ -795,8 +675,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   async function spoutHandoff(at) {
     drop(body)
     play(body, kf([{ scale: '1' }, { scale: '1.12 .88', offset: 240 / 460 }, { scale: '.93 1.09' }], OUT), { duration: 460 })
-    if (playful()) { happyEyes(true); play(tail, [{ transform: 'none' }, { transform: 'rotate(12deg)' }, { transform: 'none' }], { duration: 400, easing: 'ease-in-out', fill: 'none' }) }
-    spout()
+    if (playful()) spout()
     await at(160)
     root.dataset.exit = 'caption'
     await at(560)
@@ -810,10 +689,8 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     await at(980)
     act('handoffDone')
   }
-  // Reduced motion: the arcs' .12 s fill and the closed ring are seen before the content fades;
-  // the celebration is only the ^ ^ eyes.
+  // Reduced motion: the arcs' .12 s fill and the closed ring are seen before the content fades.
   async function stillHandoff(at) {
-    if (want.celebrate && tier() !== 'quiet') root.dataset.eyes = 'happy'
     await at(300)
     root.dataset.exit = 'caption all lane'
     await at(420)
@@ -830,7 +707,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     const settleIn = { duration: Math.round(RISE_MS * 0.6), easing: OUT }
     to(body, { scale: '1' }, settleIn)
     to(move, { transform: 'none' }, settleIn)
-    setBase(0, 0)
     const box = x.getBoundingClientRect()
     for (const a of scripted(x)) a.cancel()
     $('.flight').append(x)
@@ -840,12 +716,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     // The pond may still be shrunk for a card that has just gone: it rises at the size it shows.
     const scale = (box.width / x.offsetWidth).toFixed(3)
     play(x, [{ transform: `translate(0px, 0px) scale(${scale})` }, { transform: `translate(0px, ${String(-LIFT)}px) scale(${scale})` }], { duration: RISE_MS, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' })
-    if (playful()) {
-      const strokes = play(tail, [{ transform: 'none' }, { transform: 'rotate(12deg)' }, { transform: 'rotate(-12deg)' }, { transform: 'none' }], { duration: 240, iterations: 2, easing: 'ease-in-out', fill: 'none' })
-      strokes.done.then(() => strokes.cancel())
-    }
-    // It reaches the top with the avatar's open eyes (the celebration gave it ^ ^ ones).
-    if (want.celebrate && playful()) setTimeout(() => happyEyes(false), Math.round(RISE_MS * 0.6))
     await at(from + RISE_MS)
     act('handoffShow', { whale: { x: box.left, y: box.top - LIFT, size: box.width } })
     await at(from + RISE_MS + 260)
@@ -858,50 +728,12 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   function dive(dx, dy, deg, curve) {
     to(body, { scale: '1' }, curve)
     to(move, { transform: `translate(${dx}px, ${dy}px) rotate(${deg}deg)` }, curve)
-    if (playful() && first) play(tail, [{ transform: 'none' }, { transform: 'rotate(-12deg)', offset: 0.48 }, { transform: 'none' }], { duration: 420, easing: 'ease-out', fill: 'none' })
   }
 
   // ---- pointer and keyboard focus ----
-  let pointer = null
-  let focused = null
-  let keyboard = false
-  let frame = 0
-  function setGaze(gx, gy) {
-    x.style.setProperty('--gx', gx.toFixed(3))
-    x.style.setProperty('--gy', gy.toFixed(3))
-  }
-  // The eyes look at the pointer, or at a control that keyboard focus reached, until the next
-  // pointer move. The whale's hit box shrinks and rises with the pond when a card comes, so it is
-  // measured each time.
-  function applyGaze() {
-    frame = 0
-    if (reducedFx()) return setGaze(0, 0)
-    let gx = D.bx
-    let gy = D.by
-    const control = focused && focused === document.activeElement && focused.checkVisibility() ? focused.getBoundingClientRect() : null
-    const target = control ? { x: control.left + control.width / 2, y: control.top + control.height / 2 } : pointer
-    if (target && playful() && !D.gazeHold && !D.handed && !failure() && !['down', 'lift', 'dive'].includes(D.pose)) {
-      const rect = hit.getBoundingClientRect()
-      gx = clamp((target.x - (rect.left + rect.width / 2)) / 160)
-      gy = clamp((target.y - (rect.top + rect.height / 2)) / 160)
-    }
-    setGaze(gx, gy)
-  }
-  function setBase(bx, by) { D.bx = bx; D.by = by; applyGaze() }
-  window.addEventListener('pointermove', (event) => { pointer = { x: event.clientX, y: event.clientY }; focused = null; frame ||= requestAnimationFrame(applyGaze) }, { passive: true })
-  root.addEventListener('pointerleave', () => { pointer = null; applyGaze() })
   hit.addEventListener('pointerenter', petStart)
   hit.addEventListener('pointerleave', petEnd)
   hit.addEventListener('click', spoutClick)
-  // Keyboard focus only: the card's own focus move after a pointer answer is not followed.
-  window.addEventListener('keydown', () => { keyboard = true }, true)
-  window.addEventListener('pointerdown', () => { keyboard = false }, true)
-  document.addEventListener('focusin', (event) => {
-    const el = event.target
-    if (!keyboard || !el.matches?.('button, input[type=checkbox]') || !el.closest('.sheet, .caption') || !el.matches(':focus-visible')) return
-    focused = el
-    applyGaze()
-  })
 
   // ---- answering a card: press anticipation, nod, lean released ----
   const answering = target => { const button = target?.closest?.('.card button[data-act]'); return button && !LOCAL.has(button.dataset.act) ? button : null }
@@ -938,22 +770,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     later(mine, 1000, () => { D.leanOff = false; leanIn() })
     nod()
   }, true)
-
-  // ---- coming back to the window: one glance at the user ----
-  let blurAt = 0
-  let hiddenAt = 0
-  function returnGlance(since) {
-    if (!since || performance.now() - since < 5000) return
-    if (!stirs() || D.legging || D.handed || D.hop || D.pet) return
-    glance(['loop', 'rest'])
-  }
-  window.addEventListener('blur', () => { blurAt = performance.now() })
-  window.addEventListener('focus', () => { returnGlance(blurAt); blurAt = 0 })
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { hiddenAt = performance.now(); return }
-    returnGlance(hiddenAt)
-    hiddenAt = 0
-  })
 
   // ---- reconcile ----
   async function step() {
@@ -1076,10 +892,9 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
       const previous = D.slow
       D.slow = level
       if (level === 0) {
-        D.glanced = false
-        for (const el of [loop, tail, pair, move, ...eyes]) for (const a of el.getAnimations()) if (a.playbackRate !== 1) a.updatePlaybackRate(1)
+        for (const el of [loop, move]) for (const a of el.getAnimations()) if (a.playbackRate !== 1) a.updatePlaybackRate(1)
       }
-      if (level === 1) { calm(); if (!D.glanced) { D.glanced = true; glance() } }
+      if (level === 1) calm()
       if (level === 2 || previous === 2) { bump(); kick() }
     },
     nod,
@@ -1110,17 +925,14 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     refresh() {
       stopBreath()
       D.press = null
-      for (const el of [body, move, loop, tail, pair, lane, ripple, ...eyes, ...happy]) for (const a of scripted(el)) settle(a, el)
+      for (const el of [body, move, loop, lane, ripple]) for (const a of scripted(el)) settle(a, el)
       D.hop = null
       D.pet = null
       D.lean = false
       if (reduced()) {
-        for (const el of [gazeLayer, body, move, loop, ...eyes, ...happy]) { for (const a of scripted(el)) a.cancel(); el.style.removeProperty('transform'); el.style.removeProperty('scale'); el.style.removeProperty('opacity') }
-        root.dataset.eyes = ['down', 'lift'].includes(D.pose) ? 'heavy' : D.slow >= 2 ? 'squint' : ''
-        applyGaze()
+        for (const el of [breathLayer, body, move, loop]) { for (const a of scripted(el)) a.cancel(); el.style.removeProperty('transform'); el.style.removeProperty('scale'); el.style.removeProperty('opacity') }
         return
       }
-      delete root.dataset.eyes
       if (['down', 'lift'].includes(D.pose)) D.pose = 'redo'
       D.loop = ''
       D.card = ''

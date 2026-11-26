@@ -65,14 +65,14 @@ html[data-up] .pond{translate:0 -60px;scale:.62}
 /* The whale's flight to the Main Bot at the hand-off (whale.js leap): window-wide and above the
    stage, so neither the lane's clip at the waterline nor the stage holds it. */
 .flight{position:fixed;inset:0;overflow:visible;pointer-events:none}
-.whale-gaze,.whale,.whale-move,.whale-loop{width:100%;height:100%}
-/* .whale-gaze scales only for the breath at rest (whale.js), around the same pivot. */
-.whale-gaze,.whale,.whale-move,.whale-loop{transform-origin:49.95% 79%}
-.whale-gaze{translate:calc(var(--gx,0) * 4.6 * var(--u)) calc(var(--gy,0) * 2.3 * var(--u));transition:translate .18s ease-out}
-.whale-svg{display:block;width:100%;height:100%;overflow:visible;forced-color-adjust:none}
-#tail{transform-box:view-box;transform-origin:27.9px 61.1px}
-.bt-eye,#eye-pair,#gaze{transform-box:fill-box;transform-origin:center}
-#gaze{transform:translate(calc(var(--gx,0) * 12%),calc(var(--gy,0) * 11%));transition:transform .18s ease-out}
+.whale-breath,.whale,.whale-move,.whale-loop{width:100%;height:100%}
+/* .whale-breath scales only for the breath at rest (whale.js), around the same pivot. */
+.whale-breath,.whale,.whale-move,.whale-loop{transform-origin:49.95% 79%}
+/* image */
+/* Generated from assets/anbot-whale.png by scripts/start-assets.mjs; do not edit. */
+.whale-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('whale@2x.png')}
+@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img{background-image:url('whale@3x.png')}}
+/* /image */
 .whale-hit{position:absolute;left:290px;top:140px;width:140px;height:108px;border-radius:50%;pointer-events:auto}
 .fx{position:absolute;inset:0;pointer-events:none}
 .ripple{position:absolute;left:326px;top:236px;width:68px;height:12px;box-sizing:border-box;border:1.5px solid var(--bt-line-2);border-radius:50%;opacity:0}
@@ -270,8 +270,6 @@ html[data-held] *{animation-play-state:paused!important}
 @keyframes bt-ripple-scale{from{scale:.5}to{scale:1.6}}
 @keyframes bt-ripple-fade{from{opacity:.9}to{opacity:0}}
 html[data-start=first]:not([data-resume],[data-entered]) .whale-move{animation:bt-enter-first var(--spring-stretch-ms) var(--spring-stretch) backwards}
-html[data-start=first]:not([data-resume],[data-entered]) .bt-eye{animation:bt-wake .16s ease-out .36s backwards}
-html[data-start=first]:not([data-resume],[data-entered],[data-tier=quiet]) #tail{animation:bt-flick-in .4s ease-in-out .3s}
 html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .ripple{animation:bt-ripple-scale var(--spring-shape-ms) var(--spring-shape) .12s backwards,bt-ripple-fade .56s linear .12s}
 html[data-start=first]:not([data-resume],[data-settled]) .voice{animation:bt-veil .22s ease-out .16s backwards}
 html:not([data-resume],[data-settled]) .water{animation:bt-veil .22s ease-out .22s backwards}
@@ -280,38 +278,24 @@ html[data-start=first]:not([data-resume],[data-settled]) .place{animation:bt-vei
 html:is([data-start=later],[data-start=moving]):not([data-resume],[data-entered]) .whale-move{animation:bt-enter-later var(--spring-tap-ms) var(--spring-tap) backwards}
 html:is([data-start=later],[data-start=moving]):not([data-resume],[data-settled]) .voice{animation:bt-veil .22s ease-out .06s backwards}
 
-/* state loops, keyed on data-whale and data-tail; plugin keyframes (styles.js:84-105) in px via --u */
+/* state loops, keyed on data-whale; plugin keyframes (styles.js:84-105) in px via --u */
 html[data-whale=searching] .whale-loop{animation:bt-seek 1s ease-in-out infinite}
-html[data-whale=searching] #eye-pair{animation:bt-scan 1.6s ease-in-out infinite}
 html[data-whale=working] .whale-loop{animation:bt-bob 1.6s ease-in-out infinite}
-html[data-whale=working] .bt-eye{animation:bt-blink 2.4s ease-in-out infinite}
 html[data-whale=pondering] .whale-loop{animation:bt-ponder 2.2s ease-in-out infinite}
-html[data-whale=pondering] .bt-eye{animation:bt-squint 2.2s ease-in-out infinite}
 html[data-whale=sending] .whale-loop{animation:bt-dash 1.1s cubic-bezier(.4,0,.2,1) infinite}
-html[data-tail=beat]:not([data-tier=quiet]) #tail{animation:bt-tail-beat 1.1s ease-in-out -.55s infinite alternate}
-html[data-tail=dash]:not([data-tier=quiet]) #tail{animation:bt-tail-dash .55s ease-in-out -.275s infinite alternate}
 @keyframes bt-seek{0%,100%{transform:rotate(-4deg)}50%{transform:translateY(calc(-2.9 * var(--u))) rotate(-1deg)}}
-@keyframes bt-scan{0%,100%{transform:translateX(-12%)}50%{transform:translateX(12%)}}
 @keyframes bt-bob{0%,100%{transform:none}30%{transform:translateY(calc(-2.3 * var(--u))) rotate(-5deg)}65%{transform:rotate(4deg)}}
-@keyframes bt-blink{0%,42%,50%,100%{transform:none}46%{transform:scaleY(.03)}48%{transform:scaleY(1.06)}}
 @keyframes bt-ponder{0%,100%{transform:rotate(4deg)}50%{transform:translateY(calc(-1.7 * var(--u))) rotate(7deg)}}
-@keyframes bt-squint{0%,100%{transform:translate(0,-4%) scaleY(.7)}50%{transform:translate(5%,-5%) scaleY(.78)}}
 @keyframes bt-dash{0%,100%{transform:none}35%{transform:translateX(calc(8.3 * var(--u))) rotate(7deg)}55%{transform:translateX(calc(-1.8 * var(--u))) rotate(-3deg)}}
-@keyframes bt-tail-beat{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
-@keyframes bt-tail-dash{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
 
 /* hand-off: window-level content fades */
 html[data-exit~=caption] .caption,html[data-exit~=all] :is(.voice,.water,.ring,.props,.spout,.sheet,.place){opacity:0;transition:opacity .16s}
 html[data-hidden] *{animation-play-state:paused!important}
 
 /* reduced motion (ui-standard 9.6, styles.js:106): static whale, fades only */
-:root[data-eyes=squint] .bt-eye{transform:translate(0,-4%) scaleY(.7)}
-:root[data-eyes=heavy] .bt-eye{transform:translateY(1.5px) scaleY(.55)}
-:root[data-eyes=happy] .bt-eye{transform:scaleY(0)}
-:root[data-eyes=happy] .bt-eye-happy{opacity:1}
 @media (prefers-reduced-motion:reduce){
 :root{--bt-fx-blur-6:none}
-:root :is(.whale-x,.whale-gaze,.whale,.whale-move,.whale-loop,#tail,#gaze,#eye-pair,.bt-eye,.bt-eye-happy,.ripple,.stage){animation:none!important;transition:none!important}
+:root :is(.whale-x,.whale-breath,.whale,.whale-move,.whale-loop,.ripple,.stage){animation:none!important;transition:none!important}
 :root :is(.voice,.water,.place,.arc-base,.arc-glow,.ring,.props,.props *){animation:none!important}
 :root .props>g{scale:none!important;transition:opacity .12s!important}
 :root :is(.arc-fill,.ring-full){transition-duration:.12s!important}
@@ -323,7 +307,7 @@ html[data-hidden] *{animation-play-state:paused!important}
 }
 :root[data-effects=reduced],:root[data-effects=off]{--bt-fx-blur-6:none}
 :root:is([data-effects=reduced],[data-effects=off]) .voice>span{animation:none!important;background:none!important;color:var(--bt-ink)!important}
-:root:is([data-effects=reduced],[data-effects=off]) :is(.arc-glow,.page,.gear-big,.gear-small,[data-p=engine],.box-moving,.mate),:root:is([data-effects=reduced],[data-effects=off])[data-whale] :is(.whale-loop,#eye-pair,.bt-eye),:root:is([data-effects=reduced],[data-effects=off])[data-tail] #tail{animation:none!important}
+:root:is([data-effects=reduced],[data-effects=off]) :is(.arc-glow,.page,.gear-big,.gear-small,[data-p=engine],.box-moving,.mate),:root:is([data-effects=reduced],[data-effects=off])[data-whale] .whale-loop{animation:none!important}
 :root[data-effects=off] :is(*,::before,::after){animation:none!important;transition:none!important}
 :root[data-effects=off] .props>g,:root[data-effects=off] .btn:active{scale:none!important}
 :root[data-effects=off] :is(.voice,.caption>*,.card,.miss,.banner,.log,.confirm,.models,.more,[data-u]){filter:none!important;scale:none!important}
