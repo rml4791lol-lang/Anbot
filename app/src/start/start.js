@@ -5,7 +5,6 @@
 // (and text nodes), never as markup.
 import { fill as fillIn, t } from './text.mjs'
 import { createDirector, reduced, reducedFx, play, spring, sleep, clamped } from './whale.js'
-
 const root = document.documentElement
 const asked = new URLSearchParams(location.search).get('start')
 const START = ['first', 'later', 'moving'].includes(asked) ? asked : 'first'
@@ -67,8 +66,13 @@ const HTML_LANG = { zh: 'zh-CN', 'zh-TW': 'zh-TW', ja: 'ja', ko: 'ko', es: 'es',
 function renderStatic() {
   root.lang = HTML_LANG[lang] ?? lang ?? 'en'
   for (const el of document.querySelectorAll('.track [data-t], .footrow [data-t], .caption [data-t]')) render(el)
+  syncPhase()
   $('.track').setAttribute('aria-label', say('status.track'))
   for (const st of document.querySelectorAll('.station')) st.querySelector('.sr').textContent = say(`status.state.${st.dataset.state}`)
+  // Start with the first stage's words; a snapshot with no active arc yet still has a line.
+  $('.phase').textContent = document.querySelector('.station[data-phase=data] [data-t]')?.textContent ?? ''
+  $('.phase').setAttribute('data-on', '')
+  new MutationObserver(syncPhase).observe($('.pond'), { attributes: true, subtree: true, attributeFilter: ['data-state'] })
   if (s) { fillBlock(shown); placeUI(s.place); timeUI() }
 }
 // Where the data goes, centred in the footer with a grey 〔换个位置…〕: on a first start (the main
@@ -181,6 +185,24 @@ function blockFor(snap) {
 }
 // The edge and fill layers are pre-sized to the sheet; only their clip-path moves, so a card
 // morph never lays anything out per frame.
+let phaseTimer
+// The visible stage line under the tabs mirrors the active arc's station. The full track stays
+// screen-reader-only; this is the glanceable version of the same state.
+function syncPhase() {
+  const phase = $('.phase')
+  const arcs = [...document.querySelectorAll('.arc')]
+  // Prefer the running stage, then a failed one, then the last done stage: the line should not
+  // blink out between stages just because no arc is active for a moment.
+  const source = arcs.find(a => a.dataset.state === 'active') ?? arcs.find(a => a.dataset.state === 'failed') ?? arcs.filter(a => a.dataset.state === 'done').pop()
+  const station = source ? document.querySelector(`.station[data-phase="${source.dataset.phase}"] [data-t]`) : undefined
+  const next = station?.textContent ?? ''
+  if (!next) return
+  if (phase.textContent === next && phase.hasAttribute('data-on')) return
+  phase.removeAttribute('data-on')
+  clearTimeout(phaseTimer)
+  phaseTimer = setTimeout(() => { phase.textContent = next; phase.setAttribute('data-on', '') }, 120)
+}
+
 function morph(target, jump) {
   const h = Math.max(0, Math.min(Math.round(target), sheet.clientHeight))
   if (h === edgeH) return
@@ -329,11 +351,16 @@ async function flyIn(mine) {
     land()
   }
 }
-// Where the import's arc is, as the page shows it now (the pond may be shrunk): the middle of the
-// arc on a ring of four, else the gap after the data folder's arc that it grows out of.
+// Where the import's tab is, as the page shows it now (the paper stage may be shrunk): the middle
+// of the fourth tab, which is only there while the copy has four stages.
 function importPoint() {
+  const seg = document.querySelector('.progress .seg[data-phase=import]')
+  if (seg && seg.checkVisibility()) {
+    const box = seg.getBoundingClientRect()
+    return new DOMPoint(box.left + box.width / 2, box.top + box.height / 2)
+  }
   const ring = $('.ring')
-  const a = ((ring.dataset.n === '4' ? 135 : 120) * Math.PI) / 180
+  const a = (120 * Math.PI) / 180
   return new DOMPoint(110 + 106 * Math.sin(a), 110 - 106 * Math.cos(a)).matrixTransform(ring.getScreenCTM())
 }
 

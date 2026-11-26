@@ -66,6 +66,14 @@ win:
     - target: nsis
       arch: [x64]
   icon: assets/icon.ico
+  # The release workflow feeds the decoded PFX through WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD; this
+  # section only pins the digest and timestamp policy. electron-builder signs the installer before
+  # the .blockmap and latest.yml are written, so the update metadata hashes the signed bytes. No
+  # certificate, password or thumbprint lives in this file.
+  signtoolOptions:
+    # RFC 3161 timestamp, SHA-256 digest (see winPackager: /tr with /td sha256 for sha256).
+    rfc3161TimeStampServer: http://timestamp.digicert.com
+    signingHashAlgorithms: [sha256]
 nsis:
   # Anbot's own identity (2026-11-26). An installer replaces an older Anbot install in place;
   # an upstream DS Bot stays a separate application. The deb's --replaces/--conflicts keep

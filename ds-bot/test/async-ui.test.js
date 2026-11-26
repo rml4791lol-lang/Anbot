@@ -126,8 +126,8 @@ test('tasksForChat, taskCountsOf, and taskDeckItems scope DM vs group tasks and 
   const grpTasks = tasksForChat({ room, roster })
   assert.deepEqual(Array.from(grpTasks, item => item.id), ['k_grp2', 'k_grp'])
 
-  assert.deepEqual({ ...taskCountsOf({ bot: botA }) }, { active: 2, waitingApproval: 1, total: 3 })
-  assert.deepEqual({ ...taskCountsOf({ room, roster }) }, { active: 2, waitingApproval: 1, total: 2 })
+  assert.deepEqual({ ...taskCountsOf({ bot: botA }) }, { active: 2, waitingApproval: 1, queued: 0, total: 3 })
+  assert.deepEqual({ ...taskCountsOf({ room, roster }) }, { active: 2, waitingApproval: 1, queued: 0, total: 2 })
   assert.equal(isActiveTask(botA.tasks[0]), false)
   assert.equal(isActiveTask(botA.tasks[1]), true)
 
@@ -140,6 +140,32 @@ test('tasksForChat, taskCountsOf, and taskDeckItems scope DM vs group tasks and 
   assert.equal(deck[0].task.id, 'k_apv')
   assert.equal(deck[1].kind, 'task')
   assert.equal(deck[1].task.id, 'k_run')
+})
+
+test('queued tasks count as active, stay out of Completed, and show in the task capsule', () => {
+  const bot = {
+    id: 'a',
+    name: 'Chief',
+    tasks: [
+      { id: 'k_q', title: 'Queue this', status: 'queued', startedAt: Date.now(), updatedAt: Date.now() },
+    ],
+  }
+  const roster = { byId: { a: bot }, roomsById: {}, prefs: {} }
+  const tasks = tasksForChat({ bot })
+  assert.deepEqual({ ...taskCountsOf({ bot }) }, { active: 1, waitingApproval: 0, queued: 1, total: 1 })
+  assert.equal(isActiveTask(tasks[0]), true)
+
+  const islandTree = renderTree(TaskIslandPod({ bot, roster, tasks, approvals: [], open: false, targetId: 'a', actions: {} }))
+  const bar = findAll(islandTree, n => n.props?.className === 'bt-task-bar')
+  assert.equal(bar.length, 1)
+  const dot = findAll(islandTree, n => n.props?.className === 'bt-task-dot')
+  assert.equal(dot[0].props['data-status'], 'queued')
+
+  const detailsTree = renderTree(DetailsTaskList({ tasks, sessionId: 'a', actions: {} }))
+  assert.match(collectText(detailsTree), /Queue this/)
+  assert.match(collectText(detailsTree), /Queued/)
+  const groups = findAll(detailsTree, n => n.props?.className === 'bt-tlist-group')
+  assert.equal(groups.length, 1)
 })
 
 test('TaskIslandPod, SidebarTaskPill, DetailsTaskList, and TaskIslandPanel render expected controls and fire actions', () => {

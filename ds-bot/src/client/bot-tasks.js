@@ -19,7 +19,7 @@ import { hostText, mdLabels, t } from './i18n.js'
 // - Right-panel read-only task viewer (`TaskReaderView`) reusing BotPanel
 // - Details drawer task section (`DetailsTaskList`)
 
-export const ACTIVE_TASK_STATUSES = new Set(['running', 'waiting_work', 'waiting_approval'])
+export const ACTIVE_TASK_STATUSES = new Set(['running', 'queued', 'waiting_work', 'waiting_approval'])
 
 export const isActiveTask = task => task !== undefined && task !== null && ACTIVE_TASK_STATUSES.has(task.status)
 
@@ -59,12 +59,14 @@ export function taskCountsOf({ bot, room, roster }) {
   const list = tasksForChat({ bot, room, roster })
   let active = 0
   let waitingApproval = 0
+  let queued = 0
   for (const task of list) {
     if (!isActiveTask(task)) continue
     active += 1
     if (task.status === 'waiting_approval') waitingApproval += 1
+    else if (task.status === 'queued') queued += 1
   }
-  return { active, waitingApproval, total: list.length }
+  return { active, waitingApproval, queued, total: list.length }
 }
 
 // Builds the Focus Deck items for one conversation:
@@ -113,6 +115,7 @@ export function taskDeckItems({ bot, room, roster, approvals = [], focusTaskId =
 export function taskStatusLabel(status) {
   switch (status) {
     case 'running': return t('Running')
+    case 'queued': return t('Queued')
     case 'waiting_work': return t('Waiting for teammate')
     case 'waiting_approval': return t('Waiting for approval')
     case 'completed': return t('Done')
@@ -139,11 +142,19 @@ export function TaskIslandPod({ bot, room, roster, tasks = [], approvals = [], o
   if (active.length === 0) return null
   const waiting = Math.max(active.filter(item => item.status === 'waiting_approval').length, approvals.length)
   const needsApproval = waiting > 0
+  const queued = active.filter(item => item.status === 'queued').length
+  const leadStatus = needsApproval
+    ? 'waiting_approval'
+    : active.some(item => item.status !== 'queued') ? 'running' : 'queued'
   const label = active.length === 1
-    ? active[0].title
+    ? active[0].status === 'queued'
+      ? t('Queued · {title}', { title: active[0].title })
+      : active[0].title
     : needsApproval
       ? t('{count} background tasks · {waiting} needs approval', { count: active.length, waiting })
-      : t('{count} background tasks running', { count: active.length })
+      : queued > 0
+        ? t('{count} background tasks · {queued} queued', { count: active.length, queued })
+        : t('{count} background tasks running', { count: active.length })
   return h(Fragment, null,
     h('button', {
       type: 'button',
@@ -152,7 +163,7 @@ export function TaskIslandPod({ bot, room, roster, tasks = [], approvals = [], o
       'aria-expanded': open,
       onClick: () => (actions.toggleTaskDeck ? actions.toggleTaskDeck(targetId) : actions.openTaskDeck?.(targetId)),
     },
-    h('span', { className: 'bt-task-dot', 'data-status': needsApproval ? 'waiting_approval' : 'running', 'aria-hidden': true }),
+    h('span', { className: 'bt-task-dot', 'data-status': leadStatus, 'aria-hidden': true }),
     h('span', { className: 'bt-task-bar-label' }, label),
     active.length === 1 && active[0].startedAt
       ? h(Elapsed, { at: active[0].startedAt, className: 'bt-task-bar-time' })
@@ -162,11 +173,13 @@ export function TaskIslandPod({ bot, room, roster, tasks = [], approvals = [], o
 }
 
 // Sidebar count pill (Scheme A): calm count badge next to Bot/Room name.
-export function SidebarTaskPill({ active, waitingApproval, onClick }) {
+export function SidebarTaskPill({ active, waitingApproval, queued = 0, onClick }) {
   if (!active || active <= 0) return null
   const label = waitingApproval > 0
     ? t('{count} background tasks · {waiting} needs approval', { count: active, waiting: waitingApproval })
-    : t('{count} background tasks running', { count: active })
+    : queued > 0
+      ? t('{count} background tasks · {queued} queued', { count: active, queued })
+      : t('{count} background tasks running', { count: active })
   return h('span', {
     className: 'bt-task-pill',
     'data-approval': waitingApproval > 0 || undefined,
@@ -250,6 +263,7 @@ export function TaskIslandPanel({ bot, room, roster, approvals = [], focusTaskId
   const approvalItem = item.kind === 'approval' ? item.approvalItem : null
   const isApproval = approvalItem !== null
   const taskActive = task !== undefined && isActiveTask(task)
+  const taskQueued = task?.status === 'queued'
   const panelSubject = room?.sessionId ?? room?.id ?? bot?.sessionId ?? bot?.id ?? targetId
 
   const answerApproval = (choice) => {
@@ -341,7 +355,7 @@ export function TaskIslandPanel({ bot, room, roster, approvals = [], focusTaskId
                 : task.brief && task.brief !== task.title ? h('div', { className: 'bt-btask-desc' }, task.brief) : null)
           : null,
 
-        task && taskActive && !isApproval && typeof actions.sendTask === 'function'
+        task && taskActive && !taskQueued && !isApproval && typeof actions.sendTask === 'function'
           ? h('div', { className: 'bt-btask-reply' },
               h('textarea', {
                 ref: inputRef,
@@ -689,6 +703,7 @@ export const TASKS_CSS = `
 /* Shared luminous status dot */
 .bt-task-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--bt-ink-3)}
 .bt-task-dot[data-status=running]{background:var(--bt-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-accent) 18%,transparent)}
+.bt-task-dot[data-status=queued]{background:var(--bt-ink-3)}
 .bt-task-dot[data-status=waiting_work]{background:var(--bt-green)}
 .bt-task-dot[data-status=waiting_approval]{background:var(--bt-star);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-star) 22%,transparent)}
 .bt-task-dot[data-status=completed]{background:var(--bt-green)}
@@ -717,6 +732,7 @@ export const TASKS_CSS = `
 .bt-btask-who{font-weight:600}
 .bt-btask-status{font-weight:500}
 .bt-btask-status[data-status=running]{color:var(--bt-accent)}
+.bt-btask-status[data-status=queued]{color:var(--bt-ink-2)}
 .bt-btask-status[data-status=waiting_approval]{color:var(--bt-warn)}
 .bt-btask-status[data-status=completed]{color:var(--bt-green)}
 .bt-btask-status[data-status=failed]{color:var(--bt-danger)}

@@ -71,14 +71,31 @@ export function botGroupWork(botId, work, roster) {
 export function summaryText(busy) {
   const asks = busy.filter(entry => entry.state === 'ask')
   const workers = busy.filter(entry => entry.state === 'work')
+  const queued = busy.filter(entry => entry.state === 'queued')
   const names = asks.slice(0, 2).map(entry => entry.bot.name)
   const waiting = asks.length === 0 ? ''
     : asks.length === 1 ? t('{name} is waiting for your approval', { name: names[0] })
       : asks.length === 2 ? t('{first} and {second} are waiting for your approval', { first: names[0], second: names[1] })
         : t('{first}, {second} and {count} more are waiting for your approval', { first: names[0], second: names[1], count: asks.length - 2, total: asks.length })
   const first = workers[0]
-  const doing = first ? `${first.bot.name} · ${workPhrase(first.doing)}…${workers.length > 1 ? ` +${workers.length - 1}` : ''}` : ''
+  const doing = first
+    ? `${first.bot.name} · ${workPhrase(first.doing)}…${workers.length > 1 ? ` +${workers.length - 1}` : ''}`
+    : queued.length > 0
+      ? `${queued[0].bot.name} · ${t('Queued')}${queued.length > 1 ? ` +${queued.length - 1}` : ''}`
+      : ''
   return { waiting, doing }
+}
+
+// A queued background task is still this member's work for the group; it has no
+// running turn yet, so it joins the capsule only when the member is otherwise idle.
+function queuedMembers(room, busy, roster) {
+  const busyIds = new Set(busy.map(entry => entry.id))
+  return (room.members ?? []).flatMap((id) => {
+    if (busyIds.has(id)) return []
+    const bot = roster?.byId?.[id]
+    const task = (bot?.tasks ?? []).find(item => item?.status === 'queued' && item.roomId === room.id)
+    return task === undefined ? [] : [{ id, bot, task, state: 'queued', approvals: [], computerAsks: [], here: false }]
+  })
 }
 
 // What the capsule shows, as plain data: it outlives the work for its exit.
@@ -86,12 +103,14 @@ function dockModel(sessionId, roster, work, computer) {
   const room = roster.roomsById[sessionId]
   if (room) {
     const busy = dockMembers(busyMembers(room, work, roster, computer))
-    if (busy.length === 0) return null
-    const { waiting, doing } = summaryText(busy)
+    const queued = queuedMembers(room, busy, roster)
+    if (busy.length === 0 && queued.length === 0) return null
+    const members = [...busy, ...queued]
+    const { waiting, doing } = summaryText(members)
     const hasRoomApproval = roomApprovals(room, work, computer, roster).length > 0
     return {
       open: hasRoomApproval ? { approval: room.id, details: room.id } : { details: room.id },
-      faces: busy.slice(0, FACES_MAX).map(entry => ({ id: entry.id, ask: entry.state === 'ask', state: workState(entry.doing) })),
+      faces: members.slice(0, FACES_MAX).map(entry => ({ id: entry.id, ask: entry.state === 'ask', state: entry.state === 'queued' ? 'idle' : workState(entry.doing) })),
       waiting, doing,
     }
   }

@@ -145,6 +145,24 @@ test('one capsule names who waits and who works, without the round\'s speaker, a
   assert.equal(dock('r1', { bots: {}, rooms: { r1: [{ botId: 'd', since: 1, speaking: true }] }, approvals: [] }), null)
 })
 
+test('a queued task shows in its group capsule and opens the details', () => {
+  const queuedTeam = {
+    ...team,
+    byId: { ...team.byId, a: { ...team.byId.a, tasks: [{ id: 'k_q', roomId: 'r1', title: 'Queue this', status: 'queued' }] } },
+  }
+  const calls = []
+  const capsule = capsuleOf(MemberDock({
+    sessionId: 'r1',
+    useRoster: pick => pick(queuedTeam),
+    useWork: pick => pick({ bots: {}, rooms: {}, approvals: [] }),
+    actions: { showDetails: id => calls.push(['details', id]) },
+  }))
+  assert.ok(capsule)
+  assert.equal(capsule.props['aria-label'], 'Anvil · Queued')
+  capsule.props.onClick()
+  assert.deepEqual(calls, [['details', 'r1']])
+})
+
 test('a Bot\'s own chat shows the groups it is at work in, unless its own chat runs', () => {
   const away = { bots: { a: { since: 1, roomId: 'r1', tool: 'pwsh' } }, rooms: { r1: [{ botId: 'a', since: 1, tool: 'pwsh' }], r2: [{ botId: 'a', since: 1 }] }, approvals: [] }
   assert.deepEqual(plain(dock('a', away)), { label: 'in Ops · Running shell commands… +1', calls: [['session', 'r1']] })

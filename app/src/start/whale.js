@@ -9,6 +9,7 @@
 // One-shots run on WAAPI and end with commitStyles() + cancel(); loops are CSS keyed on
 // html[data-whale]. Every await is raced against a timer, because a
 // hidden document stops ticking animations.
+
 const root = document.documentElement
 const rm = matchMedia('(prefers-reduced-motion: reduce)')
 const tierNow = () => root.dataset.motion || 'normal'
@@ -129,7 +130,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   const first = start === 'first'
   // The entrance's clock starts once the window is on screen (`begin`, start.js).
   let t0 = performance.now()
-  const entranceMs = resume ? 0 : first ? 560 : 290
+  const entranceMs = resume ? 0 : first ? 1300 : 290
   const D = { at: 0, checks: 0, passed: 0, pose: 'enter', loop: '', card: '', slow: 0, since: [t0], activeAt: [], loopAt: 0, hop: null, pet: null, handed: false, workReady: first, missed: false, sinking: false,
     // Rest on a card: its clock, the lean, the breath, the lively hops; the press.
     clockKind: '', cardAt: 0, lean: false, leanDue: false, leanOff: false, leanMine: -1, restMine: -1, breath: null, hopsStopped: false, legging: false, press: null, nodAt: 0 }
@@ -161,7 +162,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   const begun = begin.then(() => { t0 = performance.now(); D.since[0] = t0 })
   const entered = begun.then(() => sleep(entranceMs)).then(() => { root.dataset.entered = '' })
   // Finished entrance veils are dropped, so later fades of the same blocks stay composited.
-  begun.then(() => sleep(resume ? 0 : 700)).then(() => { root.dataset.settled = '' })
+  begun.then(() => sleep(resume ? 0 : first ? 1650 : 700)).then(() => { root.dataset.settled = '' })
   if (resume) instant = true
   if (!first) begun.then(() => { setTimeout(() => { D.workReady = true; if (D.started) kick() }, resume ? 0 : 1000) })
 
@@ -351,20 +352,19 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   }
   function squash(big) {
     drop(body)
-    const a = play(body, kf([{ scale: '1' }, { scale: big ? '1.12 .88' : '1.07 .93', offset: 0.3 }, { scale: '.96 1.05', offset: 0.62 }, { scale: '1' }], OUT), { duration: 460, fill: 'none' })
+    const a = play(body, kf([{ scale: '1' }, { scale: big ? '1.07 .93' : '1.04 .96', offset: 0.3 }, { scale: '.96 1.05', offset: 0.62 }, { scale: '1' }], OUT), { duration: 460, fill: 'none' })
     a.done.then(() => a.cancel())
   }
-  // No spout once the team is ready: the hand-off spouts by itself.
+  // She is paper, not a whale: a click answers with a nod and a squash, never a spout.
   function spoutClick() {
     if (D.handed || want.view === 'handoff' || ['dive', 'sunk', 'enter'].includes(D.pose) || D.sinking) return
     const now = performance.now()
     clicks = clicks.filter(at => now - at < 2500)
     clicks.push(now)
-    if (['down', 'lift'].includes(D.pose)) { spout({ small: true }); return }
     const big = clicks.length >= 4
     if (big) clicks = []
     if (!reduced()) squash(big)
-    spout({ big })
+    nod()
   }
   function sendRipple() {
     if (!playful()) return
@@ -546,6 +546,10 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
   async function resetRun() {
     // A new folder or a blank team: sink, empty the ring while under, resurface. No spout while
     // the whale is under (D.sinking).
+    delete root.dataset.hurt
+    delete root.dataset.hit
+    $('.basin').style.opacity = '0'
+    delete root.dataset.basin
     D.sinking = true
     petEnd()
     stopHop()
@@ -651,6 +655,7 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     root.dataset.ring = 'closed'
     D.handed = true
     D.pose = 'dive'
+    delete root.dataset.hurt
     const begin = performance.now()
     const at = ms => sleep(Math.max(0, begin + ms - performance.now()))
     const pose = capture()
@@ -658,39 +663,87 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     if (reduced()) return stillHandoff(at)
     release(pose, { duration: 200, easing: 'ease-out' })
     if (want.celebrate) return spoutHandoff(at)
-    // A beat for the ring to close, then the jump (handoffShow at its top, 100 + RISE_MS) or the
-    // dive (handoffShow at 220 ms).
+    // A beat, then she ducks back under the paper edge: handoffShow at 220 ms. No leap to the
+    // avatar, so the page never hands over the old hatted look.
     await at(100)
     root.dataset.exit = 'caption all'
-    if (want.landing) return jump(at, 100)
+    delete root.dataset.basin
     dive(12, DEEP(), 18, spring('tap'))
     await at(220)
+    root.dataset.drop = ''
+    if (playful()) {
+      to(move, { transform: 'translate(0px, 680px) rotate(7deg)' }, { duration: 820, easing: 'cubic-bezier(.4,0,.9,1)' })
+    } else move.style.transform = 'translate(0px, 680px) rotate(7deg)'
+    await at(1040)
     act('handoffShow')
-    await at(390)
+    await at(1280)
     act('handoffDone')
   }
-  // A celebrating hand-off (a first start, or the first success after a failure) spouts as the
-  // ring closes and jumps (or dives) once the column has opened: handoffShow at the top of the
-  // jump (560 + RISE_MS), or at 720 ms with the dive.
+  // A celebrating hand-off (a first start, or the first success after a failure): the ring
+  // closes, an iron basin drops on her head, and she ducks back under the paper edge with it.
+  // handoffShow at 720 ms. The basin is inside .whale-x, so it travels with her; the lane stops
+  // clipping while data-basin is set, and clips her away as she goes under.
   async function spoutHandoff(at) {
+    const basin = $('.basin')
+    root.dataset.basin = ''
+    basin.style.opacity = '1'
+    basin.style.transform = 'translate(5px, -210px) rotate(-9deg)'
     drop(body)
-    play(body, kf([{ scale: '1' }, { scale: '1.12 .88', offset: 240 / 460 }, { scale: '.93 1.09' }], OUT), { duration: 460 })
-    if (playful()) spout()
-    await at(160)
-    root.dataset.exit = 'caption'
-    await at(560)
+    if (playful()) {
+      play(basin, [
+        { transform: 'translate(5px, -210px) rotate(-9deg)' },
+        { transform: 'translate(-1px, 0px) rotate(5deg)', offset: .8 },
+        { transform: 'translate(-2px, -6px) rotate(6.5deg)', offset: .9 },
+        { transform: 'translate(-2px, 0px) rotate(4deg)' },
+      ], { duration: 300, easing: 'linear', fill: 'forwards' })
+    } else basin.style.transform = 'translate(-2px, 0px) rotate(4deg)'
+    await at(300)
+    root.dataset.hit = ''
+    root.dataset.hurt = ''
+    if (playful()) {
+      squash(true)
+      play(lane, kf([{ transform: 'none' }, { transform: 'translate(6px,2px)', offset: .16 }, { transform: 'translate(-5px,-1px)', offset: .34 }, { transform: 'translate(3px,1px)', offset: .52 }, { transform: 'translate(-1px,0)', offset: .72 }, { transform: 'none' }], 'linear'), { duration: 380, fill: 'none' })
+    }
+    // The basin settles with its own small bounce. Keep the contact for a beat: the hit has to
+    // read before she reacts.
+    await at(330)
+    if (playful() && !reduced()) {
+      drop(basin)
+      basin.style.transform = 'translate(-2px, 0px) rotate(4deg)'
+      play(basin, [
+        { transform: 'translate(-2px, 0px) rotate(4deg)' },
+        { transform: 'translate(-1px, -2px) rotate(2.8deg)', offset: .36 },
+        { transform: 'translate(-2px, 0px) rotate(3.6deg)' },
+      ], { duration: 420, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' })
+    }
+    await at(420)
+    // A small knockback: she is out on her feet for a moment, then falls back under the paper.
+    if (playful()) {
+      play(move, [
+        { transform: 'translateY(0px)' },
+        { transform: 'translateY(-10px) rotate(-2deg)', offset: .34 },
+        { transform: 'translateY(0px) rotate(1deg)', offset: .7 },
+        { transform: 'translateY(6px)', offset: .88 },
+        { transform: 'translateY(4px)' },
+      ], { duration: 220, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' })
+    }
+    await at(620)
+    // Knocked out: the hurt face stays; she falls straight through the middle and takes the
+    // white sheet with her. The paper edge goes first, so nothing cuts her off at the rim.
     root.dataset.exit = 'caption all'
-    if (want.landing) return jump(at, 560)
-    dive(18, DEEP(), 24, spring('shape'))
-    await at(660)
-    sendRipple()
-    await at(720)
+    root.dataset.drop = ''
+    if (playful()) {
+      to(move, { transform: 'translate(0px, 680px) rotate(7deg)' }, { duration: 820, easing: 'cubic-bezier(.4,0,.9,1)' })
+    } else move.style.transform = 'translate(0px, 680px) rotate(7deg)'
+    await at(1440)
+    delete root.dataset.hit
     act('handoffShow')
-    await at(980)
+    await at(1700)
     act('handoffDone')
   }
   // Reduced motion: the arcs' .12 s fill and the closed ring are seen before the content fades.
   async function stillHandoff(at) {
+    delete root.dataset.hurt
     await at(300)
     root.dataset.exit = 'caption all lane'
     await at(420)
@@ -698,31 +751,6 @@ export function createDirector({ start, resume, act, label, announce, onCheck, o
     await at(440)
     act('handoffDone')
   }
-  // The jump to the Main Bot (start-window §8). The whale leaves the lane (its clip would cut it
-  // at the waterline) for the window-wide .flight layer and rises out of the water, upright and
-  // looking ahead as the avatar sits, and stops at the top. handoffShow says where it is: the
-  // team page draws the same whale there and holds it while the two windows cross-fade, then
-  // glides it onto the Main Bot's avatar. The start window never resizes under it.
-  async function jump(at, from) {
-    const settleIn = { duration: Math.round(RISE_MS * 0.6), easing: OUT }
-    to(body, { scale: '1' }, settleIn)
-    to(move, { transform: 'none' }, settleIn)
-    const box = x.getBoundingClientRect()
-    for (const a of scripted(x)) a.cancel()
-    $('.flight').append(x)
-    x.style.left = `${box.left}px`
-    x.style.top = `${box.top}px`
-    x.style.transformOrigin = '0 0'
-    // The pond may still be shrunk for a card that has just gone: it rises at the size it shows.
-    const scale = (box.width / x.offsetWidth).toFixed(3)
-    play(x, [{ transform: `translate(0px, 0px) scale(${scale})` }, { transform: `translate(0px, ${String(-LIFT)}px) scale(${scale})` }], { duration: RISE_MS, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' })
-    await at(from + RISE_MS)
-    act('handoffShow', { whale: { x: box.left, y: box.top - LIFT, size: box.width } })
-    await at(from + RISE_MS + 260)
-    act('handoffDone')
-  }
-  const RISE_MS = 300
-  const LIFT = 40
   // 1.25 x the whale's height: fully under the waterline within about 200 ms.
   const DEEP = () => Math.round(125 * u)
   function dive(dx, dy, deg, curve) {

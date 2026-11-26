@@ -262,6 +262,8 @@ var JA = {
   "{name} result": "{name} の結果",
   "Artifacts presented": "提示された成果物",
   "Completed": "完了",
+  "Queued": "待機中",
+  "Queued · {title}": "待機中 · {title}",
   "Failed": "失敗",
   "Session": "セッション",
   "Command": "コマンド",
@@ -2155,6 +2157,7 @@ var JA = {
   "This turn has already ended": "このターンはすでに終了しました",
   "Teammate request": "仲間からの依頼",
   "{count} background tasks · {waiting} needs approval": "バックグラウンドタスク {count} 件・承認待ち {waiting} 件",
+  "{count} background tasks · {queued} queued": "バックグラウンドタスク {count} 件 · {queued} 件待機中",
   "{count} background tasks running": "バックグラウンドタスク {count} 件を実行中",
   "Sent to background task": "バックグラウンドタスクへ送信しました",
   "Background tasks": "バックグラウンドタスク",
@@ -3677,6 +3680,8 @@ var KO = {
   "{name} result": "{name} 결과",
   "Artifacts presented": "제시된 산출물",
   "Completed": "완료",
+  "Queued": "대기 중",
+  "Queued · {title}": "대기 중 · {title}",
   "Session": "세션",
   "Command": "명령",
   "Exit code": "종료 코드",
@@ -5611,6 +5616,7 @@ var KO = {
   "This turn has already ended": "이 턴은 이미 끝났습니다",
   "Teammate request": "동료 요청",
   "{count} background tasks · {waiting} needs approval": "백그라운드 작업 {count}개 · 승인 대기 {waiting}건",
+  "{count} background tasks · {queued} queued": "백그라운드 작업 {count}개 · {queued}개 대기 중",
   "{count} background tasks running": "백그라운드 작업 {count}개 실행 중",
   "Sent to background task": "백그라운드 작업으로 보냄",
   "Background tasks": "백그라운드 작업",
@@ -7135,6 +7141,8 @@ var ES = {
   "{name} result": "Resultado de {name}",
   "Artifacts presented": "Artefactos presentados",
   "Completed": "Completado",
+  "Queued": "En cola",
+  "Queued · {title}": "En cola · {title}",
   "Session": "Sesión",
   "Command": "Comando",
   "Exit code": "Código de salida",
@@ -9070,6 +9078,7 @@ var ES = {
   "This turn has already ended": "Este turno ya ha terminado",
   "Teammate request": "Solicitud de compañero",
   "{count} background tasks · {waiting} needs approval": "{count} tareas en segundo plano · {waiting} requieren aprobación",
+  "{count} background tasks · {queued} queued": "{count} tareas en segundo plano · {queued} en cola",
   "{count} background tasks running": "{count} tareas en segundo plano en curso",
   "Sent to background task": "Enviado a la tarea en segundo plano",
   "Background tasks": "Tareas en segundo plano",
@@ -10595,6 +10604,8 @@ var FR = {
   "{name} result": "Résultat de {name}",
   "Artifacts presented": "Artefacts présentés",
   "Completed": "Terminé",
+  "Queued": "En file d’attente",
+  "Queued · {title}": "En file d’attente · {title}",
   "Session": "Session",
   "Command": "Commande",
   "Exit code": "Code de sortie",
@@ -12488,6 +12499,7 @@ var FR = {
   "This turn has already ended": "Ce tour est déjà terminé",
   "Teammate request": "Demande d'un coéquipier",
   "{count} background tasks · {waiting} needs approval": "{count} tâches en arrière-plan · {waiting} en attente d'approbation",
+  "{count} background tasks · {queued} queued": "{count} tâches en arrière-plan · {queued} en file d’attente",
   "{count} background tasks running": "{count} tâches en arrière-plan en cours",
   "Sent to background task": "Envoyé à la tâche en arrière-plan",
   "Background tasks": "Tâches en arrière-plan",
@@ -14008,6 +14020,8 @@ var DE = {
   "{name} result": "Ergebnis von {name}",
   "Artifacts presented": "Präsentierte Artefakte",
   "Completed": "Abgeschlossen",
+  "Queued": "In Warteschlange",
+  "Queued · {title}": "In Warteschlange · {title}",
   "Failed": "Fehlgeschlagen",
   "Session": "Sitzung",
   "Command": "Befehl",
@@ -15945,6 +15959,7 @@ var DE = {
   "This turn has already ended": "Dieser Durchlauf ist bereits beendet",
   "Teammate request": "Anfrage eines Teammitglieds",
   "{count} background tasks · {waiting} needs approval": "{count} Hintergrundaufgaben · {waiting} warten auf Freigabe",
+  "{count} background tasks · {queued} queued": "{count} Hintergrundaufgaben · {queued} in Warteschlange",
   "{count} background tasks running": "{count} Hintergrundaufgaben aktiv",
   "Sent to background task": "An Hintergrundaufgabe gesendet",
   "Background tasks": "Hintergrundaufgaben",
@@ -17358,6 +17373,8 @@ var ZH = {
   "{name} result": "{name} 结果",
   "Artifacts presented": "已呈现产物",
   "Completed": "已完成",
+  Queued: "排队中",
+  "Queued · {title}": "排队中 · {title}",
   "Session": "会话",
   "Exit code": "退出码",
   "Diff digest": "差异摘要",
@@ -19489,6 +19506,7 @@ var ZH = {
   "This turn has already ended": "当前轮次已经结束",
   "Teammate request": "同伴请求",
   "{count} background tasks · {waiting} needs approval": "{count} 个后台任务 · {waiting} 项待批准",
+  "{count} background tasks · {queued} queued": "{count} 个后台任务 · {queued} 个排队中",
   "{count} background tasks running": "{count} 个后台任务运行中",
   "Sent to background task": "已发给后台任务",
   "Background tasks": "后台任务",
@@ -22692,10 +22710,33 @@ body[data-bt-motion=quiet] .bt-mark[data-gaze] .bt-gaze,body[data-bt-effects=red
 .bt-mark[data-state=alert] .bt-b{animation:bt-hop 1.3s cubic-bezier(.3,.7,.4,1) 2}
 .bt-mark[data-shape=image]:not([data-state=idle]) .bt-mark-img{animation:bt-bob 1.6s ease-in-out infinite}
 .bt-mark[data-shape=image][data-state=alert] .bt-mark-img{animation:bt-hop 1.3s cubic-bezier(.3,.7,.4,1) 2}
+
+/* Built-in bitmap marks bake their disc into the image. Rotate the image around its
+   centre for state changes: the disc silhouette stays put while the character inside
+   rocks and reacts; uploaded photos keep the whole-frame motion. */
+.bt-mark[data-shape=image] .bt-mark-img.bt-mark-built{transform-origin:50% 50%}
+.bt-mark[data-shape=image][data-state=thinking] .bt-mark-img.bt-mark-built{animation:bt-inner-think 2.6s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=searching] .bt-mark-img.bt-mark-built{animation:bt-inner-search 2s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=working] .bt-mark-img.bt-mark-built{animation:bt-inner-work 2.4s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=sending] .bt-mark-img.bt-mark-built{animation:bt-inner-send 1.8s ease-in-out infinite}
+.bt-mark[data-shape=image]:is([data-state=orbit],[data-state=waiting]) .bt-mark-img.bt-mark-built{animation:bt-inner-wait 3.2s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=alert] .bt-mark-img.bt-mark-built{animation:bt-inner-alert 1.8s ease-in-out 2}
+.bt-mark[data-shape=image][data-state=done] .bt-mark-img.bt-mark-built{animation:bt-inner-done 1.8s ease-in-out 1}
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=hop] .bt-mark-img.bt-mark-built,
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=stretch] .bt-mark-img.bt-mark-built,
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=look] .bt-mark-img.bt-mark-built{animation:bt-inner-rock 9s ease-in-out var(--bt-fidget-delay,0s) infinite}
 body[data-bt-motion=lively] .bt-mark[data-state=alert] :is(.bt-b,.bt-mark-img){animation-iteration-count:infinite}
 .bt-mark[data-state=done] .bt-b{animation:bt-done 1.8s linear 1}
 .bt-mark[data-shape=image][data-state=done] .bt-mark-img{animation:bt-done 1.8s linear 1;transform-origin:50% 100%}
 @keyframes bt-done{0%{transform:none;animation-timing-function:cubic-bezier(.4,0,.2,1)}13.3%{transform:scale(1.12,.88);animation-timing-function:cubic-bezier(.4,0,.2,1)}25.6%{transform:scale(.93,1.09);animation-timing-function:cubic-bezier(.4,0,.2,1)}37.8%{transform:scale(1.04,.97);animation-timing-function:cubic-bezier(.4,0,.2,1)}51.1%,100%{transform:none}}
+@keyframes bt-inner-rock{0%,8%,100%{transform:rotate(0)}3%{transform:rotate(-3deg)}5.5%{transform:rotate(2deg)}}
+@keyframes bt-inner-think{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes bt-inner-search{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(3deg)}}
+@keyframes bt-inner-work{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}70%{transform:rotate(3deg)}}
+@keyframes bt-inner-send{0%,100%{transform:rotate(0)}35%{transform:rotate(5deg)}60%{transform:rotate(-3deg)}}
+@keyframes bt-inner-wait{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes bt-inner-alert{0%,100%{transform:rotate(0)}20%{transform:rotate(-5deg)}40%{transform:rotate(5deg)}}
+@keyframes bt-inner-done{0%,100%{transform:rotate(0)}30%{transform:rotate(-5deg)}60%{transform:rotate(3deg)}}
 .bt-mark-poke .bt-b{animation:bt-poke .8s cubic-bezier(.3,.7,.4,1) 1!important;transform-origin:50% 60%!important}
 .bt-mark-poke .bt-mark-img{animation:bt-poke-img .6s ease-out 1!important}
 .bt-mark[data-poke]{cursor:pointer}
@@ -38180,7 +38221,7 @@ function ToolCell({ node, sessionId, useRoster, useUi, useWork, useHeldCards, us
 
 // src/client/bot-tasks.js
 var import_react38 = require("react");
-var ACTIVE_TASK_STATUSES = /* @__PURE__ */ new Set(["running", "waiting_work", "waiting_approval"]);
+var ACTIVE_TASK_STATUSES = /* @__PURE__ */ new Set(["running", "queued", "waiting_work", "waiting_approval"]);
 var isActiveTask = (task) => task !== void 0 && task !== null && ACTIVE_TASK_STATUSES.has(task.status);
 var taskSort = (a, b) => {
   const aRank = a.status === "waiting_approval" ? 0 : isActiveTask(a) ? 1 : 2;
@@ -38209,12 +38250,14 @@ function taskCountsOf({ bot, room: room2, roster }) {
   const list = tasksForChat({ bot, room: room2, roster });
   let active = 0;
   let waitingApproval = 0;
+  let queued = 0;
   for (const task of list) {
     if (!isActiveTask(task)) continue;
     active += 1;
     if (task.status === "waiting_approval") waitingApproval += 1;
+    else if (task.status === "queued") queued += 1;
   }
-  return { active, waitingApproval, total: list.length };
+  return { active, waitingApproval, queued, total: list.length };
 }
 function taskDeckItems({ bot, room: room2, roster, approvals = [], focusTaskId = null }) {
   const tasks = tasksForChat({ bot, room: room2, roster });
@@ -38254,6 +38297,8 @@ function taskStatusLabel(status) {
   switch (status) {
     case "running":
       return t("Running");
+    case "queued":
+      return t("Queued");
     case "waiting_work":
       return t("Waiting for teammate");
     case "waiting_approval":
@@ -38285,7 +38330,9 @@ function TaskIslandPod({ bot, room: room2, roster, tasks = [], approvals = [], o
   if (active.length === 0) return null;
   const waiting = Math.max(active.filter((item) => item.status === "waiting_approval").length, approvals.length);
   const needsApproval = waiting > 0;
-  const label = active.length === 1 ? active[0].title : needsApproval ? t("{count} background tasks · {waiting} needs approval", { count: active.length, waiting }) : t("{count} background tasks running", { count: active.length });
+  const queued = active.filter((item) => item.status === "queued").length;
+  const leadStatus = needsApproval ? "waiting_approval" : active.some((item) => item.status !== "queued") ? "running" : "queued";
+  const label = active.length === 1 ? active[0].status === "queued" ? t("Queued · {title}", { title: active[0].title }) : active[0].title : needsApproval ? t("{count} background tasks · {waiting} needs approval", { count: active.length, waiting }) : queued > 0 ? t("{count} background tasks · {queued} queued", { count: active.length, queued }) : t("{count} background tasks running", { count: active.length });
   return (0, import_react38.createElement)(
     import_react38.Fragment,
     null,
@@ -38298,7 +38345,7 @@ function TaskIslandPod({ bot, room: room2, roster, tasks = [], approvals = [], o
         "aria-expanded": open,
         onClick: () => actions.toggleTaskDeck ? actions.toggleTaskDeck(targetId) : actions.openTaskDeck?.(targetId)
       },
-      (0, import_react38.createElement)("span", { className: "bt-task-dot", "data-status": needsApproval ? "waiting_approval" : "running", "aria-hidden": true }),
+      (0, import_react38.createElement)("span", { className: "bt-task-dot", "data-status": leadStatus, "aria-hidden": true }),
       (0, import_react38.createElement)("span", { className: "bt-task-bar-label" }, label),
       active.length === 1 && active[0].startedAt ? (0, import_react38.createElement)(Elapsed, { at: active[0].startedAt, className: "bt-task-bar-time" }) : (0, import_react38.createElement)("span", { className: "bt-task-bar-count" }, active.length),
       (0, import_react38.createElement)("span", { className: "bt-goal-chev", "aria-hidden": true }, (0, import_react38.createElement)(ChevronDownIcon))
@@ -38306,9 +38353,9 @@ function TaskIslandPod({ bot, room: room2, roster, tasks = [], approvals = [], o
     open ? (0, import_react38.createElement)(TaskIslandPanel, { bot, room: room2, roster, approvals, focusTaskId, targetId, actions }) : null
   );
 }
-function SidebarTaskPill({ active, waitingApproval, onClick }) {
+function SidebarTaskPill({ active, waitingApproval, queued = 0, onClick }) {
   if (!active || active <= 0) return null;
-  const label = waitingApproval > 0 ? t("{count} background tasks · {waiting} needs approval", { count: active, waiting: waitingApproval }) : t("{count} background tasks running", { count: active });
+  const label = waitingApproval > 0 ? t("{count} background tasks · {waiting} needs approval", { count: active, waiting: waitingApproval }) : queued > 0 ? t("{count} background tasks · {queued} queued", { count: active, queued }) : t("{count} background tasks running", { count: active });
   return (0, import_react38.createElement)(
     "span",
     {
@@ -38395,6 +38442,7 @@ function TaskIslandPanel({ bot, room: room2, roster, approvals = [], focusTaskId
   const approvalItem = item.kind === "approval" ? item.approvalItem : null;
   const isApproval = approvalItem !== null;
   const taskActive = task !== void 0 && isActiveTask(task);
+  const taskQueued = task?.status === "queued";
   const panelSubject = room2?.sessionId ?? room2?.id ?? bot?.sessionId ?? bot?.id ?? targetId;
   const answerApproval = (choice) => {
     if (busy || !approvalItem) return;
@@ -38484,7 +38532,7 @@ function TaskIslandPanel({ bot, room: room2, roster, approvals = [], focusTaskId
           task.error ? (0, import_react38.createElement)("div", { className: "bt-btask-err" }, task.error) : null,
           task.summary ? (0, import_react38.createElement)("div", { className: "bt-btask-desc" }, task.summary) : task.brief && task.brief !== task.title ? (0, import_react38.createElement)("div", { className: "bt-btask-desc" }, task.brief) : null
         ) : null,
-        task && taskActive && !isApproval && typeof actions.sendTask === "function" ? (0, import_react38.createElement)(
+        task && taskActive && !taskQueued && !isApproval && typeof actions.sendTask === "function" ? (0, import_react38.createElement)(
           "div",
           { className: "bt-btask-reply" },
           (0, import_react38.createElement)("textarea", {
@@ -38884,6 +38932,7 @@ var TASKS_CSS = `
 /* Shared luminous status dot */
 .bt-task-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--bt-ink-3)}
 .bt-task-dot[data-status=running]{background:var(--bt-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-accent) 18%,transparent)}
+.bt-task-dot[data-status=queued]{background:var(--bt-ink-3)}
 .bt-task-dot[data-status=waiting_work]{background:var(--bt-green)}
 .bt-task-dot[data-status=waiting_approval]{background:var(--bt-star);box-shadow:0 0 0 3px color-mix(in srgb,var(--bt-star) 22%,transparent)}
 .bt-task-dot[data-status=completed]{background:var(--bt-green)}
@@ -38912,6 +38961,7 @@ var TASKS_CSS = `
 .bt-btask-who{font-weight:600}
 .bt-btask-status{font-weight:500}
 .bt-btask-status[data-status=running]{color:var(--bt-accent)}
+.bt-btask-status[data-status=queued]{color:var(--bt-ink-2)}
 .bt-btask-status[data-status=waiting_approval]{color:var(--bt-warn)}
 .bt-btask-status[data-status=completed]{color:var(--bt-green)}
 .bt-btask-status[data-status=failed]{color:var(--bt-danger)}
@@ -39540,7 +39590,7 @@ var BotRow = memo(function BotRow2({ bot, roster, actions, useSessions, useBotCo
       (0, import_react40.createElement)(BotAvatar, { bot, size: 60, state, main: true }),
       (0, import_react40.createElement)("span", { className: "bt-tile-name" }, bot.name),
       bot.role ? (0, import_react40.createElement)("span", { className: "bt-chip" }, bot.role) : null,
-      (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })
+      (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })
     ));
   }
   return (0, import_react40.createElement)(
@@ -39563,7 +39613,7 @@ var BotRow = memo(function BotRow2({ bot, roster, actions, useSessions, useBotCo
     wide ? (0, import_react40.createElement)(
       "span",
       { className: "bt-row-body" },
-      (0, import_react40.createElement)("span", { className: "bt-row-name" }, (0, import_react40.createElement)("span", { className: "bt-row-title" }, bot.name), bot.engine ? (0, import_react40.createElement)(AgentBadge, { engine: bot.engine }) : null, pinned ? (0, import_react40.createElement)(PinMark) : null, (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })),
+      (0, import_react40.createElement)("span", { className: "bt-row-name" }, (0, import_react40.createElement)("span", { className: "bt-row-title" }, bot.name), bot.engine ? (0, import_react40.createElement)(AgentBadge, { engine: bot.engine }) : null, pinned ? (0, import_react40.createElement)(PinMark) : null, (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })),
       waitLine ? (0, import_react40.createElement)("span", { className: "bt-row-preview bt-row-preview-wait" }, waitLine) : runningLine ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, runningLine) : awayLine ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, awayLine) : deferredWaitLine ? (0, import_react40.createElement)("span", { className: "bt-row-preview bt-row-preview-wait" }, deferredWaitLine) : waitsFor ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, waitsFor) : preview ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, preview) : null
     ) : null,
     wide && alert && !active ? (0, import_react40.createElement)("span", { className: "bt-unread bt-unread-wait", "aria-hidden": true }) : wide && unread && !active ? (0, import_react40.createElement)("span", { className: "bt-unread", "aria-hidden": true }) : !wide && !active && (alert || unread) ? (0, import_react40.createElement)("span", { className: `bt-dot${alert ? " bt-dot-wait" : ""}`, "aria-hidden": true }) : null
@@ -39613,7 +39663,7 @@ var RoomRow = memo(function RoomRow2({ room: room2, roster, actions, useSessions
     wide ? (0, import_react40.createElement)(
       "span",
       { className: "bt-row-body" },
-      (0, import_react40.createElement)("span", { className: "bt-row-name" }, (0, import_react40.createElement)("span", { className: "bt-row-title" }, room2.name), pinned ? (0, import_react40.createElement)(PinMark) : null, (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })),
+      (0, import_react40.createElement)("span", { className: "bt-row-name" }, (0, import_react40.createElement)("span", { className: "bt-row-title" }, room2.name), pinned ? (0, import_react40.createElement)(PinMark) : null, (0, import_react40.createElement)(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })),
       approval ? (0, import_react40.createElement)("span", { className: "bt-row-preview bt-row-preview-wait" }, t("Waiting for your approval")) : workingLine ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, workingLine) : preview ? (0, import_react40.createElement)("span", { className: "bt-row-preview" }, preview) : null
     ) : null,
     wide && approval && !active ? (0, import_react40.createElement)("span", { className: "bt-unread bt-unread-wait", "aria-hidden": true }) : wide && unread && !active ? (0, import_react40.createElement)("span", { className: "bt-unread", "aria-hidden": true }) : !wide && !active && (approval || unread) ? (0, import_react40.createElement)("span", { className: `bt-dot${approval ? " bt-dot-wait" : ""}`, "aria-hidden": true }) : null
@@ -52953,22 +53003,34 @@ function botGroupWork(botId, work, roster) {
 function summaryText(busy) {
   const asks = busy.filter((entry) => entry.state === "ask");
   const workers = busy.filter((entry) => entry.state === "work");
+  const queued = busy.filter((entry) => entry.state === "queued");
   const names = asks.slice(0, 2).map((entry) => entry.bot.name);
   const waiting = asks.length === 0 ? "" : asks.length === 1 ? t("{name} is waiting for your approval", { name: names[0] }) : asks.length === 2 ? t("{first} and {second} are waiting for your approval", { first: names[0], second: names[1] }) : t("{first}, {second} and {count} more are waiting for your approval", { first: names[0], second: names[1], count: asks.length - 2, total: asks.length });
   const first = workers[0];
-  const doing = first ? `${first.bot.name} · ${workPhrase(first.doing)}…${workers.length > 1 ? ` +${workers.length - 1}` : ""}` : "";
+  const doing = first ? `${first.bot.name} · ${workPhrase(first.doing)}…${workers.length > 1 ? ` +${workers.length - 1}` : ""}` : queued.length > 0 ? `${queued[0].bot.name} · ${t("Queued")}${queued.length > 1 ? ` +${queued.length - 1}` : ""}` : "";
   return { waiting, doing };
+}
+function queuedMembers(room2, busy, roster) {
+  const busyIds = new Set(busy.map((entry) => entry.id));
+  return (room2.members ?? []).flatMap((id) => {
+    if (busyIds.has(id)) return [];
+    const bot = roster?.byId?.[id];
+    const task = (bot?.tasks ?? []).find((item) => item?.status === "queued" && item.roomId === room2.id);
+    return task === void 0 ? [] : [{ id, bot, task, state: "queued", approvals: [], computerAsks: [], here: false }];
+  });
 }
 function dockModel(sessionId, roster, work, computer) {
   const room2 = roster.roomsById[sessionId];
   if (room2) {
     const busy = dockMembers(busyMembers(room2, work, roster, computer));
-    if (busy.length === 0) return null;
-    const { waiting, doing } = summaryText(busy);
+    const queued = queuedMembers(room2, busy, roster);
+    if (busy.length === 0 && queued.length === 0) return null;
+    const members = [...busy, ...queued];
+    const { waiting, doing } = summaryText(members);
     const hasRoomApproval = roomApprovals(room2, work, computer, roster).length > 0;
     return {
       open: hasRoomApproval ? { approval: room2.id, details: room2.id } : { details: room2.id },
-      faces: busy.slice(0, FACES_MAX2).map((entry) => ({ id: entry.id, ask: entry.state === "ask", state: workState(entry.doing) })),
+      faces: members.slice(0, FACES_MAX2).map((entry) => ({ id: entry.id, ask: entry.state === "ask", state: entry.state === "queued" ? "idle" : workState(entry.doing) })),
       waiting,
       doing
     };

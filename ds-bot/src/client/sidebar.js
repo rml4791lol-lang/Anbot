@@ -183,7 +183,7 @@ const BotRow = memo(function BotRow({ bot, roster, actions, useSessions, useBotC
     h(BotAvatar, { bot, size: 60, state, main: true }),
     h('span', { className: 'bt-tile-name' }, bot.name),
     bot.role ? h('span', { className: 'bt-chip' }, bot.role) : null,
-    h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })))
+    h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })))
   }
   return h('button', {
     type: 'button', className: 'bt-row', 'aria-label': label, 'aria-current': active ? 'page' : undefined,
@@ -195,7 +195,7 @@ const BotRow = memo(function BotRow({ bot, roster, actions, useSessions, useBotC
   h(BotAvatar, { bot, size: wide ? 36 : 44, state, main }),
   pinned && !wide ? h(PinMark) : null,
   wide ? h('span', { className: 'bt-row-body' },
-    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, bot.name), bot.engine ? h(AgentBadge, { engine: bot.engine }) : null, pinned ? h(PinMark) : null, h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })),
+    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, bot.name), bot.engine ? h(AgentBadge, { engine: bot.engine }) : null, pinned ? h(PinMark) : null, h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })),
     waitLine ? h('span', { className: 'bt-row-preview bt-row-preview-wait' }, waitLine)
       : runningLine ? h('span', { className: 'bt-row-preview' }, runningLine)
         : awayLine ? h('span', { className: 'bt-row-preview' }, awayLine)
@@ -248,7 +248,7 @@ const RoomRow = memo(function RoomRow({ room, roster, actions, useSessions, useS
   h(RoomAvatar, { room, roster, size: wide ? 36 : 44 }),
   pinned && !wide ? h(PinMark) : null,
   wide ? h('span', { className: 'bt-row-body' },
-    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, room.name), pinned ? h(PinMark) : null, h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, onClick: openTasks })),
+    h('span', { className: 'bt-row-name' }, h('span', { className: 'bt-row-title' }, room.name), pinned ? h(PinMark) : null, h(SidebarTaskPill, { active: taskCounts.active, waitingApproval: taskCounts.waitingApproval, queued: taskCounts.queued, onClick: openTasks })),
     approval ? h('span', { className: 'bt-row-preview bt-row-preview-wait' }, t('Waiting for your approval'))
       : workingLine ? h('span', { className: 'bt-row-preview' }, workingLine)
         : preview ? h('span', { className: 'bt-row-preview' }, preview) : null) : null,

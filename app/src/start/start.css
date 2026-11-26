@@ -1,4 +1,23 @@
 /* Anbot start window. Geometry in DIP of the 720 x 540 window content (40 px band on top). */
+/* The whole page is one sheet of paper; it falls away at the hand-off. */
+.paper-base{position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--bt-card) 94%,#e7dccb 6%),var(--bt-main) 62%),repeating-linear-gradient(90deg,rgb(0 0 0/.012) 0 1px,transparent 1px 7px)}
+.paper-tear{position:fixed;inset:0;z-index:1;display:none;pointer-events:none;perspective:1200px;overflow:hidden}
+html[data-drop] .paper-base{opacity:0;transition:opacity .1s ease-out}
+html[data-drop] .paper-tear{display:block}
+html[data-drop] :is(.water,.progress,.ring,.props,.spout,.sheet,.place,.footrow,.band){opacity:0;transition:opacity .12s ease-out}
+.paper-tear::before{content:'';position:absolute;left:calc(50% - 4px);top:-2%;z-index:2;width:8px;height:104%;background:linear-gradient(180deg,rgb(20 20 20/.08),rgb(20 20 20/.34) 42%,rgb(20 20 20/.52) 78%,rgb(20 20 20/.18));clip-path:polygon(48% 0,64% 8%,42% 17%,70% 25%,46% 34%,66% 44%,40% 55%,62% 64%,44% 74%,58% 84%,42% 92%,54% 100%,45% 100%,30% 92%,47% 84%,34% 74%,55% 64%,38% 55%,60% 44%,40% 34%,64% 25%,37% 17%,55% 8%,38% 0);filter:blur(.35px);opacity:0}
+html[data-drop] .paper-tear::before{animation:bt-crack .22s ease-out both}
+@keyframes bt-crack{0%{opacity:0;transform:scaleY(.7)}55%{opacity:.8;transform:scaleY(1)}100%{opacity:.55;transform:scaleY(1)}}
+.paper-tear i{position:absolute;inset:0;display:block;background:linear-gradient(180deg,color-mix(in srgb,var(--bt-card) 94%,#e7dccb 6%),var(--bt-main) 62%),repeating-linear-gradient(90deg,rgb(0 0 0/.012) 0 1px,transparent 1px 7px);backface-visibility:hidden;will-change:transform,opacity;filter:drop-shadow(0 4px 10px rgb(0 0 0/.07))}
+.paper-tear i::after{content:'';position:absolute;top:0;bottom:0;width:34px;pointer-events:none;opacity:.9}
+.paper-tear .tear-left::after{right:calc(52% - 34px);background:linear-gradient(90deg,transparent,rgb(30 26 20/.12))}
+.paper-tear .tear-right::after{left:calc(48% - 0px);background:linear-gradient(270deg,transparent,rgb(30 26 20/.12))}
+.paper-tear .tear-left{clip-path:polygon(0 0,48% 0,50% 5%,47.5% 10%,50% 16%,48% 22%,51% 28%,48.5% 34%,50% 40%,47% 46%,50% 52%,48% 58%,51% 64%,48% 70%,49.5% 76%,47% 82%,50% 88%,48% 94%,49% 100%,0 100%);transform-origin:0 50%}
+.paper-tear .tear-right{clip-path:polygon(48% 0,100% 0,100% 100%,49% 100%,48% 94%,50% 88%,47% 82%,49.5% 76%,48% 70%,51% 64%,48% 58%,50% 52%,47% 46%,50% 40%,48.5% 34%,51% 28%,48% 22%,50% 16%,47.5% 10%,50% 5%);transform-origin:100% 50%}
+html[data-drop] .tear-left{animation:bt-tear-left .9s cubic-bezier(.32,.04,.18,1) forwards}
+html[data-drop] .tear-right{animation:bt-tear-right .9s cubic-bezier(.32,.04,.18,1) forwards}
+@keyframes bt-tear-left{0%{transform:none;opacity:1}35%{transform:perspective(1200px) rotateY(9deg) translateX(-1%);opacity:1}100%{transform:perspective(1200px) rotateY(-84deg) translateX(-5%);opacity:0}}
+@keyframes bt-tear-right{0%{transform:none;opacity:1}35%{transform:perspective(1200px) rotateY(-9deg) translateX(1%);opacity:1}100%{transform:perspective(1200px) rotateY(84deg) translateX(5%);opacity:0}}
 /* tokens */
 /* Generated from the DeepSeek theme in ds-bot/src/client/themes.js, inks.js and styles.js by scripts/start-assets.mjs; do not edit. */
 :root{color-scheme:light dark;--bt-main:#fcfcfc;--bt-card:#ffffff;--bt-ink:#141414;--bt-ink-2:rgba(20,20,20,0.6);--bt-line:rgba(20,20,20,0.08);--bt-line-2:rgba(20,20,20,0.15);--bt-hover:rgba(119,119,119,.09);--bt-accent:#4d6bfe;--bt-accent-ink:#ffffff;--bt-ink-deepseek:#4D6BFE;--bt-green:#00c972;--bt-danger:#e02135}
@@ -26,6 +45,9 @@
 @supports (corner-shape:superellipse(1.5)){*,::before,::after{corner-shape:superellipse(1.5)}.whale-hit,.ripple,.drop{corner-shape:round}}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:transparent}
+/* A small wordmark above her: the page needs a name, not just a stage. */
+.wordmark{position:absolute;left:0;top:84px;width:100%;text-align:center;font:600 11px/16px var(--font);letter-spacing:.24em;text-transform:uppercase;color:var(--bt-ink-2);opacity:.55;pointer-events:none;transition:opacity .2s ease-out}
+html[data-up] .wordmark,html[data-basin] .wordmark,html[data-drop] .wordmark,html[data-exit~=all] .wordmark{opacity:0}
 /* The stage hangs 45 px below the window until a card needs the sheet; body clips it rather
    than scrolls, so no focus, scroll anchoring or restored scroll position can shift the page. */
 html{overflow:hidden}
@@ -39,7 +61,7 @@ code{font-family:var(--mono);font-size:inherit}
 html[data-frame=system] .band{display:none}
 
 /* stage: everything that moves when a card needs the sheet */
-.stage{position:absolute;left:calc(50% - 360px);top:0;width:720px;height:100%}
+.stage{position:absolute;left:calc(50% - 360px);top:0;width:720px;height:100%;z-index:2}
 html[data-frame=system] .stage{top:-24px}
 /* Until a card needs the sheet, the whale, its ring and its line sit 45 px lower, a little above
    the window's visual centre (an integer translation, so the text stays on whole pixels). */
@@ -49,6 +71,9 @@ html:not([data-up]) .stage{translate:0 45px}
    never wraps (the copy is written to fit; the ellipsis is a last resort). When a card needs the
    sheet, the line rises with the pond on the same spring (start.js shift()), so it stays under
    the shrunken ring. */
+.phase{position:absolute;left:48px;top:282px;width:624px;height:16px;text-align:center;font-size:11px;line-height:16px;letter-spacing:.04em;color:var(--bt-ink-2);opacity:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transition:opacity .14s ease-out}
+.phase[data-on]{opacity:.62}
+html[data-up] .phase,html[data-basin] .phase,html[data-drop] .phase,html[data-exit~=all] .phase{opacity:0}
 .voice{position:absolute;left:48px;top:334px;width:624px;height:20px;text-align:center;font-size:15px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .16s ease-in}
 .voice[data-on]{opacity:1;transition:opacity .16s ease-out}
 html[data-up] .voice{translate:0 -108px}
@@ -61,23 +86,60 @@ html[data-up] .voice{translate:0 -108px}
 .pond{position:absolute;inset:0;pointer-events:none;transform-origin:360px 210px}
 html[data-up] .pond{translate:0 -60px;scale:.62}
 .lane{position:absolute;left:48px;top:102px;width:624px;height:140px;overflow:clip;pointer-events:none}
-.whale-x{position:absolute;left:256px;top:43px;width:112px;height:112px}
-/* The whale's flight to the Main Bot at the hand-off (whale.js leap): window-wide and above the
-   stage, so neither the lane's clip at the waterline nor the stage holds it. */
-.flight{position:fixed;inset:0;overflow:visible;pointer-events:none}
+.whale-x{position:absolute;left:248px;top:6px;width:128px;height:128px}
 .whale-breath,.whale,.whale-move,.whale-loop{width:100%;height:100%}
 /* .whale-breath scales only for the breath at rest (whale.js), around the same pivot. */
 .whale-breath,.whale,.whale-move,.whale-loop{transform-origin:49.95% 79%}
 /* image */
-/* Generated from assets/anbot-whale.png by scripts/start-assets.mjs; do not edit. */
-.whale-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('whale@2x.png')}
-@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img{background-image:url('whale@3x.png')}}
+/* Generated from assets/anbot-bot.png by scripts/start-assets.mjs; do not edit. */
+.whale-img,.peek-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('bot@2x.png')}
+.basin-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('basin@2x.png')}
+html[data-hurt] .whale-img{background-image:url('bot-hit@2x.png')}
+@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img,.peek-img{background-image:url('bot@3x.png')}.basin-img{background-image:url('basin@3x.png')}html[data-hurt] .whale-img{background-image:url('bot-hit@3x.png')}}
 /* /image */
-.whale-hit{position:absolute;left:290px;top:140px;width:140px;height:108px;border-radius:50%;pointer-events:auto}
+.whale-hit{position:absolute;left:304px;top:154px;width:112px;height:84px;border-radius:50%;pointer-events:auto}
 .fx{position:absolute;inset:0;pointer-events:none}
-.ripple{position:absolute;left:326px;top:236px;width:68px;height:12px;box-sizing:border-box;border:1.5px solid var(--bt-line-2);border-radius:50%;opacity:0}
+.ripple{position:absolute;left:326px;top:236px;width:68px;height:12px;box-sizing:border-box;border:1.5px solid var(--bt-line-2);border-radius:50%;opacity:0;display:none}
+.ripple::after{content:'';position:absolute;inset:-1.5px;border:1.5px solid var(--bt-line-2);border-radius:50%;opacity:0}
+/* Paper flecks at her feet: eight pieces of the paper she is cut from, thrown out as she lands. */
+.paper{position:absolute;inset:0;pointer-events:none}
+.paper span{position:absolute;left:310px;top:136px;width:5px;height:3px;border-radius:1px;background:#f2e8d5;opacity:0}
+.paper span:nth-child(2n){width:4px;height:4px;background:color-mix(in srgb,var(--bt-ink-deepseek) 58%,transparent)}
+.paper span:nth-child(1){--dx:-72px;--dy:-30px;--d:0s;--r:-80deg}
+.paper span:nth-child(2){--dx:-52px;--dy:-44px;--d:.04s;--r:30deg}
+.paper span:nth-child(3){--dx:-30px;--dy:-54px;--d:.02s;--r:70deg}
+.paper span:nth-child(4){--dx:-10px;--dy:-60px;--d:.06s;--r:-40deg}
+.paper span:nth-child(5){--dx:12px;--dy:-58px;--d:.03s;--r:40deg}
+.paper span:nth-child(6){--dx:34px;--dy:-50px;--d:.05s;--r:-70deg}
+.paper span:nth-child(7){--dx:56px;--dy:-38px;--d:.01s;--r:60deg}
+.paper span:nth-child(8){--dx:74px;--dy:-26px;--d:.07s;--r:-30deg}
+/* The head that peeks over the waterline before the rest of her: the same bitmap in a 58 px
+   window, so only her hat and face show. It rises, looks left and right, ducks, and the whole
+   body springs out where it was. */
+.peek{position:absolute;left:248px;top:82px;width:128px;height:58px;overflow:clip;opacity:0;pointer-events:none}
+.peek-img{width:128px;height:128px}
+html[data-entered] .peek{display:none}
+/* The iron basin that lands on her head as the window is about to go: it falls past the lane,
+   so the lane stops clipping while data-basin is set. */
+.basin{position:absolute;left:8px;top:-8px;width:112px;height:46px;transition:top .18s ease-out;opacity:0;pointer-events:none;filter:drop-shadow(0 6px 5px rgb(0 0 0 / .16))}
+.basin-shade{position:absolute;left:24px;top:10px;width:80px;height:36px;border-radius:50% 50% 42% 42%;background:linear-gradient(180deg,rgb(26 30 38 / .34),rgb(26 30 38 / 0) 78%);filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .14s ease-out}
+html[data-hit] .basin-shade{opacity:.5}
+html[data-basin] .lane{overflow:visible}
+.clang{position:absolute;left:286px;top:102px;width:148px;height:100px;border:2.5px solid color-mix(in srgb,var(--bt-ink-deepseek) 46%,transparent);border-radius:50%;opacity:0;pointer-events:none}
+/* Paper dust thrown off the rim at the knock. */
+.dust{position:absolute;left:360px;top:128px;pointer-events:none}
+.dust i{position:absolute;left:0;top:0;width:4px;height:3px;border-radius:1px;background:#efe4d4;opacity:0}
+.dust i:nth-child(2n){background:color-mix(in srgb,var(--bt-ink-deepseek) 45%,#e8ddcd)}
+.dust i:nth-child(1){--dx:-62px;--dy:-20px;--r:-70deg}
+.dust i:nth-child(2){--dx:-44px;--dy:-30px;--r:40deg}
+.dust i:nth-child(3){--dx:-22px;--dy:-34px;--r:-30deg}
+.dust i:nth-child(4){--dx:22px;--dy:-34px;--r:60deg}
+.dust i:nth-child(5){--dx:44px;--dy:-28px;--r:-50deg}
+.dust i:nth-child(6){--dx:62px;--dy:-16px;--r:30deg}
+html[data-hit] .dust i{animation:bt-dust .48s cubic-bezier(.15,.6,.4,1) both}
+@keyframes bt-dust{0%{opacity:.9;translate:0 0;scale:1}100%{opacity:0;translate:var(--dx) var(--dy);scale:.7;rotate:var(--r)}}
 /* The spout: the plume is a template that whale.js clones for each spout, with its drops. */
-.spout{position:absolute;left:61%;top:21%;width:0;height:0;pointer-events:none}
+.spout{position:absolute;left:51%;top:5%;width:0;height:0;pointer-events:none;display:none}
 .plume{position:absolute;left:-24px;top:-44px;width:48px;height:48px;overflow:visible;transform-origin:50% 100%}
 .plume path{fill:none;stroke:color-mix(in srgb,var(--bt-ink-deepseek) 70%,transparent);stroke-width:4;stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:1}
 .drop{position:absolute;left:-2.75px;top:-2.75px;width:5.5px;height:5.5px;border-radius:50%;background:color-mix(in srgb,var(--bt-ink-deepseek) 70%,transparent);pointer-events:none}
@@ -87,7 +149,7 @@ html[data-up] .pond{translate:0 -60px;scale:.62}
    light running along it, slower while the whale ponders. Done: drawn in the whale's blue,
    clockwise. Failed: red. The waterline is only the surface the whale rests on, soft at both
    ends. */
-.ring{position:absolute;left:250px;top:100px;width:220px;height:220px;overflow:visible}
+.ring{position:absolute;left:250px;top:100px;width:220px;height:220px;overflow:visible;opacity:0;pointer-events:none}
 .ring path,.ring circle{fill:none;stroke-width:2;stroke-linecap:round}
 /* A round cap is drawn wherever a dash touches its path, even a dash of no length: an empty fill
    (offset 100 of a 100-long path) left a dot at the arc's end. Hidden dashes lie wholly off the
@@ -115,12 +177,27 @@ html[data-ring=closed] .ring-full{stroke-dashoffset:0;opacity:1}
 html[data-ring=closed] .ring{animation:bt-ring-pulse .5s cubic-bezier(.3,.7,.4,1)}
 @keyframes bt-ring-pulse{0%,100%{scale:1}40%{scale:1.035}}
 html[data-resume] :is(.arc-fill,.ring-full){transition:none}
-.water{position:absolute;left:260px;top:242px;width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--bt-line-2) 18% 82%,transparent)}
+/* The paper stage: a torn strip she comes up through, a slit across it and three progress tabs
+   under it. No ring: the page stays paper, not a pond. */
+.water{position:absolute;left:222px;top:236px;width:276px;height:9px;pointer-events:none;background:var(--bt-card);clip-path:polygon(0 30%,4% 6%,11% 14%,18% 2%,26% 12%,35% 3%,44% 13%,53% 2%,62% 12%,71% 3%,80% 13%,89% 3%,96% 12%,100% 30%,100% 76%,95% 96%,87% 88%,78% 100%,69% 90%,60% 99%,51% 90%,42% 100%,33% 91%,24% 99%,15% 90%,7% 98%,0 92%);filter:drop-shadow(0 4px 3px rgb(0 0 0 / .12))}
+.water::before{content:'';position:absolute;left:50%;top:4px;width:156px;height:1.5px;transform:translateX(-50%);border-radius:2px;background:color-mix(in srgb,var(--bt-ink) 32%,transparent);box-shadow:0 1px 0 rgb(255 255 255 / .3);opacity:.45;animation:none!important}
+.water::after{content:none}
+/* The progress: one paper tab per stage, filling like the old arc, but on a rail, not a circle. */
+.progress{position:absolute;left:0;top:250px;width:100%;display:flex;justify-content:center;align-items:center;gap:5px;pointer-events:none}
+.seg{width:6px;height:6px;border-radius:1.5px;background:var(--bt-line);opacity:.38;transform-origin:50% 100%;transition:opacity .2s ease-out,background-color .2s ease-out,scale var(--spring-tap-ms) var(--spring-tap)}
+.pond:has(.ring:not([data-n="4"])) .seg[data-phase=import]{display:none}
+.pond:has(.arc[data-phase=data][data-state=active]) .seg[data-phase=data],.pond:has(.arc[data-phase=engine][data-state=active]) .seg[data-phase=engine],.pond:has(.arc[data-phase=team][data-state=active]) .seg[data-phase=team],.pond:has(.arc[data-phase=import][data-state=active]) .seg[data-phase=import]{opacity:1;background:color-mix(in srgb,var(--bt-ink-deepseek) 72%,transparent);animation:bt-seg .9s ease-in-out infinite;translate:0 -1px}
+.pond:has(.arc[data-phase=data][data-state=done]) .seg[data-phase=data],.pond:has(.arc[data-phase=engine][data-state=done]) .seg[data-phase=engine],.pond:has(.arc[data-phase=team][data-state=done]) .seg[data-phase=team],.pond:has(.arc[data-phase=import][data-state=done]) .seg[data-phase=import]{opacity:1;background:var(--bt-ink-deepseek);animation:none}
+.pond:has(.arc[data-phase=data][data-state=failed]) .seg[data-phase=data],.pond:has(.arc[data-phase=engine][data-state=failed]) .seg[data-phase=engine],.pond:has(.arc[data-phase=team][data-state=failed]) .seg[data-phase=team],.pond:has(.arc[data-phase=import][data-state=failed]) .seg[data-phase=import]{opacity:1;background:var(--bt-danger);animation:none}
+@keyframes bt-seg{0%,100%{scale:1 1;opacity:.8}50%{scale:1.08 .72;opacity:1}}
+/* A soft pool of light under the ring, so the whale surfaces out of depth rather than off a flat
+   page. Only on a first start; it stays for the rest of the page. */
+.pond::before{display:none}
 /* Stage props: in front of the whale, on the waterline, the work of the stage that is running:
    a folder whose pages riffle (data), two gears turning on a pulse (engine), the team popping up
    (team). Each shows only while its arc is active, so a stage done before it turns active shows
    none. Rotations keep the gears meshed: 9 and 6 teeth, so the small one turns 1.5 times as fast. */
-.props{position:absolute;left:413px;top:195px;width:46px;height:46px;overflow:visible}
+.props{position:absolute;left:437px;top:195px;width:46px;height:46px;overflow:visible;display:none}
 .props>g{opacity:0;scale:.6;transform-origin:20px 36px;transition:opacity .16s ease-in,scale .16s ease-in}
 .props *{transform-box:fill-box}
 .props>g{transform-box:view-box}
@@ -262,17 +339,36 @@ html[data-start=moving] .footrow{display:none}
 /* held at its first frame until the window is on screen (start.js data-held) */
 html[data-held] *{animation-play-state:paused!important}
 @keyframes bt-veil{from{opacity:0;filter:var(--bt-fx-blur-6,blur(6px))}}
-@keyframes bt-enter-first{from{transform:translateY(96px) rotate(-12deg)}}
+@keyframes bt-stage-in{from{opacity:.55;scale:1.012}}
+@keyframes bt-peek{0%{transform:translateY(66px)}18%{transform:translateY(0)}30%{transform:translate(-6px,-2px) rotate(-7deg)}42%{transform:translate(6px,-1px) rotate(6deg)}55%{transform:translateY(0) rotate(-2deg)}70%{transform:translateY(0)}88%{transform:translateY(58px);opacity:1}100%{transform:translateY(66px);opacity:0}}
+@keyframes bt-bot-show{0%,96%{opacity:0}100%{opacity:1}}
+@keyframes bt-enter-first{0%{transform:translateY(58px) scale(.9,.84)}45%{transform:translateY(-10px) scale(1.05,.96)}72%{transform:translateY(2px) scale(.98,1.02)}100%{transform:none}}
 @keyframes bt-enter-later{from{transform:translateY(84px)}}
+@keyframes bt-halo{from{opacity:0;scale:.84}to{opacity:.9;scale:1}}
+@keyframes bt-paper{0%{opacity:0;translate:0 2px;scale:.8;rotate:0deg}18%{opacity:.95}100%{opacity:0;translate:var(--dx) calc(var(--dy) + 24px);scale:.92;rotate:var(--r)}}
+@keyframes bt-water-wake{0%{opacity:0;scale:0 1}25%{opacity:.85}100%{opacity:0;scale:1 1}}
+@keyframes bt-ripple-dissolve{0%{opacity:.45}100%{opacity:0}}
 @keyframes bt-ring-draw{from{stroke-dashoffset:101}}
 @keyframes bt-wake{0%{transform:scaleY(.05)}60%{transform:scaleY(1.06)}}
 @keyframes bt-flick-in{0%,100%{transform:none}35%{transform:rotate(-10deg)}70%{transform:rotate(8deg)}}
 @keyframes bt-ripple-scale{from{scale:.5}to{scale:1.6}}
 @keyframes bt-ripple-fade{from{opacity:.9}to{opacity:0}}
-html[data-start=first]:not([data-resume],[data-entered]) .whale-move{animation:bt-enter-first var(--spring-stretch-ms) var(--spring-stretch) backwards}
-html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .ripple{animation:bt-ripple-scale var(--spring-shape-ms) var(--spring-shape) .12s backwards,bt-ripple-fade .56s linear .12s}
+html:not([data-resume],[data-settled]) .stage{animation:bt-stage-in .3s ease-out both}
+html[data-start=first]:not([data-resume],[data-entered]) .peek{animation:bt-peek .72s cubic-bezier(.2,.7,.35,1) both}
+html[data-start=first]:not([data-resume],[data-entered]) .whale-x{animation:bt-bot-show .62s linear both}
+html[data-start=first]:not([data-resume],[data-entered]) .whale-move{animation:bt-enter-first .62s cubic-bezier(.2,.7,.35,1) .62s backwards}
+html[data-start=first]:not([data-resume]) .pond::before{animation:bt-halo .72s ease-out .08s both}
+html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .ripple{animation:bt-ripple-scale var(--spring-shape-ms) var(--spring-shape) 1.02s backwards,bt-ripple-fade .56s linear 1.02s}
+html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .paper span{animation:bt-paper .54s cubic-bezier(.2,.6,.35,1) calc(var(--d) + 1.04s) backwards}
+html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .ripple::after{animation:bt-ripple-dissolve .5s linear 1.12s backwards}
+html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .water::before,html[data-start=first]:not([data-resume],[data-settled],[data-tier=quiet]) .water::after{animation:bt-water-wake .5s cubic-bezier(.2,.6,.35,1) 1.0s backwards}
+html:not([data-resume],[data-settled]) .arc:nth-of-type(1) .arc-base{animation-delay:.14s}
+html:not([data-resume],[data-settled]) .arc:nth-of-type(2) .arc-base{animation-delay:.2s}
+html:not([data-resume],[data-settled]) .arc:nth-of-type(3) .arc-base{animation-delay:.26s}
+html:not([data-resume],[data-settled]) .arc:nth-of-type(4) .arc-base{animation-delay:.32s}
 html[data-start=first]:not([data-resume],[data-settled]) .voice{animation:bt-veil .22s ease-out .16s backwards}
-html:not([data-resume],[data-settled]) .water{animation:bt-veil .22s ease-out .22s backwards}
+html:not([data-resume],[data-settled]) .water{animation:bt-paper-open .6s cubic-bezier(.2,.7,.35,1) .06s backwards}
+@keyframes bt-paper-open{0%{opacity:0;scale:.18 1;filter:drop-shadow(0 2px 2px rgb(0 0 0 / .04))}45%{opacity:.9;scale:.72 1}100%{scale:1}}
 html:not([data-resume],[data-settled]) .arc-base{animation:bt-ring-draw .5s cubic-bezier(.3,.7,.4,1) .18s backwards}
 html[data-start=first]:not([data-resume],[data-settled]) .place{animation:bt-veil .22s ease-out .42s backwards}
 html:is([data-start=later],[data-start=moving]):not([data-resume],[data-entered]) .whale-move{animation:bt-enter-later var(--spring-tap-ms) var(--spring-tap) backwards}
@@ -289,14 +385,15 @@ html[data-whale=sending] .whale-loop{animation:bt-dash 1.1s cubic-bezier(.4,0,.2
 @keyframes bt-dash{0%,100%{transform:none}35%{transform:translateX(calc(8.3 * var(--u))) rotate(7deg)}55%{transform:translateX(calc(-1.8 * var(--u))) rotate(-3deg)}}
 
 /* hand-off: window-level content fades */
-html[data-exit~=caption] .caption,html[data-exit~=all] :is(.voice,.water,.ring,.props,.spout,.sheet,.place){opacity:0;transition:opacity .16s}
+html[data-exit~=caption] .caption,html[data-exit~=all] :is(.voice,.water,.progress,.ring,.props,.spout,.sheet,.place){opacity:0;transition:opacity .16s}
 html[data-hidden] *{animation-play-state:paused!important}
 
 /* reduced motion (ui-standard 9.6, styles.js:106): static whale, fades only */
 @media (prefers-reduced-motion:reduce){
 :root{--bt-fx-blur-6:none}
-:root :is(.whale-x,.whale-breath,.whale,.whale-move,.whale-loop,.ripple,.stage){animation:none!important;transition:none!important}
-:root :is(.voice,.water,.place,.arc-base,.arc-glow,.ring,.props,.props *){animation:none!important}
+:root :is(.whale-x,.whale-breath,.whale,.whale-move,.whale-loop,.ripple,.stage,.peek,.basin,.clang,.dust i){animation:none!important;transition:none!important}
+:root :is(.voice,.water,.water::before,.water::after,.place,.arc-base,.arc-glow,.ring,.props,.props *,.ripple::after,.paper span){animation:none!important}
+:root[data-start=first] .pond::before{animation:none!important;opacity:.9;scale:1}
 :root .props>g{scale:none!important;transition:opacity .12s!important}
 :root :is(.arc-fill,.ring-full){transition-duration:.12s!important}
 :root .voice>span{animation:none!important;background:none!important;color:var(--bt-ink)!important}
@@ -307,7 +404,8 @@ html[data-hidden] *{animation-play-state:paused!important}
 }
 :root[data-effects=reduced],:root[data-effects=off]{--bt-fx-blur-6:none}
 :root:is([data-effects=reduced],[data-effects=off]) .voice>span{animation:none!important;background:none!important;color:var(--bt-ink)!important}
-:root:is([data-effects=reduced],[data-effects=off]) :is(.arc-glow,.page,.gear-big,.gear-small,[data-p=engine],.box-moving,.mate),:root:is([data-effects=reduced],[data-effects=off])[data-whale] .whale-loop{animation:none!important}
+:root:is([data-effects=reduced],[data-effects=off]) :is(.arc-glow,.page,.gear-big,.gear-small,[data-p=engine],.box-moving,.mate,.ripple::after,.water::before,.water::after,.paper span),:root:is([data-effects=reduced],[data-effects=off])[data-whale] .whale-loop{animation:none!important}
+:root:is([data-effects=reduced],[data-effects=off])[data-start=first] .pond::before{animation:none!important;opacity:.9;scale:1}
 :root[data-effects=off] :is(*,::before,::after){animation:none!important;transition:none!important}
 :root[data-effects=off] .props>g,:root[data-effects=off] .btn:active{scale:none!important}
 :root[data-effects=off] :is(.voice,.caption>*,.card,.miss,.banner,.log,.confirm,.models,.more,[data-u]){filter:none!important;scale:none!important}

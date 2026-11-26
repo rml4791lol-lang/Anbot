@@ -1,8 +1,8 @@
 // Writes the generated blocks of the start page in src/start from the plugin's client modules
 // in ../ds-bot (read only, as scripts/icon.mjs does):
 // - start.html, between <!-- whale --> markers: the Anbot papercut whale as a static bitmap.
-//   The raster itself is regenerated from the committed master assets/anbot-whale.png into
-//   src/start/whale@2x.png and whale@3x.png (224 and 336 px for the 112 px on-screen box).
+//   The raster itself is regenerated from the committed master assets/anbot-bot.png (and the
+//   cut-out basin from anbot-basin.png) into the @2x/@3x files beside it.
 // - start.css, between /* image */ markers: the bitmap's background rules.
 // - start.css, between /* tokens */ markers: the DeepSeek theme's light and dark colors.
 // - start.css, between /* springs */ markers: motion.js's springs as linear() curves.
@@ -32,28 +32,44 @@ const SPRINGS = ['shape', 'tap', 'pop', 'stretch', 'list']
 // The layer of the team window's card (preload.cjs).
 const CARD_SCOPE = '.dsb-card-layer'
 
-// The on-screen box is 112 px; the rasters are 2x and 3x of it.
-const WHALE_SIZES = [224, 336]
-const whaleFile = size => `whale@${String(size / 112)}x.png`
+// The on-screen box is 140 px; the rasters are 2x and 3x of it.
+const BOT_BOX = 128
+const BOT_SIZES = [BOT_BOX * 2, BOT_BOX * 3]
+const botFile = size => `bot@${String(size / BOT_BOX)}x.png`
+const hitFile = size => `bot-hit@${String(size / BOT_BOX)}x.png`
+// The basin she already wears as a hat, cut from the hatted master: 132 x 56 on screen.
+const BASIN = [112, 46]
+const BASIN_SIZES = [2, 3]
+const basinFile = scale => `basin@${String(scale)}x.png`
 
-// The start whale markup: a static bitmap, sized by the rules in the /* image */ block.
+// The start bot markup: a static bitmap, sized by the rules in the /* image */ block.
 const rig = () => '<div class="whale-img" aria-hidden="true"></div>'
 
 // Regenerate one raster from the committed master: trim the transparent border, then fit the
 // cutout on a transparent square at the target size.
-async function whaleRaster(size) {
-  const trimmed = await sharp(join(assetsDir, 'anbot-whale.png')).ensureAlpha().trim().toBuffer({ resolveWithObject: true })
+async function botRaster(size, master = 'anbot-bot.png') {
+  const trimmed = await sharp(join(assetsDir, master)).ensureAlpha().trim().toBuffer({ resolveWithObject: true })
   return sharp(trimmed.data)
     .resize(size, size, { kernel: 'lanczos3', fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png({ compressionLevel: 9 })
     .toBuffer()
 }
 
+async function basinRaster(scale) {
+  const trimmed = await sharp(join(assetsDir, 'anbot-basin.png')).ensureAlpha().trim().toBuffer({ resolveWithObject: true })
+  return sharp(trimmed.data)
+    .resize(BASIN[0] * scale, BASIN[1] * scale, { kernel: 'lanczos3', fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ compressionLevel: 9 })
+    .toBuffer()
+}
+
 function imageCss() {
   return [
-    '/* Generated from assets/anbot-whale.png by scripts/start-assets.mjs; do not edit. */',
-    `.whale-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('${whaleFile(224)}')}`,
-    `@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img{background-image:url('${whaleFile(336)}')}}`,
+    '/* Generated from assets/anbot-bot.png by scripts/start-assets.mjs; do not edit. */',
+    `.whale-img,.peek-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('${botFile(BOT_SIZES[0])}')}`,
+    `.basin-img{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:50% 50%;background-size:contain;background-image:url('${basinFile(BASIN_SIZES[0])}')}`,
+    `html[data-hurt] .whale-img{background-image:url('${hitFile(BOT_SIZES[0])}')}`,
+    `@media (-webkit-min-device-pixel-ratio:2.5),(min-resolution:2.5dppx){.whale-img,.peek-img{background-image:url('${botFile(BOT_SIZES[1])}')}.basin-img{background-image:url('${basinFile(BASIN_SIZES[1])}')}html[data-hurt] .whale-img{background-image:url('${hitFile(BOT_SIZES[1])}')}}`,
   ]
 }
 
@@ -134,14 +150,32 @@ for (const [name, generate] of Object.entries(files)) {
   stale.push(name)
   if (!check) writeFileSync(file, next)
 }
-// The whale rasters: stale when the committed bytes differ from a fresh regeneration.
-for (const size of WHALE_SIZES) {
-  const file = new URL(whaleFile(size), page)
-  const next = await whaleRaster(size)
+// The bot rasters: stale when the committed bytes differ from a fresh regeneration.
+for (const size of BOT_SIZES) {
+  const file = new URL(botFile(size), page)
+  const next = await botRaster(size)
   let current = null
   try { current = readFileSync(file) } catch { /* missing */ }
   if (current && current.equals(next)) continue
-  stale.push(whaleFile(size))
+  stale.push(botFile(size))
+  if (!check) writeFileSync(file, next)
+}
+for (const size of BOT_SIZES) {
+  const file = new URL(hitFile(size), page)
+  const next = await botRaster(size, 'anbot-bot-hit.png')
+  let current = null
+  try { current = readFileSync(file) } catch { /* missing */ }
+  if (current && current.equals(next)) continue
+  stale.push(hitFile(size))
+  if (!check) writeFileSync(file, next)
+}
+for (const scale of BASIN_SIZES) {
+  const file = new URL(basinFile(scale), page)
+  const next = await basinRaster(scale)
+  let current = null
+  try { current = readFileSync(file) } catch { /* missing */ }
+  if (current && current.equals(next)) continue
+  stale.push(basinFile(scale))
   if (!check) writeFileSync(file, next)
 }
 if (check && stale.length) {

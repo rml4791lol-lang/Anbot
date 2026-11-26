@@ -108,12 +108,13 @@ test('the start page draws the progress as a ring of three or four arcs and a cl
   assert.match(html, /<li class="station" data-phase="data"[^>]*>.*\r?\n<li class="station" data-phase="import" data-state="pending" hidden>.*\r?\n<li class="station" data-phase="engine"/u)
   assert.equal(html.match(/<circle class="ring-full" cx="110" cy="110" r="106" pathLength="100" transform="rotate\(-90 110 110\)"\/>/gu)?.length, 1)
   // The ring, the water, the whale and its hit box move as one block when a card comes.
-  assert.match(html, /<div class="pond">\r?\n<svg class="ring"[\s\S]*?<div class="water"[\s\S]*?<div class="lane">[\s\S]*?<span class="spout"><svg class="plume"[^>]*\shidden>[\s\S]*?<div class="whale-hit"[\s\S]*?<div class="fx" aria-hidden="true"><span class="ripple"><\/span><\/div>\r?\n<\/div>/u)
+  assert.match(html, /<div class="pond">\r?\n<svg class="ring"[\s\S]*?<div class="water"[\s\S]*?<div class="lane">[\s\S]*?<span class="spout"><svg class="plume"[^>]*\shidden>[\s\S]*?<div class="whale-hit"[\s\S]*?<div class="fx" aria-hidden="true"><span class="ripple"><\/span>[\s\S]*?<\/div>\r?\n<\/div>/u)
   assert.doesNotMatch(html, /class="(?:trace|elapsed)"/u)
-  // The layer the whale flies in to the Main Bot's avatar at the hand-off (whale.js leap), and
-  // the whale's box at the top of its jump, which the team page takes over.
-  assert.match(html, /<\/main>\r?\n<div class="flight" aria-hidden="true"><\/div>/u)
-  assert.match(code['whale.js'], /act\('handoffShow', \{ whale: \{ x: box\.left, y: box\.top - LIFT, size: box\.width \} \}\)/u)
+  // No flight layer and no whale box: she ducks under the paper edge, and the team page reveals
+  // without a handed-over avatar that would switch her back to the old hatted look.
+  assert.doesNotMatch(html, /class="flight"/u)
+  assert.match(code['whale.js'], /act\('handoffShow'\)/u)
+  assert.doesNotMatch(code['whale.js'], /LIFT|whale: \{/u)
   assert.doesNotMatch(read('start.css'), /\.(?:trace|elapsed)\b/u)
 })
 
@@ -188,7 +189,7 @@ test('the whale\'s entrance waits until the window is on screen', () => {
   assert.match(read('start.css'), /html\[data-held\] \*\{animation-play-state:paused!important\}/u)
   const whale = code['whale.js']
   assert.match(whale, /const entered = begun\.then\(\(\) => sleep\(entranceMs\)\)/u)
-  assert.match(whale, /begun\.then\(\(\) => sleep\(resume \? 0 : 700\)\)/u)
+  assert.match(whale, /begun\.then\(\(\) => sleep\(resume \? 0 : first \? 1650 : 700\)\)/u)
 })
 
 test('the footer is the place line alone, centred with a grey button, on first and later starts', () => {

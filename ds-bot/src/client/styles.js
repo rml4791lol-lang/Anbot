@@ -80,10 +80,33 @@ body[data-bt-motion=quiet] .bt-mark[data-gaze] .bt-gaze,body[data-bt-effects=red
 .bt-mark[data-state=alert] .bt-b{animation:bt-hop 1.3s cubic-bezier(.3,.7,.4,1) 2}
 .bt-mark[data-shape=image]:not([data-state=idle]) .bt-mark-img{animation:bt-bob 1.6s ease-in-out infinite}
 .bt-mark[data-shape=image][data-state=alert] .bt-mark-img{animation:bt-hop 1.3s cubic-bezier(.3,.7,.4,1) 2}
+
+/* Built-in bitmap marks bake their disc into the image. Rotate the image around its
+   centre for state changes: the disc silhouette stays put while the character inside
+   rocks and reacts; uploaded photos keep the whole-frame motion. */
+.bt-mark[data-shape=image] .bt-mark-img.bt-mark-built{transform-origin:50% 50%}
+.bt-mark[data-shape=image][data-state=thinking] .bt-mark-img.bt-mark-built{animation:bt-inner-think 2.6s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=searching] .bt-mark-img.bt-mark-built{animation:bt-inner-search 2s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=working] .bt-mark-img.bt-mark-built{animation:bt-inner-work 2.4s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=sending] .bt-mark-img.bt-mark-built{animation:bt-inner-send 1.8s ease-in-out infinite}
+.bt-mark[data-shape=image]:is([data-state=orbit],[data-state=waiting]) .bt-mark-img.bt-mark-built{animation:bt-inner-wait 3.2s ease-in-out infinite}
+.bt-mark[data-shape=image][data-state=alert] .bt-mark-img.bt-mark-built{animation:bt-inner-alert 1.8s ease-in-out 2}
+.bt-mark[data-shape=image][data-state=done] .bt-mark-img.bt-mark-built{animation:bt-inner-done 1.8s ease-in-out 1}
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=hop] .bt-mark-img.bt-mark-built,
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=stretch] .bt-mark-img.bt-mark-built,
+body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=look] .bt-mark-img.bt-mark-built{animation:bt-inner-rock 9s ease-in-out var(--bt-fidget-delay,0s) infinite}
 body[data-bt-motion=lively] .bt-mark[data-state=alert] :is(.bt-b,.bt-mark-img){animation-iteration-count:infinite}
 .bt-mark[data-state=done] .bt-b{animation:bt-done 1.8s linear 1}
 .bt-mark[data-shape=image][data-state=done] .bt-mark-img{animation:bt-done 1.8s linear 1;transform-origin:50% 100%}
 @keyframes bt-done{0%{transform:none;animation-timing-function:cubic-bezier(.4,0,.2,1)}13.3%{transform:scale(1.12,.88);animation-timing-function:cubic-bezier(.4,0,.2,1)}25.6%{transform:scale(.93,1.09);animation-timing-function:cubic-bezier(.4,0,.2,1)}37.8%{transform:scale(1.04,.97);animation-timing-function:cubic-bezier(.4,0,.2,1)}51.1%,100%{transform:none}}
+@keyframes bt-inner-rock{0%,8%,100%{transform:rotate(0)}3%{transform:rotate(-3deg)}5.5%{transform:rotate(2deg)}}
+@keyframes bt-inner-think{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes bt-inner-search{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(3deg)}}
+@keyframes bt-inner-work{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}70%{transform:rotate(3deg)}}
+@keyframes bt-inner-send{0%,100%{transform:rotate(0)}35%{transform:rotate(5deg)}60%{transform:rotate(-3deg)}}
+@keyframes bt-inner-wait{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes bt-inner-alert{0%,100%{transform:rotate(0)}20%{transform:rotate(-5deg)}40%{transform:rotate(5deg)}}
+@keyframes bt-inner-done{0%,100%{transform:rotate(0)}30%{transform:rotate(-5deg)}60%{transform:rotate(3deg)}}
 .bt-mark-poke .bt-b{animation:bt-poke .8s cubic-bezier(.3,.7,.4,1) 1!important;transform-origin:50% 60%!important}
 .bt-mark-poke .bt-mark-img{animation:bt-poke-img .6s ease-out 1!important}
 .bt-mark[data-poke]{cursor:pointer}

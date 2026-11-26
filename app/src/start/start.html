@@ -10,17 +10,21 @@
 <script type="module" src="start.js"></script>
 </head>
 <body>
+<div class="paper-base" aria-hidden="true"></div>
+<div class="paper-tear" aria-hidden="true"><i class="tear-left"></i><i class="tear-right"></i></div>
 <div class="band" aria-hidden="true"></div>
 <main class="stage">
+<p class="wordmark" aria-hidden="true">Anbot</p>
 <div class="pond">
 <svg class="ring" viewBox="0 0 220 220" aria-hidden="true"><g class="arc" data-phase="data" data-state="pending"><path class="arc-base" d="M119.24 4.40A106 106 0 0 1 206.07 154.80" pathLength="100"/><path class="arc-fill" d="M119.24 4.40A106 106 0 0 1 206.07 154.80" pathLength="100"/><path class="arc-glow" d="M119.24 4.40A106 106 0 0 1 206.07 154.80" pathLength="100"/></g><g class="arc" data-phase="engine" data-state="pending"><path class="arc-base" d="M196.83 170.80A106 106 0 0 1 23.17 170.80" pathLength="100"/><path class="arc-fill" d="M196.83 170.80A106 106 0 0 1 23.17 170.80" pathLength="100"/><path class="arc-glow" d="M196.83 170.80A106 106 0 0 1 23.17 170.80" pathLength="100"/></g><g class="arc" data-phase="team" data-state="pending"><path class="arc-base" d="M13.93 154.80A106 106 0 0 1 100.76 4.40" pathLength="100"/><path class="arc-fill" d="M13.93 154.80A106 106 0 0 1 100.76 4.40" pathLength="100"/><path class="arc-glow" d="M13.93 154.80A106 106 0 0 1 100.76 4.40" pathLength="100"/></g><g class="arc" data-phase="import" data-state="pending"><path class="arc-base" d="M215.60 119.24A106 106 0 0 1 119.24 215.60" pathLength="100"/><path class="arc-fill" d="M215.60 119.24A106 106 0 0 1 119.24 215.60" pathLength="100"/><path class="arc-glow" d="M215.60 119.24A106 106 0 0 1 119.24 215.60" pathLength="100"/></g><circle class="ring-full" cx="110" cy="110" r="106" pathLength="100" transform="rotate(-90 110 110)"/></svg>
 <svg class="props" viewBox="0 0 40 40" aria-hidden="true"><g data-p="data"><path class="folder-back" d="M4 12a2 2 0 0 1 2-2h9l3 3h16a2 2 0 0 1 2 2v19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><g class="page"><rect x="9" y="7" width="22" height="22" rx="1.5"/><path d="M13 13h14M13 17h14M13 21h9"/></g><g class="page"><rect x="9" y="7" width="22" height="22" rx="1.5"/><path d="M13 13h14M13 17h14M13 21h9"/></g><g class="page"><rect x="9" y="7" width="22" height="22" rx="1.5"/><path d="M13 13h14M13 17h14M13 21h9"/></g><path class="folder-front" d="M2.5 19h35l-2.2 15.2a2 2 0 0 1-2 1.8H6.7a2 2 0 0 1-2-1.8Z"/></g><g data-p="import"><path class="route" d="M10 20Q19 3 29 9"/><g class="box box-from"><rect x="2" y="24" width="14" height="12" rx="2"/><path class="lid" d="M2 28h14"/><path class="tape" d="M9 24v4"/></g><g class="box"><rect x="23" y="24" width="14" height="12" rx="2"/><path class="lid" d="M23 28h14"/><path class="tape" d="M30 24v4"/></g><g class="box box-moving"><rect x="2" y="24" width="14" height="12" rx="2"/><path class="lid" d="M2 28h14"/><path class="tape" d="M9 24v4"/></g></g><g data-p="engine"><path class="gear gear-big" fill-rule="evenodd" d="M23.25 22.40L25.94 22.85L25.94 25.15L23.25 25.60L22.35 28.07L24.12 30.15L22.64 31.91L20.29 30.53L18.01 31.84L18.03 34.57L15.77 34.97L14.85 32.40L12.27 31.94L10.53 34.05L8.53 32.90L9.49 30.34L7.80 28.33L5.11 28.82L4.33 26.66L6.70 25.31L6.70 22.69L4.33 21.34L5.11 19.18L7.80 19.67L9.49 17.66L8.53 15.10L10.53 13.95L12.27 16.06L14.85 15.60L15.77 13.03L18.03 13.43L18.01 16.16L20.29 17.47L22.64 16.09L24.12 17.85L22.35 19.93ZM18.00 24.00A3 3 0 1 0 12.00 24.00A3 3 0 1 0 18.00 24.00Z"/><path class="gear gear-small" fill-rule="evenodd" d="M23.26 16.79L21.10 16.54L20.93 14.17L23.03 13.61L24.16 11.26L23.29 9.27L25.26 7.93L26.79 9.47L29.40 9.27L30.69 7.52L32.83 8.55L32.26 10.65L33.74 12.81L35.90 13.06L36.07 15.43L33.97 15.99L32.84 18.34L33.71 20.33L31.74 21.67L30.21 20.13L27.60 20.33L26.31 22.08L24.17 21.05L24.74 18.95ZM30.70 14.80A2.2 2.2 0 1 0 26.30 14.80A2.2 2.2 0 1 0 30.70 14.80Z"/></g><g data-p="team"><g transform="translate(8 30)"><g class="mate"><circle cx="0" cy="0" r="7"/><rect x=".8" y="-3.3" width="1.9" height="4.6" rx=".95"/><rect x="3.8" y="-3.7" width="1.6" height="4.3" rx=".8"/></g></g><g transform="translate(20 22)"><g class="mate"><circle cx="0" cy="0" r="7"/><rect x=".8" y="-3.3" width="1.9" height="4.6" rx=".95"/><rect x="3.8" y="-3.7" width="1.6" height="4.3" rx=".8"/></g></g><g transform="translate(32 30)"><g class="mate"><circle cx="0" cy="0" r="7"/><rect x=".8" y="-3.3" width="1.9" height="4.6" rx=".95"/><rect x="3.8" y="-3.7" width="1.6" height="4.3" rx=".8"/></g></g></g></svg>
 <div class="water" aria-hidden="true"></div>
-<div class="lane"><div class="whale-x"><div class="whale-breath"><div class="whale"><div class="whale-move"><div class="whale-loop">
+<div class="progress" aria-hidden="true"><span class="seg" data-phase="data"></span><span class="seg" data-phase="engine"></span><span class="seg" data-phase="team"></span><span class="seg" data-phase="import"></span></div>
+<div class="lane"><div class="peek" aria-hidden="true"><div class="peek-img"></div></div><div class="paper" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="whale-x"><div class="whale-breath"><div class="whale"><div class="whale-move"><div class="whale-loop">
 <!-- whale --><div class="whale-img" aria-hidden="true"></div><!-- /whale -->
-</div></div></div></div><span class="spout"><svg class="plume" viewBox="-24 -44 48 48" aria-hidden="true" hidden><path class="stem" d="M0 0V-27" pathLength="1"/><path class="curl" d="M0 -27C-3 -37 -13 -40 -18 -31" pathLength="1"/><path class="curl" d="M0 -27C3 -37 13 -40 18 -31" pathLength="1"/></svg></span></div></div>
+</div><span class="basin-shade" aria-hidden="true"></span><span class="basin" aria-hidden="true"><span class="basin-img"></span></span></div></div></div></div><span class="spout"><svg class="plume" viewBox="-24 -44 48 48" aria-hidden="true" hidden><path class="stem" d="M0 0V-27" pathLength="1"/><path class="curl" d="M0 -27C-3 -37 -13 -40 -18 -31" pathLength="1"/><path class="curl" d="M0 -27C3 -37 13 -40 18 -31" pathLength="1"/></svg></span></div></div>
 <div class="whale-hit" aria-hidden="true"></div>
-<div class="fx" aria-hidden="true"><span class="ripple"></span></div>
+<div class="fx" aria-hidden="true"><span class="ripple"></span><span class="dust"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 </div>
 <ol class="track sr" data-t-label="status.track">
 <li class="station" data-phase="data" data-state="pending"><span data-t="status.phase.data"></span> <span class="sr"></span></li>
@@ -28,6 +32,7 @@
 <li class="station" data-phase="engine" data-state="pending"><span data-t="status.phase.engine"></span> <span class="sr"></span></li>
 <li class="station" data-phase="team" data-state="pending"><span data-t="status.phase.team"></span> <span class="sr"></span></li>
 </ol>
+<p class="phase" aria-hidden="true"></p>
 <p class="voice"><span></span></p>
 <p class="caption"><span class="caption-text"></span></p>
 <section class="sheet">
@@ -52,7 +57,6 @@
 </div>
 </section>
 </main>
-<div class="flight" aria-hidden="true"></div>
 <footer class="footrow"><p class="place" hidden><span class="place-text"></span><button class="btn" data-look="small" data-act="pick" data-detail="changePlace" data-t="btn.changePlace"></button></p></footer>
 <p class="sr live" aria-live="polite"></p>
 </body>
