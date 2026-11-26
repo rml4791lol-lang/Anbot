@@ -7,6 +7,10 @@ import { test } from 'node:test'
 import { parse } from 'yaml'
 import { APP_ID, configureIdentity, LEGACY_PRODUCT_NAMES, PRODUCT_NAME } from '../src/legacy.mjs'
 
+const ANBOT_APP_ID = 'io.github.rml4791lol-lang.anbot'
+const ANBOT_INSTALLER_GUID = 'a446109a-7d6f-45b8-95af-d6ddc6075a51'
+// The identifiers upstream releases use. A build that took them over would replace an
+// installed DS Bot and share its shell data; only the compatibility list may name them.
 const UPSTREAM_APP_ID = 'io.github.fei2411.dsbot'
 const UPSTREAM_INSTALLER_GUID = '32c46dfc-ed78-5d41-85a4-a3c7f083f2e0'
 
@@ -109,12 +113,16 @@ test('the package and builder use the Anbot identity while retaining the install
   assert.equal(pkg.productName, PRODUCT_NAME)
   assert.equal(pkg.homepage, 'https://github.com/rml4791lol-lang/Anbot')
   assert.equal(pkg.dependencies['ds-bot'], 'file:../ds-bot')
-  assert.equal(config.appId, UPSTREAM_APP_ID, "Preserve the macOS installation identity")
+  assert.equal(config.appId, ANBOT_APP_ID)
+  assert.equal(APP_ID, ANBOT_APP_ID)
   assert.equal(config.productName, PRODUCT_NAME)
   assert.equal(config.artifactName, 'Anbot-${version}-${os}-${arch}.${ext}')
   assert.equal(config.publish.owner, 'rml4791lol-lang')
   assert.equal(config.publish.repo, 'Anbot')
-  assert.equal(config.nsis.guid, UPSTREAM_INSTALLER_GUID)
+  assert.equal(config.nsis.guid, ANBOT_INSTALLER_GUID)
+  assert.notEqual(config.nsis.guid, UPSTREAM_INSTALLER_GUID, 'Anbot must not replace an upstream DS Bot install')
+  assert.notEqual(config.appId, UPSTREAM_APP_ID, 'Anbot must not share an upstream DS Bot identity')
+  for (const name of ['DS Bot', 'DeepSeek Bot']) assert.ok(LEGACY_PRODUCT_NAMES.includes(name), name)
   for (const oldPackage of ['dsbot', 'deepseek-bot']) {
     assert.ok(config.deb.fpm.includes(`--replaces=${oldPackage}`) || config.deb.fpm.some((value, index, all) => value === '--replaces' && all[index + 1] === oldPackage), oldPackage)
     assert.ok(config.deb.fpm.includes(`--conflicts=${oldPackage}`) || config.deb.fpm.some((value, index, all) => value === '--conflicts' && all[index + 1] === oldPackage), oldPackage)

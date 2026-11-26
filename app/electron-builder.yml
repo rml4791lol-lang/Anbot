@@ -1,4 +1,4 @@
-appId: io.github.fei2411.dsbot
+appId: io.github.rml4791lol-lang.anbot
 productName: Anbot
 copyright: Copyright 2026 rml4791lol-lang and the Anbot contributors
 artifactName: Anbot-${version}-${os}-${arch}.${ext}
@@ -67,8 +67,10 @@ win:
       arch: [x64]
   icon: assets/icon.ico
 nsis:
-  # Preserve the installed legacy DS Bot / DeepSeek Bot GUID so an Anbot installer replaces either in place.
-  guid: 32c46dfc-ed78-5d41-85a4-a3c7f083f2e0
+  # Anbot's own identity (2026-11-26). An installer replaces an older Anbot install in place;
+  # an upstream DS Bot stays a separate application. The deb's --replaces/--conflicts keep
+  # apt from leaving two side by side.
+  guid: a446109a-7d6f-45b8-95af-d6ddc6075a51
   oneClick: false
   perMachine: false
   allowElevation: false
