@@ -472,6 +472,14 @@ export class LocalAgentAdapter extends LlmAdapter {
     return this.nativePrompts.has(key) || (live !== undefined && live.state !== 'idle')
   }
 
+  // The OS process behind a Session while this host runs it, for a caller that
+  // must prove after a restart that the process it had handed work to is gone.
+  processId(sessionId) {
+    const live = this.live.get(String(sessionId))
+    if (live === undefined) return undefined
+    return live.engine?.child?.pid ?? live.engineSession?.child?.pid ?? live.engineSession?._worker?.child?.pid
+  }
+
   // A Claude CLI that died before `system/init` never read the prompt it was
   // handed: roll the marker back in the live state and in the saved record, so a
   // host that restarts before the next call still replays the input. ACP and
@@ -846,8 +854,7 @@ export class LocalAgentAdapter extends LlmAdapter {
         return recover()
       }
     }
-    this.startTurn(live, blocks, signal, effort)
-    return Promise.resolve()
+    return this.startTurn(live, blocks, signal, effort)
   }
 
   discardTurnOutput(live) {
@@ -871,14 +878,20 @@ export class LocalAgentAdapter extends LlmAdapter {
     try {
       const prompt = Promise.resolve(live.engine.prompt(live.engineSession, blocks, { signal, effort, onProgress: live.scheduleIdle }))
         .catch(error => { if (!signal?.aborted) live.push({ type: 'error', error }) })
+      // Codex names the turn only in its start reply. Waiting for that name here
+      // keeps a finished turn's queued events from answering the new one.
+      const turnStarted = live.spec.kind === 'codex' ? live.engineSession?.turnStarted?.promise : undefined
       if (confirmsPromptStop(live.spec.kind)) {
         const proof = prompt.then(terminal => terminal === true, () => false)
         this.nativePrompts.set(live.sessionId, proof)
-        void proof.then(terminal => {
-          if (terminal && this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
+        void proof.then(() => {
+          if (this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
         })
       }
-      return Promise.resolve()
+      if (turnStarted === undefined) return Promise.resolve()
+      return Promise.resolve(turnStarted).then(turnId => {
+        if (typeof turnId === 'string' && turnId !== '' && live.state === 'running') live.turnTag = turnId
+      })
     } catch (error) {
       live.push({ type: 'error', error })
       return Promise.resolve()

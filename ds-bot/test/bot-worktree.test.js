@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -148,6 +148,7 @@ test('local takeover keeps the worktree stopping until the original executor con
     botWorkflowView: () => ({ status: workflowStatus }),
     engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode', localAgentCanConfirmStop: () => true,
     stopLocalAgentForTakeover: () => { called.resolve(); return proof },
+    localAgentProcessId: () => process.pid,
     localAgentHasUnsettledPrompt: id => id === 's2' ? otherHasPrompt : ownHasPrompt,
     save: async () => {
       if (bot.worktreeHold === undefined && saveRelease) await saveRelease()
@@ -161,6 +162,7 @@ test('local takeover keeps the worktree stopping until the original executor con
   const taking = ownership.change('b1', true)
   await called.promise
   assert.equal(ownership.view('b1').status, 'stopping')
+  assert.equal(bot.worktreeHold.pid, process.pid)
   assert.throws(() => ownership.assertUnheld('s1'), /paused/)
   native.resolve(false)
   await assert.rejects(taking, /has not confirmed it stopped/)
@@ -170,6 +172,7 @@ test('local takeover keeps the worktree stopping until the original executor con
 
   proof = Promise.resolve(true)
   assert.equal((await ownership.change('b1', true)).status, 'held')
+  assert.equal(Object.hasOwn(bot.worktreeHold, 'pid'), false)
   agent.status = 'running'
   await assert.rejects(ownership.change('b1', false), /Session.*idle/)
   agent.status = 'idle'
@@ -207,6 +210,93 @@ test('local takeover keeps the worktree stopping until the original executor con
   await ownership.change('b1', false)
   assert.deepEqual(saved, ['stopping', 'held', null])
   assert.doesNotThrow(() => ownership.assertUnheld('s1'))
+})
+
+test('a hold whose process exits after startup can be taken over without a restart', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'anbot-hold-late-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const folder = join(root, 'checkout')
+  const worker = join(root, 'worker')
+  mkdirSync(folder)
+  const git = (...args) => execFileSync('git', ['-C', folder, ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
+  git('init', '--quiet')
+  git('-c', 'user.name=Anbot test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '--allow-empty', '-m', 'base')
+  git('worktree', 'add', '--quiet', '--detach', worker)
+
+  const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' })
+  t.after(() => { try { child.kill('SIGKILL') } catch {} })
+  await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
+  const observed = await linkedWorktree(worker)
+  assert.equal(observed.status, 'observed')
+  const bot = {
+    id: 'b1', sessionId: 's1',
+    worktreeHold: { sessionId: 's1', root: observed.value.root, gitDir: observed.value.gitDir, status: 'stopping', at: 1, local: true, hostRun: 'previous-host', pid: child.pid },
+  }
+  const agent = { status: 'idle', session: { id: 's1' }, inbox: { hasPending: false }, whenIdle: async () => {} }
+  const registry = { get: () => agent, list: () => [agent] }
+  const rt = {
+    ctx: { get: () => registry }, state: { bots: { b1: bot } },
+    botOf: id => (id === 'b1' ? bot : undefined), selfOf: () => 'b1', chatOf: () => 's1',
+    sessionFolder: () => worker, real: async path => realpathSync(path), hasSubagents: () => false,
+    botWorkflowView: () => ({}), engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode',
+    localAgentCanConfirmStop: () => true, stopLocalAgentForTakeover: () => Promise.resolve(true),
+    localAgentHasUnsettledPrompt: () => false,
+    load: async () => {}, readOnly: () => undefined, save: async () => {},
+  }
+  const ownership = createWorktreeHold(rt)
+  await ownership.recoverPendingRestores()
+  assert.equal(bot.worktreeHold.status, 'stopping')
+  assert.match(bot.worktreeHold.reason, /still running/)
+
+  // The same host run: the process exits after startup, with no new recovery.
+  child.kill('SIGKILL')
+  await new Promise(resolve => child.once('exit', resolve))
+  await new Promise(resolve => setTimeout(resolve, 20))
+  const held = await ownership.change('b1', true)
+  assert.equal(held.status, 'held')
+  assert.equal(bot.worktreeHold.status, 'held')
+  assert.equal(Object.hasOwn(bot.worktreeHold, 'pid'), false)
+})
+
+test('a stopping local worktree hold left by a previous host is reconciled at startup', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'anbot-hold-reconcile-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const holds = {
+    b1: { sessionId: 's1', root: join(root, 'w1'), gitDir: join(root, 'g1'), status: 'stopping', at: 1, local: true, hostRun: 'previous-host' },
+    b2: { sessionId: 's2', root: join(root, 'w2'), gitDir: join(root, 'g2'), status: 'stopping', at: 2, local: true, hostRun: 'previous-host' },
+    b3: { sessionId: 's3', root: join(root, 'w3'), gitDir: join(root, 'g3'), status: 'stopping', at: 3, local: true, hostRun: 'previous-host', pid: 999_999_999 },
+    b4: { sessionId: 's4', root: join(root, 'w4'), gitDir: join(root, 'g4'), status: 'stopping', at: 4, local: true, hostRun: 'previous-host', pid: process.pid },
+  }
+  const bots = { b1: { id: 'b1', worktreeHold: holds.b1 }, b2: { id: 'b2', worktreeHold: holds.b2 }, b3: { id: 'b3', worktreeHold: holds.b3 }, b4: { id: 'b4', worktreeHold: holds.b4 } }
+  const stops = []
+  const saved = []
+  const rt = {
+    ctx: {}, state: { bots },
+    botOf: id => bots[id], selfOf: id => id, chatOf: id => id,
+    load: async () => {}, readOnly: () => undefined,
+    save: async () => { saved.push(Object.values(bots).map(bot => bot.worktreeHold.status)) },
+    // The real adapter answers true for a Session this host is not running.
+    stopLocalAgentForTakeover: (id) => { stops.push(id); return Promise.resolve(true) },
+  }
+  const ownership = createWorktreeHold(rt)
+  await ownership.recoverPendingRestores()
+  assert.deepEqual(stops, [], 'a missing process id cannot be proven stopped')
+  assert.equal(bots.b1.worktreeHold.status, 'stopping')
+  assert.match(bots.b1.worktreeHold.reason, /did not record the local Agent process/)
+  assert.equal(bots.b2.worktreeHold.status, 'stopping')
+  assert.match(bots.b2.worktreeHold.reason, /did not record the local Agent process/)
+  assert.equal(bots.b3.worktreeHold.status, 'held')
+  assert.equal(Object.hasOwn(bots.b3.worktreeHold, 'pid'), false)
+  assert.equal(bots.b4.worktreeHold.status, 'stopping')
+  assert.match(bots.b4.worktreeHold.reason, /still running/)
+  assert.equal(ownership.view('b1').status, 'stopping')
+  assert.match(ownership.view('b1').reason, /did not record the local Agent process/)
+  assert.deepEqual(saved, [
+    ['stopping', 'stopping', 'stopping', 'stopping'],
+    ['stopping', 'stopping', 'stopping', 'stopping'],
+    ['stopping', 'stopping', 'held', 'stopping'],
+    ['stopping', 'stopping', 'held', 'stopping'],
+  ])
 })
 
 test('restart cleans only the reserved unpublished restore and retains a dirty checkout for operator recovery', async t => {

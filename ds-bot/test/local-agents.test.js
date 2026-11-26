@@ -58,6 +58,19 @@ test('Codex defers interrupt until the start reply identifies the turn, then wai
   assert.equal(await prompt, true)
 })
 
+test('Codex prompt settles the turn name when the CLI exits during turn/start', async (t) => {
+  const engine = new CodexEngine('local-codex-cli', { name: 'Codex', command: process.execPath, args: [FIXTURES.codex] }, { findExecutable: path => path })
+  t.after(() => engine.close?.())
+  const thread = await engine.open('s1', { cwd: mkdtempSync(join(tmpdir(), 'dsb-start-exit-')), mode: 'workspace-write' })
+  const prompt = engine.prompt(thread, [{ type: 'text', text: 'exit-on-start' }], {})
+  const started = await Promise.race([thread.turnStarted.promise, delay(500, 'pending')])
+  assert.notEqual(started, 'pending', 'the turn name settles when the start request cannot')
+  assert.equal(await prompt, false)
+  const event = await thread.next()
+  assert.equal(event.type, 'error')
+  assert.match(event.error.message, /exited/)
+})
+
 test('Codex accepts a matching terminal notification that precedes the start reply', async () => {
   const engine = new CodexEngine('local-codex-cli', { name: 'Codex' }, {})
   const thread = engine.threadFor('dsh-session')
@@ -1535,6 +1548,18 @@ test('codex app-server: an answer whose turn already ended starts a new turn', a
   assert.equal(second.finish?.kind, 'stop')
 })
 
+test('codex app-server: a stale event from an earlier turn does not answer the next turn', async (t) => {
+  const adapter = makeAdapter({ codexArgs: ['--text-only'] })
+  t.after(() => adapter.dispose())
+  const messages = [user('m1', 'first')]
+  const first = await collect(adapter.stream(options('s1', messages, { provider: 'local-codex-cli' })))
+  assert.match(first.text, /User: first/)
+  // The CLI sends the finished turn's item before it names the new turn.
+  const second = await collect(adapter.stream(options('s1', [...messages, user('m2', 'stale-before-start')], { provider: 'local-codex-cli' })))
+  assert.equal(second.text.includes('stale: earlier turn'), false, JSON.stringify(second))
+  assert.match(second.text, /ok: stale-before-start/)
+})
+
 test('codex app-server: a steer refused while the turn ends still gets a turn of its own', async (t) => {
   const adapter = makeAdapter()
   t.after(() => adapter.dispose())
@@ -2677,6 +2702,32 @@ test('ACP errors with numeric, empty or object codes keep their message and get 
   )
 })
 
+
+test('a failed native prompt no longer counts as unsettled after it settles', async (t) => {
+  const adapter = makeAdapter()
+  t.after(() => adapter.dispose())
+  await assert.rejects(collect(adapter.stream(options('s1', [user('m1', 'rpc-error-number')]))))
+  await Promise.resolve()
+  assert.equal(adapter.hasUnsettledPrompt('s1'), false)
+  assert.equal(await adapter.stopForTakeover('s1'), true)
+})
+
+test('a live local Agent session reports the process id its engine child holds', async (t) => {
+  const acp = makeAdapter()
+  const claude = makeAdapter()
+  t.after(async () => { await Promise.all([acp.dispose(), claude.dispose()]) })
+  // Antigravity runs a per-folder ACP worker; Claude keeps its child on the Session.
+  await collect(acp.stream(options('s1', [user('m1', 'hello')], { provider: 'local-antigravity' })))
+  await collect(claude.stream(options('s2', [user('m1', 'hello')], { provider: 'local-claude-code' })))
+  for (const [adapter, id] of [[acp, 's1'], [claude, 's2']]) {
+    const pid = adapter.processId(id)
+    assert.equal(typeof pid, 'number')
+    assert.equal(Number.isSafeInteger(pid), true)
+    // Neither the ACP coordinator nor the Claude engine keeps the child itself;
+    // the process lives on the Session/worker the live entry names.
+    assert.equal(adapter.live.get(id).engine?.child?.pid, undefined)
+  }
+})
 
 test('stream reports live thoughts, tool activities and end-of-stream idle to the turn tracker', async (t) => {
   const seen = []
