@@ -9,7 +9,8 @@ name: Release
 #
 # The release tag must be v<version in app/package.json>, and app/package.json must match the
 # bundled ds-bot plugin version. Publish with "Set as latest release" off. The final job marks it
-# Latest only after the Windows, macOS, Linux and Android assets, notes, and SHA256SUMS.txt are attached.
+# Latest only after the Windows, macOS and Android assets, notes, and SHA256SUMS.txt are attached.
+# v0.0.1 ships no Linux package: Linux builds from source until a later release adds it.
 
 on:
   release:
