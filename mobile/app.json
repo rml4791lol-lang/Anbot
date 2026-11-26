@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DS Bot",
+    "name": "Anbot",
     "slug": "dsbot",
     "web": {
       "bundler": "metro",

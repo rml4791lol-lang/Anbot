@@ -227,11 +227,23 @@ process.stdin.on('data', (chunk) => {
         const badImage = input.find(item => item.type === 'image' && typeof item.url !== 'string' && typeof item.fileId !== 'string')
         if (badImage !== undefined) { replyError(id, 'Invalid image input: missing url or fileId'); break }
         const images = input.filter(item => item.type === 'image').map(item => ({ type: item.type, url: item.url }))
+        const text = input.filter(item => item.type === 'text').map(item => item.text ?? '').join('\n')
+        // Exit before the start reply, as a broken CLI can: the client sees the
+        // turn/start rejection without a turn id.
+        if (text.includes('exit-on-start')) process.exit(0)
         const thread = threads.get(params.threadId)
         const turnId = `turn-${++nextId}`
-        if (thread !== undefined) thread.turn = turnId
+        if (thread !== undefined) {
+          const previousTurnId = thread.lastTurnId
+          thread.lastTurnId = turnId
+          thread.turn = turnId
+          // An item from the finished turn arrives before the start reply, so the
+          // client cannot tell whose turn it is until the reply names this one.
+          if (previousTurnId !== undefined && text.includes('stale-before-start')) {
+            notice('item/completed', { threadId: thread.id, turnId: previousTurnId, item: { id: 'stale', type: 'agentMessage', text: 'stale: earlier turn' } })
+          }
+        }
         reply(id, { turn: { id: turnId } })
-        const text = input.filter(item => item.type === 'text').map(item => item.text ?? '').join('\n')
         setImmediate(() => runTurn(thread ?? { id: params.threadId }, turnId, text, params.effort, images))
         break
       }

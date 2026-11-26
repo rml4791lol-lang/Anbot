@@ -445,7 +445,7 @@ jobs:
           }
           $installer = Get-Item dist-pack/DS-Bot-*-win-x64.exe
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
-          $dir = Join-Path $env:LOCALAPPDATA 'Programs\DS Bot'
+          $dir = Join-Path $env:LOCALAPPDATA 'Programs\Anbot'
           $exe = Join-Path $dir 'DS Bot.exe'
           if (-not (Test-Path $exe)) { throw "The installer did not put the app in $dir" }
           $entry = Find-Entry 'HKCU:'
@@ -470,7 +470,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $exe = Join-Path $env:LOCALAPPDATA 'Programs\DS Bot\DS Bot.exe'
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Anbot\DS Bot.exe'
           node scripts/check-update.mjs $exe dist-next
           if ($LASTEXITCODE -ne 0) { throw 'The installed app did not take the update' }
           # The installer goes on after the app has quit.
@@ -495,7 +495,7 @@ jobs:
             Get-ChildItem "$root\Software\Microsoft\Windows\CurrentVersion\Uninstall" |
               Where-Object { (Get-ItemProperty $_.PSPath).DisplayName -like 'DS Bot*' }
           }
-          $dir = Join-Path $env:LOCALAPPDATA 'Programs\DS Bot'
+          $dir = Join-Path $env:LOCALAPPDATA 'Programs\Anbot'
           $exe = Join-Path $dir 'DS Bot.exe'
           # The uninstaller removes the program only: the data location and the app's own data stay.
           $kept = foreach ($folder in (Join-Path $HOME '.ds-bot'), (Join-Path $env:APPDATA 'DS Bot')) {
@@ -581,7 +581,7 @@ jobs:
           zip="dist-pack/Anbot-$(node -p "require('./package.json').version")-mac-${{ matrix.arch }}.zip"
           test -f "$zip"
           ditto -x -k "$zip" /Applications
-          app="/Applications/DS Bot.app"
+          app="/Applications/Anbot.app"
           exe="$app/Contents/MacOS/DS Bot"
           codesign --verify --deep --strict "$app"
           file "$exe"
@@ -659,11 +659,11 @@ jobs:
         run: |
           version="$(node -p "require('./package.json').version")"
           sudo apt-get install -y "./dist-pack/Anbot-$version-linux-amd64.deb"
-          test -f /usr/share/applications/dsbot.desktop
-          xvfb-run -a node scripts/check-packed.mjs "/opt/DS Bot/dsbot"
+          test -f /usr/share/applications/anbot.desktop
+          xvfb-run -a node scripts/check-packed.mjs "/opt/Anbot/dsbot"
       # A deb cannot update itself: it points at the release page, as on macOS.
       - name: The deb's app hears of a new version
-        run: xvfb-run -a node scripts/check-update.mjs "/opt/DS Bot/dsbot" 99.0.0
+        run: xvfb-run -a node scripts/check-update.mjs "/opt/Anbot/dsbot" 99.0.0
       # The update builds the app a second time, so it runs only for changes to the app or workflows
       # (and full runs). The AppImage downloads the new one and replaces itself as it quits.
       - name: Build the next version
@@ -684,7 +684,7 @@ jobs:
       - name: Uninstall
         run: |
           sudo apt-get remove -y dsbot
-          test ! -e "/opt/DS Bot/dsbot"
+          test ! -e "/opt/Anbot/dsbot"
 
   docker:
     name: Docker startup and data migration

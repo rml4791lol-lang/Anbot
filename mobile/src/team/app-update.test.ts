@@ -169,12 +169,12 @@ test('checkAndroidUpdate falls back to releases/latest on API rate limit and sup
   assert.equal(fallback.release.version, '0.3.12')
   assert.equal(fallback.release.sha256, VALID_SHA)
   assert.deepEqual(requests, [
-    'https://api.github.com/repos/Fei-Craft/DS-Bot/releases?per_page=20',
-    'https://github.com/Fei-Craft/DS-Bot/releases/latest',
-    'https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.12/SHA256SUMS.txt',
+    'https://api.github.com/repos/rml4791lol-lang/Anbot/releases?per_page=20',
+    'https://github.com/rml4791lol-lang/Anbot/releases/latest',
+    'https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.12/SHA256SUMS.txt',
   ])
   assert.deepEqual(fallback.release.downloadUrls, [
-    `https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.12/${apkName}`,
+    `https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.12/${apkName}`,
   ])
 
   // Custom mirror manifest works even when GitHub is completely unreachable.

@@ -390,6 +390,7 @@ export function install(rt, { probeSignIn: checkSignIn = probeSignIn, probeVersi
     localAgentCanConfirmStop: route => confirmsPromptStop(engineOfRoute(route, customAgents())?.kind),
     stopLocalAgentForTakeover: sessionId => adapter.stopForTakeover(sessionId),
     localAgentHasUnsettledPrompt: sessionId => adapter.hasUnsettledPrompt(sessionId),
+    localAgentProcessId: sessionId => adapter.processId(sessionId),
     localAgentBadge: (ref) => {
       const provider = splitRef(ref)?.provider
       return provider !== undefined && isLocalAgentRoute(provider) ? provider : undefined
