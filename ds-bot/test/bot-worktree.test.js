@@ -215,8 +215,10 @@ test('a stopping local worktree hold left by a previous host is reconciled at st
   const holds = {
     b1: { sessionId: 's1', root: join(root, 'w1'), gitDir: join(root, 'g1'), status: 'stopping', at: 1, local: true, hostRun: 'previous-host' },
     b2: { sessionId: 's2', root: join(root, 'w2'), gitDir: join(root, 'g2'), status: 'stopping', at: 2, local: true, hostRun: 'previous-host' },
+    b3: { sessionId: 's3', root: join(root, 'w3'), gitDir: join(root, 'g3'), status: 'stopping', at: 3, local: true, hostRun: 'previous-host', pid: 999_999_999 },
+    b4: { sessionId: 's4', root: join(root, 'w4'), gitDir: join(root, 'g4'), status: 'stopping', at: 4, local: true, hostRun: 'previous-host', pid: process.pid },
   }
-  const bots = { b1: { id: 'b1', worktreeHold: holds.b1 }, b2: { id: 'b2', worktreeHold: holds.b2 } }
+  const bots = { b1: { id: 'b1', worktreeHold: holds.b1 }, b2: { id: 'b2', worktreeHold: holds.b2 }, b3: { id: 'b3', worktreeHold: holds.b3 }, b4: { id: 'b4', worktreeHold: holds.b4 } }
   const stops = []
   const saved = []
   const rt = {
@@ -233,9 +235,18 @@ test('a stopping local worktree hold left by a previous host is reconciled at st
   assert.equal(bots.b1.worktreeHold.status, 'held')
   assert.equal(bots.b2.worktreeHold.status, 'stopping')
   assert.match(bots.b2.worktreeHold.reason, /did not prove it stopped/)
+  assert.equal(bots.b3.worktreeHold.status, 'held')
+  assert.equal(Object.hasOwn(bots.b3.worktreeHold, 'pid'), false)
+  assert.equal(bots.b4.worktreeHold.status, 'stopping')
+  assert.match(bots.b4.worktreeHold.reason, /did not prove it stopped/)
   assert.equal(ownership.view('b1').status, 'held')
   assert.match(ownership.view('b2').reason, /did not prove it stopped/)
-  assert.deepEqual(saved, [['held', 'stopping'], ['held', 'stopping']])
+  assert.deepEqual(saved, [
+    ['held', 'stopping', 'stopping', 'stopping'],
+    ['held', 'stopping', 'stopping', 'stopping'],
+    ['held', 'stopping', 'held', 'stopping'],
+    ['held', 'stopping', 'held', 'stopping'],
+  ])
 })
 
 test('restart cleans only the reserved unpublished restore and retains a dirty checkout for operator recovery', async t => {

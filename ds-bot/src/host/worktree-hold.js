@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { linkedWorktree } from './bot-worktree.js'
 import { within } from './folders.js'
+import { pidAlive } from './home-lock.js'
 import { checkCheckpointWorktree, checkpointTaskRef, checkpointWorktree, discardCheckpointRef, discardCheckpointWorktree, materializeCheckpoint, normalizeTaskRef, sameTaskRef, snapshotWorktree } from './bot-checkpoint.js'
 import { createCheckpointSession } from './checkpoint-session.js'
 import { readTaskLedger } from './task-ledger.js'
@@ -153,13 +154,15 @@ export function createWorktreeHold(rt) {
         if (typeof folder === 'string' && within(await rt.real(folder), root)) throw refused('Another Agent is active in this worktree.')
       }
       if (holds().some(other => other !== current && other.gitDir === gitDir)) throw refused('Another Bot already has a hold on this worktree.')
-      const hold = current ?? { sessionId, root, gitDir, status: 'stopping', at: Date.now(), ...(route.local ? { local: true, hostRun } : {}) }
+      const localPid = route.local ? rt.localAgentProcessId?.(sessionId) : undefined
+      const hold = current ?? { sessionId, root, gitDir, status: 'stopping', at: Date.now(), ...(route.local ? { local: true, hostRun, ...(Number.isSafeInteger(localPid) && localPid > 0 ? { pid: localPid } : {}) } : {}) }
       if (current === null) await persist(bot, hold)
       if (agent.status !== 'idle') agent.cancel({ kind: 'user' }, { keepInbox: true })
       const stop = route.local ? rt.stopLocalAgentForTakeover?.(sessionId) : true
       await waitForStop(agent, stop)
       if (!same(hold, await attached(botId))) throw refused('The worktree changed before the Bot stopped.')
       const held = { ...hold, status: 'held' }
+      delete held.pid
       await persist(bot, held)
       return held
     } finally { changing.delete(botId) }
@@ -273,22 +276,29 @@ export function createWorktreeHold(rt) {
   }
 
   // A hold persisted in `stopping` by another host run carries no stop
-  // confirmation. Ask the local Agent adapter to stop that Session; only when it
-  // proves the stop does the hold become `held`. Otherwise the reservation stays,
-  // with the reason, instead of refusing every later attempt without one.
+  // confirmation. A recorded process that is gone proves the stop; a live one,
+  // or one this host cannot identify, keeps the reservation and says why.
   async function reconcileStoppingHolds() {
     for (const bot of Object.values(state.bots)) {
       const hold = bot.worktreeHold
       if (hold === undefined || hold.status !== 'stopping' || hold.hostRun === hostRun || changing.has(bot.id)) continue
       let stopped = true
       if (hold.local === true) {
-        stopped = false
-        try {
-          stopped = await Promise.resolve(rt.stopLocalAgentForTakeover?.(hold.sessionId)) === true
-        } catch {}
+        if (Number.isSafeInteger(hold.pid) && hold.pid > 0) stopped = !pidAlive(hold.pid)
+        else {
+          // Holds written before the process id was recorded have no durable handle.
+          stopped = false
+          try {
+            stopped = await Promise.resolve(rt.stopLocalAgentForTakeover?.(hold.sessionId)) === true
+          } catch {}
+        }
       }
-      if (stopped) await persist(bot, { ...hold, status: 'held', at: Date.now() })
-      else if (hold.reason === undefined) {
+      if (stopped) {
+        const held = { ...hold, status: 'held', at: Date.now() }
+        delete held.pid
+        delete held.reason
+        await persist(bot, held)
+      } else if (hold.reason === undefined) {
         await persist(bot, { ...hold, reason: 'The previous host’s local Agent did not prove it stopped; keep this worktree reserved.' })
       }
     }

@@ -472,6 +472,14 @@ export class LocalAgentAdapter extends LlmAdapter {
     return this.nativePrompts.has(key) || (live !== undefined && live.state !== 'idle')
   }
 
+  // The OS process behind a Session while this host runs it, for a caller that
+  // must prove after a restart that the process it had handed work to is gone.
+  processId(sessionId) {
+    const live = this.live.get(String(sessionId))
+    if (live === undefined) return undefined
+    return live.engine?.child?.pid ?? live.engineSession?.child?.pid ?? live.engineSession?._worker?.child?.pid
+  }
+
   // A Claude CLI that died before `system/init` never read the prompt it was
   // handed: roll the marker back in the live state and in the saved record, so a
   // host that restarts before the next call still replays the input. ACP and
