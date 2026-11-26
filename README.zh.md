@@ -6,7 +6,7 @@
 
 **Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。** 主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。它让你看见理解了什么、谁在做、改了哪些文件、凭什么算完成；你可以随时暂停、接管这个工作区自己改，再交回去。
 
-它有三种形态：Windows、macOS、Linux 桌面应用，DSH 插件，Docker；团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
+它有三种形态：Windows、macOS、Linux 桌面应用，插件，Docker；团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
 > 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 

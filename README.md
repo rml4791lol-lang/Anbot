@@ -6,7 +6,7 @@ English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/visi
 
 **Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.** A Main Bot splits the job; specialist Bots pick it up; the team shares memory, group chats and the same workspace. It shows what it understood, who is working, which files changed, and why it counts as done. You can pause, take over the folder yourself, and hand it back.
 
-It ships as a desktop app for Windows, macOS and Linux, a plugin for DSH, and a Docker service. Your team, chats, memory, credentials and execution records stay on your own computer.
+It ships as a desktop app for Windows, macOS and Linux, a plugin, and a Docker service. Your team, chats, memory, credentials and execution records stay on your own computer.
 
 > The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
