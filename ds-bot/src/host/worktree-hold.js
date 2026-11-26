@@ -122,8 +122,19 @@ export function createWorktreeHold(rt) {
     if (bot === undefined || changing.has(botId) || rt.botDeleting?.(botId)) throw refused('The Bot workspace is unavailable or already changing hands.')
     changing.add(botId)
     try {
-      const current = get(botId)
+      let current = get(botId)
       const worktree = await attached(botId)
+      // The previous host run's process can exit after startup reconciliation: a
+      // takeover or return re-checks it before refusing on the old host run.
+      const promoted = current !== null && current.status === 'stopping' && current.local === true
+        && current.hostRun !== hostRun && Number.isSafeInteger(current.pid) && current.pid > 0 && !pidAlive(current.pid)
+      if (promoted) {
+        const held = { ...current, status: 'held', at: Date.now() }
+        delete held.pid
+        delete held.reason
+        await persist(bot, held)
+        current = held
+      }
       if (!take) {
         if (current === null || !same(current, worktree)) throw refused('This Session is no longer attached to the held worktree.')
         if (current.status !== 'held') throw refused('The executor has not confirmed it stopped. Finish taking control before giving the worktree back.')
@@ -138,6 +149,12 @@ export function createWorktreeHold(rt) {
         releasing.set(botId, current)
         try { await persist(bot, undefined) } finally { releasing.delete(botId) }
         return null
+      }
+      // The recorded process is gone: the takeover the previous host was waiting
+      // on is complete, so this call returns the hold it left.
+      if (promoted) {
+        if (!same(current, worktree)) throw refused('This Session is no longer attached to the held worktree.')
+        return current
       }
       const route = executor(botId, worktree.agent)
       if (!route.canTakeOver) throw refused('Workspace takeover is not ready for this local Agent.')

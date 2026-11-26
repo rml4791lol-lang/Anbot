@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -148,7 +148,7 @@ test('local takeover keeps the worktree stopping until the original executor con
     botWorkflowView: () => ({ status: workflowStatus }),
     engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode', localAgentCanConfirmStop: () => true,
     stopLocalAgentForTakeover: () => { called.resolve(); return proof },
-    localAgentProcessId: () => 4321,
+    localAgentProcessId: () => process.pid,
     localAgentHasUnsettledPrompt: id => id === 's2' ? otherHasPrompt : ownHasPrompt,
     save: async () => {
       if (bot.worktreeHold === undefined && saveRelease) await saveRelease()
@@ -162,7 +162,7 @@ test('local takeover keeps the worktree stopping until the original executor con
   const taking = ownership.change('b1', true)
   await called.promise
   assert.equal(ownership.view('b1').status, 'stopping')
-  assert.equal(bot.worktreeHold.pid, 4321)
+  assert.equal(bot.worktreeHold.pid, process.pid)
   assert.throws(() => ownership.assertUnheld('s1'), /paused/)
   native.resolve(false)
   await assert.rejects(taking, /has not confirmed it stopped/)
@@ -210,6 +210,52 @@ test('local takeover keeps the worktree stopping until the original executor con
   await ownership.change('b1', false)
   assert.deepEqual(saved, ['stopping', 'held', null])
   assert.doesNotThrow(() => ownership.assertUnheld('s1'))
+})
+
+test('a hold whose process exits after startup can be taken over without a restart', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'anbot-hold-late-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const folder = join(root, 'checkout')
+  const worker = join(root, 'worker')
+  mkdirSync(folder)
+  const git = (...args) => execFileSync('git', ['-C', folder, ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
+  git('init', '--quiet')
+  git('-c', 'user.name=Anbot test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '--allow-empty', '-m', 'base')
+  git('worktree', 'add', '--quiet', '--detach', worker)
+
+  const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' })
+  t.after(() => { try { child.kill('SIGKILL') } catch {} })
+  await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
+  const observed = await linkedWorktree(worker)
+  assert.equal(observed.status, 'observed')
+  const bot = {
+    id: 'b1', sessionId: 's1',
+    worktreeHold: { sessionId: 's1', root: observed.value.root, gitDir: observed.value.gitDir, status: 'stopping', at: 1, local: true, hostRun: 'previous-host', pid: child.pid },
+  }
+  const agent = { status: 'idle', session: { id: 's1' }, inbox: { hasPending: false }, whenIdle: async () => {} }
+  const registry = { get: () => agent, list: () => [agent] }
+  const rt = {
+    ctx: { get: () => registry }, state: { bots: { b1: bot } },
+    botOf: id => (id === 'b1' ? bot : undefined), selfOf: () => 'b1', chatOf: () => 's1',
+    sessionFolder: () => worker, real: async path => realpathSync(path), hasSubagents: () => false,
+    botWorkflowView: () => ({}), engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode',
+    localAgentCanConfirmStop: () => true, stopLocalAgentForTakeover: () => Promise.resolve(true),
+    localAgentHasUnsettledPrompt: () => false,
+    load: async () => {}, readOnly: () => undefined, save: async () => {},
+  }
+  const ownership = createWorktreeHold(rt)
+  await ownership.recoverPendingRestores()
+  assert.equal(bot.worktreeHold.status, 'stopping')
+  assert.match(bot.worktreeHold.reason, /still running/)
+
+  // The same host run: the process exits after startup, with no new recovery.
+  child.kill('SIGKILL')
+  await new Promise(resolve => child.once('exit', resolve))
+  await new Promise(resolve => setTimeout(resolve, 20))
+  const held = await ownership.change('b1', true)
+  assert.equal(held.status, 'held')
+  assert.equal(bot.worktreeHold.status, 'held')
+  assert.equal(Object.hasOwn(bot.worktreeHold, 'pid'), false)
 })
 
 test('a stopping local worktree hold left by a previous host is reconciled at startup', async t => {
