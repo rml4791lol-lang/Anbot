@@ -256,7 +256,9 @@ for (const error of ['invalid_grant', 'invalid_refresh_token', 'token_expired', 
     assert.equal(stored.hostId, first.hostId)
     assert.equal(stored.subject, first.subject)
     assert.equal(f.client.status().state, 'needs-sign-in')
-    assert.equal((await createChatGPTSignIn(f.clientOptions)).status().state, 'needs-sign-in')
+    const restarted = await createChatGPTSignIn(f.clientOptions)
+    await restarted.prime()
+    assert.equal(restarted.status().state, 'needs-sign-in')
   })
 }
 
@@ -392,7 +394,84 @@ test('corrupt encrypted storage fails closed without overwriting it', async t =>
   const corrupt = Buffer.from('not an encrypted record')
   await fs.writeFile(file, corrupt)
   const client = await createChatGPTSignIn(f.clientOptions)
+  await client.prime()
   assert.equal(client.status().state, 'temporarily-unavailable')
   await assert.rejects(client.signIn({ openExternal: () => assert.fail('must not open browser') }), typed('temporarily-unavailable', 'secure-storage-failed'))
   assert.deepEqual(await fs.readFile(file), corrupt)
+})
+
+const sampleRecord = {
+  version: 1,
+  hostId: 'urn:uuid:11111111-1111-4111-8111-111111111111',
+  clientId: 'issued-client',
+  subject: 'synthetic-account',
+  issuer: 'https://auth.openai.com',
+  account: { email: 'person@example.test', name: 'Test Person' },
+  tokens: { accessToken: 'synthetic-access', refreshToken: 'synthetic-refresh', idToken: 'id-token',
+    scopes: ['chatgpt.tokens.use.direct'], expiresAt: Date.now() + 3600_000 },
+}
+
+test('boot construction never reads or decrypts the stored sign-in record', async t => {
+  const userData = await fs.mkdtemp(join(tmpdir(), 'ds-bot-lazy-'))
+  t.after(() => fs.rm(userData, { recursive: true, force: true }))
+  const store = createChatGPTStore({ userData, safeStorage, platform: 'darwin' })
+  await store.write(sampleRecord)
+  const reads = []
+  const decrypts = []
+  const spyingStorage = {
+    isEncryptionAvailable: () => true,
+    getSelectedStorageBackend: () => 'gnome_libsecret',
+    encryptString: text => safeStorage.encryptString(text),
+    decryptString: buffer => { decrypts.push(buffer); return safeStorage.decryptString(buffer) },
+  }
+  const spyingFs = { ...fs, readFile: async (file, ...rest) => { reads.push(String(file)); return fs.readFile(file, ...rest) } }
+
+  const client = await createChatGPTSignIn({ userData, safeStorage: spyingStorage, fs: spyingFs,
+    platform: 'darwin', fetch: () => assert.fail('network must not be touched at boot') })
+  assert.equal(reads.filter(file => file.endsWith('chatgpt-signin.enc')).length, 0, 'the record file is not read at boot')
+  assert.equal(decrypts.length, 0, 'the record is not decrypted at boot')
+  assert.equal(client.status().state, 'signed-out')
+
+  // Opening the ChatGPT panel primes the lazy load; the stored session is restored only then.
+  await client.prime()
+  assert.equal(client.status().state, 'connected')
+  assert.equal(decrypts.length, 1, 'the record is decrypted once on first use')
+})
+
+test('a denied or failing secure storage degrades without throwing at boot', async t => {
+  const userData = await fs.mkdtemp(join(tmpdir(), 'ds-bot-lazy-denied-'))
+  t.after(() => fs.rm(userData, { recursive: true, force: true }))
+  await fs.writeFile(join(userData, 'chatgpt-signin.enc'), safeStorage.encryptString(JSON.stringify(sampleRecord)))
+  const deniedStorage = {
+    isEncryptionAvailable: () => true,
+    getSelectedStorageBackend: () => 'gnome_libsecret',
+    encryptString: () => { throw new Error('keychain denied') },
+    decryptString: () => { throw new Error('keychain denied (-25293)') },
+  }
+  const client = await createChatGPTSignIn({ userData, safeStorage: deniedStorage, platform: 'darwin',
+    fetch: () => assert.fail('network must not be touched') })
+  // Construction and the first prime must not reject; the degraded state looks signed-out-ish.
+  await assert.doesNotReject(client.prime())
+  assert.equal(client.status().state, 'temporarily-unavailable')
+  assert.equal(client.status().account, undefined)
+  assert.equal(client.status().planUsage, undefined)
+  // A repeated prime must not hit the keychain a second time.
+  await assert.doesNotReject(client.prime())
+})
+
+test('an absent record stays signed-out and touches no decryption key', async t => {
+  const userData = await fs.mkdtemp(join(tmpdir(), 'ds-bot-lazy-empty-'))
+  t.after(() => fs.rm(userData, { recursive: true, force: true }))
+  const decrypts = []
+  const spyingStorage = {
+    isEncryptionAvailable: () => true,
+    getSelectedStorageBackend: () => 'gnome_libsecret',
+    encryptString: text => safeStorage.encryptString(text),
+    decryptString: buffer => { decrypts.push(buffer); return safeStorage.decryptString(buffer) },
+  }
+  const client = await createChatGPTSignIn({ userData, safeStorage: spyingStorage, platform: 'darwin',
+    fetch: () => assert.fail('network must not be touched') })
+  await client.prime()
+  assert.equal(client.status().state, 'signed-out')
+  assert.equal(decrypts.length, 0)
 })

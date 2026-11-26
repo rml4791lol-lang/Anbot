@@ -25,7 +25,8 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
 }) {
   const store = createChatGPTStore({ userData, safeStorage, fs, platform })
   let record
-  let state = 'signed-out'
+  let state = store.supported() ? 'signed-out' : 'unsupported'
+  let loadPromise
   let publish = () => {}
   const setState = next => { state = next; publish() }
   let refreshInFlight
@@ -42,13 +43,21 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
   const supported = () => {
     if (!store.supported()) throw fail('unsupported', 'secure-storage-unavailable')
   }
-  try {
-    if (!store.supported()) state = 'unsupported'
-    else record = await store.read()
-  } catch { state = 'temporarily-unavailable' }
   const connectionState = () => record?.tokens ? (record.tokens.scopes.includes(PLAN_SCOPE) ? 'connected' : 'plan-usage-off')
     : record?.needsSignIn ? 'needs-sign-in' : 'signed-out'
-  if (record) state = connectionState()
+  // The stored record is read lazily: booting must not unlock the Keychain. The first status
+  // query or signed-in action primes it; a denied/unavailable store degrades to a signed-out-ish
+  // state without throwing out of startup.
+  const ensureLoaded = () => {
+    if (loadPromise) return loadPromise
+    loadPromise = (async () => {
+      if (!store.supported()) { state = 'unsupported'; return }
+      try { record = await store.read() }
+      catch { state = 'temporarily-unavailable'; record = undefined; publish(); return }
+      if (record) { state = connectionState(); publish() }
+    })().catch(() => { state = 'temporarily-unavailable'; publish() })
+    return loadPromise
+  }
   const save = async next => {
     supported()
     try { await store.write(next) } catch {
@@ -63,14 +72,17 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     const { tokens: _tokens, ...mapping } = record
     await save({ ...mapping, needsSignIn })
   }
-  const status = () => ({
-    state: store.supported() ? state : 'unsupported',
-    ...(record?.account ? { account: {
-      ...(typeof record.account.email === 'string' ? { email: record.account.email } : {}),
-      ...(typeof record.account.name === 'string' ? { name: record.account.name } : {}),
-    } } : {}),
-    ...(record?.tokens ? { planUsage: record.tokens.scopes.includes(PLAN_SCOPE), expiresAt: record.tokens.expiresAt } : {}),
-  })
+  const status = () => {
+    void ensureLoaded()
+    return {
+      state: store.supported() ? state : 'unsupported',
+      ...(record?.account ? { account: {
+        ...(typeof record.account.email === 'string' ? { email: record.account.email } : {}),
+        ...(typeof record.account.name === 'string' ? { name: record.account.name } : {}),
+      } } : {}),
+      ...(record?.tokens ? { planUsage: record.tokens.scopes.includes(PLAN_SCOPE), expiresAt: record.tokens.expiresAt } : {}),
+    }
+  }
   let published
   publish = () => {
     const next = status()
@@ -162,6 +174,7 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     activeSignIn = controller
     const combined = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs), ...(signal ? [signal] : [])])
     return exclusive(async () => {
+      await ensureLoaded()
       supported()
       if (state === 'temporarily-unavailable' && !record) throw fail(state, 'secure-storage-failed')
       setState('signing-in')
@@ -242,6 +255,7 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
   }
   const refresh = () => {
     refreshInFlight ??= exclusive(async () => {
+      await ensureLoaded()
       supported()
       if (credentialWriteFailed) throw fail('temporarily-unavailable', 'secure-storage-failed')
       if (!record?.tokens?.refreshToken || state === 'needs-sign-in') throw fail('needs-sign-in', 'sign-in-required')
@@ -266,6 +280,7 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     return refreshInFlight
   }
   const getAccessToken = async () => {
+    await ensureLoaded()
     supported()
     if (credentialWriteFailed) throw fail('temporarily-unavailable', 'secure-storage-failed')
     if (signingOut || !record?.tokens || state === 'needs-sign-in' || state === 'signing-in') throw new ChatGPTSignInError(state, 'sign-in-required')
@@ -281,6 +296,7 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     signingOut = true
     activeSignIn?.abort()
     return exclusive(async () => {
+      await ensureLoaded()
       supported()
       let revoked = false
       try {
@@ -307,5 +323,5 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     return body.models.filter(model => model?.visibility === 'list' && typeof model.slug === 'string' && typeof model.display_name === 'string')
       .map(model => ({ id: model.slug, name: model.display_name }))
   }
-  return { signIn, refresh, signOut, getAccessToken, listModels, status }
+  return { signIn, refresh, signOut, getAccessToken, listModels, status, prime: ensureLoaded }
 }

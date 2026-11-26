@@ -31,6 +31,7 @@ import {
   hasAppBoundKey,
   importFromBrowser,
   isLoopbackPortOpen,
+  listSources,
   kindOfExe,
   locksProfile,
   probeSource,
@@ -1519,5 +1520,30 @@ test('harvestLiveChromium preserves CDP partitionKeyOpaque and string partitionK
   } finally {
     await new Promise((resolve) => wss.close(resolve))
     await root.remove()
+  }
+})
+
+test('listing sources and probing browsers never read the macOS Keychain', async () => {
+  const { createRequire } = await import('node:module')
+  const require = createRequire(import.meta.url)
+  const cp = require('node:child_process')
+  const securityCalls = []
+  const originalExecFile = cp.execFile
+  cp.execFile = (cmd, args, opts, cb) => {
+    if (String(cmd).includes('security') || (Array.isArray(args) && args.includes('find-generic-password'))) {
+      securityCalls.push([cmd, args])
+    }
+    return originalExecFile(cmd, args, opts, cb)
+  }
+  try {
+    const listed = await listSources()
+    assert.ok(Array.isArray(listed))
+    await probeSource({ engine: 'chromium', userDataDir: '/nonexistent/chrome',
+      profilePath: '/nonexistent/chrome/Default', profileDir: 'Default',
+      cookieDb: '/nonexistent/chrome/Default/Network/Cookies', keychainServices: ['Chrome Safe Storage'] })
+    await probeSource({ engine: 'safari', userDataDir: '/nonexistent/safari', cookieFile: null })
+    assert.deepEqual(securityCalls, [], 'no security find-generic-password -w during enumerate/probe')
+  } finally {
+    cp.execFile = originalExecFile
   }
 })
