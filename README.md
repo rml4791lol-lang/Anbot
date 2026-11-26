@@ -1,45 +1,58 @@
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.svg"><img src="docs/images/logo.svg" alt="DS Bot" width="260"></picture></p>
-
-# DS Bot
+# Anbot
 
 English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/vision.md) · [Known issues](docs/known-issues.md) · [Contributing](CONTRIBUTING.md)
 
-![version](https://img.shields.io/badge/version-v0.3.10-blue) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![license](https://img.shields.io/badge/license-Apache_2.0-green)
+![Status](https://img.shields.io/badge/status-preview-orange) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![License](https://img.shields.io/badge/license-Apache_2.0-green)
 
-DS Bot is an open-source project built on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH), available as a standalone desktop app or as a DSH plugin. It turns DSH into a team of long-lived bots that you create, talk to and work with.
+**Anbot is a personal agent workspace built on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).** You hand it a job; it does the job in a real working folder, and it shows you what it understood, who is working on it, which files changed, and why it counts as done. You can pause it at any point, take over the same working folder and edit it yourself, then hand it back.
 
-## Sponsors
+It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it also runs in Docker. Your team, chats, memory, credentials and execution records stay on your own computer.
 
-<table>
-<tr>
-<td width="180" align="center"><a href="https://modelgo.ai/?utm_source=dsbot&utm_medium=sponsorship&utm_content=readme&campaign_id=dsbot&ad_group_id=readme"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/sponsors/modelgo-dark.svg"><img src="docs/images/sponsors/modelgo.svg" alt="ModelGo" width="150"></picture></a></td>
-<td>ModelGo is a reliable, high-performance, enterprise-grade AI API aggregation platform. Access leading AI models—including Claude, OpenAI, Gemini, and DeepSeek—with a single API key. Sign up now and get 40% off DeepSeek V4.1 Flash.<br>Exclusive perks for DS-Bot users: get $0.50 in credits when you sign up, earn another $2 after your first API call, and receive up to $10 in bonus credits when you top up! Try it now: <a href="https://modelgo.ai/?utm_source=dsbot&utm_medium=sponsorship&utm_content=readme&campaign_id=dsbot&ad_group_id=readme">ModelGo Official Website</a></td>
-</tr>
-</table>
+> Preview. No installers have been published yet, and the interface and configuration will still change. Today you can build it from source or install it as a DSH plugin.
 
-<h2></h2>
+## What Anbot adds on top of DS Bot
 
-![Say one sentence to Chief, and it sets up the bots and the group chat](docs/images/team.png)
+Anbot comes from [DS Bot](https://github.com/Fei2411/DS-Bot) and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. On top of that it strengthens two things: whether execution can be trusted, and whether you can take over.
+
+| Capability | What it does |
+|---|---|
+| **X-Ray workspace** | Chat by default; open X-Ray when you need it: task objective and constraints, an editable subtask checklist, the actual executor, the effective model and permissions, context budget, workspace state, checkpoints |
+| **Workspace takeover and return** | Before you can take over, Anbot waits until the executor confirms it stopped; new messages are refused while you hold it; on return it checks that it is still the same Session and the same working folder. Works for DSH-native Bots and for local agents such as Codex, Claude Code and OpenCode |
+| **Checkpoints and recovery** | Saves the conversation position and the workspace files as a pair at one moment. Preview it read-only, or restore into a new writable workspace; the original workspace and later edits stay. Memory entries written after the checkpoint can be undone one by one |
+| **Runtime probes** | What the current Session actually loaded (skills, plugins, MCP), the sandbox permissions actually in force, the route the last request took, and whether a local agent is installed and signed in. When it cannot tell, it says "unverified" instead of guessing |
+| **Context view** | Current pressure, usable window, check thresholds, and which original records each piece the model sees came from |
+| **Ten professional presets** | Choose one when creating a Bot: development and debugging, code review, UI and product, frontend, backend and database, testing and acceptance, project coordination, local agent collaboration, docs and knowledge, self-maintenance. Each fills in the role, method, recommended skills, workspace and permission policy, acceptance criteria and delivery format; all of it stays editable |
+| **Automatic workspaces** | A new Bot in a Git team workspace gets its own linked worktree, so parallel Bots stop stepping on each other's files |
+| **High-risk command approval** | Recursive deletes, destructive Git operations, pushes, disk commands and privilege elevation need your approval once before they run |
+| **After a failure** | Retry the failed turn on another model; after a restart, resume the interrupted work once automatically, and pause for you in X-Ray if it is interrupted again |
+| **No automatic skills** | Ordinary conversations and one-off experience do not create or update skills, and raise no approval. Only an explicit request starts that flow |
 
 ## Install
 
 **Desktop app (Windows, macOS, Linux)**
 
-The desktop app bundles a pinned DSH, so you do not need to install DSH first. Download the package for your system from [Releases](https://github.com/rml4791lol-lang/Anbot/releases/latest), open it, and configure a model in Settings (it can also copy your existing bot team from DSH).
+Installers are not published yet. Build from source:
 
-If your OS warns about an unsigned app: on Windows select **More info** → **Run anyway**; on macOS open **System Settings** → **Privacy & Security** and select **Open Anyway**.
+```sh
+git clone https://github.com/rml4791lol-lang/Anbot.git
+cd Anbot
+sh scripts/setup.sh        # three installs: the plugin, the phone link, the DSH packages for tests
+(cd app && npm test && npm run build && npm run pack)
+```
+
+The result is in `app/dist-pack/`. The desktop app bundles a pinned DSH, so you do not need DSH first; on first launch it can copy the bot team from an existing DSH.
 
 **As a plugin in DSH**
 
-First install DSH and configure at least one model in it. DS Bot uses the models from DSH.
-
-- **DSH Desktop**: In the sidebar, select **Plugins** → **Add plugin**, enter `ds-bot` (in mainland China, set **Registry** to **Mainland China mirror**), then select **Install** and **Enable now**.
-- **DSH Web** (needs Node.js `22.19` or later, and pnpm):
+Install DSH and configure at least one model in it; Anbot uses the models from DSH.
 
 ```sh
-npx @deepseek-ai/dsh@0.2.2-rc.5 plugin --profile web add ds-bot
-npx @deepseek-ai/dsh@0.2.2-rc.5 web
+git clone https://github.com/rml4791lol-lang/Anbot.git
+cd Anbot/ds-bot && npm pack
+dsh plugin --profile web add ./ds-bot-*.tgz
 ```
+
+Set `--profile` to the profile you want, for example `desktop`. In DSH Desktop you can also add the tgz under **Plugins** and enable it there.
 
 **Docker (NAS, Linux server)**
 
@@ -47,7 +60,7 @@ See [`docker/README.md`](docker/README.md).
 
 ## Setup
 
-The easiest way to set up other bots and group chats is to just talk to your Main Bot.
+The easiest way to set up other bots and group chats is to talk to your Main Bot.
 
 **Settings** opens on an **Overview** console showing items that need attention, your team, recent usage, and quick cards for every area. Press `⌘K` / `Ctrl+K` (or use the top search bar) to jump straight to any setting, bot, group chat, or model. Domains scroll as one page with top anchors:
 
@@ -56,11 +69,11 @@ The easiest way to set up other bots and group chats is to just talk to your Mai
 - **Team**: Bots · Group chats · Scheduled tasks
 - **Connect**: Connectors · IM · Phone · API
 - **Tools**: Computer use · Browser · Capabilities · Secrets
-- **Usage** & **About DS Bot** (includes **Feedback**)
+- **Usage** & **About Anbot** (includes **Feedback**)
 
 In the standalone desktop app, you can use your ChatGPT plan for bot models without an OpenAI API key. Under **Settings → Models → Providers**, open **OpenAI** (or select it under **Add a provider → Known provider**) and choose **Sign in with ChatGPT**. This requires OS-backed secure storage. See [Models](ds-bot/README.md#models) for how to enable plan usage and choose a model.
 
-> **Note on web search**: DS Bot selects its `auto` search provider for the whole profile. If you disable `web-search-auto`, select another registered search provider in that profile too. See [Web search](ds-bot/README.md#web-search) and the [recovery steps](docs/known-issues.md#web-search-fails-everywhere-after-turning-off-web-search-auto).
+> **Note on web search**: Anbot selects its `auto` search provider for the whole profile. If you disable `web-search-auto`, select another registered search provider in that profile too. See [Web search](ds-bot/README.md#web-search) and the [recovery steps](docs/known-issues.md#web-search-fails-everywhere-after-turning-off-web-search-auto).
 
 ## Features
 
@@ -78,7 +91,7 @@ The same local gateway serves versioned `/v1/*` REST + SSE endpoints, Streamable
 
 ### Bot
 
-Each bot is a long-lived identity with one continuous conversation—no session lists or manual session switching. When context fills up, DS Bot condenses or moves to a fresh part automatically while earlier history stays readable and searchable. Each bot keeps its own saved profile (model, thinking level, instructions, working folder and permission preset), separate from the host's DSH installation profile.
+Each bot is a long-lived identity with one continuous conversation—no session lists or manual session switching. When context fills up, Anbot condenses or moves to a fresh part automatically while earlier history stays readable and searchable. Each bot keeps its own saved profile (model, thinking level, instructions, working folder and permission preset), separate from the host's DSH installation profile.
 
 Each bot can have its own working folder and permission preset — just tell the bot when you want to switch folders. A bot that looks after several projects can also get extra folders and work in all of them at once. Your foreground chat stays responsive while a bot works: slow shell commands move to background jobs automatically, and a bot can launch background tasks or hand an in-flight turn to the background when you send a new message. Track progress, answer approvals, send follow-ups or stop tasks from the header island, inspect task transcripts in the details **Tasks** tab, manage them on mobile, or type `/side` to ask a side question. Bots also maintain long-term memory, render interactive charts/tables/forms in replies, run scheduled tasks, and can be organized into collapsible sidebar sections.
 
@@ -110,11 +123,11 @@ A private bot cannot be a Main Bot or join group chats. This isolates it from ot
 
 Connect coding-agent CLIs already installed on your computer (Claude Code, Codex CLI, Cursor CLI, GitHub Copilot, Devin CLI, OpenCode, Gemini CLI, Antigravity, Kimi CLI, Kilo CLI, and custom CLIs) directly as bots. A local-agent bot uses the CLI's own sign-in, plan, models, tools and context, while still participating in private chats, group chats, handoffs and memory.
 
-Because it uses the CLI's own tools, shared capabilities and connectors in DS Bot are not passed into it, and switching between model and local-agent modes starts a fresh conversation part. Only CLIs that reject MCP servers altogether run without team tools. Note that Cursor CLI saves the last chosen model as its own global default (`~/.cursor`); keep **CLI default** if you do not want to change your terminal default.
+Because it uses the CLI's own tools, shared capabilities and connectors in Anbot are not passed into it, and switching between model and local-agent modes starts a fresh conversation part. Only CLIs that reject MCP servers altogether run without team tools. Note that Cursor CLI saves the last chosen model as its own global default (`~/.cursor`); keep **CLI default** if you do not want to change your terminal default.
 
 ### Browser
 
-Each bot has its own isolated browser with separate logins, and in the desktop app can import cookies and supported `localStorage` from files or local browsers (including Chrome/Edge, Safari, Brave, Arc, Firefox and Zen). For interactive browsing, set `browserPlugin` to `refs`, `script` or `task` in the DSH profile and restart DS Bot; **Settings → Tools → Browser** explains setup and manages per-site action grants. Posting, uploading, downloading and deleting require approval unless preauthorized; logins, CAPTCHAs and payments hand control back to you.
+Each bot has its own isolated browser with separate logins, and in the desktop app can import cookies and supported `localStorage` from files or local browsers (including Chrome/Edge, Safari, Brave, Arc, Firefox and Zen). For interactive browsing, set `browserPlugin` to `refs`, `script` or `task` in the DSH profile and restart Anbot; **Settings → Tools → Browser** explains setup and manages per-site action grants. Posting, uploading, downloading and deleting require approval unless preauthorized; logins, CAPTCHAs and payments hand control back to you.
 
 The embedded browser panel is available in the desktop app and DSH Desktop (not DSH Web); only the desktop app persists panel sign-ins across restarts and supports cookie import.
 
@@ -140,7 +153,7 @@ Bots can create, inspect and edit Word (`.docx`), PowerPoint (`.pptx`) and Excel
 
 ### Mobile app & browser remote
 
-Control your running bot team from iOS, Android, or a browser over an end-to-end encrypted link (Noise IK)—your computer connects outbound only, with no public IP or open ports. Open **Settings → Connect → Phone**, enable phone access, and scan the QR code in the mobile app (Android APK in [Releases](https://github.com/rml4791lol-lang/Anbot/releases/latest); see [`mobile/README.md`](mobile/README.md) for iOS).
+Control your running bot team from iOS, Android, or a browser over an end-to-end encrypted link (Noise IK)—your computer connects outbound only, with no public IP or open ports. Open **Settings → Connect → Phone**, enable phone access, and scan the QR code in the mobile app (see [`mobile/README.md`](mobile/README.md) for the iOS build).
 
 For **browser remote (preview)**, pick **Open in a browser** or **Copy browser link** on the same pairing screen. Self-hosted relay instructions and security limits are in [`link/README.md`](link/README.md) and [`docs/plans/2026-11-17-web-remote.md`](docs/plans/2026-11-17-web-remote.md).
 
@@ -150,7 +163,6 @@ In **Settings → Connect → IM**, link any bot or group chat to WeChat, Feishu
 
 WeChat supports private chat with the QR-paired account only; WeChat and QQ enforce platform reply windows; WeChat, QQ and DingTalk use numbered replies instead of card buttons; secret cards cannot be submitted from IM apps.
 
-
 ### Usage & appearance
 
 In **Settings → Usage**, track token usage by time range, bot and model. In **Settings → Appearance**, pick themes, accent colors, bubble or flat message layout with width sliders, interface motion tiers, and avatar animation levels—all with live preview across 8 supported languages.
@@ -159,7 +171,14 @@ In **Settings → Usage**, track token usage by time range, bot and model. In **
 
 ## Data
 
-All data stays on your computer: in the data folder chosen for the desktop app (`~/.ds-bot` by default), or in `bot/` and `sessions/` inside your DSH home folder (`~/.dsh` by default) for the plugin. Uninstalling the app or plugin does not delete your data.
+All data stays on your computer: in the data folder chosen for the desktop app (existing installs keep `~/.ds-bot`), or in `bot/` and `sessions/` inside your DSH home folder (`~/.dsh` by default) for the plugin. Uninstalling the app or plugin does not delete your data. Anbot does not upload it; model requests go to the model provider you configured.
+
+## Not done yet
+
+- **Coordination layer**: tell the Main Bot a goal and it splits the work, picks bots, prepares workspaces, tracks dependencies and reports acceptance by itself. For now you arrange the delegation.
+- **Multi-bot workflow view**: one picture of every bot's dependencies, progress and approvals.
+- **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
+- **Public installers, automatic updates and code signing.**
 
 ## Documentation & development
 
@@ -168,19 +187,22 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - Desktop app internals and packaging: [`app/README.md`](app/README.md)
 - Development setup, tests and workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Version history: [`CHANGELOG.md`](CHANGELOG.md)
+- Report security problems privately as described in [`SECURITY.md`](SECURITY.md); do not open a public issue.
 
 ## Acknowledgments
 
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): DS Bot is built on the DSH plugin system and Sessions. Model Bots use its agent loop and model service; local-agent Bots use their CLI's tools and model access. Auxiliary model calls run outside the agent loop, while web search/fetch and DeepSeek OCR, TTS and ASR make direct service requests.
+Anbot comes from [DS Bot](https://github.com/Fei2411/DS-Bot), maintained by Fei2411 and its contributors, and continues from there.
+
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): Anbot is built on the DSH plugin system and Sessions. Model Bots use its agent loop and model service; local-agent Bots use their CLI's tools and model access. Auxiliary model calls run outside the agent loop, while web search/fetch and DeepSeek OCR, TTS and ASR make direct service requests.
 - [esbuild](https://esbuild.github.io/): bundles the plugin's interface code.
-- Thanks to these projects for the ideas they published. DS Bot learned from their designs and does not contain their code:
+- Thanks to these projects for the ideas they published. Anbot learned from their designs and does not contain their code:
   - [AgentMemoryRepo](https://github.com/AgentMemoryRepo/agentmemoryrepo): the Markdown format of Bot memory.
   - [OpenAI Codex](https://github.com/openai/codex): checkpoints that keep the user's messages next to the summary, and message anchors for chat search.
   - [OpenMausBot](https://github.com/milind-soni/OpenMausBot): group chat rounds and @mention relays.
   - [Hermes Agent](https://github.com/NousResearch/hermes-agent) and [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode): one session per member per group chat, and handoffs that carry the earlier user messages.
   - [OpenCode](https://github.com/sst/opencode), [goose](https://github.com/block/goose), [pi](https://github.com/badlogic/pi-mono) and [Gemini CLI](https://github.com/google-gemini/gemini-cli): when to condense a long chat, and what a handoff note holds.
   - [obelisk](https://github.com/tommy0103/obelisk): chat search with a SQLite full-text index.
-- Everyone who tries DS Bot, asks questions and reports bugs.
+- Everyone who uses and contributes to DS Bot.
 
 ## License
 
@@ -188,6 +210,6 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 
 ## Disclaimer
 
-DS Bot is an independent community project. **It is not an official DeepSeek product**, and it is not affiliated with, endorsed by or sponsored by DeepSeek. "DeepSeek", "DeepSeek Harness" and the other names are trademarks of their owners. They are used here only to say what this plugin works with.
+Anbot is an independent community project. **It is not an official DeepSeek product**, and it is not affiliated with, endorsed by or sponsored by DeepSeek. "DeepSeek", "DeepSeek Harness" and the other names are trademarks of their owners. They are used here only to say what this plugin works with.
 
 Bots use your own model quota, and they read and write files and run commands when you ask them to. Check important actions yourself.
