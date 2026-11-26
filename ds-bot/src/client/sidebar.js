@@ -935,21 +935,24 @@ export function TeamSidebar(props) {
   const top = wideContent
     ? h('div', { className: 'bt-side-top' },
         h('span', { className: 'bt-brand' }, h(BrandName)),
-        h(UpdateButton, { useUpdate: props.useUpdate, actions }),
         h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New section'), title: t('New section'), onClick: createNewSection }, h(FolderIcon)),
         h('button', { type: 'button', className: 'bt-round', 'aria-label': t('Search'), title: t('Search'), onClick: () => actions.openPalette() }, h(SearchIcon)),
         h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon)),
         h('button', { type: 'button', className: 'bt-round bt-side-collapse', 'aria-label': t('Collapse sidebar'), title: t('Collapse sidebar'), onClick: onToggle }, h(SidebarIcon)))
     : h('div', { className: 'bt-rail-top' },
-        h(UpdateButton, { useUpdate: props.useUpdate, actions }),
         h('button', { type: 'button', className: 'bt-round bt-side-collapse', 'aria-label': t('Collapse sidebar'), title: t('Collapse sidebar'), onClick: onToggle }, h(SidebarIcon)),
         main ? h(BotRow, { ...rowProps, bot: main, marked: markedUnread[main.id] === true }) : roster.ready ? null : bootFailed ? h(BootFailed, { actions }) : h('div', { className: 'bt-hint' }, t('Setting up your Main Bot…')),
         h('span', { className: 'bt-rail-sep', 'aria-hidden': true }))
-  // The foot stands in for the shell's hidden footer: the account avatar, and on
-  // the rail the new-chat button above it.
+  // The foot stands in for the shell's hidden footer: the account avatar and the
+  // Plugins shortcut, the update cloud against the divider, and on the rail the
+  // new-chat button above them.
   const foot = wideContent
-    ? h('div', { className: 'bt-leftcol-foot' }, h(AccountLauncher, { seat: false, actions }), h(PluginsButton, { actions }))
+    ? h('div', { className: 'bt-leftcol-foot' },
+        h(AccountLauncher, { seat: false, actions }),
+        h(PluginsButton, { actions }),
+        h(UpdateButton, { useUpdate: props.useUpdate, actions, up: true }))
     : h('div', { className: 'bt-leftcol-foot bt-leftcol-foot-rail' },
+        h(UpdateButton, { useUpdate: props.useUpdate, actions, up: true }),
         h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon)),
         h(AccountLauncher, { seat: false, actions }),
         h(PluginsButton, { actions }))
@@ -989,11 +992,11 @@ export function TeamSidebar(props) {
     shown === 'hidden' ? null : h(LeftColumn, { mode: shown, width: ourWidth, onGrip: startDrag, leaving, entering: !firstColumn.current }, content))
 }
 
-// The update button at the sidebar's top right: a cloud while a newer Anbot —
-// or a newer verified DSH — is available, then the install's progress and
-// result. Its card has one row each for the bot and DSH, with their versions,
-// the release notes link, and each row's own button.
-function UpdateButton({ useUpdate, actions }) {
+// The update button sits at the left column's foot, against the divider: a cloud
+// while a newer Anbot — or a newer verified DSH — is available, then the install's
+// progress and result. Its card has one row each for the bot and DSH, with their
+// versions, the release notes link, and each row's own button.
+function UpdateButton({ useUpdate, actions, up = false }) {
   const update = useUpdate(value => value)
   const [open, setOpen] = useState(false)
   const [shown, leaving] = useLinger(open, 120)
@@ -1022,8 +1025,11 @@ function UpdateButton({ useUpdate, actions }) {
   useLayoutEffect(() => {
     if (!open) return
     const rect = button.current?.getBoundingClientRect()
-    if (rect) setBox({ left: Math.max(8, Math.min(rect.left, window.innerWidth - 288)), top: rect.bottom + 6 })
-  }, [open, tick])
+    if (rect) {
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - 288))
+      setBox(up ? { left, bottom: viewBottom() - rect.top + 5 } : { left, top: rect.bottom + 6 })
+    }
+  }, [open, tick, up])
   if (!update?.available && !dshRow && phase === 'idle' && dshPhase === 'idle') return null
   const cloudPhase = phase === 'installing' || dshPhase === 'installing' ? 'installing' : phase !== 'idle' ? phase : dshPhase
   const toggle = () => setOpen(value => !value)
@@ -1054,7 +1060,7 @@ function UpdateButton({ useUpdate, actions }) {
       ref: button, type: 'button', className: 'bt-round bt-update', 'data-phase': cloudPhase, 'aria-label': label, title: label,
       'aria-haspopup': 'dialog', 'aria-expanded': open, onClick: toggle,
     }, h(CloudDownloadIcon, { done: phase === 'installed' || phase === 'updated' }), phase === 'failed' || dshPhase === 'failed' ? h('span', { className: 'bt-update-dot', 'aria-hidden': true }) : null),
-    shown && box ? createPortal(h('div', { className: 'bt-update-pop', role: 'dialog', 'aria-label': update?.available || phase !== 'idle' ? t('Anbot update') : t('DSH update'), style: box, 'data-leaving': leaving || undefined },
+    shown && box ? createPortal(h('div', { className: 'bt-update-pop', role: 'dialog', 'aria-label': update?.available || phase !== 'idle' ? t('Anbot update') : t('DSH update'), style: box, 'data-up': up || undefined, 'data-leaving': leaving || undefined },
       update?.available || phase !== 'idle' ? h(Fragment, null,
         h('div', { className: 'bt-update-title' }, phase === 'installed' || phase === 'updated' ? t('Update installed') : t('Anbot {version}', { version: update.latest })),
         h('div', { className: 'bt-update-text' }, phase === 'installed'
@@ -1468,6 +1474,10 @@ export const SIDEBAR_CSS = `
 [class*="_footArea"]>[class*="_footerActions"]>div>.bt-foot-account{grid-column:1;order:1;display:inline-flex}
 [class*="_footArea"]:has(.bt-foot-account)>[class*="_settingsArea"]{grid-column:3}
 [class*="_footArea"]:has(.bt-foot-account)>[class*="_settingsArea"] button[class*="_trigger"] [class*="_label"]{display:none!important}
+/* The update cloud closes the left column's foot: settings and plugins stay left,
+   the cloud kisses the divider. */
+.bt-leftcol-foot>.bt-update{margin-left:auto;margin-right:-8px}
+.bt-leftcol-foot-rail>.bt-update{margin:0}
 
 /* The update cloud springs in when a newer Anbot shows up; its arrow drops in a
    loop while the install runs. */
@@ -1478,7 +1488,8 @@ export const SIDEBAR_CSS = `
 .bt-update[data-phase=installing] .bt-cloud-arrow{animation:bt-cloud-drop 1.1s cubic-bezier(.45,0,.55,1) infinite}
 @keyframes bt-cloud-drop{0%{transform:translateY(-3px);opacity:0}35%{opacity:1}70%{transform:translateY(1px);opacity:1}100%{transform:translateY(2px);opacity:0}}
 .bt-update-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#E5484D;box-shadow:0 0 0 1.5px var(--bt-sidebar)}
-.bt-update-pop{position:fixed;z-index:60;width:280px;padding:14px 14px 12px;border-radius:16px;background:var(--bt-glass-bg);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border:.5px solid var(--bt-glass-rim);box-shadow:var(--bt-glass-shadow);color:var(--bt-ink);box-sizing:border-box;transform-origin:top left;font-family:var(--bt-font);animation:bt-update-pop ${SPRING_SHAPE.duration}ms ${SPRING_SHAPE.easing}}
+.bt-update-pop{position:fixed;z-index:60;width:280px;padding:14px 14px 12px;border-radius:16px;background:var(--bt-glass-bg);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border:.5px solid var(--bt-glass-rim);box-shadow:var(--bt-glass-shadow);color:var(--bt-ink);box-sizing:border-box;transform-origin:top left;font-family:var(--bt-font);animation:bt-update-pop ${SPRING_SHAPE.duration}ms ${SPRING_SHAPE.easing};max-height:calc(100dvh - 24px);overflow:auto}
+.bt-update-pop[data-up=true]{transform-origin:bottom left}
 .bt-update-pop[data-leaving]{animation:bt-pop-out .12s cubic-bezier(.4,0,1,1) forwards;pointer-events:none}
 @keyframes bt-update-pop{from{opacity:0;transform:scale(.96);filter:var(--bt-fx-blur-4,blur(4px))}}
 .bt-update-title{font-size:14px;line-height:20px;font-weight:600}
