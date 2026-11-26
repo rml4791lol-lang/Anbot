@@ -140,6 +140,20 @@ const files = {
   'start.css': async css => between(between(between(css, '/* tokens */', '/* /tokens */', tokens()), '/* image */', '/* /image */', imageCss()), '/* springs */', '/* /springs */', await springs()),
   '../page-card.css': async css => between(between(css, '/* tokens */', '/* /tokens */', tokens(CARD_SCOPE)), '/* springs */', '/* /springs */', await springs(CARD_SCOPE)),
 }
+// The PNG bytes depend on the encoder build: the libvips behind sharp writes the same pixels in
+// a different byte stream on macOS than on the Linux CI runner. Compare the decoded image instead
+// — same size, same pixels — so a raster is stale only when it actually differs.
+async function sameImage(file, buffer) {
+  let current
+  try { current = readFileSync(file) } catch { return false }
+  const decode = async (input) => {
+    const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    return { data, width: info.width, height: info.height }
+  }
+  const [before, after] = await Promise.all([decode(current), decode(buffer)])
+  return before.width === after.width && before.height === after.height && before.data.equals(after.data)
+}
+
 const check = process.argv.includes('--check')
 const stale = []
 for (const [name, generate] of Object.entries(files)) {
@@ -154,27 +168,21 @@ for (const [name, generate] of Object.entries(files)) {
 for (const size of BOT_SIZES) {
   const file = new URL(botFile(size), page)
   const next = await botRaster(size)
-  let current = null
-  try { current = readFileSync(file) } catch { /* missing */ }
-  if (current && current.equals(next)) continue
+  if (await sameImage(file, next)) continue
   stale.push(botFile(size))
   if (!check) writeFileSync(file, next)
 }
 for (const size of BOT_SIZES) {
   const file = new URL(hitFile(size), page)
   const next = await botRaster(size, 'anbot-bot-hit.png')
-  let current = null
-  try { current = readFileSync(file) } catch { /* missing */ }
-  if (current && current.equals(next)) continue
+  if (await sameImage(file, next)) continue
   stale.push(hitFile(size))
   if (!check) writeFileSync(file, next)
 }
 for (const scale of BASIN_SIZES) {
   const file = new URL(basinFile(scale), page)
   const next = await basinRaster(scale)
-  let current = null
-  try { current = readFileSync(file) } catch { /* missing */ }
-  if (current && current.equals(next)) continue
+  if (await sameImage(file, next)) continue
   stale.push(basinFile(scale))
   if (!check) writeFileSync(file, next)
 }
