@@ -2712,6 +2712,23 @@ test('a failed native prompt no longer counts as unsettled after it settles', as
   assert.equal(await adapter.stopForTakeover('s1'), true)
 })
 
+test('a live local Agent session reports the process id its engine child holds', async (t) => {
+  const acp = makeAdapter()
+  const claude = makeAdapter()
+  t.after(async () => { await Promise.all([acp.dispose(), claude.dispose()]) })
+  // Antigravity runs a per-folder ACP worker; Claude keeps its child on the Session.
+  await collect(acp.stream(options('s1', [user('m1', 'hello')], { provider: 'local-antigravity' })))
+  await collect(claude.stream(options('s2', [user('m1', 'hello')], { provider: 'local-claude-code' })))
+  for (const [adapter, id] of [[acp, 's1'], [claude, 's2']]) {
+    const pid = adapter.processId(id)
+    assert.equal(typeof pid, 'number')
+    assert.equal(Number.isSafeInteger(pid), true)
+    // Neither the ACP coordinator nor the Claude engine keeps the child itself;
+    // the process lives on the Session/worker the live entry names.
+    assert.equal(adapter.live.get(id).engine?.child?.pid, undefined)
+  }
+})
+
 test('stream reports live thoughts, tool activities and end-of-stream idle to the turn tracker', async (t) => {
   const seen = []
   const records = {}
