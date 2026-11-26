@@ -12,22 +12,38 @@ It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it 
 
 > The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
-## What Anbot adds on top of DSH
+## Key facts
 
-DSH provides the Session, the tools, the model routes and the plugin API. Anbot builds the team and workspace layer on those primitives, and strengthens two things: whether execution can be trusted, and whether you can take over.
+- **What it is:** Anbot is a DSH-native personal agent and engineering workspace.
+- **Runtime:** [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) supplies the Session, the tools, the model routes and the plugin API.
+- **Forms:** desktop app for Windows, macOS and Linux, a DSH plugin, and Docker. v0.0.1 also ships an Android APK.
+- **Data:** local-first. Teams, chats, memory, credentials and execution records stay on your computer; model requests go to the provider you configure.
+- **License:** Apache 2.0.
 
-| Capability | What it does |
+## What Anbot adds, in practice
+
+DSH provides the Session, the tools, the model routes and the plugin API. Anbot adds the parts that make a long task usable in a real project:
+
+| When this gets in the way | What Anbot does about it |
 |---|---|
-| **X-Ray workspace** | Chat by default; open X-Ray when you need it: task objective and constraints, an editable subtask checklist, the actual executor, the effective model and permissions, context budget, workspace state, checkpoints |
-| **Workspace takeover and return** | Before you can take over, Anbot waits until the executor confirms it stopped; new messages are refused while you hold it; on return it checks that it is still the same Session and the same working folder. Works for DSH-native Bots and for local agents such as Codex, Claude Code and OpenCode |
-| **Checkpoints and recovery** | Saves the conversation position and the workspace files as a pair at one moment. Preview it read-only, or restore into a new writable workspace; the original workspace and later edits stay. Memory entries written after the checkpoint can be undone one by one |
-| **Runtime probes** | What the current Session actually loaded (skills, plugins, MCP), the sandbox permissions actually in force, the route the last request took, and whether a local agent is installed and signed in. When it cannot tell, it says "unverified" instead of guessing |
-| **Context view** | Current pressure, usable window, check thresholds, and which original records each piece the model sees came from |
-| **Ten professional presets** | Choose one when creating a Bot: development and debugging, code review, UI and product, frontend, backend and database, testing and acceptance, project coordination, local agent collaboration, docs and knowledge, self-maintenance. Each fills in the role, method, recommended skills, workspace and permission policy, acceptance criteria and delivery format; all of it stays editable |
-| **Automatic workspaces** | A new Bot in a Git team workspace gets its own linked worktree, so parallel Bots stop stepping on each other's files |
-| **High-risk command approval** | Recursive deletes, destructive Git operations, pushes, disk commands and privilege elevation need your approval once before they run |
-| **After a failure** | Retry the failed turn on another model; after a restart, resume the interrupted work once automatically, and pause for you in X-Ray if it is interrupted again |
-| **No automatic skills** | Ordinary conversations and one-off experience do not create or update skills, and raise no approval. Only an explicit request starts that flow |
+| You cannot tell what the Bot understood | **X-Ray** shows the objective and constraints, an editable subtask checklist, the actual executor, the model and permissions in force, the context budget, the workspace state and the checkpoints. Chat stays the default; X-Ray is one click away. |
+| You need to change the work yourself | **Takeover and return** waits for the executor to confirm it stopped, refuses new messages while you hold the workspace, and on return checks that it is still the same Session and the same folder. It works for DSH-native Bots and local agents such as Codex, Claude Code and OpenCode. |
+| A long run fails or goes wrong | **Checkpoints** save the conversation position and the workspace files as a pair. Preview read-only, restore into a new writable workspace, keep the original and later edits, and undo memory writes made after the checkpoint one by one. |
+| You do not know what is actually loaded | **Runtime probes** report the skills, plugins and MCP the Session loaded, the sandbox permissions in force, the route the last request took, and whether a local agent is installed and signed in. If it cannot tell, it says "unverified" instead of guessing. |
+| Context pressure is invisible | **Context view** shows the current pressure, the usable window, check thresholds, and which original records each piece of context came from. |
+| Setting up a specialized Bot takes too long | **Ten professional presets** fill in the role, method, recommended skills, workspace and permission policy, acceptance criteria and delivery format. Every field stays editable. |
+| Parallel Bots overwrite each other | **Automatic worktrees**: a new Bot in a Git team workspace gets its own linked worktree. |
+| A command could destroy work | **High-risk approval** covers recursive deletes, destructive Git operations, pushes, disk commands and privilege elevation; you approve once before it runs. |
+| A model fails mid-run | **Failure handling** retries the failed turn on another model, resumes an interrupted run once after a restart, and pauses for you in X-Ray if it is interrupted again. |
+| Skills change without asking | **No automatic skills**: ordinary conversations and one-off experience do not create or update skills and raise no approval. Only an explicit request starts that flow. |
+
+## Three practical workflows
+
+**Fix a failing test in a real repository.** Point Anbot at the repository and the failing test. X-Ray shows the checklist, the executor and the permissions; save a checkpoint before the run. Anbot works in the real folder, changes the files and shows the diff and the test output as evidence. If the fix is wrong, retry the failed turn on another model or restore the checkpoint.
+
+**Take over a half-written document.** Ask Anbot to pause. Once the executor confirms it stopped, open the same working folder and edit the file yourself; new messages are refused while you hold it. Hand it back, and Anbot checks that it is the same Session and the same folder before continuing.
+
+**Start a code-review Bot in one step.** Create a Bot with the code-review preset. It fills the role, method, recommended skills, workspace, permissions, acceptance criteria and delivery format; change any field you want, then run it.
 
 ## Install
 
@@ -209,6 +225,29 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - **Multi-bot workflow view**: one picture of every bot's dependencies, progress and approvals.
 - **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
 - **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. No Linux package or `latest-linux.yml` is attached in this release, so the Linux targets build from source only. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer updates through electron-updater; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
+
+## FAQ
+
+**What is Anbot?**
+Anbot is an open-source, DSH-native personal agent and engineering workspace. It runs a team of long-lived Bots on DeepSeek Harness, works in a real folder, shows its plan and evidence, and lets you pause, take over and hand back.
+
+**How is Anbot related to DSH?**
+DSH is the runtime. Every Bot runs in a DSH Session with DSH's tools, model routes and plugin API. Anbot is the team and workspace layer on top; it is not a second agent runtime.
+
+**How is Anbot different from DS Bot?**
+Anbot is developed from DS Bot and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. It adds trusted execution and takeover: X-Ray, checkpoints, runtime probes, context view, ten presets, automatic worktrees and high-risk approval. DS Bot remains the upstream project.
+
+**Does my data leave my computer?**
+No. Teams, chats, memory, credentials and execution records stay local. Model requests go to the model provider you configure; Anbot does not upload your workspace.
+
+**Which models can I use?**
+The models configured in DSH, including local models through DSH providers. The desktop app can also sign in with a ChatGPT plan for OpenAI models without an API key.
+
+**What can I run it on?**
+The desktop app runs on Windows, macOS and Linux; the plugin runs in DSH Desktop and DSH Web; Docker runs on a NAS or Linux server. v0.0.1 also ships an Android APK; it has no Linux installer or iOS package.
+
+**Is Anbot open source?**
+Yes, under Apache 2.0.
 
 ## Documentation & development
 
