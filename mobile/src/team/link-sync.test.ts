@@ -418,6 +418,10 @@ test('reconnectDelayMs retries at once on first drop after a live link, then bac
   assert.equal(reconnectDelayMsFn(false, 0), 2_000)
   assert.equal(reconnectDelayMsFn(true, 0), 0)
   assert.equal(reconnectDelayMsFn(true, 1), 2_000)
+  assert.equal(reconnectDelayMsFn(true, 2), 4_000)
+  assert.equal(reconnectDelayMsFn(true, 3), 8_000)
+  assert.equal(reconnectDelayMsFn(true, 4), 15_000)
+  assert.equal(reconnectDelayMsFn(true, 8), 15_000)
 })
 
 test('useTeamLink reconnects at once when returning to foreground while disconnected, and probes with 2_500ms while linked', async (t) => {

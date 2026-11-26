@@ -12,6 +12,7 @@ import type { PhoneIdentity, SavedComputer } from '../store.ts'
 // Feed events keep the app live; the poll only stays as a foreground fallback.
 const POLL_MS = 15_000
 const RETRY_MS = 2_000
+const RETRY_MAX_MS = 15_000
 // Writes that settle pending items without always bumping state.revision.
 const PENDING_MUTATING = new Set([
   'approval-answer',
@@ -49,7 +50,8 @@ export function rejected(error: unknown): boolean {
 }
 
 export function reconnectDelayMs(hadLink: boolean, failStreak: number): number {
-  return hadLink && failStreak === 0 ? 0 : RETRY_MS
+  if (hadLink && failStreak === 0) return 0
+  return Math.min(RETRY_MS * 2 ** Math.max(0, failStreak - 1), RETRY_MAX_MS)
 }
 
 // Keeps the link up and the team state fresh. `call` runs one /api/bot endpoint.

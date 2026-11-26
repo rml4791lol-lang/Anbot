@@ -215,7 +215,7 @@ export class HostLink {
   }
 
   private async loop(): Promise<void> {
-    const [min, max] = this.options.retryMs ?? [1_000, 60_000]
+    const [min, max] = this.options.retryMs ?? [1_000, 20_000]
     let delay = min
     while (this.running) {
       this.setStatus('connecting')

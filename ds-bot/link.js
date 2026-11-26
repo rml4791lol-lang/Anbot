@@ -7865,7 +7865,7 @@ var HostLink = class {
     this.options.onStatus?.(status);
   }
   async loop() {
-    const [min, max] = this.options.retryMs ?? [1e3, 6e4];
+    const [min, max] = this.options.retryMs ?? [1e3, 2e4];
     let delay = min;
     while (this.running) {
       this.setStatus("connecting");
