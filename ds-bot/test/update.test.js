@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
-import { cleanVersion, install, newer, sourceOf } from '../src/host/update.js'
+import { cleanVersion, install, newer, sourceOf, STARS_RETRY_MS, STARS_TTL_MS } from '../src/host/update.js'
 
 const PKG = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 const flush = async () => { for (let index = 0; index < 14; index += 1) await Promise.resolve() }
@@ -23,6 +23,7 @@ function start({ source, registries, answers = {}, result = { application: 'rest
     fetched.push(url)
     const answer = answers[url]
     if (answer === undefined) return { ok: false, status: 404, json: async () => ({}) }
+    if (typeof answer === 'number') return { ok: false, status: answer, json: async () => ({}) }
     if (answer instanceof Error) throw answer
     return { ok: true, status: 200, json: async () => answer }
   }
@@ -169,17 +170,37 @@ test('in the desktop app, which updates as a whole, it never asks the network an
   assert.throws(() => rt.updateStart(), /No DS Bot update/)
 })
 
-test('the star count comes from the repository, is kept for an hour, and survives a failed answer', async () => {
+test('a refused star count backs off, then retries; a counted one stays for an hour', async () => {
   const repo = 'https://api.github.com/repos/rml4791lol-lang/Anbot'
-  const answers = { [repo]: new Error('offline') }
+  const answers = { [repo]: 403 }
   const { rt, fetched } = start({ source: `${PKG.name}@^${PKG.version}`, answers })
   assert.equal(rt.updateView().repoUrl, 'https://github.com/rml4791lol-lang/Anbot')
-  assert.equal(await rt.repoStars(), null)
-  answers[repo] = { stargazers_count: 42 }
-  assert.equal(await rt.repoStars(), 42)
-  answers[repo] = new Error('offline')
-  assert.equal(await rt.repoStars(), 42)
-  assert.deepEqual(fetched, [repo, repo])
+  const clock = { now: Date.now() }
+  const realNow = Date.now
+  Date.now = () => clock.now
+  try {
+    assert.equal(await rt.repoStars(), null)
+    // The same refusal must not send another request before the retry time.
+    clock.now += STARS_RETRY_MS - 1
+    assert.equal(await rt.repoStars(), null)
+    assert.deepEqual(fetched, [repo])
+    clock.now += 1
+    answers[repo] = { stargazers_count: 42 }
+    assert.equal(await rt.repoStars(), 42)
+    assert.deepEqual(fetched, [repo, repo])
+    clock.now += STARS_TTL_MS - 1
+    assert.equal(await rt.repoStars(), 42)
+    assert.deepEqual(fetched, [repo, repo])
+    clock.now += 1
+    answers[repo] = 403
+    assert.equal(await rt.repoStars(), 42)
+    assert.deepEqual(fetched, [repo, repo, repo])
+    clock.now += STARS_RETRY_MS - 1
+    assert.equal(await rt.repoStars(), 42)
+    assert.deepEqual(fetched, [repo, repo, repo])
+  } finally {
+    Date.now = realNow
+  }
 })
 
 test('without a source from the plugin manager, the profile\'s own dependency entry decides', async () => {
