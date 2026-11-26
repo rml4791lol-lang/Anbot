@@ -4,15 +4,17 @@ English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/visi
 
 ![Status](https://img.shields.io/badge/release-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![License](https://img.shields.io/badge/license-Apache_2.0-green)
 
-**Anbot is a personal agent workspace built on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).** You hand it a job; it does the job in a real working folder, and it shows you what it understood, who is working on it, which files changed, and why it counts as done. You can pause it at any point, take over the same working folder and edit it yourself, then hand it back.
+**Anbot is a DSH-native personal agent and engineering workspace.** DSH ([DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)) is the runtime: every Bot runs in a DSH Session with the tools, model routes and plugin API that DSH provides. Anbot adds the team and workspace layer on top: long-lived Bot identities, group chats, memory, approvals, checkpoints and a desktop app.
+
+You hand it a job; it does the job in a real working folder, and it shows you what it understood, who is working on it, which files changed, and why it counts as done. You can pause it at any point, take over the same working folder and edit it yourself, then hand it back.
 
 It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it also runs in Docker. Your team, chats, memory, credentials and execution records stay on your own computer.
 
 > The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
-## What Anbot adds on top of DS Bot
+## What Anbot adds on top of DSH
 
-Anbot is developed on the basis of [DS Bot](https://github.com/Fei2411/DS-Bot) and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. On that base it strengthens two things: whether execution can be trusted, and whether you can take over.
+DSH provides the Session, the tools, the model routes and the plugin API. Anbot builds the team and workspace layer on those primitives, and strengthens two things: whether execution can be trusted, and whether you can take over.
 
 | Capability | What it does |
 |---|---|

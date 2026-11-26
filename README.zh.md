@@ -4,15 +4,17 @@
 
 ![版本](https://img.shields.io/badge/版本-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green)
 
-**Anbot 是建在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）上的个人 Agent 工作台。** 你把一件事交给它，它在一个真实的工作区里做完，并且让你看得见：它怎么理解这件事、现在谁在做、改了哪些文件、凭什么算完成。你可以随时暂停、接管同一个工作区自己改，改完再交回去。
+**Anbot 是 DSH 原生的个人 Agent 与工程工作台。** DSH（[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)）是运行时：每个 Bot 都跑在 DSH 的 Session 里，用 DSH 提供的工具、模型路由和插件 API。Anbot 在上面加一层团队与工作区：长期存在的 Bot 身份、群聊、记忆、审批、检查点和桌面应用。
+
+你把一件事交给它，它在一个真实的工作区里做完，并且让你看得见：它怎么理解这件事、现在谁在做、改了哪些文件、凭什么算完成。你可以随时暂停、接管同一个工作区自己改，改完再交回去。
 
 它有两种形态：Windows、macOS、Linux 的独立桌面应用，和 DSH 插件；也可以装在 Docker 里。团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
 > 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
-## Anbot 在 DS Bot 之上加了什么
+## Anbot 在 DSH 之上加了什么
 
-Anbot 基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 开发，保留了它的 Bot 团队、群聊、浏览器、电脑操控、IM、连接器和 Office 能力，并在此基础上加强了执行是否可信、能否随时接管这两件事：
+DSH 提供 Session、工具、模型路由和插件 API。Anbot 在这些原语上搭团队与工作区层，并重点加强两件事：执行是否可信、能否随时接管：
 
 | 能力 | 说明 |
 |---|---|
