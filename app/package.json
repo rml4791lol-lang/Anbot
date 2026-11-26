@@ -92,7 +92,8 @@
     "@deepseek-ai/cordis": "4.1.0",
     "@deepseek-ai/dsh-llm": "0.2.2-rc.5",
     "@deepseek-ai/dsh-tools": "0.2.2-rc.5",
-    "@deepseek-ai/dsh-web": "0.2.2-rc.5"
+    "@deepseek-ai/dsh-web": "0.2.2-rc.5",
+    "yauzl": "3.4.0"
   },
   "optionalDependencies": {
     "@deepseek-ai/dsh-experimental-cua-macos": "0.2.2-rc.5"

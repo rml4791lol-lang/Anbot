@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { FileMatcher, getNodeModuleFileMatcher } from 'app-builder-lib/out/fileMatcher.js'
 import { parse } from 'yaml'
 
@@ -32,6 +34,19 @@ test('the lockfile records the ds-bot plugin with its current dependencies', () 
   assert.deepEqual(entry.dependencies, plugin.dependencies, 'run npm install in app/ after changing ds-bot/package.json')
   const missing = Object.keys(plugin.dependencies).filter(name => lock.packages[`node_modules/${name}`] === undefined)
   assert.deepEqual(missing, [], `the lockfile installs none of: ${missing.join(' ')}`)
+})
+
+// extract-zip extracts through yauzl, and yauzl 2.10 stalls on a large wheel under Node 24 and 26:
+// the process exits 0 partway through the archive and the build never finishes. The override also
+// lifts the copy out of devDependencies, so the resolver gives extract-zip yauzl 3.
+test('extract-zip unpacks wheels through yauzl 3', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'))
+  assert.match(lock.packages['node_modules/yauzl']?.version ?? '', /^3\./u, 'the lockfile installs yauzl 3')
+  assert.equal(lock.packages['node_modules/extract-zip/node_modules/yauzl'], undefined, 'extract-zip has its own yauzl 2 copy')
+  const fromExtractZip = createRequire(new URL('../node_modules/extract-zip/index.js', import.meta.url)).resolve('yauzl')
+  assert.equal(fromExtractZip, fileURLToPath(new URL('../node_modules/yauzl/index.js', import.meta.url)), 'extract-zip resolves the shared yauzl')
+  assert.equal(manifest.overrides.yauzl, '3.4.0')
 })
 
 test('sharp native modules and versioned libvips libraries are unpacked together', () => {
