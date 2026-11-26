@@ -1,6 +1,6 @@
 # docs/plans：已定设计目录
 
-这里收录 DS Bot 已定下的架构与功能设计：为什么这样做、当前已定的行为、不做什么、已知限制。拿不准一个现象是 bug 还是设计如此时，先查这里、[文档总导航](../README.md) 和 [愿景](../vision.zh.md)。
+这里收录 Anbot 已定下的架构与功能设计：为什么这样做、当前已定的行为、不做什么、已知限制。拿不准一个现象是 bug 还是设计如此时，先查这里、[文档总导航](../README.md) 和 [愿景](../vision.zh.md)。
 
 ## 维护原则（活文档）
 
@@ -18,7 +18,7 @@
 | [角色与权限](2026-10-07-roles-and-permissions.md) | 用户、Main Bot、群管理员、普通 Bot 的权责边界；Bot 权限预设与群统一权限 |
 | [隐私 Bot](2026-10-27-private-bots.md) | 独立工作文件夹、团队内隔离边界、外发审批与删除后保留保护 |
 | [Bot 运行配置](2026-10-10-bot-runtime.md) | Agent 预设、每 Bot 模型与思考强度、新 Bot 默认模型、工作文件夹与能力 |
-| [额外工作文件夹](2026-11-10-extra-folders.md) | Bot 和群聊在工作文件夹之外再列几个文件夹；文件工具写那里由 DS Bot 自动批准，shell 命令仍问用户；群文件夹优先；隐私 Bot 只用自己的文件夹 |
+| [额外工作文件夹](2026-11-10-extra-folders.md) | Bot 和群聊在工作文件夹之外再列几个文件夹；文件工具写那里由 Anbot 自动批准，shell 命令仍问用户；群文件夹优先；隐私 Bot 只用自己的文件夹 |
 | [功能包](2026-11-21-feature-packs.md) | 团队库三档状态（常驻 / 清单 / 关）、按会话 `use_pack` / `drop_pack` 装卸与 `team-admin` 内置包 |
 
 ### 2. Bot 对话、异步工作与协作
@@ -29,7 +29,7 @@
 | [Bot 之间派活](2026-10-16-bot-handoffs.md) | 同伴状态可见、未读消息合并与派活树（子活交回后再向上交回） |
 | [本地 Agent CLI 作为 Bot](2026-11-04-local-agents.md) | 将本机编程 CLI 接入为 Bot：运行切换、会话映射、工具桥、审批与记忆（英文） |
 | [Side chat（侧边对话）](2026-10-21-btw.md) | 右侧栏 `/side` 顺手提问：基于快照回答、不执行工具、不打断主对话 |
-| [Bot 聊天和群聊的 `/` 菜单](2026-11-13-bot-slash-commands.md) | agent 作用域命令遮蔽（`commandShield`）与 DS Bot 动作注入（`/scheduled-task`、`/goal`） |
+| [Bot 聊天和群聊的 `/` 菜单](2026-11-13-bot-slash-commands.md) | agent 作用域命令遮蔽（`commandShield`）与 Anbot 动作注入（`/scheduled-task`、`/goal`） |
 | [长消息](2026-10-16-long-messages.md) | 超过 2 万字的 Bot 消息转存为附件与全文按需读取 |
 | [读长回复](2026-11-13-long-reply-reading.md) | 长回复滚动后顶部阅读胶囊：回到开头、当前小节与目录跳转 |
 | [批量换 Bot 的模型](2026-11-13-bot-models.md) | 设置页多选 Bot 一次切换模型与逐个结果报告（英文） |
@@ -61,7 +61,7 @@
 |---|---|
 | [Bot 浏览器、联网搜索与密钥](2026-10-08-browser-and-secrets.md) | 隔离浏览器面板与 Cookie/localStorage 导入、`auto` 搜索、密钥卡与出站脱敏 |
 | [浏览器插件](2026-10-21-browser-plugins.md) | 可选交互式浏览器后端（`refs` / `script` / `task`）、每 Bot 独立 Profile、动作预授权与用户接管 |
-| [Bot 插件体系与面板](2026-11-22-bot-plugins.md) | DS Bot 统一插件运行时、互斥槽位、按 Bot 开关、独立插件面板、可替换浏览器插件与插件收录仓库目录 |
+| [Bot 插件体系与面板](2026-11-22-bot-plugins.md) | Anbot 统一插件运行时、互斥槽位、按 Bot 开关、独立插件面板、可替换浏览器插件与插件收录仓库目录 |
 | [电脑操控](2026-11-04-computer-use.md) | 按 Bot 四档权限、应用授权与禁碰清单、应用/前台租约与顶部指示条 |
 | [连接器](2026-11-04-connectors.md) | 通用连接器引擎、OAuth 浏览器登录、自定义 MCP 服务器与邮箱集成 |
 | [官方 MCP loopback 与只读工具清单](2026-11-16-official-mcp-loopback.md) | 本地 Agent Bot 的官方 MCP 传输、取消、schema 保真、工具热更新和 `dsbot://tool-inventory` 只读漂移清单 |
@@ -75,15 +75,15 @@
 
 | 文档 | 内容 |
 |---|---|
-| [桌面应用](2026-10-16-desktop-app.md) | Electron 壳与锁定 DSH 引擎、无边框材质、托盘、自建选择框、数据搬迁与自动更新 |
+| [桌面应用](2026-10-16-desktop-app.md) | Electron 壳与锁定 DSH 引擎、无边框材质、托盘、自建选择框、数据搬迁与更新检查（Windows / AppImage 自动更新，macOS / deb 手动下载） |
 | [桌面端安装与上手流程](2026-10-26-windows-onboarding.md) | 下载资产、安装向导、首次启动定根与导入、模型配置与恢复卡 |
 | [启动窗口：领航鲸](2026-10-26-start-window.md) | 固定小窗双窗口交接、三段/四段真实进度弧、鲸鱼动作与页内恢复卡 |
 | [启动页文案](2026-10-29-start-copy.md) | 启动页与壳内卡片的文案分层、`text.mjs` 单表与扫描校验 |
 | [Linux 桌面包](2026-10-21-linux-app-package.md) | 同轮产出 AppImage（自更新）与 deb（沙箱兜底） |
-| [手机 App](2026-10-24-mobile-app.md) | iOS / Android 原生远程端：Noise IK 加密中转、高权限生物解锁与同步规则 |
+| [手机 App](2026-10-24-mobile-app.md) | Android 原生远程端（APK 随版提供；iOS 源码目标保留，当前无可安装包）：Noise IK 加密中转、高权限生物解锁与同步规则 |
 | [移动端客户端 API](2026-10-24-mobile-api.md) | 握手版本、头像引用、群聊分页、提醒补发、分块下载与 Gateway Remote 方法 |
 | [浏览器远程客户端](2026-11-17-web-remote.md) | Expo 网页版与 Relay 同源部署；浏览器链接配对、独立设备身份、localStorage 与 CSP 安全边界 |
-| [iOS 出包与 TestFlight](2026-11-13-ios-release.md) | Apple 账号准备、签名归档与 TestFlight 上传指引 |
+| [iOS 出包与 TestFlight](2026-11-13-ios-release.md) | 未来准备：Apple 账号准备、签名归档与 TestFlight 上传指引；v0.0.1 不含 iOS 可安装包 |
 | [IM](2026-11-04-im.md) | 微信、飞书、钉钉、企业微信、QQ、Telegram、Discord、Slack 双向桥接与配对边界 |
 | [MCP 访问](2026-11-20-mcp-access.md) | （已收口至 [对外统一 API](2026-11-21-external-api.md)）初版独立 MCP 访问设计记录；现统一由设置 → API 同端口 `/mcp` 与自动迁移承接 |
 | [对外统一 API](2026-11-21-external-api.md) | 持锁宿主自建本机网关（默认关闭、`127.0.0.1:17830`）：独立可撤销 Bearer Token、Scope × 目标白名单与隐私隔离、统一 `Run` 状态机、`/v1/*` REST+SSE、`/mcp` Streamable HTTP、薄层 `ds-bot` CLI 与可选 OpenAI 兼容层 |

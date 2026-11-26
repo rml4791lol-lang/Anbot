@@ -59,7 +59,7 @@ node scripts/build-client.mjs --check
 
 - **源码分发不需要任何证书。** 从源码 `npm run pack` / `dist` 出的包是本地编译产物，不经过浏览器下载通道，**不带 `com.apple.quarantine` 属性**，macOS Gatekeeper 不会按「未识别开发者」拦截。
 - 实测本机已装包 `/Applications/Anbot.app`：`xattr` 仅含 `com.apple.provenance`，无 `com.apple.quarantine`；签名为 **adhoc**（`Signature=adhoc`，`TeamIdentifier=not set`），`spctl -a` 评估为 rejected——该评估只对带 quarantine 的下载副本生效，本地编译运行不触发。
-- 预编译安装包（发给其他用户的 zip/dmg/exe/AppImage）属于另一个议题：跨机器分发需要开发者签名与（macOS）公证，否则对方下载后会被 Gatekeeper 拦。签名方案、证书与发布流程在预编译包发布前单独讨论，本源码构建流程不做签名。
+- 预编译安装包（发给其他用户的 zip/exe/AppImage）属于另一个议题：macOS 包沿用上游做法出 zip，ad-hoc 签名（`identity: '-'`），不公证、不用 Developer ID，首次打开由用户在「隐私与安全性」手动放行；Windows exe 在 CI 上用注入的项目自签 PFX 做 Authenticode 签名（非商业 CA 证书）。签名方案、证书与发布流程见 [release-signing.md](release-signing.md)，本源码构建流程不做签名。
 
 ## 3. 品牌与身份残留清单
 
@@ -77,7 +77,7 @@ node scripts/build-client.mjs --check
 
 ### 3.2 待发布前决策（本次未改，均有兼容性或构建验证影响）
 
-**手机端身份（`mobile/`）**——改 bundle id / scheme 等于换一个新应用，已安装用户无法覆盖升级；当前没有公开 iOS 版本，Android 也未公开分发，改动窗口尚在，但需要完整原生构建与双端回归：
+**手机端身份（`mobile/`）**——改 bundle id / scheme 等于换一个新应用，已安装用户无法覆盖升级；当前没有公开 iOS 版本，Android 已随 v0.0.1 公开分发，改包名 / scheme 后旧包不能覆盖升级，需要完整原生构建与双端回归：
 
 | 文件:行 | 现状 | 说明 |
 | --- | --- | --- |
@@ -92,7 +92,7 @@ node scripts/build-client.mjs --check
 | `mobile/plugins/android-native.js:9,87,95,164,165` | 系统包名、FileProvider authorities、更新路径 XML、通知图标资源名 | 原生插件标识 |
 | `mobile/plugins/android-native/*.kt` | 包名 `io.github.fei2411.dsbot.system`、动作 action、通知默认标题 "DS Bot" | Kotlin 包与字符串 |
 | `mobile/app.config.js:1,16` | 注释旧名；环境变量 `DS_BOT_APPLE_TEAM_ID` | 环境变量改名需兼容旧名 |
-| `mobile/README.md:1,3,5` | 文档自指 DS Bot | 文档，可随身份一并改 |
+| `mobile/README.md:1,3,5` | 文档自指已改为 Anbot | 文档；原生身份标识（见上）待发布前决策 |
 
 **Docker 内部标识**（不影响对外品牌，可延后）：
 
@@ -124,19 +124,19 @@ node scripts/build-client.mjs --check
 
 ### 5.1 Android（release.yml `app-android` 作业）
 
-签名 release APK 需要三个 GitHub Secrets（在仓库 Settings → Secrets 配置；**本地无法核验是否已配置**）：
+签名 release APK 使用三个 GitHub Secrets（在仓库 Settings → Secrets 配置，v0.0.1 已配置）：
 
 | Secret | 用途 |
 | --- | --- |
-| `ANDROID_KEYSTORE_BASE64` | 上传密钥 `.jks` 的 base64；缺失时 release 事件直接报错退出，非 release 事件退回 debug 密钥 dry run |
+| `ANDROID_KEYSTORE_BASE64` | 上传密钥 `.jks` 的 base64 |
 | `ANDROID_KEYSTORE_PASSWORD` | keystore 密码 |
-| `ANDROID_KEY_ALIAS` | 密钥别名 |
+| `ANDROID_KEY_ALIAS` | 密钥别名 `upload` |
 
 前置：上传密钥库由维护者生成并保管，不进仓库；CI 用 JDK 17、Android SDK build-tools（zipalign/apksigner/aapt2）。本地开发另需 Android SDK 与模拟器/真机（Expo Go 不支持，用到原生模块）。
 
 ### 5.2 iOS（无 CI 签名作业，本机脚本归档）
 
-发布/TestFlight 上传走 `mobile/scripts/ios-archive.sh`，前置 Apple 账号与材料（详见 `docs/plans/2026-11-13-ios-release.md`）：
+**v0.0.1 不发布 iOS 包**：当前无 Apple Developer 账号，不构建也不上传 `.ipa` / TestFlight；以下均为账号材料齐备后的前置条件与未来流程，不代表 iOS 已支持或即将放出下载项。发布/TestFlight 上传走 `mobile/scripts/ios-archive.sh`，前置 Apple 账号与材料（详见 `docs/plans/2026-11-13-ios-release.md`）：
 
 1. Apple Developer Program 会员（年费 99 美元，Account Holder 本人操作），并在 App Store Connect 接受协议。
 2. Team ID（10 位）。

@@ -1,6 +1,6 @@
-# DS Bot phone link
+# Anbot phone link
 
-The encrypted link between the DS Bot phone app and the computer, and the Relay Server between them. The design is in [docs/plans/2026-10-24-mobile-app.md](../docs/plans/2026-10-24-mobile-app.md).
+The encrypted link between the Anbot phone app and the computer, and the Relay Server between them. The design is in [docs/plans/2026-10-24-mobile-app.md](../docs/plans/2026-10-24-mobile-app.md).
 
 - `src/`: code both ends share. The phone uses `RelayTransport`, `SecureTransport` and `RpcClient`; the computer uses `HostLink` and `DeviceRegistry`.
 - `server/`: the Relay Server. It forwards encrypted frames and cannot read them.
@@ -18,7 +18,7 @@ npm test
 PORT=8787 DSBOT_LINK_DATA=./data/devices.json npm run server
 ```
 
-The Server speaks plain `ws://`. Put it behind a TLS proxy and give phones the `wss://` address. DS Bot uses `wss://relay.dsbot.app/v1/link` unless the user enters another Server in Settings → Phone.
+The Server speaks plain `ws://`. Put it behind a TLS proxy and give phones the `wss://` address. Anbot uses `wss://relay.dsbot.app/v1/link` unless the user enters another Server in Settings → Phone.
 
 For browser remote, build the client with `npm ci && npm run export:web` in `mobile/` and set `DSBOT_LINK_WEB_DIR` to the absolute `mobile/dist` path before starting the Server. It serves the app at `/web/`. Browser clients trust the Server's page as well as the encrypted transport; use a trusted Server and HTTPS/WSS outside localhost. The browser has no background notifications and restricts sensitive operations to the native app or computer.
 

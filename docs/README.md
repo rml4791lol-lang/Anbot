@@ -1,6 +1,6 @@
-# DS Bot 文档导航
+# Anbot 文档导航
 
-这里汇总 DS Bot 仓库的全部有效文档。每份文档只记录当前实现与已拍板的设计；代码改动时直接更新对应文档，不再靠层叠补丁保留过期方案。
+这里汇总 Anbot 仓库的全部有效文档。每份文档只记录当前实现与已拍板的设计；代码改动时直接更新对应文档，不再靠层叠补丁保留过期方案。
 
 ## 上手与使用
 
@@ -15,8 +15,8 @@
 | 模块 | 说明文档 | 职责 |
 |---|---|---|
 | `ds-bot/` | [ds-bot/README.md](../ds-bot/README.md) | 核心 DSH 插件：服务端宿主（`src/host/`）、浏览器界面（`src/client/` → `client.js`）、`auto` 搜索（`web-search.js`） |
-| `app/` | [app/README.md](../app/README.md) | 独立桌面应用（Windows / macOS / Linux Electron 壳、锁定 DSH 引擎、首次启动与导入、自动更新） |
-| `mobile/` | [mobile/README.md](../mobile/README.md) | Expo React Native 手机 App（iOS / Android）与浏览器远程导出 |
+| `app/` | [app/README.md](../app/README.md) | 独立桌面应用（Windows / macOS / Linux Electron 壳、锁定 DSH 引擎、首次启动与导入；Windows 与 AppImage 自动更新，macOS 与 deb 提示手动下载） |
+| `mobile/` | [mobile/README.md](../mobile/README.md) | Expo React Native 客户端（Android APK 随版提供，上传密钥签名；iOS 无可安装包）与浏览器远程导出 |
 | `link/` | [link/README.md](../link/README.md) | 端到端加密（Noise IK）连接协议与自建中转服务器 |
 | `browser-plugins/` | [browser-plugins/README.md](../browser-plugins/README.md) | 可选交互式浏览器后端（`refs` / `script` / `task`） |
 | `docker/` | [docker/README.md](../docker/README.md) · [README.dev.md](../docker/README.dev.md) | NAS / Linux 服务器 Docker 部署与容器化开发环境 |
@@ -27,7 +27,7 @@
 |---|---|
 | [愿景（中文）](vision.zh.md) · [Vision (English)](vision.md) | 产品定位、两种形态、十条核心要求与取舍原则 |
 | [安全模型](../SECURITY_MODEL.md) | 信任边界、资产分级、威胁模型（重点防 Prompt Injection）与现行防护 |
-| [DSH 让步总账](plans/2026-10-13-dsh-concessions.md) | 因 DSH 自身限制所做的让步与当前边界（区分 DS Bot 缺陷与上游限制） |
+| [DSH 让步总账](plans/2026-10-13-dsh-concessions.md) | 因 DSH 自身限制所做的让步与当前边界（区分 Anbot 缺陷与上游限制） |
 | [UI 设计标准](design/ui-standard.md) | 主题变量、排版、圆角、动效弹簧、组件规格、文案与无障碍规范 |
 | [已定设计目录](plans/README.md) | 按领域分类的全部核心功能设计文档 |
 
@@ -37,6 +37,7 @@
 |---|---|
 | [参与开发（中文）](../CONTRIBUTING.zh.md) · [Contributing](../CONTRIBUTING.md) | 开发环境、测试命令、分支与 PR 协作规则、发版步骤 |
 | [发版前真机检查](dev/release-checklist.md) | Windows / macOS / 插件版 / Android 发版前的真机验收清单 |
+| [签名与信任说明](dev/release-signing.md) | 各平台签名状态、首次安装放行步骤、Android 上传密钥生成与签名验证 |
 | [更新日志](../CHANGELOG.md) | 各已发布版本的用户可见变更历史 |
 
 ## 架构速览

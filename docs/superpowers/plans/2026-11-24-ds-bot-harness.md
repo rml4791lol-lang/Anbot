@@ -20,7 +20,7 @@
 
 ## Phase 0 · Brand and distribution
 
-- [x] Switch visible identity, metadata, downloads, feedback, release workflow and update source to `rml4791lol-lang/Anbot`. Retain historical attribution and compatibility identifiers where needed. Verify the private release channel and configuration overrides with no embedded credential.
+- [x] Switch visible identity, metadata, downloads, feedback, release workflow and update source to `rml4791lol-lang/Anbot`. Retain historical attribution and compatibility identifiers where needed. Verify the public release channel and configuration overrides with no embedded credential.
 - [x] Verify existing shells, project/data locations and legacy environment keys, including isolated runs. Rebuild the client and app, run lint and unit tests, and smoke the real pinned DSH host and desktop where supported. Capture evidence and commit separately.
 - [x] Seed [architecture](../../architecture.md), [extensions](../../capabilities-and-extensions.md) and [development](../../development-and-runbook.md) from verified paths. This plan is the sole phase and progress ledger.
 
@@ -71,9 +71,9 @@ Only actual execution events advance worktree state. Paired restore uses a new S
 
 - 2026-11-24: Opened the maintainer goal, isolated the integration branch, and routed three baseline investigations to DeepSeek V4.1 Flash max. Parallel preset and Reality Harness work has its own worktree. It must be reviewed and integrated by change set.
 
-- 2026-11-24: Pre-brand baseline at `5471b4d3`: 2,763 tests passed, 3 skipped. Client bundle freshness and lint passed. The independent Anbot repository already exists and is private.
+- 2026-11-24: Pre-brand baseline at `5471b4d3`: 2,763 tests passed, 3 skipped. Client bundle freshness and lint passed. The independent Anbot repository exists; it has since been made public.
 
-- 2026-11-24 · Phase 0 local gate: client build and freshness check, plugin lint, and 2,765 plugin tests passed (3 skipped). App suite: 478 passed (3 skipped), including legacy shell/data defaults and the release contract. The real pinned DSH Web host passed all 52 bench steps with a fixture model, and its processes stopped. With Node 24, the macOS arm64 package built and checked out-of-tree with the rebuilt client. The real Electron app sent and received a chat, hid and reopened its window, and quit cleanly. Anbot branding verified in `/tmp/dsbot-maintainer-checks.2Tpi2B/anbot-phase0-chat.png`. Platform-specific signing and the private GitHub release remain remote gates. The in-repo release and updater point to Anbot; an authenticated manual download or explicit feed is required for its private repository.
+- 2026-11-24 · Phase 0 local gate: client build and freshness check, plugin lint, and 2,765 plugin tests passed (3 skipped). App suite: 478 passed (3 skipped), including legacy shell/data defaults and the release contract. The real pinned DSH Web host passed all 52 bench steps with a fixture model, and its processes stopped. With Node 24, the macOS arm64 package built and checked out-of-tree with the rebuilt client. The real Electron app sent and received a chat, hid and reopened its window, and quit cleanly. Anbot branding verified in `/tmp/dsbot-maintainer-checks.2Tpi2B/anbot-phase0-chat.png`. Platform-specific signing and the first GitHub release remain remote gates. The in-repo release and updater point to Anbot; the repository is public, so anonymous release checks and manual downloads work without an authenticated feed.
 - The publishing worker's DeepSeek V4.1 Flash provider returned HTTP 502. Implementation was reviewed, corrected and verified locally by the maintainer.
 - Phase 0 commit: `e8832445`. Phase 1A is active.
 - Phase 1A configuration regression reproduced against the pinned Cordis composer: the desktop onboarding overlay dropped existing model-settings UI options. It now overlays the flag onto the effective UI row. `node --import ./test/reset-env.mjs --test test/app-patch.test.mjs` in `app/`: 5 passed. This verifies the desktop row; the full configuration/security contract and Phase 1A acceptance are still open.

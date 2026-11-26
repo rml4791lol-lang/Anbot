@@ -2,17 +2,17 @@
 
 English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/vision.md) · [Known issues](docs/known-issues.md) · [Contributing](CONTRIBUTING.md)
 
-![Status](https://img.shields.io/badge/status-preview-orange) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![License](https://img.shields.io/badge/license-Apache_2.0-green)
+![Status](https://img.shields.io/badge/release-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![License](https://img.shields.io/badge/license-Apache_2.0-green)
 
 **Anbot is a personal agent workspace built on [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).** You hand it a job; it does the job in a real working folder, and it shows you what it understood, who is working on it, which files changed, and why it counts as done. You can pause it at any point, take over the same working folder and edit it yourself, then hand it back.
 
 It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it also runs in Docker. Your team, chats, memory, credentials and execution records stay on your own computer.
 
-> Preview. No installers have been published yet, and the interface and configuration will still change. Today you can build it from source or install it as a DSH plugin.
+> The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip`, `Anbot-0.0.1-linux-x86_64.AppImage`, `Anbot-0.0.1-linux-amd64.deb` and `Anbot-0.0.1-android.apk`, plus `latest.yml`, `latest-linux.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
 ## What Anbot adds on top of DS Bot
 
-Anbot comes from [DS Bot](https://github.com/Fei2411/DS-Bot) and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. On top of that it strengthens two things: whether execution can be trusted, and whether you can take over.
+Anbot is developed on the basis of [DS Bot](https://github.com/Fei2411/DS-Bot) and keeps its bot team, group chats, browser, computer use, IM, connectors and Office support. On that base it strengthens two things: whether execution can be trusted, and whether you can take over.
 
 | Capability | What it does |
 |---|---|
@@ -40,7 +40,7 @@ Behind a proxy or registry mirror, set `npm_config_proxy` / `npm_config_https_pr
 
 ### Desktop app (Windows, macOS, Linux)
 
-Installers are not published yet; see the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest) for any published packages. Build from source:
+Prebuilt packages for v0.0.1 are on the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest): a Windows installer, macOS zips (arm64 and x64), a Linux AppImage and a deb, and the Android APK. No iOS package is published. To build from source:
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -68,7 +68,7 @@ The unit tests also fail if `client.js` is stale. Without a build step you can s
 
 ### Signing and Gatekeeper
 
-Building from source needs no certificate. A locally compiled app carries no macOS `quarantine` attribute, so Gatekeeper does not block it as an unidentified developer. Signed, notarized prebuilt installers are a separate release topic; nothing in this source build signs the app.
+Building from source needs no certificate. A locally compiled app carries no macOS `quarantine` attribute, so Gatekeeper does not block it as an unidentified developer. The prebuilt macOS zips are ad-hoc signed (identity `-`), are not notarized and do not use an Apple Developer account; see [Signing and trust](docs/dev/release-signing.md). Nothing in this source build signs the app.
 
 **As a plugin in DSH**
 
@@ -181,7 +181,7 @@ Bots can create, inspect and edit Word (`.docx`), PowerPoint (`.pptx`) and Excel
 
 ### Mobile app & browser remote
 
-Control your running bot team from iOS, Android, or a browser over an end-to-end encrypted link (Noise IK)—your computer connects outbound only, with no public IP or open ports. Open **Settings → Connect → Phone**, enable phone access, and scan the QR code in the mobile app (see [`mobile/README.md`](mobile/README.md) for the iOS build).
+Control your running bot team from the Android app or a browser over an end-to-end encrypted link (Noise IK)—your computer connects outbound only, with no public IP or open ports. Open **Settings → Connect → Phone**, enable phone access, and scan the QR code in the mobile app. There is no installable iOS package in this release: iOS needs an Apple Developer account that this repository does not have yet. See [`mobile/README.md`](mobile/README.md).
 
 For **browser remote (preview)**, pick **Open in a browser** or **Copy browser link** on the same pairing screen. Self-hosted relay instructions and security limits are in [`link/README.md`](link/README.md) and [`docs/plans/2026-11-17-web-remote.md`](docs/plans/2026-11-17-web-remote.md).
 
@@ -206,7 +206,7 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - **Coordination layer**: tell the Main Bot a goal and it splits the work, picks bots, prepares workspaces, tracks dependencies and reports acceptance by itself. For now you arrange the delegation.
 - **Multi-bot workflow view**: one picture of every bot's dependencies, progress and approvals.
 - **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
-- **Code signing and distribution**: the Windows installer carries an Authenticode signature, but the current certificate is self-signed and not trusted by a commercial CA, so first launch on other machines still warns "unknown publisher"; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace; Linux packages are unsigned; iOS has no Apple account yet and ships no package. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
+- **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized; the Linux AppImage and deb are unsigned. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml`, `latest-linux.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer and the Linux AppImage update through electron-updater; macOS and the Linux deb do not update themselves—after finding a newer release they open the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
 
 ## Documentation & development
 
@@ -219,18 +219,17 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 
 ## Acknowledgments
 
-Anbot continues from [DS Bot](https://github.com/Fei2411/DS-Bot), originally maintained by Fei2411 and its contributors.
-
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): Anbot is built on the DSH plugin system and Sessions. Model Bots use its agent loop and model service; local-agent Bots use their CLI's tools and model access. Auxiliary model calls run outside the agent loop, while web search/fetch and DeepSeek OCR, TTS and ASR make direct service requests.
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): Anbot builds on the DSH plugin system, and every Bot runs inside a DSH Session with the tools and model access DSH provides. Model Bots go through DSH's Agent loop and model service; local-agent Bots use their own CLI's tools and model access. Auxiliary model calls (memory tidy, context steward, handoff, side chat, and so on) run outside the Agent loop; web search/fetch and the DeepSeek OCR, TTS and ASR services call those service endpoints directly, so they are not all served by DSH.
+- [Fei2411 and the DS Bot contributors](https://github.com/Fei2411/DS-Bot): Anbot is developed on the basis of DS Bot. It keeps DS Bot's Bot team, group chats, browser, computer use, IM, connectors and Office support, and strengthens two areas on that base: whether execution can be trusted, and whether you can take over.
 - [esbuild](https://esbuild.github.io/): bundles the plugin's interface code.
 - Thanks to these projects for the ideas they published. Anbot learned from their designs and does not contain their code:
-  - [AgentMemoryRepo](https://github.com/AgentMemoryRepo/agentmemoryrepo): the Markdown format of Bot memory.
-  - [OpenAI Codex](https://github.com/openai/codex): checkpoints that keep the user's messages next to the summary, and message anchors for chat search.
-  - [OpenMausBot](https://github.com/milind-soni/OpenMausBot): group chat rounds and @mention relays.
-  - [Hermes Agent](https://github.com/NousResearch/hermes-agent) and [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode): one session per member per group chat, and handoffs that carry the earlier user messages.
-  - [OpenCode](https://github.com/sst/opencode), [goose](https://github.com/block/goose), [pi](https://github.com/badlogic/pi-mono) and [Gemini CLI](https://github.com/google-gemini/gemini-cli): when to condense a long chat, and what a handoff note holds.
-  - [obelisk](https://github.com/tommy0103/obelisk): chat search with a SQLite full-text index.
-- Everyone who uses and contributes to Anbot.
+  - [AgentMemoryRepo](https://github.com/AgentMemoryRepo/agentmemoryrepo): the Markdown format of Bot memory: one entry per line with `[key: value]` metadata, plus a `MEMORY.md` index that links the topic files.
+  - [OpenAI Codex](https://github.com/openai/codex): checkpoints that keep the user's original messages next to the summary, and message anchors for searching earlier chat.
+  - [OpenMausBot](https://github.com/milind-soni/OpenMausBot): group chat rounds and @mention relays between Bots.
+  - [Hermes Agent](https://github.com/NousResearch/hermes-agent) and [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode): one Session per member per group chat, and handoffs that carry the earlier user messages.
+  - [OpenCode](https://github.com/sst/opencode), [goose](https://github.com/block/goose), [pi](https://github.com/badlogic/pi-mono) and [Gemini CLI](https://github.com/google-gemini/gemini-cli): when to condense a long conversation, and what a handoff note holds.
+  - [obelisk](https://github.com/tommy0103/obelisk): searching a Bot's own chat with a SQLite FTS5 index ranked by BM25.
+- Every person who has tried Anbot, asked questions about it, and reported its bugs.
 
 ## License
 

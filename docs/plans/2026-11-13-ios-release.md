@@ -2,10 +2,11 @@
 
 - 日期：2026-11-13
 - 相关：Issue #1448
+- **当前状态（v0.0.1）**：本次发布不含任何 iOS 可安装包。仓库没有 Apple Developer Program 账号、Team ID 和 App Store Connect API key，不构建也不上传 `.ipa` / TestFlight。本文全部内容是账号材料齐备后的未来准备步骤，不代表 iOS 已支持或即将放出下载项。
 
 ## 为什么
 
-v0.3.5 已经有 Android 手机 App（Settings → Phone 扫码配对），iOS 没有对应版本，iPhone 用户用不了配对。iOS 签名和 TestFlight 分发需要 Apple Developer Program 账号。本文列出账号准备、签名、出包和上传步骤；账号、付款和证书由账号持有人管理。
+v0.3.5（历史版本号）已经有 Android 手机 App（Settings → Phone 扫码配对），iOS 没有对应版本，iPhone 用户用不了配对。iOS 签名和 TestFlight 分发需要 Apple Developer Program 账号。本文列出账号准备、签名、出包和上传步骤；账号、付款和证书由账号持有人管理。
 
 ## 现在的状态
 

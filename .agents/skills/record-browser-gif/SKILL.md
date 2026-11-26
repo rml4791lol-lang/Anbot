@@ -161,7 +161,7 @@ git push origin <assets-branch>
 
 新系列则浅克隆临时 checkout（`git clone --depth 1 <repo-url> /tmp/assets-checkout`），用 `git switch --orphan <assets-branch>` 建孤儿分支，然后同样 add、commit、push。
 
-推送后用带认证的 GitHub API 或 raw 请求确认远端路径、字节数、校验和、`200` 响应和 `image/gif` 类型。匿名 `404` 不能证伪私有仓库的资产；用认证请求验证。这证明的是仓库成员的评审路径，不是公网可达。
+推送后用 GitHub API 或 raw 请求确认远端路径、字节数、校验和、`200` 响应和 `image/gif` 类型。仓库为公开仓库，匿名请求即可访问；若返回 `404`，先核对路径与分支，必要时再用带认证的请求复核。这证明的是评审路径上的资产，不代表公网 CDN 可达。
 
 编辑 PR 正文前一刻，重读被演示 PR 的实时头并与 GIF 旁记录的提交比对；动了就停下来重录。编辑后重读实时头，确认仍在该提交。另外用 GitHub 的 Markdown API 渲染正文，确认预期的 `<img>` 出现。
 

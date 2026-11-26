@@ -1,6 +1,6 @@
-# DS Bot Plugin & Extension Development Reference
+# Anbot Plugin & Extension Development Reference
 
-Machine-oriented engineering reference for extending **DS Bot** across all supported layers: live Bot-authored capabilities, team-wide connectors, custom local agent CLIs, standalone DeepSeek Harness (DSH) plugins, and core `ds-bot` secondary development.
+Machine-oriented engineering reference for extending **Anbot** across all supported layers: live Bot-authored capabilities, team-wide connectors, custom local agent CLIs, standalone DeepSeek Harness (DSH) plugins, and core `ds-bot` secondary development.
 
 - **Bundled runtime skill:** [`ds-bot/src/host/skills/ds-bot-plugin-dev/SKILL.md`](../ds-bot/src/host/skills/ds-bot-plugin-dev/SKILL.md) with progressive-disclosure references:
   - [`capabilities-and-mcp.md`](../ds-bot/src/host/skills/ds-bot-plugin-dev/references/capabilities-and-mcp.md)
@@ -22,7 +22,7 @@ Choose the narrowest layer whose scope, lifecycle, and approval model satisfy th
 | **2. Team Connectors** | Built-in catalog & `connector-add` (`connectors/`) | Team-wide upstream; per-Bot `offFor` mask | Live hot-reconcile via loopback gateway | User signs in / saves secret (`request_connector` or Settings); optional `readOnly` gate | `state.connectors` in `state.json`; credentials in `secrets.json` | OAuth 2.0 / API-key SaaS MCPs (GitHub, Mail, Slack, Notion, custom HTTP/stdio) shared across Bots |
 | **3. Standalone DSH Plugins** | Cordis plugin in `profiles/<profile>` (`plugin.js`) | Host / DSH profile wide | Requires DSH restart / profile reload | Explicit profile package install (`dsh plugin --profile <p> add ...`) or bundle claim | `<DSH_HOME>/profiles/<profile>/` (`package.json`, `node_modules`) | Cross-cutting DSH services (`web`, `skills`, browser tools, UI views) usable alongside or outside `ds-bot` |
 | **4. Custom Local Agent CLIs** | `local-acp-<id>` (`local-agents/`) | Any Bot routed to that CLI | Immediate via `local-agent-add`; active next turn | User-configured executable; `cleanEnv` strips host env; `approve_agent_action` gates host actions | `state.localAgents.custom` in `state.json` | Delegating a Bot's turns to an external ACP CLI binary while keeping `rt.teamTools` |
-| **5. Core `ds-bot` Modules** | Checkout edits (`ds-bot/index.js`, `src/host/`, `src/client/`) | Entire DS Bot runtime & UI | Requires `npm run build` (client) & restart | `install.test.js`, `style-debt.test.js`, `lint`, smoke bench, `scan.mjs` | Git checkout (`ds-bot/`) | New `/api/bot` endpoints, SSE feed events, IM adapters, core team tools, or built-in UI |
+| **5. Core `ds-bot` Modules** | Checkout edits (`ds-bot/index.js`, `src/host/`, `src/client/`) | Entire Anbot runtime & UI | Requires `npm run build` (client) & restart | `install.test.js`, `style-debt.test.js`, `lint`, smoke bench, `scan.mjs` | Git checkout (`ds-bot/`) | New `/api/bot` endpoints, SSE feed events, IM adapters, core team tools, or built-in UI |
 
 Hard rule: **never patch DeepSeek Harness (`@deepseek-ai/dsh*`)**. Build strictly on documented DSH plugin APIs, Cordis services, and `@deepseek-ai/dsh/profile-boot`.
 
@@ -168,14 +168,14 @@ Machine and contributor workflows that develop or maintain standalone DSH plugin
     - `dsh_docs`: supports `action: 'search'` (queries `llms.txt` with parameters `query`, `language: 'zh' | 'en' | 'all'`, and `limit`) and `action: 'fetch'` (retrieves document content by `id` using `offset` and `revision` for paging through long texts).
     - `dsh_plugins`: supports `action: 'search'` across the DSH catalog or npm registry, `action: 'fetch_npm'` to resolve and lock an exact npm semver version, and `action: 'fetch_github'` (using the local `gh` CLI or GitHub API) to inspect repository metadata and pin an exact commit hash for `github:owner/repo#commit` package identifiers.
     - **Read-only boundary:** Both tools are strictly read-only. Package installation, updating, or uninstallation remains restricted to `@deepseek-ai/dsh-plugin-manager` or explicit CLI invocation (`dsh plugin --profile <profile> add ...`), gated by user consent.
-  - **Preset scoping & fallback chain:** DS Bot Bot sessions are initialized with `{ agentPreset: 'standard' }` by `ds-bot/src/host/roster.js`. The built-in Creator reminder in `dsh-dev-index` activates only under the `'cordis'` Creator preset (`CREATOR_PRESET_ID`). When `dsh_docs` is present in the profile, its tools register on `ctx.tools`. In stock DS Bot Desktop App environments or profiles without `dsh_docs`, callers must fall back to standard `web_fetch`:
+  - **Preset scoping & fallback chain:** Anbot's sessions are initialized with `{ agentPreset: 'standard' }` by `ds-bot/src/host/roster.js`. The built-in Creator reminder in `dsh-dev-index` activates only under the `'cordis'` Creator preset (`CREATOR_PRESET_ID`). When `dsh_docs` is present in the profile, its tools register on `ctx.tools`. In stock Anbot Desktop App environments or profiles without `dsh_docs`, callers must fall back to standard `web_fetch`:
     1. Fetch `https://deepseek-harness.github.io/deepseek-harness/llms.txt` to find matching document identifiers.
     2. Fetch the corresponding raw Markdown at `https://deepseek-harness.github.io/deepseek-harness/<id>.md`.
 
 - **Runtime Contract Inspection (`cordis_inspect_*`):**
   - **Schema inspection tools:** The `@deepseek-ai/dsh-tool-cordis` package registers read-only inspection tools `cordis_inspect_list` and `cordis_inspect_query` (`platform: 'host' | 'client'`, `provider`, `method`, `input`). These tools inspect live runtime definitions and schemas for Cordis `Service`, `Event`, `Slot`, `Tool`, and `Config`.
   - **Creator preset skills:** In DSH, these inspection tools are paired with specialized Creator preset (`'cordis'`) skills from `@deepseek-ai/dsh-agent-preset/skills`: `cordis-plugin-development`, `cordis-composition-reference`, `editing-cordis-compositions`, and `agent-experience`.
-  - **Session scope caveat:** These tools are not mounted by default within DS Bot's `'standard'` preset unless invoked from a Creator session or explicitly attached to the profile. Furthermore, inspect query methods return schema structures only and are never callable business Services.
+  - **Session scope caveat:** These tools are not mounted by default within Anbot's `'standard'` preset unless invoked from a Creator session or explicitly attached to the profile. Furthermore, inspect query methods return schema structures only and are never callable business Services.
   - **Type verification:** Always verify observed runtime contracts against the local TypeScript declarations (`.d.ts` files under `dev/harness/` or the profile's `node_modules/@deepseek-ai/`).
 
 - **Version Alignment & `dsh-v*` Git Tags:**
@@ -262,7 +262,7 @@ Implemented in [`local-agents/index.js`](../ds-bot/src/host/local-agents/index.j
 - **Control endpoints (`POST /api/bot`):** `local-agents`, `local-agent-refresh`, `local-agent-models`, `local-agent-add`, `local-agent-update`, and `local-agent-remove` (adapter receives `presetFor`, `cwdFor`, `probeCwd`, and `toolsFor` scoped via `rt.localAgentTools`).
 - **Permission preset mapping (`MODES` via `acpMode` / `cliMode`):**
 
-| DS Bot Preset | ACP Session Modes (`acpMode`) | Claude (`cliMode`) | Codex (`cliMode`) |
+| Anbot Preset | ACP Session Modes (`acpMode`) | Claude (`cliMode`) | Codex (`cliMode`) |
 | :--- | :--- | :--- | :--- |
 | `'read-only'` | `['ask', 'plan', 'read-only', 'readonly']` | `'plan'` | `'read-only'` |
 | `'workspace-write'` | `['accept-edits', 'accept_edits', 'acceptEdits']` | `'acceptEdits'` | `'workspace-write'` |

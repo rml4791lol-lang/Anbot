@@ -121,7 +121,7 @@ requests repeat the returned version so a changed presented file cannot be splic
 into an earlier download. Presented-file coordinates require their exact Session
 part; a Bot id never searches matching sequence numbers in other parts.
 
-New clients request one chunk at a time. Android and iOS write each chunk through an
+New clients request one chunk at a time. The Android client writes each chunk through an
 Expo file handle before requesting the next; the browser collects Blob parts. There
 is no total-file limit for chunk clients. Older clients that omit `offset` retain
 the existing whole-file response and its 16 MiB compatibility limit.

@@ -1,9 +1,12 @@
 Anbot
 Copyright 2026 Anbot contributors
 
-Anbot is based on DS Bot (https://github.com/Fei2411/DS-Bot), Copyright 2026 Fei2411 and
-the DS Bot contributors; that upstream attribution is retained under the Apache License,
-Version 2.0 (see LICENSE).
+Anbot is developed on the basis of DS Bot (https://github.com/Fei2411/DS-Bot), Copyright
+2026 Fei2411 and the DS Bot contributors. The upstream copyright notice and the Apache
+License, Version 2.0 terms are retained as required by that license (see LICENSE). Anbot
+also builds on DeepSeek Harness (https://github.com/deepseek-ai/deepseek-harness) and uses
+esbuild to bundle its plugin interface code; the sections below list the retained third-party
+code and the projects that gave ideas without contributing code.
 
 ==============================================================================
 Third-party code in this repository
@@ -229,7 +232,7 @@ The server depends on zod (MIT) and the Node transport depends on hono and
 @hono/node-server (MIT).
 The bundled ds-bot/office.js includes
 @xmldom/xmldom (https://github.com/xmldom/xmldom, MIT License, Copyright (c)
-jindw and contributors) from npm. esbuild is a build tool only. The plugin's
+jindw and contributors) from npm. esbuild (https://esbuild.github.io/) is a build tool only. The plugin's
 client.js bundles qrcode-generator from npm (MIT, Copyright (c) 2009 Kazuhiko
 Arase), and its link.js bundles the phone link from link/ with the packages
 it uses, listed below. The desktop app

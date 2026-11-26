@@ -2,17 +2,17 @@
 
 [English](README.md) | 中文 · [文档导航](docs/README.md) · [愿景](docs/vision.zh.md) · [已知问题](docs/known-issues.zh.md) · [参与开发](CONTRIBUTING.zh.md)
 
-![状态](https://img.shields.io/badge/状态-预览版-orange) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green)
+![版本](https://img.shields.io/badge/版本-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green)
 
 **Anbot 是建在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）上的个人 Agent 工作台。** 你把一件事交给它，它在一个真实的工作区里做完，并且让你看得见：它怎么理解这件事、现在谁在做、改了哪些文件、凭什么算完成。你可以随时暂停、接管同一个工作区自己改，改完再交回去。
 
 它有两种形态：Windows、macOS、Linux 的独立桌面应用，和 DSH 插件；也可以装在 Docker 里。团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
-> 预览版。安装包还没有发布，界面和配置还会变。现在可以从源码构建，或作为 DSH 插件安装。
+> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip`、`Anbot-0.0.1-linux-x86_64.AppImage`、`Anbot-0.0.1-linux-amd64.deb` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml`、`latest-linux.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
 ## Anbot 在 DS Bot 之上加了什么
 
-Anbot 源于 [DS Bot](https://github.com/Fei2411/DS-Bot)，保留了它的 Bot 团队、群聊、浏览器、电脑操控、IM、连接器和 Office 能力，并在执行是否可信、能否接管这两件事上做了加强：
+Anbot 基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 开发，保留了它的 Bot 团队、群聊、浏览器、电脑操控、IM、连接器和 Office 能力，并在此基础上加强了执行是否可信、能否随时接管这两件事：
 
 | 能力 | 说明 |
 |---|---|
@@ -40,7 +40,7 @@ Anbot 源于 [DS Bot](https://github.com/Fei2411/DS-Bot)，保留了它的 Bot �
 
 ### 桌面应用（Windows、macOS、Linux）
 
-安装包还没有发布；已发布的安装包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。现在可以从源码构建：
+v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）、Linux AppImage 与 deb，以及 Android APK。不发布 iOS 包。从源码构建：
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -68,7 +68,7 @@ node scripts/build-client.mjs --check   # 已提交 bundle 过期时退出 1
 
 ### 签名与 Gatekeeper
 
-从源码构建不需要任何证书。本地编译出的 app 不带 macOS `quarantine` 属性，Gatekeeper 不会按「未识别开发者」拦截。签名、公证的预编译安装包是单独的发布议题；本源码构建流程不会对 app 做签名。
+从源码构建不需要任何证书。本地编译出的 app 不带 macOS `quarantine` 属性，Gatekeeper 不会按「未识别开发者」拦截。预编译 macOS zip 采用 ad-hoc 签名（identity `-`），不公证，也不需要 Apple Developer 账号；见[签名与信任说明](docs/dev/release-signing.md)。本源码构建流程不会对 app 做签名。
 
 **作为 DSH 插件**
 
@@ -181,7 +181,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 
 ### 手机 App 与浏览器远程访问
 
-通过端到端加密链路（Noise IK）在 iOS、Android 或浏览器里远程操控电脑上的 Bot 团队——电脑仅向外连接，不需要公网 IP 或开放端口。在 **设置 → 连接 → 手机** 开启手机访问，用手机 App 扫码即可配对（iOS 构建见 [`mobile/README.md`](mobile/README.md)）。
+通过端到端加密链路（Noise IK）在 Android App 或浏览器里远程操控电脑上的 Bot 团队——电脑仅向外连接，不需要公网 IP 或开放端口。在 **设置 → 连接 → 手机** 开启手机访问，用手机 App 扫码即可配对。本次发布不含 iOS 可安装包：iOS 需要 Apple Developer 账号，仓库目前还没有。见 [`mobile/README.md`](mobile/README.md)。
 
 无需安装 App 也可使用**浏览器远程访问（预览）**：在同一配对页点 **Open in a browser** 或 **Copy browser link**。自建中转服务器与安全限制见 [`link/README.md`](link/README.md) 和 [`docs/plans/2026-11-17-web-remote.md`](docs/plans/2026-11-17-web-remote.md)。
 
@@ -206,7 +206,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 - **协调层**：你对 Main Bot 说一个目标，它自己拆任务、选 Bot、准备工作区、跟踪依赖、汇总验收。派活目前仍要你自己安排。
 - **多 Bot 工作流视图**：一张图看到所有 Bot 的依赖、进度和审批。
 - **Bot 锻造器与自举工程器**：用对话组装新 Bot、让 Anbot 改自己的代码。
-- **代码签名与分发**：Windows 安装包已做 Authenticode 签名，但当前用的是自签证书，未被商业 CA 信任，其他机器首次打开仍提示「未知发布者」；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换；Linux 包未签名；iOS 还没有 Apple 账号，不出包。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
+- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证；Linux AppImage 与 deb 未签名。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml`、`latest-linux.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包与 Linux AppImage 走 electron-updater 自动下载安装；macOS 与 Linux deb 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
 
 ## 文档与开发
 
@@ -219,18 +219,17 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 
 ## 致谢
 
-Anbot 在 [DS Bot](https://github.com/Fei2411/DS-Bot) 基础上继续开发；上游原由 Fei2411 与贡献者维护。
-
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：Anbot 建在 DSH 的插件系统和 Session 上。模型 Bot 用它的 Agent 循环和模型服务；本地智能体 Bot 用 CLI 自己的工具和模型访问。辅助模型调用不经过 Agent 循环，搜索 / 抓取和 DeepSeek OCR、TTS、ASR 则直接请求服务。
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：Anbot 建在 DSH 的插件系统上，每个 Bot 都在 DSH Session 里运行，使用 DSH 提供的工具与模型访问。模型 Bot 走 DSH 的 Agent 循环与模型服务；本地智能体 Bot 使用自己 CLI 的工具与模型访问。辅助模型调用（记忆整理、上下文管家、交接、侧边对话等）在 Agent 循环之外进行；网页搜索 / 抓取以及 DeepSeek OCR、TTS、ASR 等直连服务由对应服务接口直接请求，并非全部由 DSH 提供。
+- [Fei2411 与 DS Bot 贡献者](https://github.com/Fei2411/DS-Bot)：Anbot 基于 DS Bot 开发，保留了它的 Bot 团队、群聊、浏览器、电脑操控、IM、连接器与 Office 能力，并在此基础上加强了两个方向：执行是否可信，以及你能否随时接管。
 - [esbuild](https://esbuild.github.io/)：用来打包插件的界面代码。
 - 下面这些项目公开的设计思路也留在了 Anbot 里。Anbot 参考了它们的设计，没有使用它们的代码：
-  - [AgentMemoryRepo](https://github.com/AgentMemoryRepo/agentmemoryrepo)：Bot 记忆的 Markdown 格式。
-  - [OpenAI Codex](https://github.com/openai/codex)：压缩时把用户原话留在摘要旁边，以及搜索聊天记录用的消息锚点。
-  - [OpenMausBot](https://github.com/milind-soni/OpenMausBot)：群聊轮流发言和 `@` 接力。
-  - [Hermes Agent](https://github.com/NousResearch/hermes-agent) 和 [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode)：每个成员在每个群里一个会话，以及交接时带上用户之前的原话。
+  - [AgentMemoryRepo](https://github.com/AgentMemoryRepo/agentmemoryrepo)：Bot 记忆的 Markdown 格式：一行一条 `[key: value]` 元数据，外加链接各主题文件的 `MEMORY.md` 索引。
+  - [OpenAI Codex](https://github.com/openai/codex)：压缩时把用户原话留在摘要旁边的 checkpoint，以及搜索聊天记录用的消息锚点。
+  - [OpenMausBot](https://github.com/milind-soni/OpenMausBot)：群聊轮流发言与 `@` 接力。
+  - [Hermes Agent](https://github.com/NousResearch/hermes-agent) 和 [Hermes Bot Mode](https://github.com/NousResearch/Hermes-Bot-Mode)：每个成员在每个群聊一个 Session，交接时带上用户之前的原话。
   - [OpenCode](https://github.com/sst/opencode)、[goose](https://github.com/block/goose)、[pi](https://github.com/badlogic/pi-mono)、[Gemini CLI](https://github.com/google-gemini/gemini-cli)：长对话什么时候压缩，交接笔记写哪些内容。
-  - [obelisk](https://github.com/tommy0103/obelisk)：用 SQLite 全文索引搜索聊天记录。
-- Anbot 的每一位使用者和贡献者。
+  - [obelisk](https://github.com/tommy0103/obelisk)：用 SQLite FTS5 全文索引按 BM25 排序搜索 Bot 自己的聊天。
+- 每一位试用过 Anbot、提出过问题、报告过错误的人。
 
 ## 许可
 

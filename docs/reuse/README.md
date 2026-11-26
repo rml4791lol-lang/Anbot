@@ -1,6 +1,6 @@
 # Reuse decision assets
 
-This directory holds the machine-maintainable part of DS-Bot's “Existing Code First” process.
+This directory holds the machine-maintainable part of Anbot's “Existing Code First” process.
 
 | Asset | Purpose |
 |---|---|
@@ -24,8 +24,8 @@ This directory holds the machine-maintainable part of DS-Bot's “Existing Code 
    - B: SDK, official API, protocol or format;
    - C: extracted module with an adapter;
    - D: reference design;
-   - E: build in DS-Bot.
-6. Fill every feature field: DS-Bot implementation, DSH implementation, candidate, cost, dependencies, compatibility, decision, migration and acceptance.
+   - E: build in Anbot.
+6. Fill every feature field: Anbot implementation, DSH implementation, candidate, cost, dependencies, compatibility, decision, migration and acceptance.
 7. Update the human-readable map, component ledger, ADR and notice ledger in the same change.
 8. Run the repository verification before commit.
 

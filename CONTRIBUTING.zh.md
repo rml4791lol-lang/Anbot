@@ -74,7 +74,7 @@
 
 1. 向 `dev` 提一个 Pull Request：同步更新 `ds-bot/package.json`、`app/package.json` 和 `README.md` / `README.zh.md` 的版本号，根据已合并 Pull Request 的 Changelog 句子写 `CHANGELOG.md` 的这一版。
 2. 提一个从 `dev` 到 `main` 的 Pull Request，标题为 `release: vX.Y.Z`。在描述里列出这一版所有的 `Fixes #<号>`，合并时这些 Issue 会一起关闭。
-3. 合并前在 Windows 真机上做一遍[发版前真机检查](docs/dev/release-checklist.md)，改动涉及 macOS 时在 macOS 上也做一遍，结果贴在这个 PR 里。用 merge commit 合并，在 `main` 上发布 GitHub Release `vX.Y.Z`，发布时不勾「Set as the latest release」：安装包、`SHA256SUMS.txt` 和下载表都传完后，工作流会自己把它标为最新。Release 工作流会检查 tag 与版本号一致、且在 `main` 上，跑完检查后把包发到 npm（预发布版本发到 npm 的 `next` 标签）。不要手动 `npm publish`。
+3. 合并前在 Windows 真机上做一遍[发版前真机检查](docs/dev/release-checklist.md)，改动涉及 macOS 时在 macOS 上也做一遍，结果贴在这个 PR 里。用 merge commit 合并，在 `main` 上发布 GitHub Release `vX.Y.Z`，发布时不勾「Set as the latest release」：安装包、`SHA256SUMS.txt` 和下载表都传完后，工作流会自己把它标为最新。Release 工作流会检查 tag 与版本号一致、且在 `main` 上，跑完检查后构建插件包并把 `ds-bot-<版本>.tgz` 附到 GitHub Release，不发布到 npm。不要手动 `npm publish`。
 4. 热修：从 `main` 切 `fix/hot-<短名>`，向 `main` 提 Pull Request，发一个补丁版本，再把 `main` 合回 `dev`。
 
 ## 搭建环境

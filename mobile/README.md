@@ -1,8 +1,8 @@
-# DS Bot mobile
+# Anbot mobile
 
-The DS Bot app for iOS and Android, also exportable as a browser app. It controls the Bot team that runs on your computer; model execution and Bot tools stay on that host. The client UI and encrypted-link endpoint run on the phone or browser. The design is in [docs/plans/2026-10-24-mobile-app.md](../docs/plans/2026-10-24-mobile-app.md).
+The Anbot Android client, also exportable as a browser app. The source has an iOS target, but there is no installable iOS package: this repository has no Apple Developer account yet. It controls the Bot team that runs on your computer; model execution and Bot tools stay on that host. The client UI and encrypted-link endpoint run on the phone or browser. The design is in [docs/plans/2026-10-24-mobile-app.md](../docs/plans/2026-10-24-mobile-app.md).
 
-Pair the app with your computer by scanning the QR code in DS Bot's Settings → Phone. The encrypted link to the computer is in [../link](../link); run `npm ci` there too before you build.
+Pair the app with your computer by scanning the QR code in Anbot's Settings → Phone. The encrypted link to the computer is in [../link](../link); run `npm ci` there too before you build.
 
 Use **Edit Bot** to rename a Bot or change its avatar, including Chief, the initial Main Bot. **Group settings** lets you upload or remove a group photo when the connected host supports group avatars.
 
@@ -28,10 +28,14 @@ npx expo run:android --device <emulator>                    # native build when 
 
 ## Release
 
-- Android: `.github/workflows/release.yml` builds and signs the APK.
-- iOS: the account items, the archive/upload steps and the failure guide are in
-  [docs/plans/2026-11-13-ios-release.md](../docs/plans/2026-11-13-ios-release.md).
-  With the Apple account variables set, `npm run ios:archive` archives and exports
-  `ios/build/export/DSBot.ipa`; `sh scripts/ios-archive.sh --upload` also sends it to
-  TestFlight. `mobile-ios` in `.github/workflows/test.yml` builds the iOS project for the
-  simulator for changes to `mobile/` or `ds-bot/package.json`, and for full workflow runs (workflow changes, main, scheduled or manual runs), unsigned.
+- Android: `.github/workflows/release.yml` builds and signs the release APK with the upload keystore (secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, alias `upload`; v1 JAR + v2 + v3 schemes). The signed `Anbot-0.0.1-android.apk` is attached to the v0.0.1 release, and `SHA256SUMS.txt` includes its SHA-256. The in-app update check matches that asset name and verifies the digest before downloading.
+- iOS: no installable package is published in this release. There is no Apple Developer
+  account yet, and no `.ipa` is built or uploaded. The account items, archive/upload steps
+  and failure guide in
+  [docs/plans/2026-11-13-ios-release.md](../docs/plans/2026-11-13-ios-release.md) are future
+  preparation only: once the Apple account variables are set, `npm run ios:archive` can
+  archive and export the local script artifact `ios/build/export/DSBot.ipa` (a local build
+  filename only; nothing iOS is published in v0.0.1), and `sh scripts/ios-archive.sh --upload`
+  can send it to TestFlight. `mobile-ios` in `.github/workflows/test.yml` only builds the
+  unsigned iOS project for the simulator for changes to `mobile/` or `ds-bot/package.json`,
+  and for full workflow runs (workflow changes, main, scheduled or manual runs).
