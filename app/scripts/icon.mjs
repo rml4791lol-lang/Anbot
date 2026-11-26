@@ -1,19 +1,18 @@
-// Draws the app icon from the Main Bot's whale in ../ds-bot and writes assets/icon.svg,
-// assets/icon.png (1024 px), assets/icon.ico (Windows, 16 to 256 px) and the tray marks:
-// assets/tray.ico (Windows), assets/tray.png (Linux), assets/trayTemplate.png with its
-// @2x (macOS), and the per-size PNGs in assets/icons/, which electron-builder installs
-// into hicolor/<size>x<size>/apps/ for the Linux menu and taskbar.
-// Usage: npm run icon. It runs itself again inside Electron, which turns the SVG into PNGs.
+// Rasterizes the committed Anbot SVGs in assets/ into the platform icon files:
+// assets/icon.svg, assets/icon.png (1024 px), assets/icon.ico (Windows, 16 to 256 px)
+// and the tray marks: assets/tray.ico (Windows), assets/tray.png (Linux),
+// assets/trayTemplate.png with its @2x (macOS), and the per-size PNGs in assets/icons/,
+// which electron-builder installs into hicolor/<size>x<size>/apps/ for the Linux menu and taskbar.
+// Usage: npm run icon. It runs itself again inside Electron, which turns the SVGs into PNGs.
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { characterMarkup, MASK_ID } from '../../ds-bot/src/client/characters.js'
 
 const here = fileURLToPath(import.meta.url)
 const assets = join(dirname(here), '..', 'assets')
-const ICO_SIZES = [16, 20, 24, 32, 36, 40, 48, 64, 72, 96, 128, 256]
+const ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 72, 96, 128, 256]
 // The Linux hicolor set: 1024x1024 is not a registered hicolor directory, so a single large
 // PNG installs as an unresolvable icon. electron-builder copies these into hicolor/<size>x<size>/apps/.
 const HICOLOR_SIZES = [16, 24, 32, 48, 64, 96, 128, 256, 512]
@@ -21,63 +20,17 @@ const HICOLOR_SIZES = [16, 24, 32, 48, 64, 96, 128, 256, 512]
 const TRAY_ICO_SIZES = [16, 20, 24, 32]
 const TRAY_PNG_SIZE = 24
 // macOS draws a template image itself, in the colour of the menu bar: a black mark with the
-// shape of the whale.
+// shape of the Anbot monogram.
 const TRAY_TEMPLATE_SIZES = [16, 32]
-const WHALE_INK = '#4D6BFE'
+// Ink for the coloured tray mark (Windows / Linux), matching the cyan of the app icon.
+const TRAY_INK = '#2AD4FF'
 
-// The whale's body spans x 4..95.9 and y 20.9..79 of its 100 box.
-const WHALE = { cx: 49.95, cy: 49.95, width: 91.9 }
-
-// A superellipse close to the system's rounded-square app tile.
-function tile(size, inset) {
-  const radius = (size - 2 * inset) / 2
-  const center = size / 2
-  const points = []
-  for (let i = 0; i < 128; i += 1) {
-    const angle = (i / 128) * Math.PI * 2
-    const at = value => Math.sign(value) * Math.abs(value) ** 0.4
-    points.push(`${(center + radius * at(Math.cos(angle))).toFixed(2)} ${(center + radius * at(Math.sin(angle))).toFixed(2)}`)
-  }
-  return `M${points.join('L')}Z`
-}
-
-// `plate`: the tile's share of the canvas. macOS wants a margin around the tile; Windows
-// draws its icons nearly edge to edge, so its sizes use a fuller tile.
-function iconSvg(plate, size = 1024) {
-  const inset = (size * (1 - plate)) / 2
-  const whaleWidth = (size - 2 * inset) * 0.85
-  const scale = whaleWidth / WHALE.width
-  // The head carries the weight, so the whale sits a little left of and above center.
-  const x = size / 2 - WHALE.cx * scale - whaleWidth * 0.015
-  const y = size / 2 - WHALE.cy * scale - whaleWidth * 0.018
-  const path = tile(size, inset)
-  const whale = characterMarkup('whale', 'deepseek').replaceAll(MASK_ID, 'eyes').replaceAll('var(--bt-ink-deepseek)', WHALE_INK)
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-<defs>
-<linearGradient id="plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eef1f7"/></linearGradient>
-<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="${size * 0.012}" stdDeviation="${size * 0.012}" flood-color="#000" flood-opacity=".22"/></filter>
-</defs>
-<path d="${path}" fill="url(#plate)" filter="url(#shadow)"/>
-<path d="${path}" fill="none" stroke="rgba(20,20,40,.1)" stroke-width="${size * 0.004}"/>
-<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(4)})">${whale}</g>
-</svg>
-`
-}
-
-// The tray mark: the whale alone, so that it still reads at the size of a tray icon. The
-// macOS template is the same shape in black, because macOS paints it in the colour of the
-// menu bar itself.
-function traySvg(size, ink) {
-  const whaleWidth = size * 0.94
-  const scale = whaleWidth / WHALE.width
-  const x = size / 2 - WHALE.cx * scale - whaleWidth * 0.015
-  const y = size / 2 - WHALE.cy * scale - whaleWidth * 0.018
-  const whale = characterMarkup('whale', 'deepseek').replaceAll(MASK_ID, 'eyes').replaceAll('var(--bt-ink-deepseek)', ink)
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(4)})">${whale}</g>
-</svg>
-`
-}
+// Committed vector sources. The SVG in assets/ is the single source of truth for the shape;
+// this script only converts it to the raster formats each platform reads.
+const appSvg = readFileSync(join(assets, 'icon.svg'), 'utf8')
+const trayMarkSvg = readFileSync(join(assets, 'tray-mark.svg'), 'utf8')
+// The tray mark ships in black for the macOS template; the Windows and Linux tray repaints it cyan.
+const coloredTraySvg = trayMarkSvg.replaceAll('#000', TRAY_INK)
 
 // PNG entries in an .ico file, which Windows reads since Vista.
 function icoFile(images) {
@@ -120,14 +73,13 @@ async function renderInElectron(jobs) {
 }
 
 if (process.versions.electron) {
-  const hicolor = HICOLOR_SIZES.map(size => ({ svg: iconSvg(0.92, size), size }))
   const jobs = [
-    { svg: iconSvg(0.805), size: 1024 },
-    ...ICO_SIZES.map(size => ({ svg: iconSvg(0.92, size), size })),
-    ...TRAY_ICO_SIZES.map(size => ({ svg: traySvg(size, WHALE_INK), size })),
-    { svg: traySvg(TRAY_PNG_SIZE, WHALE_INK), size: TRAY_PNG_SIZE },
-    ...TRAY_TEMPLATE_SIZES.map(size => ({ svg: traySvg(size, '#000000'), size })),
-    ...hicolor,
+    { svg: appSvg, size: 1024 },
+    ...ICO_SIZES.map(size => ({ svg: appSvg, size })),
+    ...TRAY_ICO_SIZES.map(size => ({ svg: coloredTraySvg, size })),
+    { svg: coloredTraySvg, size: TRAY_PNG_SIZE },
+    ...TRAY_TEMPLATE_SIZES.map(size => ({ svg: trayMarkSvg, size })),
+    ...HICOLOR_SIZES.map(size => ({ svg: appSvg, size })),
   ]
   // Not awaited at the top: Electron is ready only after the main module has run.
   const { app } = await import('electron')
@@ -152,11 +104,10 @@ if (process.versions.electron) {
   })
 } else {
   mkdirSync(assets, { recursive: true })
-  writeFileSync(join(assets, 'icon.svg'), iconSvg(0.805))
   // A terminal inside an Electron-based editor may set ELECTRON_RUN_AS_NODE, which would keep Electron plain Node.
   const { ELECTRON_RUN_AS_NODE: _runAsNode, ...env } = process.env
   const electron = createRequire(import.meta.url)('electron')
   const run = spawnSync(electron, [here], { stdio: 'inherit', env })
   if (run.status !== 0) process.exit(run.status ?? 1)
-  console.log('icon: wrote assets/icon.svg, assets/icon.png, assets/icon.ico, the tray marks and the per-size icons in assets/icons/')
+  console.log('icon: wrote assets/icon.png, assets/icon.ico, the tray marks and the per-size icons in assets/icons/')
 }
