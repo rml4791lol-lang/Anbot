@@ -865,6 +865,9 @@ test('background task preserves IM origin in state and delivers taskId without o
 test('reconcileTasksAfterRestart marks orphaned idle tasks interrupted while preserving inflight, inbox-queued, switching, and waiting_work tasks', async (t) => {
   const env = await startEnv()
   t.after(env.stop)
+  // This test seeds five live tasks to exercise restart reconciliation, so lift the
+  // default per-Bot concurrency cap for this scenario only.
+  env.rt.taskMaxConcurrent = 10
   const dmA = env.agentMap.get('dm-a')
   await env.tool('task_start').execute({ title: 'Orphaned shell wait', brief: 'Wait for shell' }, execOf(dmA))
   await env.tool('task_start').execute({ title: 'Inflight turn', brief: 'Still running' }, execOf(dmA))
@@ -1287,6 +1290,8 @@ test('task_start forks compact parents, skips fork above TASK_FORK_MAX_EVENTS wi
   })
   const env = await startEnv({ team })
   t.after(env.stop)
+  // Fork-threshold scenarios start several live tasks; lift the concurrency cap here.
+  env.rt.taskMaxConcurrent = 10
 
   // Wire real DSH sessionController.page contract (0-based contiguous seqs) for SQLite FTS5 chat index.
   const pageStore = new Map([
@@ -1810,4 +1815,93 @@ test('handoffForeground handoffCutSeq edge cases: Turn 1 without turn/end cuts a
   dmE.session.seq = null
   const taskNullSeq = await envE.rt.startTask('dm-a', { title: 'Null seq task', brief: 'Check coercion' }, execOf(dmE), { taskForkMaxEvents: 0 })
   assert.deepEqual(taskNullSeq.inheritedSegments, [{ sessionId: 'dm-a', throughSeq: 1 }], 'null session.seq must fall back to snapshotEvents instead of coercing to 0 (-1)')
+})
+
+const finishTask = async (env, task, text) => {
+  await env.emit(task.sessionId, 'turn/start', { turn: 1 })
+  await env.emit(task.sessionId, 'assistant/message', { turn: 1, message: { role: 'assistant', content: [{ type: 'text', text }] } })
+  await env.emit(task.sessionId, 'turn/end', { turn: 1, reason: { kind: 'completed' } })
+}
+
+test('task_start returns at once and leaves the foreground session free', async (t) => {
+  const env = await startEnv()
+  t.after(env.stop)
+  const dmA = env.agentMap.get('dm-a')
+  const out = await env.tool('task_start').execute({ title: 'Long build', brief: 'Run the full build' }, execOf(dmA))
+  assert.match(out, /Started background task/)
+  const task = env.rt.botOf('a').tasks.at(-1)
+  assert.equal(task.status, 'running')
+  // The call did not block until the task finished: no completion report yet.
+  assert.equal(env.deliveries.some(d => d.role === 'task-report'), false)
+  // The foreground chat session stays separate and usable while the task runs.
+  assert.notEqual(task.sessionId, 'dm-a')
+  assert.ok(ownChatSessions(env.rt.botOf('a')).includes('dm-a'))
+})
+
+test('a completed task reports conclusion, evidence paths, and a task_read pointer', async (t) => {
+  const env = await startEnv()
+  t.after(env.stop)
+  const dmA = env.agentMap.get('dm-a')
+  await env.tool('task_start').execute({ title: 'Audit logs', brief: 'Inspect logs' }, execOf(dmA))
+  const task = env.rt.botOf('a').tasks.at(-1)
+  const longNote = 'This internal working note is deliberately longer than one hundred sixty characters so the report formatter keeps it out of the chat and leaves it inside the task record for task_read to surface later on demand.'
+  await finishTask(env, task, `All logs clean.\nChecked /tmp/build.log and /tmp/second.log.\n${longNote}`)
+  await waitFor(() => env.deliveries.some(d => d.role === 'task-report'))
+  const report = env.deliveries.find(d => d.role === 'task-report')
+  const lines = report.text.split('\n')
+  assert.equal(lines[0], 'All logs clean.')
+  assert.ok(report.text.includes('Evidence:'))
+  assert.ok(report.text.includes('/tmp/build.log'))
+  assert.ok(report.text.includes('/tmp/second.log'))
+  assert.ok(report.text.includes(`task_read(task: "${task.id}")`))
+  // Long working notes stay in the task record, not in the chat report.
+  assert.ok(!report.text.includes(longNote))
+})
+
+test('only two tasks run per Bot; the third queues and starts after a slot frees', async (t) => {
+  const env = await startEnv()
+  t.after(env.stop)
+  const dmA = env.agentMap.get('dm-a')
+  const t1 = await env.rt.startTask('dm-a', { title: 'Task one', brief: 'First' }, execOf(dmA))
+  const t2 = await env.rt.startTask('dm-a', { title: 'Task two', brief: 'Second' }, execOf(dmA))
+  assert.equal(t1.status, 'running')
+  assert.equal(t2.status, 'running')
+
+  const queuedOut = await env.tool('task_start').execute({ title: 'Task three', brief: 'Third' }, execOf(dmA))
+  assert.match(queuedOut, /Queued background task "Task three"/)
+  const t3 = env.rt.botOf('a').tasks.at(-1)
+  assert.equal(t3.status, 'queued')
+  assert.equal(t3.sessionId, undefined)
+
+  // Finishing t1 frees a slot; the queued t3 launches FIFO while t2 keeps running.
+  await finishTask(env, t1, 'First done.')
+  await waitFor(() => t3.status === 'running' && t3.sessionId !== undefined)
+  assert.equal(t2.status, 'running')
+})
+
+test('a second task on the same topic reuses the running one', async (t) => {
+  const env = await startEnv()
+  t.after(env.stop)
+  const dmA = env.agentMap.get('dm-a')
+  const first = await env.rt.startTask('dm-a', { title: 'Audit logs', brief: 'Inspect recent logs' }, execOf(dmA))
+  const out = await env.tool('task_start').execute({ title: 'audit LOGS', brief: 'Same topic again' }, execOf(dmA))
+  assert.match(out, /Reusing existing background task/)
+  const bot = env.rt.botOf('a')
+  assert.equal(bot.tasks.length, 1)
+  assert.equal(bot.tasks[0].id, first.id)
+})
+
+test('a task past its timeout is stopped, fails, and reports back', async (t) => {
+  const env = await startEnv()
+  t.after(env.stop)
+  env.rt.taskTimeoutMs = 60
+  const dmA = env.agentMap.get('dm-a')
+  const started = await env.rt.startTask('dm-a', { title: 'Hung task', brief: 'Never replies' }, execOf(dmA))
+  const task = env.rt.botOf('a').tasks.find(item => item.id === started.id)
+  await waitFor(() => task.status === 'failed', 2000)
+  assert.match(task.error, /Timed out after/)
+  await waitFor(() => env.deliveries.some(d => d.role === 'task-report' && d.taskId === task.id), 2000)
+  const report = env.deliveries.find(d => d.role === 'task-report' && d.taskId === task.id)
+  assert.ok(report !== undefined)
+  assert.match(report.text, /Timed out|failed/)
 })

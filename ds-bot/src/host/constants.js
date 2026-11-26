@@ -153,6 +153,13 @@ export const BACKGROUND_AFTER_MAX_SEC = 600
 // copies the whole event log) and opens a fresh lightweight Session seeded with a
 // structured context summary and read_own_chat access to the parent part.
 export const TASK_FORK_MAX_EVENTS = 600
+// How many background tasks one Bot may run at once. Extra calls wait in an
+// in-memory FIFO queue and start as running slots free; the queue does not
+// survive a restart.
+export const TASK_MAX_CONCURRENT = 2
+// Hard ceiling on one background task's lifetime. On expiry the task is stopped,
+// its slot released, and the failure reported back instead of lingering as a zombie.
+export const TASK_TIMEOUT_MS = 30 * 60 * 1000
 
 // Tools that only operate on group chats: hidden from non-Main Bots in zero groups,
 // and from Main Bots when the team has no groups yet (create_group stays available).

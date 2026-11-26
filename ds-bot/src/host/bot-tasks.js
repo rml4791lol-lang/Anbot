@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node
 import { join, resolve } from 'node:path'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { HANDOFF_ACK, HISTORY_TIMEOUT_MS, SOURCE_KIND, STEER_CUT, TASK_FORK_MAX_EVENTS } from './constants.js'
+import { HANDOFF_ACK, HISTORY_TIMEOUT_MS, SOURCE_KIND, STEER_CUT, TASK_FORK_MAX_EVENTS, TASK_MAX_CONCURRENT, TASK_TIMEOUT_MS } from './constants.js'
 import { within } from './folders.js'
 import { absoluteLinks } from './links.js'
 import { textOf } from './text.js'
@@ -101,6 +101,12 @@ export function install(rt) {
   // In-flight foreground-to-background handoffs per Bot:
   // botId -> { oldSid, committed, aborted, saved, newSid, taskId, explicit, operationIds, savedOperationIds, promise, messages }.
   const handoffing = new Map()
+  // In-memory FIFO queues of background tasks waiting for a free running slot, per Bot.
+  // Entries carry the prebuilt shell record and the arguments needed to launch later;
+  // nothing here is restored after a restart.
+  const taskQueues = new Map()
+  // Per-task timeout timers, taskId -> Timeout. Kept in memory so a restart drops them.
+  const taskTimers = new Map()
   // Monotonic foreground epoch per Bot (incremented on foreground handoff commit).
   const foregroundEpochs = new Map()
   // Bounded idempotency caches for explicit moveForegroundToBackground operations:
@@ -328,6 +334,81 @@ export function install(rt) {
     const bot = rt.botOf(owned.botId)
     const task = tasksOf(bot).find(item => item?.id === owned.taskId)
     return bot === undefined || task === undefined ? undefined : { bot, task }
+  }
+
+  // Running slots count active tasks that already own a task session. Queued tasks
+  // wait in `taskQueues` and do not hold a slot yet.
+  const runningTasksOf = bot => activeTasksOf(bot).filter(task => task.sessionId !== undefined)
+  const normTopic = text => String(text ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
+  const queueOf = botId => {
+    let queue = taskQueues.get(botId)
+    if (queue === undefined) { queue = []; taskQueues.set(botId, queue) }
+    return queue
+  }
+  // Same-topic duplicate: an active task or a queued entry on the same Bot and room
+  // whose normalized title matches.
+  const findDuplicateTask = (bot, room, title) => {
+    const roomId = room?.id
+    const matches = task => (task?.roomId ?? undefined) === roomId && normTopic(task?.title) === normTopic(title)
+    const active = activeTasksOf(bot).find(matches)
+    if (active !== undefined) return active
+    return queueOf(bot.id).map(entry => entry.task).find(matches)
+  }
+  const removeQueuedTask = (botId, taskId) => {
+    const queue = taskQueues.get(botId)
+    if (queue === undefined) return false
+    const index = queue.findIndex(entry => entry.task.id === taskId)
+    if (index === -1) return false
+    queue.splice(index, 1)
+    if (queue.length === 0) taskQueues.delete(botId)
+    return true
+  }
+  const dropTimer = taskId => {
+    const timer = taskTimers.get(taskId)
+    if (timer !== undefined) { clearTimeout(timer); taskTimers.delete(taskId) }
+  }
+  const armTimeout = (bot, task) => {
+    dropTimer(task.id)
+    const timeoutMs = rt.taskTimeoutMs ?? TASK_TIMEOUT_MS
+    const timer = setTimeout(() => {
+      taskTimers.delete(task.id)
+      void timeoutTask(bot, task)
+    }, timeoutMs)
+    timer.unref?.()
+    taskTimers.set(task.id, timer)
+  }
+
+  const ABSOLUTE_PATH_RE = /(?:~|\/)[^\s"'()[\]{}]+/g
+  const evidenceLines = (fullText, conclusion, limit = 3) => {
+    if (fullText === '') return []
+    const out = []
+    for (const raw of fullText.split('\n')) {
+      const trimmed = raw.trim().replace(/^[-*•]\s*/, '')
+      if (trimmed === '' || trimmed === conclusion) continue
+      const pathMatch = trimmed.match(ABSOLUTE_PATH_RE)
+      if (pathMatch !== null) {
+        for (const path of pathMatch) {
+          const clean = path.replace(/[.,;:]+$/, '')
+          if (!out.includes(clean)) out.push(clean)
+          if (out.length >= limit) return out
+        }
+        continue
+      }
+      if (trimmed.length <= 160 && !out.includes(trimmed)) out.push(trimmed)
+      if (out.length >= limit) return out
+    }
+    return out
+  }
+  // Fixed completion report: one-line conclusion, up to three evidence lines or
+  // absolute paths, then the pointer to read the full report in the task record.
+  const formatCompletedReport = (task, fullText) => {
+    const firstLine = String(fullText ?? '').split('\n').map(line => line.trim()).find(Boolean)
+    const conclusion = oneLine(firstLine ?? fullText, SUMMARY_MAX) || '(completed with no reply text)'
+    const evidence = evidenceLines(fullText, conclusion, 3)
+    const lines = [conclusion]
+    if (evidence.length > 0) lines.push('', 'Evidence:', ...evidence.map(item => `- ${item}`))
+    lines.push('', `Details: Call task_read(task: "${task.id}") for the full report.`)
+    return lines.join('\n')
   }
 
   const writeReportFile = (taskId, text) => {
@@ -814,9 +895,7 @@ export function install(rt) {
       let note
       if (outcome === 'completed') {
         note = `"${task.title}" (${task.id}) finished`
-        body = fullText.length > REPORT_MAX
-          ? `${fullText.slice(0, REPORT_MAX)}…\n[Truncated at ${REPORT_MAX} characters. Call task_read(task: "${task.id}") for the full report.]`
-          : (fullText || '(no reply text)')
+        body = formatCompletedReport(task, fullText)
       } else if (outcome === 'failed') {
         note = `"${task.title}" (${task.id}) failed`
         body = `This background task failed: ${task.error ?? 'unknown error'}.${fullText ? `\n\nLast output:\n${fullText.slice(0, REPORT_MAX)}` : ''}`
@@ -850,6 +929,7 @@ export function install(rt) {
       settled = false
       throw error
     } finally {
+      dropTimer(task.id)
       for (const sid of taskSessionIds(task)) {
         forgetTaskSession(sid)
         rt.renewMemory?.(sid)
@@ -858,6 +938,8 @@ export function install(rt) {
       }
       settling.delete(task.id)
       if (settled && (hasExcessSettledTasks(bot) || retiredTasks().length > 0)) await retireTasks([bot])
+      // A slot just freed: start the next queued task for this Bot, FIFO.
+      if (settled) pumpQueue(bot)
     }
   }
 
@@ -921,6 +1003,11 @@ export function install(rt) {
       }
     }
 
+    const duplicate = findDuplicateTask(bot, room, name)
+    if (duplicate !== undefined) {
+      return { ...duplicate, reused: true, queued: duplicate.status === 'queued' }
+    }
+
     const id = newId()
     const now = Date.now()
     const imOrigin = api ? undefined : room !== undefined ? rt.captureImOrigin?.(rt.sessionOfRoom(room)) : rt.captureImOrigin?.(fromSessionId)
@@ -938,12 +1025,12 @@ export function install(rt) {
     const taskWorkId = linkWork ? `task:${id}` : undefined
 
     const inherited = room === undefined ? slimSegments(bot) : []
-    const baseTask = {
+    const shell = {
       id,
       title: name,
       brief: oneLine(detail, BRIEF_KEPT),
       from: fromSessionId,
-      status: 'running',
+      status: 'queued',
       startedAt: now,
       updatedAt: now,
       ...(api ? { origin: 'api' } : {}),
@@ -953,12 +1040,33 @@ export function install(rt) {
       ...(imOrigin !== undefined ? { imOrigin } : {}),
       ...(dispatchApprovalOrigin !== undefined ? { dispatchApprovalOrigin } : {}),
     }
+    const entry = { bot, task: shell, fromSessionId, resolvedDir, room, api, detail, groupOwner, exec, options }
 
+    if (runningTasksOf(bot).length >= (rt.taskMaxConcurrent ?? TASK_MAX_CONCURRENT)) {
+      ;(bot.tasks ??= []).push(shell)
+      queueOf(bot.id).push(entry)
+      await rt.save()
+      emitTaskEvent('task.queued', bot, shell)
+      return { ...shell, queued: true }
+    }
+    return launchTaskRecord(entry)
+  }
+
+  // Opens the task session, delivers the opening prompt, and arms the timeout for a
+  // queued shell record. Shared by the immediate start path and the FIFO queue pump.
+  async function launchTaskRecord(entry) {
+    const { bot, task: shell, fromSessionId, resolvedDir, room, detail, options } = entry
+    // Mark active before opening the part: a save-triggered session re-index only keeps
+    // active tasks in taskOwners/chatOwners, so a still-queued record would be missed.
+    shell.status = 'running'
+    shell.updatedAt = Date.now()
     const shouldFork = sourceEventCountOf(fromSessionId) <= resolveTaskForkMaxEvents(options)
     const fromThroughSeq = room === undefined ? lastSeqOf(sourceSessionOf(fromSessionId)) : undefined
-    const { sessionId, forked, task } = await rt.openTaskPart(bot, fromSessionId, baseTask, { workDir: resolvedDir, fork: shouldFork, throughSeq: fromThroughSeq })
-    if (taskWorkId !== undefined) {
-      rt.openWork?.(taskWorkId, { from: bot.id, parent: parentWork, toSession: sessionId, toTaskId: id, name: `task "${name}"`, child: id })
+    const { sessionId, forked, task } = await rt.openTaskPart(bot, fromSessionId, shell, { workDir: resolvedDir, fork: shouldFork, throughSeq: fromThroughSeq })
+    // openTaskPart stored its own copy; drop the queued placeholder that shared the id.
+    bot.tasks = tasksOf(bot).filter(item => item.id !== shell.id || item.sessionId !== undefined)
+    if (task.workId !== undefined) {
+      rt.openWork?.(task.workId, { from: bot.id, parent: task.parentWorkId, toSession: sessionId, toTaskId: task.id, name: `task "${task.title}"`, child: task.id })
     }
     if (room !== undefined) rt.workRoomTurn?.(fromSessionId, 'task')
 
@@ -975,8 +1083,8 @@ export function install(rt) {
         sessionId,
         text: prompt,
         role: 'task',
-        note: `"${name}" (${id})`,
-        taskId: id,
+        note: `"${task.title}" (${task.id})`,
+        taskId: task.id,
         recordExchange: false,
       })
     } catch (error) {
@@ -984,19 +1092,63 @@ export function install(rt) {
       throw error
     }
 
+    armTimeout(bot, task)
     emitTaskEvent('task.started', bot, task)
     return { ...task, sessionId, forked }
   }
 
-  async function stopTask(bot, task, reason = 'stopped', { notifyForeground = false } = {}) {
+  // FIFO pump: starts queued tasks whenever a running slot frees up for the Bot.
+  function pumpQueue(bot) {
+    if (bot === undefined) return
+    const queue = taskQueues.get(bot.id)
+    if (queue === undefined || queue.length === 0) return
+    void (async () => {
+      while (queue.length > 0 && runningTasksOf(bot).length < (rt.taskMaxConcurrent ?? TASK_MAX_CONCURRENT)) {
+        const next = queue.shift()
+        if (next === undefined) break
+        try {
+          await launchTaskRecord(next)
+        } catch (error) {
+          await settleQueuedFailure(next, error)
+        }
+      }
+    })().catch(error => rt.warn?.('ds-bot: task queue pump failed: %s', error?.message ?? error))
+  }
+
+  async function settleQueuedFailure(entry, error) {
+    const { bot, task: shell } = entry
+    removeQueuedTask(bot.id, shell.id)
+    shell.status = 'running'
+    await settleTask(bot, shell, 'failed', { error: error?.message ?? String(error), notifyForeground: true })
+  }
+
+  async function timeoutTask(bot, task) {
+    if (!isActiveTask(task) || settling.has(task.id)) return
+    const timeoutMs = rt.taskTimeoutMs ?? TASK_TIMEOUT_MS
+    const duration = timeoutMs >= 60_000
+      ? `${Math.round(timeoutMs / 60_000)} minutes`
+      : `${Math.max(1, Math.round(timeoutMs / 1000))} seconds`
+    await stopTask(bot, task, `Timed out after ${duration} without finishing.`, { notifyForeground: true, outcome: 'failed' })
+  }
+
+  async function stopTask(bot, task, reason = 'stopped', { notifyForeground = false, outcome = 'stopped' } = {}) {
     if (bot === undefined || task === undefined) return false
+    if (task.status === 'queued') {
+      removeQueuedTask(bot.id, task.id)
+      task.status = 'stopped'
+      task.updatedAt = Date.now()
+      task.endedAt = task.updatedAt
+      task.error = oneLine(reason, 300)
+      await rt.save()
+      return true
+    }
     const wasActive = isActiveTask(task)
     const sessionId = task.sessionId
     try {
       if (wasActive) {
         // Mark stopped and save before cancelling so the ensuing turn/end never
         // misclassifies the cancellation as a completed task.
-        await settleTask(bot, task, 'stopped', { error: reason, notifyForeground })
+        await settleTask(bot, task, outcome, { error: reason, notifyForeground })
       }
     } finally {
       // Always cancel approvals, shell jobs, and the running agent even if saving or
@@ -1013,7 +1165,7 @@ export function install(rt) {
 
   async function stopAllTasksOfBot(bot, reason = 'stopped') {
     const rooms = new Set()
-    for (const task of activeTasksOf(bot)) {
+    for (const task of [...activeTasksOf(bot), ...queueOf(bot.id).map(entry => entry.task)]) {
       if (task.roomId !== undefined) rooms.add(task.roomId)
       await stopTask(bot, task, reason, { notifyForeground: false })
     }
@@ -1132,7 +1284,18 @@ export function install(rt) {
   async function reconcileTasksAfterRestart(keepSessions = new Set()) {
     if (rt.readOnly?.() !== undefined) return
     const keep = keepSessions instanceof Set ? keepSessions : new Set(Object.keys(keepSessions ?? {}))
+    let queuedCleaned = false
     for (const bot of Object.values(state.bots)) {
+      // Queued shells were held only in memory; after a restart the FIFO queue is
+      // gone, so do not revive them. Mark stopped without posting a foreground report.
+      for (const task of tasksOf(bot)) {
+        if (task.status !== 'queued') continue
+        task.status = 'stopped'
+        task.endedAt = Date.now()
+        task.updatedAt = task.endedAt
+        task.error = 'Queued before a restart; it was not started.'
+        queuedCleaned = true
+      }
       for (const task of activeTasksOf(bot)) {
         const sid = task.sessionId
         if (keep.has(sid)) continue
@@ -1153,6 +1316,7 @@ export function install(rt) {
         await settleTask(bot, task, 'interrupted', { notifyForeground: true })
       }
     }
+    if (queuedCleaned) await rt.save().catch(() => {})
     // Replay any foreground handoff inputs left on disk by a prior host crash/restart.
     await reconcilePendingHandoffInputs()
     const bots = Object.values(state.bots).filter(hasExcessSettledTasks)
@@ -3047,6 +3211,12 @@ export function install(rt) {
       if (blocked !== undefined) return blocked
       try {
         const task = await startTask(exec.agent?.id, args, exec)
+        if (task.reused) {
+          return `Reusing existing background task "${task.title}" (${task.id}) for this topic. Its result will come back here when it finishes; do not start another one.`
+        }
+        if (task.queued) {
+          return `Queued background task "${task.title}" (${task.id}); the running slots are full, so it starts automatically in order when one frees. Its result will come back here when it finishes; do not wait for it.`
+        }
         const mode = task.forked ? 'with full chat context' : 'in a fresh session with recent summary'
         return `Started background task "${task.title}" (${task.id}) ${mode}. Its result will come back here when it finishes; do not wait for it.`
       } catch (error) {
@@ -3090,7 +3260,7 @@ export function install(rt) {
       const scope = callerScopeOf(exec)
       const task = scope === undefined ? undefined : findTask(scope.bot, ref, scope.roomId)
       if (task === undefined) return 'No such task of yours. See task_list.'
-      if (!isActiveTask(task)) return `Task "${task.title}" (${task.id}) is already ${task.status}.`
+      if (!isActiveTask(task) && task.status !== 'queued') return `Task "${task.title}" (${task.id}) is already ${task.status}.`
       await stopTask(scope.bot, task, 'stopped by the Bot', { notifyForeground: false })
       return `Stopped task "${task.title}" (${task.id}).`
     },
