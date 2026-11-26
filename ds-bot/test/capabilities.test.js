@@ -75,6 +75,10 @@ function testAgent(id, mounts, skillsBySession, { awaitMount = async () => {}, c
           effect: execute => { record.cleanup = execute() },
         }
         plugin.apply(c)
+      } else {
+        // Non-skill plugins (e.g. the command shield) run their apply() in the
+        // agent child context; give them a minimal child so their ready hook fires.
+        plugin.apply?.({ get: () => undefined, effect: () => () => {} })
       }
       return {
         await: () => awaitMount(record),

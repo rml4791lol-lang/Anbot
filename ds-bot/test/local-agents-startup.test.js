@@ -99,7 +99,7 @@ test('taken routes cannot be selected or probed as local agents (#1390)', async 
   const other = new LlmAdapter()
   other.listModels = async provider => [{ provider, id: 'other-model', name: 'Other model' }]
   llm.registerAdapter(['local-opencode', 'local-acp-taken'], other)
-  rt.state.localAgents.custom.push({ id: 'taken', name: 'Taken', command: process.execPath, args: [] })
+  rt.state.localAgents.custom.push({ id: 'taken', name: 'Taken', command: 'node', args: [] })
   const probes = []
   t.mock.method(LocalAgentAdapter.prototype, 'probeModels', async route => {
     probes.push(route)
