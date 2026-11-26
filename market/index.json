@@ -1,7 +1,7 @@
 {
   "schema": "anbot.market/1",
   "name": "Anbot 配置目录",
-  "about": "预设、技能、MCP、插件。四类零件，一份索引，装进你自己的 Anbot；Anbot 跑在 DSH 上。",
+  "about": "预设、技能、MCP、插件。四类零件，一份索引，装进你自己的 Anbot——一支持久在线的开源 Bot 团队。",
   "updated": "2026-11-27T09:00:00+08:00",
   "indexUrl": "https://market.anbot.app/index.json",
   "install": "anbot market add https://market.anbot.app/index.json",

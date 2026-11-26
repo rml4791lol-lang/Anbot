@@ -36,7 +36,7 @@ const jsonld = {
   name: 'Anbot 配置市场',
   alternateName: 'Anbot Market',
   url: siteUrl,
-  description: `Anbot 的 DSH 原生配置市场：预设、技能、MCP、插件四类条目，共 ${index.items.length} 条，读同一份 index.json；在本机安装，不经服务器。`,
+  description: `Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 ${index.items.length} 条，读同一份 index.json；一支持久在线的多 Agent Bot 团队，在本机安装。`,
   inLanguage: 'zh-CN',
   dateModified: index.updated,
   isAccessibleForFree: true,

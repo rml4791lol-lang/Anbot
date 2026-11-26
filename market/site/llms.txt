@@ -1,6 +1,6 @@
 # Anbot 配置市场
 
-> 预设、技能、MCP、插件。四类零件，一份索引，装进你自己的 Anbot；Anbot 跑在 DSH 上。
+> 预设、技能、MCP、插件。四类零件，一份索引，装进你自己的 Anbot——一支持久在线的开源 Bot 团队。
 
 ## 索引
 - 站点: https://market.anbot.app/
