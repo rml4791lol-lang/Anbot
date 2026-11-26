@@ -349,7 +349,6 @@ export class CodexEngine {
       return
     }
     thread.turnId = turnId
-    thread.turnStarted?.resolve(turnId)
     thread.pendingCompaction = false
     const cancelled = thread.compactionCancel
     thread.compactionCancel = undefined
