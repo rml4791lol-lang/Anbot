@@ -209,6 +209,35 @@ test('local takeover keeps the worktree stopping until the original executor con
   assert.doesNotThrow(() => ownership.assertUnheld('s1'))
 })
 
+test('a stopping local worktree hold left by a previous host is reconciled at startup', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'anbot-hold-reconcile-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const holds = {
+    b1: { sessionId: 's1', root: join(root, 'w1'), gitDir: join(root, 'g1'), status: 'stopping', at: 1, local: true, hostRun: 'previous-host' },
+    b2: { sessionId: 's2', root: join(root, 'w2'), gitDir: join(root, 'g2'), status: 'stopping', at: 2, local: true, hostRun: 'previous-host' },
+  }
+  const bots = { b1: { id: 'b1', worktreeHold: holds.b1 }, b2: { id: 'b2', worktreeHold: holds.b2 } }
+  const stops = []
+  const saved = []
+  const rt = {
+    ctx: {}, state: { bots },
+    botOf: id => bots[id], selfOf: id => id, chatOf: id => id,
+    load: async () => {}, readOnly: () => undefined,
+    save: async () => { saved.push(Object.values(bots).map(bot => bot.worktreeHold.status)) },
+    // The adapter proves only s1 stopped; s2's executor may still be writing.
+    stopLocalAgentForTakeover: (id) => { stops.push(id); return Promise.resolve(id === 's1') },
+  }
+  const ownership = createWorktreeHold(rt)
+  await ownership.recoverPendingRestores()
+  assert.deepEqual(stops, ['s1', 's2'])
+  assert.equal(bots.b1.worktreeHold.status, 'held')
+  assert.equal(bots.b2.worktreeHold.status, 'stopping')
+  assert.match(bots.b2.worktreeHold.reason, /did not prove it stopped/)
+  assert.equal(ownership.view('b1').status, 'held')
+  assert.match(ownership.view('b2').reason, /did not prove it stopped/)
+  assert.deepEqual(saved, [['held', 'stopping'], ['held', 'stopping']])
+})
+
 test('restart cleans only the reserved unpublished restore and retains a dirty checkout for operator recovery', async t => {
   const fixture = mkdtempSync(join(tmpdir(), 'anbot-restore-reconcile-'))
   t.after(() => rmSync(fixture, { recursive: true, force: true }))
