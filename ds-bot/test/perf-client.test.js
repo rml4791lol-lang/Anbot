@@ -1643,7 +1643,7 @@ test('mark.js shares global gaze hub, deduplicates --bt-gx/--bt-gy, and sameRoom
     },
   })
   for (let k = 0; k < 5; k += 1) {
-    exports.BotMark({ bot: { id: `b${k}`, name: `B${k}`, color: 'blue', avatar: { shape: 'whale' } }, size: 36, gaze: true })
+    exports.BotMark({ bot: { id: `b${k}`, name: `B${k}`, color: 'blue' }, look: { shape: 'whale', color: 'blue' }, size: 36, gaze: true })
   }
   flushEffects()
 

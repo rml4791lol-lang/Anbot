@@ -1,6 +1,6 @@
 import { call } from './api.js'
 import { isHex, inkText, paintCss } from './inks.js'
-import { DEFAULT_MASK, SHAPES, markupCache, maskOf } from './characters.js'
+import { DEFAULT_MASK, SHAPES, markupCache, maskOf, builtImage } from './characters.js'
 import { createSource, EMPTY_ROSTER, indexRoster, isAgentSession } from './sources.js'
 import { teamActions } from './team-actions.js'
 import { themeCss, shellTokens, registry, registerShape, registerTheme, allThemes, layoutOf, effectsOf, widthOf, flatWidthOf } from './themes.js'
@@ -442,8 +442,10 @@ export function apply(ctx) {
         const chip = /\s/.test(bot.name) ? '' : `:is([class*="_userRow"],.bt-uhost) [data-ref-chip="file"][title="@${bot.name.replace(/["\\]/g, '\\$&')}" i]`
         const look = lookOf(bot)
         const marks = chip ? `${anchor}::before,${chip}::before` : `${anchor}::before`
-        const mark = look.image
-          ? `${marks}{background:center/cover url("${look.image}");-webkit-mask:none;mask:none;border-radius:50%}`
+        const built = builtImage(look.shape)
+        const chipImage = look.image || built
+        const mark = chipImage
+          ? `${marks}{background:center/${look.image ? 'cover' : 'contain'} url("${chipImage}");-webkit-mask:none;mask:none;border-radius:50%}`
           : `${marks}{background:${paintCss(look.color)};-webkit-mask-image:${maskOf(look.shape)};mask-image:${maskOf(look.shape)}}`
         const chipBase = chip ? `${chip}{color:inherit;font-weight:600}${chip}>svg{display:none}${chip}::before{content:"";display:inline-block;flex:none;width:16px;height:16px;margin-right:3px;vertical-align:-3px;-webkit-mask:${DEFAULT_MASK} center/contain no-repeat;mask:${DEFAULT_MASK} center/contain no-repeat}` : ''
         return `${anchor}{color:${inkText(look.color)}}${chipBase}${mark}`

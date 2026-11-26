@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
 import { SvgXml } from 'react-native-svg'
-import { characterMarkup, lookOf, MASK_ID, shapeOf } from '../../../ds-bot/src/client/characters.js'
+import { characterMarkup, lookOf, MASK_ID, shapeOf, builtImage } from '../../../ds-bot/src/client/characters.js'
 import { INKS } from '../../../ds-bot/src/client/inks.js'
 import type { Bot, Room } from '../connection.ts'
 import { MainStarIcon } from './icons.tsx'
@@ -28,8 +28,10 @@ const lookSvg = (look: { shape: string; color: string; image?: string }, dark: b
 }
 
 export function Mark({ look, dark, size = 24 }: { look: { shape: string; color: string; image?: string }; dark: boolean; size?: number }) {
-  if (typeof look.image === 'string' && look.image.startsWith('data:')) {
-    return <Image source={{ uri: look.image }} style={{ width: size, height: size, borderRadius: size / 2 }} />
+  const photo = typeof look.image === 'string' && look.image.startsWith('data:') ? look.image : undefined
+  const uri = photo ?? builtImage(look.shape)
+  if (typeof uri === 'string' && uri.startsWith('data:')) {
+    return <Image source={{ uri }} resizeMode={photo ? 'cover' : 'contain'} style={{ width: size, height: size, borderRadius: size / 2 }} />
   }
   return (
     <View style={{ width: size, height: size }}>

@@ -1238,9 +1238,9 @@ export function install(rt) {
     await rt.load()
     void rt.syncModels()
     if (state.mainBotIds.some(id => rt.botOf(id))) return
-    // Only the team's first Main Bot is stored as the DeepSeek whale; other Bots get a
-    // look from their id, and a Bot made Main Bot later keeps its own.
-    bootstrapping ??= createBot({ name: defaults.mainName, role: defaults.mainRole, main: true, color: 'deepseek', avatar: { shape: 'whale' }, pickModel: true })
+    // Only the team's first Main Bot is stored with the Anbot main mark; other Bots
+    // get a look from their id, and a Bot made Main Bot later keeps its own.
+    bootstrapping ??= createBot({ name: defaults.mainName, role: defaults.mainRole, main: true, color: 'deepseek', avatar: { shape: 'anbot' }, pickModel: true })
       .finally(() => { bootstrapping = null })
     await bootstrapping
   }

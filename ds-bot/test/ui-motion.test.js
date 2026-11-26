@@ -296,7 +296,7 @@ test('BotMark gaze listeners and offsets respond dynamically to data-bt-effects 
     useEffect: (fn) => { effects.push(fn) },
   })
 
-  client.BotMark({ bot: { id: 'b1' }, look: { shape: 'orb', color: '#4f7' }, gaze: true })
+  client.BotMark({ bot: { id: 'b1' }, look: { shape: 'whale', color: '#4f7' }, gaze: true })
   assert.equal(effects.length, 1)
   const dispose = effects[0]()
 

@@ -1,5 +1,6 @@
 import { INKS, GRADIENTS, isHex, inkFill } from './inks.js'
 import { lruGet, lruSet } from './lru.js'
+import { ANBOT_MARKS } from './marks/anbot-assets.js'
 
 // -------------------------------------------------------------------------
 // Characters: Anbot's own avatars, small 3D models seen from a
@@ -38,14 +39,16 @@ export const CHARACTERS = {
   ring: {body:'M48.1 4.3l8-.1 7.8 1.8 7.3 3.5 6.7 5.4 5.2 6.7 4.1 8.3 2.3 8.9 .7 9-1 9.5-2.5 8.9-4.1 8.3-5.3 7.3-6.6 6.1-7.3 4.5-7.8 2.7-8.4 .9-7.2-.8-7.3-2.5-6.7-4.1-5.6-5.3-4.5-6.5-3.5-7.8-2-8.4-.6-8.4 .9-8.9 2.2-8.4 3.5-7.8 4.9-7.2 5.8-6.1 6.3-4.5 7.1-3.3zM50.5 33.8l2.3-.3 1.7 .4 1.6 1.1 2 2.2 1.3 2.8 .8 2.7 .4 3.4-.1 3.3-1.4 6.2-3 5.6-2.2 2.4-2.2 1.6-2.3 1-2.2 .3-1.7-.4-1.6-1.1-2.8-3.7-1.5-5.2-.1-5.5 1.2-5.6 2.4-5 3.6-4z',shade:'M76.2 14.9l1.1-.5 3.4 3.8 2.8 3.9 2.3 4.5 1.6 3.9 1.6 5.6 1.1 8.3-.4 10.1-1.3 6.1-2.6 7.8-4.6 8.3-4.4 5.6-6.2 5.7-6.1 3.8-7.2 2.9-6.2 1.1-7.8-.1-7.2-1.7-3.9-1.6-4-2.2-5.5-4.5-2.8-3.4 1.7-.6 2.4-2.1 2-2.8 1.2-2.8 1.2-5 1.1-13.4 1.4-7.8 2.5-7.8 3.8-7.3 3.3-4.5 3.4-3.4 3.9-3.1 4.4-2.6 3.9-1.5 4.5-1.1 12.3-.9zM50.5 33.8l.6-.3 2.8 0 1.6 .9 2.7 2.8 3 1.4 3.3 .5 6.1 .2 3.9 .9 1.7 1 1.7 1.6 2.1 4.4 .7 4.5-.3 5-1.2 5-1.9 4.5-2.8 4.2-3.3 3.6-3.9 2.8-3.9 1.7-3.4 .6-3.3-.1-3.4-1.1-2.5-1.7-2.5-3-3.6-7-2.9-3.4-2.1-5-.6-5.6 .6-4.4 1-3.4 2.3-4.4 1.4-2.1 2.3-2.2 2.7-1.7z',light:'M41.1 5.9l.5 .1 .2 .5-.3 .6-12.4 13.3-13.1 18.1-2.3 2.1-1.1 0-.2-1.2 .2-2.8 1.6-5 4.6-8.3 3.9-5.1 4.4-4.4 4.5-3.4 5-2.8zM60.5 53.3l1.2-.3 1.1 .6 1.1 1.3 .8 1.8-.2 3.3-1.5 2.8-2 1.7-2.6 1-7.3 .2 2.2-1.4 2.6-2.6z',eyes:[[56.2,84.6,5.3,13.3,-6.8],[71.7,78.8,5.1,13.4,-6.5]]},
   gem: {body:'M57 9.3l2.9-.4 14.9 3.5 19.6 14.1 1 1.4 .6 1.6-.5 2.6-27.1 56.5-1.6 1.8-2.1 .7-15.9-3.4-42.9-30.7-1.3-1.6-.6-1.6 .5-2.6 12-25.2 1.1-1.5 1.5-1z',shade:'M75.7 14.6l.1-.4 .6 .2 16.9 12.3 1.1 .7 .5-.2 .5 .7 .6 2.6-.5 1.6-26.4 55.1-1.2 2.1-1.1 1.1-1.6 .6-2.1 0-14.3-3.3-42.8-30.7 1.5-.2 11.6 2.5 2.2-.7 2.8-2.6 11.9-24.9 .6-.8 38.2-14.2z',light:'M19.1 23.6l1.1-.4 .5 .5 11.7 2.2 1 .9-.2 .5-1.8 2.7-11.7 24.4-1.6 .6-13.3-2.8-.5-.5 12.1-25.4 1.2-1.7z',eyes:[[51.4,42.9,6.7,17.7,-10],[66.1,37.4,6.7,17.7,-10]]},
 }
-// The picker shows every character at once, five to a row. A Bot with no choice gets
-// one of the friendliest fifteen; the whale is left out so it stays the Main Bot's.
-export const PICKER_SHAPES = Object.keys(CHARACTERS)
-export const PICKER_COLUMNS = 5
-export const DEFAULT_SHAPES = ['star', 'moon', 'dolphin', 'octopus', 'turtle', 'crab', 'puffer', 'jelly', 'starfish', 'seahorse', 'gumdrop', 'peanut', 'bunny', 'kitty', 'acorn']
-export const FALLBACK_SHAPE = 'gumdrop'
-// The team's first Main Bot, and the plugin's own mark in the sidebar.
-export const MAIN_LOOK = Object.freeze({ shape: 'whale', color: 'deepseek' })
+// The picker lists only Anbot's own six bitmap characters; the main mark stays out
+// of it, and the legacy vector table is kept for tooling and fixtures but not offered.
+// A Bot with no choice gets one of these six from its id.
+export const PICKER_SHAPES = ['gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm']
+export const PICKER_COLUMNS = 3
+export const DEFAULT_SHAPES = [...PICKER_SHAPES]
+export const FALLBACK_SHAPE = 'gpt'
+// The team's first Main Bot, and the plugin's own mark in the sidebar. Bitmap slots
+// do not take a color; deepseek is kept only so legacy ink lookups stay valid.
+export const MAIN_LOOK = Object.freeze({ shape: 'anbot', color: 'deepseek' })
 // Character colors in picker order. Black, the gradients, and the dull gray and brown
 // are never defaults; the user must pick them.
 export const CHARACTER_COLORS = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'magenta', 'gray', 'aurora']
@@ -72,12 +75,35 @@ export function defaultShape(id) {
   return DEFAULT_SHAPES[((value ^ (value >>> 16)) >>> 0) % DEFAULT_SHAPES.length]
 }
 
-// A stored shape or color wins; then the id. With no Bot it is a black gumdrop.
+// A stored shape or color wins; then the id. With no Bot it is the fallback bitmap.
 export const colorOf = bot => (isColor(bot?.color) ? bot.color : bot?.id ? defaultColor(String(bot.id)) : 'black')
+
+// Legacy built-in slot → new bitmap slot. Old state strings are left on disk; the
+// remap is applied at lookup time only.
+const LEGACY_REMAP = { whale: 'anbot', star: 'gemini', moon: 'kimi', wave: 'qwen', squircle: 'claude', zed: 'glm', hex: 'gpt' }
+
+// Resolve a stored avatar.shape to a current slot. Retired legacy vectors are not
+// rendered: they fall back to a deterministic look from the Bot id, so old Bots stay
+// visually distinct instead of sharing one silhouette. Plugin-registered shapes pass
+// through untouched.
+export function resolveShape(stored, id) {
+  if (typeof stored === 'string' && Object.hasOwn(LEGACY_REMAP, stored)) return LEGACY_REMAP[stored]
+  if (typeof stored === 'string' && BITMAP_SHAPES.has(stored)) return stored
+  if (typeof stored === 'string' && Object.hasOwn(SHAPES, stored) && !Object.hasOwn(CHARACTERS, stored)) return stored
+  return id ? defaultShape(String(id)) : FALLBACK_SHAPE
+}
+
+// The bundled bitmap for a built-in image slot, if any. Uploaded photos win over it
+// at the render layer.
+export function builtImage(shape) {
+  const def = SHAPES[shape]
+  return def?.kind === 'image' ? def.image : undefined
+}
+
 export function lookOf(bot) {
   const avatar = bot?.avatar ?? {}
   return {
-    shape: hasShape(avatar.shape) ? avatar.shape : bot?.id ? defaultShape(String(bot.id)) : FALLBACK_SHAPE,
+    shape: resolveShape(avatar.shape, bot?.id),
     image: avatar.image,
     color: colorOf(bot),
   }
@@ -93,6 +119,14 @@ for (const [id, character] of Object.entries(CHARACTERS)) {
   ].join('')
   SHAPES[id] = { label: character.label ?? id[0].toUpperCase() + id.slice(1), size: 100, path: character.body, layers, eyes: character.eyes }
 }
+
+// Anbot's own bitmap slots: whole-frame webp data URLs, no vector layers or eye
+// capsules. `imageClosed` is the blink frame, null where the slot ships none.
+for (const [id, slot] of Object.entries(ANBOT_MARKS)) {
+  SHAPES[id] = { kind: 'image', label: slot.label, size: 100, image: slot.open, imageClosed: slot.closed ?? undefined, eyes: [] }
+}
+const BITMAP_SHAPES = new Set(Object.keys(ANBOT_MARKS))
+export const IMAGE_SHAPES = BITMAP_SHAPES
 export const hasShape = id => typeof id === 'string' && Object.hasOwn(SHAPES, id)
 export const shapeId = id => (hasShape(id) ? id : FALLBACK_SHAPE)
 export const shapeOf = id => SHAPES[shapeId(id)]
@@ -145,4 +179,6 @@ export function maskOf(shape) {
   }
   return mask
 }
-export const DEFAULT_MASK = maskOf(FALLBACK_SHAPE)
+// The generic mention-chip silhouette stays a legacy vector; the fallback bitmap has no
+// vector layers to mask.
+export const DEFAULT_MASK = maskOf('whale')

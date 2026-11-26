@@ -1,6 +1,6 @@
 import { createElement as h, Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { paintCss } from './inks.js'
-import { CHARACTERS, PICKER_SHAPES, PICKER_COLUMNS, CHARACTER_COLORS, SHAPES, hasShape, shapeOf, bodyOf, maskBox, holes, nextMarkSerial } from './characters.js'
+import { CHARACTERS, PICKER_SHAPES, PICKER_COLUMNS, CHARACTER_COLORS, SHAPES, IMAGE_SHAPES, hasShape, shapeOf, bodyOf, maskBox, holes, nextMarkSerial } from './characters.js'
 import { isMainOf } from './sources.js'
 import { PencilIcon, ChevronRightIcon } from './icons.js'
 import { lookOf, BotMark } from './mark.js'
@@ -121,10 +121,14 @@ function PermissionCard({ bot, roster, actions, run }) {
 }
 
 // The selection ring of a picker cell follows the shape: a 1px line 3px outside it.
+// Built-in bitmap slots have no vector silhouette, so they take a plain circle ring.
 function ShapeRing({ shape, size }) {
   const maskId = useRef('')
   if (maskId.current === '') maskId.current = `bt-ring-${nextMarkSerial()}`
   const def = shapeOf(shape)
+  if (def.kind === 'image') {
+    return h('svg', { className: 'bt-ring', viewBox: '0 0 100 100', 'aria-hidden': true, dangerouslySetInnerHTML: { __html: '<circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="6"/>' } })
+  }
   const unit = def.size / size
   const markup = `<defs><mask id="${maskId.current}" ${maskBox(def.size)}>${holes(def, `<g stroke="#000" stroke-width="${6 * unit}" stroke-linejoin="round">${bodyOf(def, '#000', true)}</g>`)}</mask></defs><g mask="url(#${maskId.current})" stroke="currentColor" stroke-width="${8 * unit}" stroke-linejoin="round">${bodyOf(def, 'currentColor', true)}</g>`
   return h('svg', { className: 'bt-ring', viewBox: `0 0 ${def.size} ${def.size}`, 'aria-hidden': true, dangerouslySetInnerHTML: { __html: markup } })
@@ -132,8 +136,9 @@ function ShapeRing({ shape, size }) {
 
 // Every character shape, six to a row, then the color swatches.
 export function CharacterGrid({ look, hasPhoto = false, onShape, onColor }) {
-  const shapes = [...PICKER_SHAPES, ...Object.keys(SHAPES).filter(id => !Object.hasOwn(CHARACTERS, id))]
+  const shapes = [...PICKER_SHAPES, ...Object.keys(SHAPES).filter(id => !Object.hasOwn(CHARACTERS, id) && !IMAGE_SHAPES.has(id))]
   if (!shapes.includes(look.shape)) shapes.push(look.shape)
+  const showColors = shapeOf(look.shape).kind !== 'image'
   const rows = []
   for (let index = 0; index < shapes.length; index += PICKER_COLUMNS) rows.push(shapes.slice(index, index + PICKER_COLUMNS))
   return h(Fragment, null,
@@ -141,10 +146,10 @@ export function CharacterGrid({ look, hasPhoto = false, onShape, onColor }) {
       key: id, type: 'button', className: 'bt-shape', 'aria-label': t(shapeOf(id).label), title: t(shapeOf(id).label), 'aria-pressed': !hasPhoto && look.shape === id,
       onClick: () => onShape(id),
     }, h(ShapeRing, { shape: id, size: 36 }), h(BotMark, { look: { shape: id, color: look.color }, size: 36 })))))),
-    h('div', { className: 'bt-colors', role: 'group', 'aria-label': t('Character color') }, CHARACTER_COLORS.map(color => h('button', {
+    showColors ? h('div', { className: 'bt-colors', role: 'group', 'aria-label': t('Character color') }, CHARACTER_COLORS.map(color => h('button', {
       key: color, type: 'button', className: 'bt-color', 'aria-label': t(capitalize(color)), title: t(capitalize(color)), 'aria-pressed': look.color === color,
       onClick: () => onColor(color),
-    }, h('span', { style: { background: paintCss(color) } })))))
+    }, h('span', { style: { background: paintCss(color) } })))) : null)
 }
 
 // The avatar editor: the Bot tab picks a character (every click saves), the

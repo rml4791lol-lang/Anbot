@@ -24,6 +24,9 @@ ${Object.entries(INKS).map(([name, [, dark]]) => `body[data-ds-dark-theme]{--bt-
 .bt-mark{display:inline-block;flex:none;position:relative;line-height:0}
 .bt-mark svg{width:100%;height:100%;overflow:visible}
 .bt-mark-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;box-shadow:inset 0 0 0 1px var(--bt-line)}
+/* Built-in bitmap frames keep the whole Q-version bust in frame; uploaded photos stay cover-cropped. */
+.bt-mark-img.bt-mark-built{object-fit:contain}
+.bt-mark-closed{position:absolute;inset:0;opacity:0}
 .bt-mark .bt-b,.bt-mark .bt-eye,.bt-mark .bt-eyes,.bt-mark .bt-gaze{transform-box:fill-box}
 .bt-mark .bt-b{transform-origin:50% 100%}
 .bt-mark .bt-eye,.bt-mark .bt-eyes{transform-origin:center}
@@ -31,6 +34,8 @@ ${Object.entries(INKS).map(([name, [, dark]]) => `body[data-ds-dark-theme]{--bt-
    mark only for its state; normal, the default, adds petting, pokes and eyes that follow
    the pointer; lively adds blinks and fidgets at rest and a question riding on the head. */
 body[data-bt-motion=lively] .bt-mark[data-live]:is([data-state=idle],[data-state=alert]) .bt-eye{animation:bt-blink-idle 5s linear infinite;animation-delay:var(--bt-delay,0s)}
+/* Built-in bitmap slots blink by cross-fading the closed frame over the open one. */
+body[data-bt-motion=lively] .bt-mark[data-live]:is([data-state=idle],[data-state=alert]) .bt-mark-closed{animation:bt-blink-frame 5s linear infinite;animation-delay:var(--bt-delay,0s)}
 body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle]:is([data-fidget=hop],[data-fidget=sway],[data-fidget=stretch]) :is(.bt-b,.bt-mark-img){animation:var(--bt-fidget) 9s ease-in-out var(--bt-fidget-delay,0s) infinite}
 body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=hop]{--bt-fidget:bt-fidget-hop}
 body[data-bt-motion=lively] .bt-mark[data-live][data-state=idle][data-fidget=sway]{--bt-fidget:bt-fidget-sway}
@@ -99,6 +104,7 @@ body[data-bt-motion=quiet] .bt-mark[data-poke]{cursor:default}
 @keyframes bt-poke-img{0%,100%{transform:scale(1)}40%{transform:scale(1.14) rotate(-6deg)}}
 /* Idle clip: two .26s blinks (lid to 3%, then a 6% overshoot) at 1.48s and 3.46s. */
 @keyframes bt-blink-idle{0%,29.6%,35%,69.2%,74.6%,100%{transform:scaleY(1)}32.2%,71.8%{transform:scaleY(.03)}33.8%,73.4%{transform:scaleY(1.06)}}
+@keyframes bt-blink-frame{0%,29.6%,35%,69.2%,74.6%,100%{opacity:0}32.2%,71.8%{opacity:1}33.8%,73.4%{opacity:0}}
 @keyframes bt-blink{0%,42%,50%,100%{transform:scaleY(1)}46%{transform:scaleY(.03)}48%{transform:scaleY(1.06)}}
 @media (prefers-reduced-motion:reduce){.bt-mark *{animation:none!important;transition:none!important}}
 .bt-badge{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;corner-shape:round;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px var(--bt-sidebar)}
@@ -121,6 +127,7 @@ body[data-bt-motion=quiet] .bt-mark[data-poke]{cursor:default}
 .bt-side-top{display:flex;flex-wrap:wrap;container-type:inline-size;container-name:bt-side-top;justify-content:flex-start;align-items:center;gap:8px;padding:6px 5px 0 0}
 .bt-brand{display:inline-flex;align-items:center;gap:6px;margin-right:auto;padding:4px 8px 4px 4px;border:0;border-radius:8px;background:none;cursor:pointer;font-family:inherit;font-size:15px;line-height:20px;font-weight:600;letter-spacing:-.01em;color:var(--bt-ink);white-space:nowrap}
 .bt-brand-whale{display:inline-flex;color:var(--bt-accent)}
+.bt-brand-whale svg{width:100%;height:100%;display:block}
 .bt-round{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--bt-line);background:var(--bt-main);color:var(--bt-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background-color .12s ease,transform .12s ease}
 /* A narrow column must wrap its header instead of squeezing round controls. */
 @container bt-side-top (max-width:300px){.bt-side-top>.bt-brand{flex-basis:100%}}

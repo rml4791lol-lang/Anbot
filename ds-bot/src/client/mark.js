@@ -168,7 +168,11 @@ export const BotMark = memo(function BotMark({ bot, look: given, size = 36, stat
   const [poked, setPoked] = useState(false)
   // A photo that does not load shows the character instead; a new photo is tried again.
   const [broken, setBroken] = useState('')
-  const image = look.image && look.image !== broken ? look.image : undefined
+  const def = shapeOf(look.shape)
+  const built = def.kind === 'image' ? def.image : undefined
+  const image = look.image && look.image !== broken ? look.image : built
+  // Only built-in slots get a blink frame; uploaded photos have no closed version.
+  const closed = image && built && image === built ? def.imageClosed : undefined
   useGaze(ref, gaze && !image)
   const common = {
     ref,
@@ -187,7 +191,12 @@ export const BotMark = memo(function BotMark({ bot, look: given, size = 36, stat
     onAnimationEnd: poked ? (event) => { if (event.animationName.startsWith('bt-poke')) setPoked(false) } : undefined,
     onAnimationCancel: poked ? () => setPoked(false) : undefined,
   }
-  if (image) return h('span', common, h('img', { className: 'bt-mark-img', src: image, alt: '', draggable: false, onError: () => setBroken(image) }))
+  if (image) {
+    const builtClass = built && image === built ? ' bt-mark-built' : ''
+    return h('span', common,
+      h('img', { className: `bt-mark-img${builtClass}`, src: image, alt: '', draggable: false, onError: () => setBroken(image) }),
+      closed ? h('img', { className: `bt-mark-img${builtClass} bt-mark-closed`, src: closed, alt: '', draggable: false }) : null)
+  }
   const box = shapeOf(look.shape).size
   return h('span', common, h('svg', { viewBox: `0 0 ${box} ${box}`, dangerouslySetInnerHTML: { __html: characterMarkup(look.shape, look.color).replaceAll(MASK_ID, maskId.current) } }))
 }, (a, b) => sameBotLook(a.bot, b.bot)

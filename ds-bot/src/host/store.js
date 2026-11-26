@@ -490,13 +490,14 @@ export function install(rt) {
         delete entry.sectionId
       }
     }
-    // Teams from before the whale was stored at setup: their first Bot, while still a
-    // Main Bot, gets it once wherever it has no look of its own. After that the whale is
-    // an ordinary look the user can change, and it never passes to another Bot.
+    // Teams from before the main mark was stored at setup: their first Bot, while
+    // still a Main Bot, gets it once wherever it has no look of its own. After that
+    // the mark is an ordinary look the user can change, and it never passes to another Bot.
+    // The migration marker keeps its old name so already-migrated teams do not repeat it.
     if (state.whaleStored !== true) {
       const first = Object.values(state.bots).reduce((best, bot) => (best === undefined || (bot.createdAt ?? 0) < (best.createdAt ?? 0) ? bot : best), undefined)
       if (first !== undefined && state.mainBotIds.includes(first.id)) {
-        if (!first.avatar?.shape && !first.avatar?.image) first.avatar = { ...first.avatar, shape: 'whale' }
+        if (!first.avatar?.shape && !first.avatar?.image) first.avatar = { ...first.avatar, shape: 'anbot' }
         if (!first.color) first.color = 'deepseek'
       }
       state.whaleStored = true

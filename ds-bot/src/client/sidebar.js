@@ -7,6 +7,7 @@ import { isMainOf } from './sources.js'
 import { currentPart, previewOf, relativeShort } from './text.js'
 import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, PlugIcon, SwitchIcon, CloudDownloadIcon, SignInIcon, SignOutIcon, SlidersIcon, ChevronRightIcon, DotsIcon, FolderIcon } from './icons.js'
 import { lookOf, MAIN_LOOK } from './characters.js'
+import { ANBOT_MARK_SVG } from './marks/anbot-assets.js'
 import { botState, BotMark, BotAvatar, RoomAvatar } from './mark.js'
 import { AgentBadge } from './agent-badge.js'
 import { SidebarTaskPill, taskCountsOf } from './bot-tasks.js'
@@ -1412,7 +1413,7 @@ export function BotReturn({ wide, useSurface, useRoster, actions }) {
   if (mode !== 'agent') return null
   const label = t('Back to Anbot')
   return h('button', { type: 'button', className: 'bt-return', 'aria-label': label, title: label, onClick: () => actions.setSurface('bot') },
-    h(BotMark, { look: MAIN_LOOK, size: 20 }),
+    h(BrandTile, { size: 20 }),
     wide ? h('span', { className: 'bt-return-name' }, label) : null,
     wide ? h('span', { className: 'bt-return-swap', 'aria-hidden': true }, h(SwitchIcon)) : null)
 }
@@ -1431,8 +1432,13 @@ export const RETURN_CSS = `
 .bt-return-swap svg{width:16px;height:16px}
 `
 
+// The main brand seat uses the true-vector Anbot tile; the about and usage pages
+// keep the raster fallback BotMark.
+function BrandTile({ size }) {
+  return h('span', { className: 'bt-brand-whale', style: { width: size, height: size }, dangerouslySetInnerHTML: { __html: ANBOT_MARK_SVG } })
+}
 export function BrandMark({ size = 24 }) {
-  return h('span', { className: 'bt-brand-whale' }, h(BotMark, { look: MAIN_LOOK, size }))
+  return h(BrandTile, { size })
 }
 export function BrandName() {
   return h('span', { style: { fontWeight: 600, fontSize: 14 } }, 'Anbot')
