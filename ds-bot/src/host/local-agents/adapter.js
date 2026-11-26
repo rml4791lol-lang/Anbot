@@ -876,8 +876,8 @@ export class LocalAgentAdapter extends LlmAdapter {
       if (confirmsPromptStop(live.spec.kind)) {
         const proof = prompt.then(terminal => terminal === true, () => false)
         this.nativePrompts.set(live.sessionId, proof)
-        void proof.then(terminal => {
-          if (terminal && this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
+        void proof.then(() => {
+          if (this.nativePrompts.get(live.sessionId) === proof) this.nativePrompts.delete(live.sessionId)
         })
       }
       if (turnStarted === undefined) return Promise.resolve()

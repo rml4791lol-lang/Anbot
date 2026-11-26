@@ -2690,6 +2690,15 @@ test('ACP errors with numeric, empty or object codes keep their message and get 
 })
 
 
+test('a failed native prompt no longer counts as unsettled after it settles', async (t) => {
+  const adapter = makeAdapter()
+  t.after(() => adapter.dispose())
+  await assert.rejects(collect(adapter.stream(options('s1', [user('m1', 'rpc-error-number')]))))
+  await Promise.resolve()
+  assert.equal(adapter.hasUnsettledPrompt('s1'), false)
+  assert.equal(await adapter.stopForTakeover('s1'), true)
+})
+
 test('stream reports live thoughts, tool activities and end-of-stream idle to the turn tracker', async (t) => {
   const seen = []
   const records = {}
