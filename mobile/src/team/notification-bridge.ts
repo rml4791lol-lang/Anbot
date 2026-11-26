@@ -109,7 +109,7 @@ export async function applyBackgroundDeliveryPrefs(computerName?: string): Promi
     : t('Background notifications active')
   await setBackgroundDeliveryConfig({
     mode,
-    title: 'DS Bot',
+    title: 'Anbot',
     subtitle,
   }).catch(() => {})
 }
@@ -167,7 +167,7 @@ export async function sendTestNotification(hostId: string): Promise<boolean> {
   await ensureNotificationChannels()
   return postNativeNotification({
     tag: `${hostId || 'default'}:test`,
-    title: 'DS Bot',
+    title: 'Anbot',
     body: t('Notifications are working on this phone.'),
     channel: 'needs_you',
     targetKind: 'needs',

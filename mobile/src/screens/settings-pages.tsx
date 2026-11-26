@@ -69,7 +69,7 @@ interface ProviderItem { id: string; name: string; key?: { configured?: boolean;
 interface ProvidersView { available?: boolean; providers: ProviderItem[]; addable?: { id: string; name: string }[]; protocols?: string[] }
 
 const keyLabel = (key?: { configured?: boolean; writable?: boolean }) =>
-  key?.configured !== true ? t('Needs an API key') : key.writable === true ? t('Key set') : t('Key set outside DS Bot')
+  key?.configured !== true ? t('Needs an API key') : key.writable === true ? t('Key set') : t('Key set outside Anbot')
 
 // A field whose label stays above it once it has a value; the placeholder alone
 // would leave a filled form with no way to tell its fields apart.
@@ -180,7 +180,7 @@ export function Providers({ navigation }: any) {
                       </View>
                       {saved === provider.id ? <Text style={[typeScale.small, { color: p.accent, marginTop: 6 }]}>{t('Saved.')}</Text> : null}
                     </View>
-                  ) : provider.key !== undefined ? <Text style={[typeScale.small, { color: p.ink3, paddingHorizontal: 16, paddingVertical: 8 }]}>{t('This key comes from outside DS Bot, such as an environment variable, and cannot be changed here.')}</Text> : null}
+                  ) : provider.key !== undefined ? <Text style={[typeScale.small, { color: p.ink3, paddingHorizontal: 16, paddingVertical: 8 }]}>{t('This key comes from outside Anbot, such as an environment variable, and cannot be changed here.')}</Text> : null}
                   {provider.models.length > 0 ? (
                     <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
                       <Text style={[typeScale.small, { color: p.ink3, marginBottom: 4 }]}>{t('Models')}</Text>
@@ -730,12 +730,12 @@ export function Updates({ navigation }: any) {
   }, [])
   const updateText = (u: typeof update) => {
     if (u === null) return '—'
-    if (u.phase === 'installing') return t('Updating DS Bot…')
-    if (u.phase === 'installed') return t('Restart DSH to start using DS Bot {version}.', { version: u.installed ?? u.latest ?? '' })
-    if (u.phase === 'updated') return t('DS Bot {version} is installed.', { version: u.installed ?? u.latest ?? '' })
+    if (u.phase === 'installing') return t('Updating Anbot…')
+    if (u.phase === 'installed') return t('Restart DSH to start using Anbot {version}.', { version: u.installed ?? u.latest ?? '' })
+    if (u.phase === 'updated') return t('Anbot {version} is installed.', { version: u.installed ?? u.latest ?? '' })
     if (u.phase === 'failed') return t('The update did not finish: {reason}', { reason: u.error ?? '' })
-    if (u.available) return t('DS Bot {version} is available', { version: u.latest ?? '' })
-    if (u.source === 'app') return t('Updates come with the DS Bot app.')
+    if (u.available) return t('Anbot {version} is available', { version: u.latest ?? '' })
+    if (u.source === 'app') return t('Updates come with the Anbot app.')
     if (u.enabled === false) return t('Update checks are off.')
     if (u.source === 'path') return t('Installed from a local folder; update it there.')
     if (u.latest === undefined || u.latest === null) return t('Could not check for updates.')
@@ -746,7 +746,7 @@ export function Updates({ navigation }: any) {
     if (d.phase === 'installing') return t('Updating DSH…')
     if (d.phase === 'installed') return t('Restart DSH to start using DSH {version}.', { version: d.installed ?? d.verified ?? '' })
     if (d.phase === 'failed') return t('The update did not finish: {reason}', { reason: d.error ?? '' })
-    if (d.available === false && d.blockedBy) return t('Update DS Bot {version} first.', { version: d.blockedBy })
+    if (d.available === false && d.blockedBy) return t('Update Anbot {version} first.', { version: d.blockedBy })
     if (d.available) return t('DSH {version} is available', { version: d.verified ?? d.latest ?? '' })
     return t('Up to date')
   }
@@ -755,8 +755,8 @@ export function Updates({ navigation }: any) {
   return (
     <Screen><Back title={t('Updates & diagnostics')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <Section label={t('DS Bot')}>
-          <Row label={update?.current ? `DS Bot ${update.current}` : t('DS Bot')} value={updateText(update)} />
+        <Section label={t('Anbot')}>
+          <Row label={update?.current ? `Anbot ${update.current}` : t('Anbot')} value={updateText(update)} />
           {update?.notes ? <Row label={t('What is new')} value={update.notes} /> : null}
           {update?.available === true ? <Row label={t('Install update')} onPress={() => void call('update-install')} /> : null}
           <Row label={busy ? t('Checking for updates…') : t('Check for updates')} onPress={busy ? undefined : check} />
@@ -804,7 +804,7 @@ export function About({ navigation }: any) {
     <Screen><Back title={t('About')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Section label={t('About')}>
-          <Row label={t('DS Bot')} value={version} />
+          <Row label={t('Anbot')} value={version} />
           {dsh !== undefined ? <Row label={t('DSH')} value={dsh} /> : null}
           <Row
             label={t('Phone app')}
@@ -814,8 +814,8 @@ export function About({ navigation }: any) {
           <Row label={t('Computer')} value={computer?.name ?? '—'} />
         </Section>
         <Section label={t('Licenses')}>
-          <Row label={t('DS Bot')} hint={t('Apache License 2.0')} onPress={() => void Linking.openURL('https://github.com/Fei-Craft/DS-Bot/blob/main/LICENSE')} />
-          <Row label={t('Repository')} hint="github.com/Fei-Craft/DS-Bot" onPress={() => void Linking.openURL('https://github.com/Fei-Craft/DS-Bot')} />
+          <Row label={t('Anbot')} hint={t('Apache License 2.0')} onPress={() => void Linking.openURL('https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE')} />
+          <Row label={t('Repository')} hint="github.com/rml4791lol-lang/Anbot" onPress={() => void Linking.openURL('https://github.com/rml4791lol-lang/Anbot')} />
         </Section>
       </ScrollView>
     </Screen>

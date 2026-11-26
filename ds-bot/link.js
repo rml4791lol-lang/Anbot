@@ -7593,7 +7593,7 @@ function pairingUri(offer) {
 function parsePairingUri(uri) {
   const url = new URL(uri);
   if (url.protocol !== PAIRING_SCHEME || url.host !== "pair" || url.searchParams.get("v") !== "1") {
-    throw new Error("This is not a DS Bot pairing code.");
+    throw new Error("This is not an Anbot pairing code.");
   }
   const field = (name) => {
     const value = url.searchParams.get(name);

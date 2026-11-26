@@ -189,7 +189,7 @@ export async function openLink(computer: SavedComputer, identity: PhoneIdentity,
   return client
 }
 
-/** Calls one DS Bot endpoint on the computer, the same one its window calls. */
+/** Calls one Anbot endpoint on the computer, the same one its window calls. */
 export async function callBot<T>(client: RpcClient, endpoint: string, payload: unknown = {}, signal?: AbortSignal): Promise<T> {
   const result = await client.rpc<BotResult<T>>('bot', { endpoint, payload }, { signal })
   if (!result.ok) throw Object.assign(new Error(result.error.message), { code: result.error.code })

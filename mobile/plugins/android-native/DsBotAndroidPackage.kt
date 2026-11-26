@@ -6,7 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
 
-/** Registers DS Bot's Android updater and notification native modules via React Native's interop layer. */
+/** Registers Anbot's Android updater and notification native modules via React Native's interop layer. */
 class DsBotAndroidPackage : BaseReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
     when (name) {

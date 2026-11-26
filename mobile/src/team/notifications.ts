@@ -150,7 +150,7 @@ export function formatNoticeNotification(
   const roomTitle = (notice.title ?? '').trim()
   const title = roomTitle && botName && roomTitle !== botName
     ? `${roomTitle} · ${botName}`
-    : roomTitle || botName || 'DS Bot'
+    : roomTitle || botName || 'Anbot'
   const snippet = typeof notice.text === 'string' ? notice.text.trim() : ''
   const show = options.preview && snippet.length > 0
 

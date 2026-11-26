@@ -91,7 +91,7 @@ class DsBotNotificationsModule(reactContext: ReactApplicationContext) : ReactCon
   fun notify(payload: ReadableMap, promise: Promise) {
     try {
       val tag = payload.getString("tag") ?: "dsbot"
-      val title = payload.getString("title") ?: "DS Bot"
+      val title = payload.getString("title") ?: "Anbot"
       val body = payload.getString("body") ?: ""
       val channel = payload.getString("channel") ?: "replies"
       val targetKind = payload.getString("targetKind") ?: "bot"
@@ -197,7 +197,7 @@ class DsBotNotificationsModule(reactContext: ReactApplicationContext) : ReactCon
     try {
       val ctx = reactApplicationContext
       val mode = config.getString("mode") ?: "off"
-      val title = config.getString("title") ?: "DS Bot"
+      val title = config.getString("title") ?: "Anbot"
       val subtitle = config.getString("subtitle") ?: ""
       DsBotNotifyHelper.prefs(ctx).edit()
         .putString(DsBotNotifyHelper.KEY_BG_MODE, mode)

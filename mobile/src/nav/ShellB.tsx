@@ -88,7 +88,7 @@ function DrawerContent() {
     <View style={{ flex: 1, backgroundColor: p.sidebar }}>
       {/* The desktop sidebar's head: the product name, search and New. */}
       <View style={[styles.drawerHead, { paddingTop: insets.top + 6 }]}>
-        <Text style={{ color: p.ink, fontSize: 17, fontWeight: '600', flex: 1 }}>DS Bot</Text>
+        <Text style={{ color: p.ink, fontSize: 17, fontWeight: '600', flex: 1 }}>Anbot</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={t('Search')} onPress={() => setSearching(on => !on)} hitSlop={4} style={[styles.round, { borderColor: p.line, backgroundColor: p.card }]}>
           <SearchIcon size={16} color={p.ink2} />
         </Pressable>
@@ -343,7 +343,7 @@ function NoticeBanner() {
       // The chat on screen already shows its own messages and cards.
       if (active?.kind === target.kind && active.id === target.id) return
       const copy = formatNoticeNotification(entry, { preview: true })
-      const text = copy.title && copy.title !== 'DS Bot' ? `${copy.title}：${copy.body}` : copy.body
+      const text = copy.title && copy.title !== 'Anbot' ? `${copy.title}：${copy.body}` : copy.body
       const mine = ++seq
       setNotice({ text, target, seq: mine })
       setTimeout(() => setNotice(current => (current?.seq === mine ? null : current)), 8000)

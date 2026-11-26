@@ -1,4 +1,4 @@
-// The phone app ships with DS Bot and carries its version. Android installs an update
+// The phone app ships with Anbot and carries its version. Android installs an update
 // only over a lower versionCode, so the code grows with the version, and a pre-release
 // (0.4.0-rc.1) stays below its release (0.4.0).
 const { version } = require('../ds-bot/package.json')

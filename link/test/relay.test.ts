@@ -162,7 +162,7 @@ test('pairing codes that were changed are refused', () => {
   assert.equal(parsePairingUri(uri).code, 'abc')
   assert.throws(() => parsePairingUri(uri.replace(desk.publicKey, generateKeyPair().publicKey)), /does not match/)
   assert.throws(() => parsePairingUri(uri.replace('wss%3A', 'http%3A')), /invalid Server/)
-  assert.throws(() => parsePairingUri('https://example.com/pair?v=1'), /not a DS Bot pairing code/)
+  assert.throws(() => parsePairingUri('https://example.com/pair?v=1'), /not an Anbot pairing code/)
 })
 
 async function hello(self: { deviceId: string; publicKey: string }, accessToken: string): Promise<string> {

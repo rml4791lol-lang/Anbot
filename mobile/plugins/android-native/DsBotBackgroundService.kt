@@ -45,7 +45,7 @@ class DsBotBackgroundService : Service() {
     fun update(context: Context, subtitle: String) {
       if (!running.get()) return
       val prefs = DsBotNotifyHelper.prefs(context)
-      val title = prefs.getString(DsBotNotifyHelper.KEY_BG_TITLE, null) ?: "DS Bot"
+      val title = prefs.getString(DsBotNotifyHelper.KEY_BG_TITLE, null) ?: "Anbot"
       val notification = DsBotNotifyHelper.buildBackgroundNotification(context, title, subtitle)
       try {
         NotificationManagerCompat.from(context).notify(DsBotNotifyHelper.BG_NOTIFICATION_ID, notification)
@@ -87,7 +87,7 @@ class DsBotBackgroundService : Service() {
     val zh = Locale.getDefault().language.startsWith("zh")
     val title = intent?.getStringExtra(EXTRA_TITLE)
       ?: prefs.getString(DsBotNotifyHelper.KEY_BG_TITLE, null)
-      ?: "DS Bot"
+      ?: "Anbot"
     val subtitle = intent?.getStringExtra(EXTRA_SUBTITLE)
       ?: prefs.getString(DsBotNotifyHelper.KEY_BG_SUBTITLE, null)
       ?: if (zh) "后台实时通知已开启" else "Background notifications active"

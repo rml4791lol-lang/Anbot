@@ -1,4 +1,4 @@
-// Expo config plugin that installs DS Bot's Android native modules (in-app APK
+// Expo config plugin that installs Anbot's Android native modules (in-app APK
 // updater with streaming SHA-256 verification and FileProvider handoff, plus
 // native notification channels, Foreground Service, JobScheduler sync, and
 // UnifiedPush v2 connector) without affecting iOS or Web builds.

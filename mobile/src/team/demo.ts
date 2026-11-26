@@ -88,7 +88,7 @@ const call = useMemo(() => async (endpoint: string, payload: unknown = {}): Prom
       }
       case 'file-download': {
         if (body.attachmentId !== 'att-1') throw Object.assign(new Error('Unknown attachment'), { code: 'bot/not-found' })
-        return { name: 'release-notes.md', mime: 'text/markdown', bytes: btoa('# Release notes\n\nDemo file from DS Bot.\n') }
+        return { name: 'release-notes.md', mime: 'text/markdown', bytes: btoa('# Release notes\n\nDemo file from Anbot.\n') }
       }
       case 'state':
         if (body.since === state.revision) return { revision: state.revision, unchanged: true, work: state.work, activity: state.activity }
@@ -285,7 +285,7 @@ const call = useMemo(() => async (endpoint: string, payload: unknown = {}): Prom
       case 'browser-frame': {
         const hold = state.browserHolds?.[String(body.botId ?? '')]
         if (hold === undefined && body.botId !== 'b-coder') return { ok: false, error: { code: 'bot/not-found', message: 'This Bot has no open browser' } }
-        return { mime: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', url: 'https://github.com/Fei-Craft/DS-Bot', title: 'DS Bot — GitHub' }
+        return { mime: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', url: 'https://github.com/rml4791lol-lang/Anbot', title: 'Anbot — GitHub' }
       }
       case 'browser-takeover': { (state.browserHolds ??= {})[String(body.botId ?? '')] = { by: 'user', reason: 'takeover', note: 'The user is controlling this browser.' }; return { ok: true } }
       case 'browser-give-back': { delete (state.browserHolds ??= {})[String(body.botId ?? '')]; return { ok: true } }

@@ -77,7 +77,7 @@ export function isPrereleaseVersion(version: string): boolean {
 }
 
 export function androidApkName(version: string): string {
-  return `DS-Bot-${version}-android.apk`
+  return `Anbot-${version}-android.apk`
 }
 
 export function isSafeUpdateUrl(raw: unknown, options: { allowLoopbackHttp?: boolean } = {}): raw is string {
@@ -318,7 +318,7 @@ export async function checkAndroidUpdate(options: CheckUpdateOptions): Promise<U
   const urlOpts = { allowLoopbackHttp: options.allowLoopbackHttp === true }
   const currentVersion = options.currentVersion.trim().replace(/^v/u, '')
   const allowPrerelease = isPrereleaseVersion(currentVersion)
-  const userAgent = `DS-Bot-Android/${currentVersion || '0.0.0'}`
+  const userAgent = `Anbot-Android/${currentVersion || '0.0.0'}`
   const customMirror = normalizeMirrorBase(options.customMirror ?? '', urlOpts) ?? ''
 
   if (customMirror !== '') {

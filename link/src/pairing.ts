@@ -78,7 +78,7 @@ export function pairingUri(offer: PairingOffer): string {
 export function parsePairingUri(uri: string): PairingOffer {
   const url = new URL(uri)
   if (url.protocol !== PAIRING_SCHEME || url.host !== 'pair' || url.searchParams.get('v') !== '1') {
-    throw new Error('This is not a DS Bot pairing code.')
+    throw new Error('This is not an Anbot pairing code.')
   }
   const field = (name: string): string => {
     const value = url.searchParams.get(name)

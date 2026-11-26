@@ -5,8 +5,8 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "DS Bot",
-      "shortName": "DS Bot",
+      "name": "Anbot",
+      "shortName": "Anbot",
       "themeColor": "#fcfcfc",
       "favicon": "./assets/icon.png"
     },
@@ -41,7 +41,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "DS Bot uses the camera to scan the pairing code that your computer shows.",
+          "cameraPermission": "Anbot uses the camera to scan the pairing code that your computer shows.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

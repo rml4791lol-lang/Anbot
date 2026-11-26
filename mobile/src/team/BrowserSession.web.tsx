@@ -13,6 +13,6 @@ export function BrowserSession({ children }: { children: ReactNode }) {
   }, [])
   if (state === 'ready') return children
   return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: p.main, padding: 24 }}>
-    <Text accessibilityRole="alert" style={{ color: p.ink, textAlign: 'center' }}>{state === 'waiting' ? t('DS Bot is open in another tab') : t('This browser cannot keep a single DS Bot tab active. Use a browser with Web Locks over HTTPS or localhost.')}</Text>
+    <Text accessibilityRole="alert" style={{ color: p.ink, textAlign: 'center' }}>{state === 'waiting' ? t('Anbot is open in another tab') : t('This browser cannot keep a single Anbot tab active. Use a browser with Web Locks over HTTPS or localhost.')}</Text>
   </View>
 }

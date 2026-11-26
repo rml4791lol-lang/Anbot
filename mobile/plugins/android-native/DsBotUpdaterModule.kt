@@ -117,7 +117,7 @@ class DsBotUpdaterModule(reactContext: ReactApplicationContext) : ReactContextBa
         connectTimeout = 20_000
         readTimeout = 30_000
         requestMethod = "GET"
-        setRequestProperty("User-Agent", "DS-Bot-Android/${BuildConfig.VERSION_NAME}")
+        setRequestProperty("User-Agent", "Anbot-Android/${BuildConfig.VERSION_NAME}")
         setRequestProperty("Accept", "application/vnd.android.package-archive, application/octet-stream, */*")
       }
       activeConn.set(conn)

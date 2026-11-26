@@ -15,6 +15,11 @@ import {
 const VALID_SHA = '3d419ff385a0d95e5a78fd211b98e39f529f80eacf96c75ea26edbc0c8fb077e'
 const OTHER_SHA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
+test('androidApkName follows the release workflow naming Anbot-<version>-android.apk', () => {
+  assert.equal(androidApkName('0.0.1'), 'Anbot-0.0.1-android.apk')
+  assert.equal(androidApkName('0.4.0-rc.1'), 'Anbot-0.4.0-rc.1-android.apk')
+})
+
 test('isNewerVersion respects semver ordering and prerelease channels', () => {
   assert.equal(isNewerVersion('0.3.11', '0.3.10'), true)
   assert.equal(isNewerVersion('v0.4.0', '0.3.10'), true)
@@ -29,18 +34,18 @@ test('isNewerVersion respects semver ordering and prerelease channels', () => {
 
 test('parseSha256Sums strictly matches exact APK filename and rejects conflicting duplicates', () => {
   const sums = [
-    `${OTHER_SHA}  DS-Bot-0.3.11-win-x64.exe`,
-    `${VALID_SHA}  DS-Bot-0.3.11-android.apk`,
-    `${VALID_SHA}  DS-Bot-android.apk`,
+    `${OTHER_SHA}  Anbot-0.3.11-win-x64.exe`,
+    `${VALID_SHA}  Anbot-0.3.11-android.apk`,
+    `${VALID_SHA}  Anbot-android.apk`,
   ].join('\n')
-  assert.equal(parseSha256Sums(sums, 'DS-Bot-0.3.11-android.apk'), VALID_SHA)
-  assert.equal(parseSha256Sums(sums, 'DS-Bot-0.3.12-android.apk'), null)
+  assert.equal(parseSha256Sums(sums, 'Anbot-0.3.11-android.apk'), VALID_SHA)
+  assert.equal(parseSha256Sums(sums, 'Anbot-0.3.12-android.apk'), null)
 
   const conflicted = [
-    `${VALID_SHA}  DS-Bot-0.3.11-android.apk`,
-    `${OTHER_SHA}  DS-Bot-0.3.11-android.apk`,
+    `${VALID_SHA}  Anbot-0.3.11-android.apk`,
+    `${OTHER_SHA}  Anbot-0.3.11-android.apk`,
   ].join('\n')
-  assert.equal(parseSha256Sums(conflicted, 'DS-Bot-0.3.11-android.apk'), null)
+  assert.equal(parseSha256Sums(conflicted, 'Anbot-0.3.11-android.apk'), null)
   assert.equal(parseGitHubDigest(`sha256:${VALID_SHA.toUpperCase()}`), VALID_SHA)
   assert.equal(parseGitHubDigest('md5:1234'), null)
 })
@@ -52,15 +57,15 @@ test('parseReleaseMirrorUrl and stripDownloadTable match release-notes.mjs forma
     '',
     '| System / 系统 | Download / 下载 | Size / 大小 |',
     '|---|---|---|',
-    '| Android (phone app / 手机 App) | DS-Bot-0.3.11-android.apk: [Mirror / 国内镜像](https://dl.dsbot.app/DS-Bot-0.3.11-android.apk) · [GitHub](https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.11/DS-Bot-0.3.11-android.apk) | 61 MB |',
+    '| Android (phone app / 手机 App) | Anbot-0.3.11-android.apk: [Mirror / 国内镜像](https://dl.dsbot.app/Anbot-0.3.11-android.apk) · [GitHub](https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.11/Anbot-0.3.11-android.apk) | 61 MB |',
     '<!-- /downloads -->',
     '',
     '### Added',
     '- Android auto-update',
   ].join('\n')
 
-  assert.equal(parseReleaseMirrorUrl(body, 'DS-Bot-0.3.11-android.apk'), 'https://dl.dsbot.app/DS-Bot-0.3.11-android.apk')
-  assert.equal(parseReleaseMirrorUrl(body, 'DS-Bot-0.3.12-android.apk'), null)
+  assert.equal(parseReleaseMirrorUrl(body, 'Anbot-0.3.11-android.apk'), 'https://dl.dsbot.app/Anbot-0.3.11-android.apk')
+  assert.equal(parseReleaseMirrorUrl(body, 'Anbot-0.3.12-android.apk'), null)
   assert.equal(stripDownloadTable(body), '### Added\n- Android auto-update')
   assert.equal(normalizeMirrorBase('https://dl.dsbot.app///'), 'https://dl.dsbot.app')
   assert.equal(normalizeMirrorBase('http://insecure.example.com'), null)
@@ -75,17 +80,17 @@ test('checkAndroidUpdate verifies SHA256SUMS, prefers mirror URLs, ignores prere
       tag_name: 'v0.4.0-rc.1',
       draft: false,
       prerelease: true,
-      assets: [{ name: androidApkName('0.4.0-rc.1'), browser_download_url: 'https://github.com/Fei-Craft/DS-Bot/releases/download/v0.4.0-rc.1/DS-Bot-0.4.0-rc.1-android.apk', digest: `sha256:${OTHER_SHA}` }],
+      assets: [{ name: androidApkName('0.4.0-rc.1'), browser_download_url: 'https://github.com/rml4791lol-lang/Anbot/releases/download/v0.4.0-rc.1/Anbot-0.4.0-rc.1-android.apk', digest: `sha256:${OTHER_SHA}` }],
     },
     {
       tag_name: 'v0.3.11',
       draft: false,
       prerelease: false,
-      html_url: 'https://github.com/Fei-Craft/DS-Bot/releases/tag/v0.3.11',
+      html_url: 'https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.3.11',
       body: `<!-- downloads -->\n| Android | ${apkName}: [Mirror / 国内镜像](https://mirror.test/${apkName}) · [GitHub](https://github.com/x) | 61 MB |\n<!-- /downloads -->\n\n### Fixed\n- Faster sync`,
       assets: [
-        { name: apkName, browser_download_url: `https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.11/${apkName}`, size: 62_000_000, digest: `sha256:${VALID_SHA}` },
-        { name: 'SHA256SUMS.txt', browser_download_url: 'https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.11/SHA256SUMS.txt' },
+        { name: apkName, browser_download_url: `https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.11/${apkName}`, size: 62_000_000, digest: `sha256:${VALID_SHA}` },
+        { name: 'SHA256SUMS.txt', browser_download_url: 'https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.11/SHA256SUMS.txt' },
       ],
     },
   ]
@@ -108,7 +113,7 @@ test('checkAndroidUpdate verifies SHA256SUMS, prefers mirror URLs, ignores prere
   assert.equal(res.release.sha256, VALID_SHA)
   assert.deepEqual(res.release.downloadUrls, [
     `https://mirror.test/${apkName}`,
-    `https://github.com/Fei-Craft/DS-Bot/releases/download/v0.3.11/${apkName}`,
+    `https://github.com/rml4791lol-lang/Anbot/releases/download/v0.3.11/${apkName}`,
   ])
   assert.equal(res.release.notes, '### Fixed\n- Faster sync')
 
@@ -158,7 +163,7 @@ test('checkAndroidUpdate falls back to releases/latest on API rate limit and sup
     if (target.includes('api.github.com')) return new Response('rate limit', { status: 403 })
     if (target.endsWith('/releases/latest')) {
       const resp = new Response('', { status: 200 })
-      Object.defineProperty(resp, 'url', { value: 'https://github.com/Fei-Craft/DS-Bot/releases/tag/v0.3.12' })
+      Object.defineProperty(resp, 'url', { value: 'https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.3.12' })
       return resp
     }
     if (target.endsWith('SHA256SUMS.txt')) return new Response(`${VALID_SHA}  ${apkName}\n`, { status: 200 })
@@ -197,7 +202,7 @@ test('checkAndroidUpdate falls back to releases/latest on API rate limit and sup
   })
   assert.equal(fromMirror.status, 'available')
   assert.equal(fromMirror.release.version, '0.3.15')
-  assert.equal(fromMirror.release.downloadUrls[0], 'https://cn.mirror.test/ds-bot/DS-Bot-0.3.15-android.apk')
+  assert.equal(fromMirror.release.downloadUrls[0], 'https://cn.mirror.test/ds-bot/Anbot-0.3.15-android.apk')
 })
 
 test('checkAndroidUpdate rejects insecure HTTP redirects during metadata fetch', async () => {

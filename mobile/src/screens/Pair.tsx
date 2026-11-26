@@ -39,7 +39,7 @@ export function Pair({ identity, offer, onPaired, onCancel }: { identity: PhoneI
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: p.main }}>
       <ScrollView contentContainerStyle={[styles.center, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
         <Text style={[typeScale.largeTitle, { color: p.ink, textAlign: 'center' }]}>{t('Pair with your computer')}</Text>
-        <Text style={[typeScale.settingsRow, { color: p.ink2, marginTop: 12, textAlign: 'center' }]}>{Platform.OS === 'web' ? t('On the computer, open DS Bot, go to Settings → Phone and copy the pairing link. Paste it here.') : t('On the computer, open DS Bot, go to Settings → Phone and show a QR code. Then scan it here.')}</Text>
+        <Text style={[typeScale.settingsRow, { color: p.ink2, marginTop: 12, textAlign: 'center' }]}>{Platform.OS === 'web' ? t('On the computer, open Anbot, go to Settings → Phone and copy the pairing link. Paste it here.') : t('On the computer, open Anbot, go to Settings → Phone and show a QR code. Then scan it here.')}</Text>
         <PairCamera busy={busy} onScan={uri => void pair(uri)} />
         {Platform.OS !== 'web' ? <Text style={[typeScale.settingsRow, { color: p.ink2, marginTop: 16, textAlign: 'center' }]}>{t('No camera? Paste the pairing link.')}</Text> : null}
         <View style={styles.pairRow}>

@@ -31,7 +31,7 @@ const server = await startRelayServer({
   maxPushesPerHour: number('DSBOT_LINK_MAX_PUSHES_PER_HOUR'),
   allowedPushHosts,
 })
-console.log(`DS Bot link Server: ${server.url}`)
+console.log(`Anbot link Server: ${server.url}`)
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => { void server.close().then(() => process.exit(0)) })
 }

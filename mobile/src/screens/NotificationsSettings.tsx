@@ -311,7 +311,7 @@ export function NotificationsSettings({ navigation }: any) {
             ) : null}
             {!pushSupportedByHost && bgStatus?.unifiedPushEndpoint ? (
               <View style={styles.noteRow}>
-                <Text style={[typeScale.small, { color: p.star }]}>{t('Update DS Bot on the computer to enable offline push.')}</Text>
+                <Text style={[typeScale.small, { color: p.star }]}>{t('Update Anbot on the computer to enable offline push.')}</Text>
               </View>
             ) : null}
             <Row

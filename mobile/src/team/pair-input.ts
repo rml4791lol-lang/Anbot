@@ -7,7 +7,7 @@ export function parsePairingInput(input: string) {
     const browserLink = (url.protocol === 'https:' || url.protocol === 'http:') && url.hash.startsWith('#pair=')
     return parsePairingUri(browserLink ? decodeURIComponent(url.hash.slice('#pair='.length)) : text)
   } catch {
-    throw new Error('This is not a DS Bot pairing code.')
+    throw new Error('This is not an Anbot pairing code.')
   }
 }
 
