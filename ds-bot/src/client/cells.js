@@ -1018,7 +1018,7 @@ export function Shimmer({ children }) {
 
 // The time since `at`, from 1s. It ticks on its own whole seconds, so its parent does
 // not render again each second.
-export function Elapsed({ at, className }) {
+export function Elapsed({ at, className, bare = false }) {
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
     let timer = 0
@@ -1030,7 +1030,7 @@ export function Elapsed({ at, className }) {
     tick()
     return () => clearTimeout(timer)
   }, [at])
-  return h('span', { className }, `· ${elapsedLabel(Math.max(1000, now - at))}`)
+  return h('span', { className }, `${bare ? '' : '· '}${elapsedLabel(Math.max(1000, now - at))}`)
 }
 
 // Status phrases. A running tool names what it does; otherwise one
@@ -1569,8 +1569,10 @@ export function ToolCell({ node, sessionId, useRoster, useUi, useWork, useHeldCa
   // The newest call still running names the work, so a program reads as the tool it is in.
   const running = root.kind === 'tool-result' ? undefined : calls.findLast(call => call.kind !== 'tool-result')
   const note = running ? toolActivity(toolName(running), toolArgs(running).text, findBot, roster.byId[sessionId]) : null
-  // A running tool shows only as the activity row's phrase.
-  useLiveNote(actions, sessionId, `tool:${root.callId ?? node.key}`, note)
+  // A running tool shows only as the activity row's phrase. The orb needs the
+  // subagent family on the entry; other tools keep the note the row already had.
+  const liveNote = note && /^subagent(?:_|$)/.test(toolName(running)) ? { ...note, tool: toolName(running) } : note
+  useLiveNote(actions, sessionId, `tool:${root.callId ?? node.key}`, liveNote)
   useShownCards(actions, sessionId, drawn.filter(call => (CARDS.has(toolName(call)) || isComputerCall(toolName(call))) && call.callId).map(call => call.callId))
   if (drawn.length === 0) return h(CellEmpty)
   const env = { sessionId, roster, actions, useRoster, useUi, useWork, findBot, heldCards, hooks: { useBrowserHolds, useBrowserTabs, useBrowserPages, useComputer } }

@@ -14,7 +14,12 @@ const react = {
   useLayoutEffect: () => {}, useMemo: make => make(), useCallback: fn => fn, Fragment: 'fragment',
 }
 const require = (name) => {
-  const platform = { react, 'react-dom': { createPortal: node => node }, '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: () => null } }
+  const platform = {
+    react,
+    'react/jsx-runtime': { Fragment: 'fragment', jsx: (type, props) => react.createElement(type, props), jsxs: (type, props) => react.createElement(type, props), jsxDEV: (type, props) => react.createElement(type, props) },
+    'react-dom': { createPortal: node => node },
+    '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: () => null },
+  }
   if (!(name in platform)) throw new Error(`no platform module ${name}`)
   return platform[name]
 }

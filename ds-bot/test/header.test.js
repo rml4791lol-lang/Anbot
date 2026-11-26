@@ -11,12 +11,17 @@ const bundle = await build({
   external: ['react', 'react-dom', '@deepseek-ai/dsh-client-ui-primitives'],
 })
 const effects = []
+const runtimeElement = (type, props) => {
+  const children = props?.children
+  return { type, props: props ?? {}, children: children === undefined ? [] : Array.isArray(children) ? children.flat(Infinity) : [children] }
+}
 const module = { exports: {} }
 runInNewContext(bundle.outputFiles[0].text, {
   module, exports: module.exports, URL, URLSearchParams, setTimeout, clearTimeout,
   require: (name) => {
     const platform = {
       react: { createContext: (initial) => { const ctx = { value: initial }; ctx.Provider = ({ value, children }) => { ctx.value = value; return children }; return ctx }, useContext: ctx => ctx.value, useId: () => 'dv-id', useSyncExternalStore: (subscribe, getSnapshot) => getSnapshot(),  createElement: (type, props, ...children) => ({ type, props: props ?? {}, children: children.flat(Infinity) }), useState: initial => [initial, () => {}], useEffect: fn => { effects.push(fn) }, useRef: current => ({ current }), useLayoutEffect: () => {}, useMemo: make => make(), useCallback: fn => fn, Fragment: 'fragment' },
+      'react/jsx-runtime': { Fragment: 'fragment', jsx: runtimeElement, jsxs: runtimeElement, jsxDEV: runtimeElement },
       'react-dom': { createPortal: node => node },
       '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: () => null },
     }

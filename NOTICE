@@ -234,8 +234,9 @@ The bundled ds-bot/office.js includes
 @xmldom/xmldom (https://github.com/xmldom/xmldom, MIT License, Copyright (c)
 jindw and contributors) from npm. esbuild (https://esbuild.github.io/) is a build tool only. The plugin's
 client.js bundles qrcode-generator from npm (MIT, Copyright (c) 2009 Kazuhiko
-Arase), and its link.js bundles the phone link from link/ with the packages
-it uses, listed below. The desktop app
+Arase) and @firexcore/agent-orbs (https://github.com/FireXCore/agent-orbs,
+MIT, Copyright (c) 2026 FireXCore), and its link.js bundles the phone link from
+link/ with the packages it uses, listed below. The desktop app
 in app/ installs the pinned @deepseek-ai/* packages, Electron and pnpm from
 npm; they keep their own licenses. The build of its window (app/ui) bundles,
 from npm, React and React DOM (MIT, Copyright (c) Meta Platforms, Inc. and

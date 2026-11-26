@@ -2,6 +2,7 @@ import { Component, createElement as h, useCallback, useEffect, useMemo, useRef,
 import { ACCENT_INKS, INKS } from './inks.js'
 import { isMainOf } from './sources.js'
 import { MESSAGE_WIDTH, allThemes, effectsOf, flatWidthOf, layoutOf, thinkingShown, widthOf } from './themes.js'
+import { loadingStateOf, subagentStateOf, workMetricsOf, workOrbOf, workSpeedOf, workStatusOf } from './work-status.js'
 import { ArrowUpIcon, BlocksIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, CloseIcon, CompassIcon, ConnectorIcon, GlobeIcon, InfoIcon, LayersIcon, MonitorIcon, OverviewIcon, PaletteIcon, PhoneIcon, ApiIcon, PlusIcon, PuzzleIcon, SearchIcon, SendIcon, SlidersIcon, TerminalIcon, WaveIcon, SETTINGS_ICONS } from './icons.js'
 import { IconAgentPresetOutlineMedium, IconArchiveOutlineMedium, IconSettingsOutlineMedium, IconUserOutlineMedium } from './dsh-primitives.js'
 import { AdminStar, BotAvatar, RoomAvatar } from './mark.js'
@@ -146,6 +147,11 @@ function SetRow({ label, hint, children, className = '', tour = null }) {
 const LAYOUTS = [['bubble', 'Bubble'], ['flat', 'Flat']]
 const EFFECTS = [['full', 'Full'], ['reduced', 'Reduced'], ['off', 'None']]
 const MOTIONS = [['quiet', 'Quiet'], ['normal', 'Normal'], ['lively', 'Lively']]
+const WORK_STATUSES = [['full', 'Detailed'], ['compact', 'Compact']]
+const ORB_SPEEDS = [[0.5, '0.5×'], [0.75, '0.75×'], [1, '1×'], [1.5, '1.5×'], [2, '2×']]
+const LOADING_STYLES = [['shaping', 'Fill'], ['breathing', 'Breathe'], ['waiting', 'Wait']]
+const SUBAGENT_STYLES = [['weaving', 'Weave'], ['connecting', 'Connect'], ['solving', 'Solve']]
+const GLASS_STYLES = [['solid', 'Solid'], ['frosted', 'Frosted'], ['clear', 'Clear glass']]
 
 function Choice({ label, value, options, pick, className = 'bt-look-seg' }) {
   return h(Segmented, { label, value, className }, options.map(([id, text]) => h('button', {
@@ -295,6 +301,35 @@ function AppearancePage({ roster, actions, run, dsh }) {
       layoutOf(prefs) === 'flat' ? h(SetRow, { label: t('Text width') }, h(WidthSlider, { label: t('Text width'), value: flatWidthOf(prefs), save: flatWidth => run(actions.setPrefs({ flatWidth })) })) : null,
       h(SetRow, { label: t('Bubble width') }, h(WidthSlider, { label: t('Bubble width'), value: widthOf(prefs), save: width => run(actions.setPrefs({ width })) })),
       h(SetRow, { label: t('Show thinking') }, h(Switch, { label: t('Show thinking'), on: thinkingShown(prefs), onChange: thinking => run(actions.setPrefs({ thinking })) }))),
+    h(SetSection, { key: 'work', title: t('Work status') },
+      h(SetRow, { label: t('Work status') }, h(Choice, {
+        label: t('Work status'), value: workStatusOf(prefs), options: WORK_STATUSES,
+        pick: id => run(actions.setPrefs({ workStatus: id === 'full' ? null : id })),
+      })),
+      h(SetRow, { label: t('Animated status orb') }, h(Switch, {
+        label: t('Animated status orb'), on: workOrbOf(prefs),
+        onChange: workOrb => run(actions.setPrefs({ workOrb: workOrb ? null : false })),
+      })),
+      workOrbOf(prefs) ? h(SetRow, { label: t('Orb speed') }, h(Choice, {
+        label: t('Orb speed'), value: workSpeedOf(prefs), options: ORB_SPEEDS,
+        pick: id => run(actions.setPrefs({ orbSpeed: id === 1 ? null : id })),
+      })) : null,
+      h(SetRow, { label: t('Work metrics') }, h(Switch, {
+        label: t('Work metrics'), on: workMetricsOf(prefs),
+        onChange: workMetrics => run(actions.setPrefs({ workMetrics: workMetrics ? null : false })),
+      })),
+      h(SetRow, { label: t('Agent loading') }, h(Choice, {
+        label: t('Agent loading'), value: loadingStateOf(prefs), options: LOADING_STYLES,
+        pick: id => run(actions.setPrefs({ loadingStyle: id === 'shaping' ? null : id })),
+      })),
+      h(SetRow, { label: t('Subagent activity') }, h(Choice, {
+        label: t('Subagent activity'), value: subagentStateOf(prefs), options: SUBAGENT_STYLES,
+        pick: id => run(actions.setPrefs({ subagentStyle: id === 'weaving' ? null : id })),
+      })),
+      h(SetRow, { label: t('Glass') }, h(Choice, {
+        label: t('Glass'), value: prefs.glass === 'solid' || prefs.glass === 'clear' ? prefs.glass : 'frosted', options: GLASS_STYLES,
+        pick: id => run(actions.setPrefs({ glass: id === 'frosted' ? null : id })),
+      }))),
     h(SetSection, { key: 'motion', title: t('Motion'), tour: 'motion' },
       h(SetRow, { label: t('Interface motion') }, h(Choice, { label: t('Interface motion'), value: effectsOf(prefs), options: EFFECTS, pick: id => run(actions.setPrefs({ effects: id })) })),
       h(SetRow, { label: t('Bot animation') }, h(Choice, { label: t('Bot animation'), value: motion, options: MOTIONS, className: 'bt-motion-seg', pick: id => run(actions.setPrefs({ motion: id })) }))),

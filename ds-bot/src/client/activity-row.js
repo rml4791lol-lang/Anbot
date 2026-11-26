@@ -6,6 +6,7 @@ import { MoveIcon } from './icons.js'
 import { noteClientError } from './diagnostics.js'
 import { reducedEffects, reducedMotion } from './motion.js'
 import { hostText, t } from './i18n.js'
+import { OrbMark, WorkStatus, statsOf, workMetricsOf, workOrbOf, workStatusOf } from './work-status.js'
 
 // -------------------------------------------------------------------------
 // The activity row: the Bot's mark and a shimmering phrase at the transcript
@@ -154,6 +155,7 @@ function useRowEntrances(replacing) {
 
 export function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useLive, useSession, useWork, actions }) {
   const roster = useRoster(value => value)
+  const prefs = useRoster(value => value?.prefs) ?? {}
   const running = useSessionStatus(map => map.get(sessionId)?.running === true)
   const turnAt = useWork?.(work => work.turns?.[sessionId])
   // Until the host reports the turn's start, the clock counts from when this window
@@ -176,18 +178,62 @@ export function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useL
       : room !== undefined ? work.rooms?.[room.id]?.find(item => item.self === true) : undefined
     return entry?.switching === true && entry.folder === true && entry.roomId === undefined ? entry.since : 0
   }) ?? 0
-  const entries = useMemo(() => Object.values(JSON.parse(liveKey)), [liveKey])
-  const streaming = entries.some(entry => entry.text)
-  const tools = entries.filter(entry => !entry.text).sort((a, b) => a.at - b.at)
+  const liveEntries = useMemo(() => Object.entries(JSON.parse(liveKey)), [liveKey])
+  const streaming = liveEntries.some(([, entry]) => entry.text)
+  const toolEntries = liveEntries.filter(([, entry]) => !entry.text)
+  const tools = toolEntries
+    .map(([id, entry]) => ({ ...entry, id }))
+    .sort((a, b) => a.at - b.at)
   // Group chats show who is typing on their own while members speak.
   const relaying = tools.some(entry => entry.relay)
   const visible = moveAt !== 0 || rowVisible({ running, streaming, tools, relaying, bot, room })
   const tool = tools.at(-1)
+  const statusMode = workStatusOf(prefs)
+  const fullStatus = statusMode === 'full' && bot !== undefined && room === undefined
+  const [toolCount, setToolCount] = useState(0)
+  const seenTools = useRef(new Set())
+  const firstToolAt = useRef(0)
+  useEffect(() => {
+    seenTools.current = new Set()
+    firstToolAt.current = 0
+    setToolCount(0)
+  }, [running, turnAt, pendingInput])
+  useEffect(() => {
+    if (!running) return
+    let added = false
+    for (const entry of tools) {
+      if (seenTools.current.has(entry.id)) continue
+      seenTools.current.add(entry.id)
+      added = true
+    }
+    if (!added) return
+    setToolCount(seenTools.current.size)
+    if (firstToolAt.current === 0) firstToolAt.current = Date.now()
+  }, [liveKey, running])
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    if (!running || !fullStatus || bot === undefined || typeof actions.runStats !== 'function') {
+      setStats(null)
+      return undefined
+    }
+    let live = true
+    const read = () => {
+      Promise.resolve(actions.runStats(bot.id, sessionId)).then(
+        values => { if (live) setStats(statsOf(values)) },
+        () => {},
+      )
+    }
+    read()
+    const timer = setInterval(read, 6000)
+    return () => { live = false; clearInterval(timer) }
+  }, [running, fullStatus, bot?.id, sessionId])
+
   const inputRef = useRef(0)
   // A steer keeps the run going, so nothing else resets the row: fresh input is
   // the newest activity, and the phrase and the clock restart from the send.
   const inputAt = Math.max(inputRef.current, pendingInput)
   inputRef.current = inputAt
+  const clockAt = moveAt !== 0 ? moveAt : Math.max(turnAt ?? runAt.current, inputAt)
   const want = !visible ? null
     : moveAt !== 0 ? { key: 'move', label: t('Switching working folder'), state: 'thinking' }
       : inputAt > (tool?.at ?? 0)
@@ -249,12 +295,28 @@ export function ActivityIndicator({ sessionId, useRoster, useSessionStatus, useL
         actions.reportError?.(new Error(hostText(error?.message ?? String(error))), 'move-to-background')
       })
   }
-  return createPortal(h('div', { className: 'bt-typing', 'data-exiting': phase === 'out' ? '' : undefined },
+  return createPortal(h('div', { className: 'bt-typing', 'data-work': fullStatus ? 'full' : undefined, 'data-exiting': phase === 'out' ? '' : undefined },
     h('span', { className: 'bt-typing-mark', 'aria-hidden': true },
-      bot ? h(BotMark, { bot, size: 28, state: markState.current, live: true, pokeable: true }) : h(RoomAvatar, { room, roster, size: 28 })),
-    h('span', { className: 'bt-typing-text', 'aria-hidden': true },
-      h('span', { key: `${shown.key}:${shown.at}`, className: 'bt-typing-label' }, h(Shimmer, null, `${shown.text}…`)),
-      h(Elapsed, { at: moveAt !== 0 ? moveAt : Math.max(turnAt ?? runAt.current, inputAt), className: 'bt-typing-time' })),
+      bot
+        ? (fullStatus && workOrbOf(prefs)
+            ? h(OrbMark, { tool: tool?.tool, state: markState.current, prefs })
+            : h(BotMark, { bot, size: 28, state: markState.current, live: true, pokeable: true }))
+        : h(RoomAvatar, { room, roster, size: 28 })),
+    fullStatus
+      ? h(WorkStatus, {
+          tool: tool?.tool,
+          state: markState.current,
+          prefs,
+          phrase: { key: `${shown.key}:${shown.at}`, text: shown.text },
+          startAt: clockAt,
+          toolCount,
+          firstToolAt: firstToolAt.current,
+          stats,
+          metrics: workMetricsOf(prefs),
+        })
+      : h('span', { className: 'bt-typing-text', 'aria-hidden': true },
+          h('span', { key: `${shown.key}:${shown.at}`, className: 'bt-typing-label' }, h(Shimmer, null, `${shown.text}…`)),
+          h(Elapsed, { at: clockAt, className: 'bt-typing-time' })),
     showBgAction
       ? h('button', {
           type: 'button',

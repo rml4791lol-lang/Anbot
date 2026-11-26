@@ -325,6 +325,41 @@ export function install(rt) {
       else if (body.effects === 'reduced' || body.effects === 'off') state.prefs.effects = body.effects
       else throw invalid('Effects must be full, reduced or off')
     }
+    if (body.workStatus !== undefined) {
+      if (body.workStatus === null || body.workStatus === 'full') delete state.prefs.workStatus
+      else if (body.workStatus === 'compact') state.prefs.workStatus = body.workStatus
+      else throw invalid('Work status must be full or compact')
+    }
+    if (body.workOrb !== undefined) {
+      if (body.workOrb === false) state.prefs.workOrb = false
+      else if (body.workOrb === true || body.workOrb === null) delete state.prefs.workOrb
+      else throw invalid('Work orb must be on or off')
+    }
+    if (body.workMetrics !== undefined) {
+      if (body.workMetrics === false) state.prefs.workMetrics = false
+      else if (body.workMetrics === true || body.workMetrics === null) delete state.prefs.workMetrics
+      else throw invalid('Work metrics must be on or off')
+    }
+    if (body.orbSpeed !== undefined) {
+      if (body.orbSpeed === null || body.orbSpeed === 1) delete state.prefs.orbSpeed
+      else if ([0.5, 0.75, 1.5, 2].includes(body.orbSpeed)) state.prefs.orbSpeed = body.orbSpeed
+      else throw invalid('Orb speed must be 0.5, 0.75, 1, 1.5 or 2')
+    }
+    if (body.loadingStyle !== undefined) {
+      if (body.loadingStyle === null || body.loadingStyle === 'shaping') delete state.prefs.loadingStyle
+      else if (['breathing', 'waiting'].includes(body.loadingStyle)) state.prefs.loadingStyle = body.loadingStyle
+      else throw invalid('Loading style must be shaping, breathing or waiting')
+    }
+    if (body.subagentStyle !== undefined) {
+      if (body.subagentStyle === null || body.subagentStyle === 'weaving') delete state.prefs.subagentStyle
+      else if (['connecting', 'solving'].includes(body.subagentStyle)) state.prefs.subagentStyle = body.subagentStyle
+      else throw invalid('Subagent style must be weaving, connecting or solving')
+    }
+    if (body.glass !== undefined) {
+      if (body.glass === null || body.glass === 'frosted') delete state.prefs.glass
+      else if (body.glass === 'solid' || body.glass === 'clear') state.prefs.glass = body.glass
+      else throw invalid('Glass must be solid, frosted or clear')
+    }
     if (body.layout !== undefined) {
       if (body.layout === null || body.layout === 'bubble') delete state.prefs.layout
       else if (body.layout === 'flat') state.prefs.layout = body.layout

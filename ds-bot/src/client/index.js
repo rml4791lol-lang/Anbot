@@ -507,12 +507,17 @@ export function apply(ctx) {
       const effects = effectsOf(prefs)
       const width = widthOf(prefs)
       const flatWidth = flatWidthOf(prefs)
-      const next = `${id}|${accent ?? ''}|${motion}|${layout}|${effects}|${width}|${flatWidth}|${registry.getSnapshot()}`
+      const work = prefs.workStatus === 'compact' ? 'compact' : 'full'
+      const glass = prefs.glass === 'solid' || prefs.glass === 'clear' ? prefs.glass : 'frosted'
+      const next = `${id}|${accent ?? ''}|${motion}|${layout}|${effects}|${width}|${flatWidth}|${work}|${glass}|${registry.getSnapshot()}`
       if (next === key) return
       key = next
       if (document.body.dataset.btMotion !== motion) document.body.dataset.btMotion = motion
       if (document.body.dataset.btLayout !== layout) document.body.dataset.btLayout = layout
       if (document.body.dataset.btEffects !== effects) document.body.dataset.btEffects = effects
+      if (document.body.dataset.btWork !== work) document.body.dataset.btWork = work
+      if (glass === 'frosted') delete document.body.dataset.btGlass
+      else if (document.body.dataset.btGlass !== glass) document.body.dataset.btGlass = glass
       if (WINDOWS && document.body.dataset.btOs !== 'windows') document.body.dataset.btOs = 'windows'
       const msgW = String(width / 100)
       if (document.body.style.getPropertyValue('--bt-msg-w') !== msgW) document.body.style.setProperty('--bt-msg-w', msgW)
@@ -525,7 +530,7 @@ export function apply(ctx) {
       releaseTokens = ctx.theme.overrideTokens('ds-bot', shellTokens(themes[id]))
       if (typeof release === 'function') release()
       if (snapshot.ready) {
-        try { localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: prefs.theme, accent: prefs.accent, motion: prefs.motion, layout: prefs.layout, effects: prefs.effects, width: prefs.width, flatWidth: prefs.flatWidth, thinking: prefs.thinking, defaultBotModel: prefs.defaultBotModel, enterToSend: prefs.enterToSend })) } catch { /* storage unavailable */ }
+        try { localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: prefs.theme, accent: prefs.accent, motion: prefs.motion, layout: prefs.layout, effects: prefs.effects, width: prefs.width, flatWidth: prefs.flatWidth, thinking: prefs.thinking, defaultBotModel: prefs.defaultBotModel, enterToSend: prefs.enterToSend, workStatus: prefs.workStatus, workOrb: prefs.workOrb, workMetrics: prefs.workMetrics, orbSpeed: prefs.orbSpeed, loadingStyle: prefs.loadingStyle, subagentStyle: prefs.subagentStyle, glass: prefs.glass })) } catch { /* storage unavailable */ }
       }
     }
     render()
@@ -544,6 +549,8 @@ export function apply(ctx) {
         delete document.body.dataset.btMotion
         delete document.body.dataset.btLayout
         delete document.body.dataset.btEffects
+        delete document.body.dataset.btWork
+        delete document.body.dataset.btGlass
         delete document.body.dataset.btOs
         document.body.style.removeProperty('--bt-msg-w')
         document.body.style.removeProperty('--bt-flat-w')

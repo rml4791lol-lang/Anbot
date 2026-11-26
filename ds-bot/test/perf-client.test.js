@@ -113,6 +113,12 @@ async function loadClientModule(entry, extraGlobals = {}, reactOverrides = {}) {
   }
   const platform = {
     react,
+    'react/jsx-runtime': {
+      Fragment: 'fragment',
+      jsx: (type, props) => ({ type, props: props ?? {}, children: Array.isArray(props?.children) ? props.children : props?.children === undefined ? [] : [props.children] }),
+      jsxs: (type, props) => ({ type, props: props ?? {}, children: Array.isArray(props?.children) ? props.children : props?.children === undefined ? [] : [props.children] }),
+      jsxDEV: (type, props) => ({ type, props: props ?? {}, children: Array.isArray(props?.children) ? props.children : props?.children === undefined ? [] : [props.children] }),
+    },
     'react-dom': { createPortal: node => node },
     '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: () => null },
   }

@@ -26,6 +26,9 @@ export async function bundleClient() {
     platform: 'browser',
     target: 'es2022',
     external: PLATFORM_MODULES,
+    // @firexcore/agent-orbs is compiled with the automatic JSX runtime. The
+    // shell only seeds `react`, so point the generated runtime at our shim.
+    alias: { 'react/jsx-runtime': join(PLUGIN, 'src/client/jsx-runtime.js'), 'react/jsx-dev-runtime': join(PLUGIN, 'src/client/jsx-runtime.js') },
     // Every source declaration ships, used or not, as in the hand-written bundle.
     treeShaking: false,
     // Readable for debugging in the browser: no minification, and Chinese text stays text.
