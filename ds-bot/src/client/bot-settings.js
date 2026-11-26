@@ -1,6 +1,5 @@
-import { createElement as h, Fragment, useCallback, useEffect, useRef, useState } from 'react'
-import { paintCss } from './inks.js'
-import { CHARACTERS, PICKER_SHAPES, PICKER_COLUMNS, CHARACTER_COLORS, SHAPES, IMAGE_SHAPES, hasShape, shapeOf, bodyOf, maskBox, holes, nextMarkSerial } from './characters.js'
+import { createElement as h, useCallback, useEffect, useRef, useState } from 'react'
+import { PICKER_SHAPES, PICKER_COLUMNS, hasShape, shapeOf, bodyOf, maskBox, holes, nextMarkSerial } from './characters.js'
 import { isMainOf } from './sources.js'
 import { PencilIcon, ChevronRightIcon } from './icons.js'
 import { lookOf, BotMark } from './mark.js'
@@ -17,8 +16,6 @@ import { SKILL_SHORTLIST_MAX, skillPurpose } from './bot-draft.js'
 import { SPRING_SHAPE, SPRING_TAP, spring, useGlide, useLinger } from './motion.js'
 import { t } from './i18n.js'
 import { ApprovalSettings } from './approval-settings.js'
-
-const capitalize = word => word[0].toUpperCase() + word.slice(1)
 
 // Settings save on blur or Enter, with no Save button; Escape puts the
 // saved value back. A required field never saves empty. Where the field sits in a page
@@ -134,22 +131,15 @@ function ShapeRing({ shape, size }) {
   return h('svg', { className: 'bt-ring', viewBox: `0 0 ${def.size} ${def.size}`, 'aria-hidden': true, dangerouslySetInnerHTML: { __html: markup } })
 }
 
-// Every character shape, six to a row, then the color swatches.
-export function CharacterGrid({ look, hasPhoto = false, onShape, onColor }) {
-  const shapes = [...PICKER_SHAPES, ...Object.keys(SHAPES).filter(id => !Object.hasOwn(CHARACTERS, id) && !IMAGE_SHAPES.has(id))]
-  if (!shapes.includes(look.shape)) shapes.push(look.shape)
-  const showColors = shapeOf(look.shape).kind !== 'image'
+// The fifteen bitmap presets in a simple grid; one click switches the Bot. These
+// slots are whole-frame webp images, so there is no color row.
+export function CharacterGrid({ look, hasPhoto = false, onShape }) {
   const rows = []
-  for (let index = 0; index < shapes.length; index += PICKER_COLUMNS) rows.push(shapes.slice(index, index + PICKER_COLUMNS))
-  return h(Fragment, null,
-    h('div', { className: 'bt-shapes', role: 'group', 'aria-label': t('Character shape') }, rows.map((row, index) => h('div', { key: index, className: 'bt-shape-row' }, row.map(id => h('button', {
-      key: id, type: 'button', className: 'bt-shape', 'aria-label': t(shapeOf(id).label), title: t(shapeOf(id).label), 'aria-pressed': !hasPhoto && look.shape === id,
-      onClick: () => onShape(id),
-    }, h(ShapeRing, { shape: id, size: 36 }), h(BotMark, { look: { shape: id, color: look.color }, size: 36 })))))),
-    showColors ? h('div', { className: 'bt-colors', role: 'group', 'aria-label': t('Character color') }, CHARACTER_COLORS.map(color => h('button', {
-      key: color, type: 'button', className: 'bt-color', 'aria-label': t(capitalize(color)), title: t(capitalize(color)), 'aria-pressed': look.color === color,
-      onClick: () => onColor(color),
-    }, h('span', { style: { background: paintCss(color) } })))) : null)
+  for (let index = 0; index < PICKER_SHAPES.length; index += PICKER_COLUMNS) rows.push(PICKER_SHAPES.slice(index, index + PICKER_COLUMNS))
+  return h('div', { className: 'bt-shapes', role: 'group', 'aria-label': t('Character shape') }, rows.map((row, index) => h('div', { key: index, className: 'bt-shape-row' }, row.map(id => h('button', {
+    key: id, type: 'button', className: 'bt-shape', 'aria-label': t(shapeOf(id).label), title: t(shapeOf(id).label), 'aria-pressed': !hasPhoto && look.shape === id,
+    onClick: () => onShape(id),
+  }, h(ShapeRing, { shape: id, size: 36 }), h(BotMark, { look: { shape: id, color: look.color }, size: 36 }))))))
 }
 
 // The avatar editor: the Bot tab picks a character (every click saves), the
@@ -203,7 +193,6 @@ export function AvatarEditor({ bot, room, actions, run, onClose, leaving = false
     tab === 'bot' ? h(CharacterGrid, {
       look, hasPhoto,
       onShape: shape => run(actions.updateBot(bot.id, { avatar: { shape } })),
-      onColor: color => run(actions.updateBot(bot.id, { color })),
     }) : null,
     tab === 'upload' ? h('div', {
       className: 'bt-dropzone', 'data-over': over || undefined,
@@ -465,6 +454,6 @@ label.bt-bs-row{cursor:text}
 .bt-switch[aria-checked=true] .bt-switch-knob{transform:translateX(16px)}
 .bt-switch:active:not(:disabled) .bt-switch-knob{width:21px}
 .bt-switch[aria-checked=true]:active:not(:disabled) .bt-switch-knob{transform:translateX(11px)}
-.bt-avedit :is(.bt-shapes,.bt-colors,.bt-dropzone){animation:bt-veil-in .18s ease-out}
-@media (prefers-reduced-motion:reduce){.bt-switch,.bt-switch-knob{transition:none}.bt-avedit :is(.bt-shapes,.bt-colors,.bt-dropzone){animation:none}}
+.bt-avedit :is(.bt-shapes,.bt-dropzone){animation:bt-veil-in .18s ease-out}
+@media (prefers-reduced-motion:reduce){.bt-switch,.bt-switch-knob{transition:none}.bt-avedit :is(.bt-shapes,.bt-dropzone){animation:none}}
 `

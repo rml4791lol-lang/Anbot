@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { DEFAULT_COLORS, DEFAULT_SHAPES, MAIN_LOOK, defaultColor, defaultShape, lookOf } from '../src/client/characters.js'
+import { DEFAULT_COLORS, DEFAULT_SHAPES, FALLBACK_SHAPE, MAIN_LOOK, PICKER_SHAPES, defaultColor, defaultShape, lookOf, resolveShape } from '../src/client/characters.js'
+import { ANBOT_MARKS } from '../src/client/marks/anbot-assets.js'
 import { indexRoster } from '../src/client/sources.js'
 
 const ids = Array.from({ length: 3000 }, (_, index) => `session-${index.toString(16).padStart(8, '0')}-look`)
@@ -27,6 +28,36 @@ test('the whale is only a stored look: the browser gives no Bot a look by its pl
   const photo = lookOf({ id: 'chief', avatar: { image: 'data:image/png;base64,AA==' } })
   assert.equal(photo.image, 'data:image/png;base64,AA==')
   assert.equal(photo.shape, defaultShape('chief'))
+})
+
+test('the picker lists the fifteen Anbot presets, girl first, with no vendor slots', () => {
+  assert.deepEqual(PICKER_SHAPES, [
+    'anbot-girl', 'ds-headphone', 'ds-glasses', 'ds-scarf', 'ds-nightcap',
+    'ds-overalls', 'ds-chef', 'ds-wizard', 'ds-astro', 'ds-detective',
+    'ds-painter', 'ds-gardener', 'ds-barista', 'ds-skater', 'ds-raincoat',
+  ])
+  assert.equal(Object.keys(ANBOT_MARKS).length, 15)
+  assert.deepEqual(Object.keys(ANBOT_MARKS), PICKER_SHAPES)
+  for (const slot of Object.values(ANBOT_MARKS)) assert.equal(slot.closed, null)
+  for (const retired of ['gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'anbot']) {
+    assert.ok(!PICKER_SHAPES.includes(retired), retired)
+    assert.ok(!Object.hasOwn(ANBOT_MARKS, retired), retired)
+  }
+})
+
+test('default and fallback look resolve to the girl preset', () => {
+  assert.equal(FALLBACK_SHAPE, 'anbot-girl')
+  assert.equal(MAIN_LOOK.shape, 'anbot-girl')
+  assert.equal(resolveShape(undefined), 'anbot-girl')
+  assert.equal(resolveShape(null), 'anbot-girl')
+})
+
+test('retired vendor and vector shapes remap to one of the current presets', () => {
+  for (const legacy of ['anbot', 'gpt', 'qwen', 'kimi', 'claude', 'gemini', 'glm', 'whale', 'star', 'moon', 'wave', 'squircle', 'zed', 'hex']) {
+    const resolved = resolveShape(legacy, 'writer')
+    assert.ok(PICKER_SHAPES.includes(resolved), `${legacy} -> ${resolved}`)
+  }
+  assert.equal(resolveShape('anbot'), 'anbot-girl')
 })
 
 test('Bot settings is the only settings entry; nothing is called Team settings', () => {

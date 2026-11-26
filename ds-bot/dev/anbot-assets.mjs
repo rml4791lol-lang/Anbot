@@ -3,13 +3,13 @@
 //   node dev/anbot-assets.mjs        writes src/client/marks/anbot-assets.js
 //
 // Frame pipeline:
-//   source cutout PNG (anbot-whale.png, 1536x1536 RGBA)
-//     -> dev/anbot-render-mark.py  (contain with uniform margin, LANCZOS)
-//     -> assets/marks/<slot>-160.webp  (bundled) and anbot-320.webp (retina spare)
+//   source cutout webp (assets/marks/<slot>-512.webp, 512x512 RGBA)
+//     -> assets/marks/<slot>-160.webp  (bundled) and <slot>-512.webp (retina spare)
 //
-// Only the 160px open/closed frames are inlined here; the 320px frame is kept on
-// disk for future 2x retina avatars and is not bundled. The generated module is
-// committed, like characters.js.
+// Only the 160px open frame is inlined here; the 512px frame is kept on disk for
+// future 2x retina avatars and is not bundled. These slots ship no blink frame,
+// so `closed` is null for every one. The generated module is committed, like
+// characters.js.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,15 +18,23 @@ const PLUGIN = dirname(dirname(fileURLToPath(import.meta.url)))
 const ASSETS = join(PLUGIN, 'assets', 'marks')
 const OUT = join(PLUGIN, 'src', 'client', 'marks', 'anbot-assets.js')
 
-// Picker order matches PICKER_SHAPES in characters.js; anbot is the main mark only.
+// Picker order matches PICKER_SHAPES in characters.js; anbot-girl is the default.
 const SLOTS = [
-  ['gpt', 'Gpt'],
-  ['qwen', 'Qwen'],
-  ['kimi', 'Kimi'],
-  ['claude', 'Claude'],
-  ['gemini', 'Gemini'],
-  ['glm', 'Glm'],
-  ['anbot', 'Anbot'],
+  ['anbot-girl', 'Girl'],
+  ['ds-headphone', 'Headphones'],
+  ['ds-glasses', 'Glasses'],
+  ['ds-scarf', 'Scarf'],
+  ['ds-nightcap', 'Nightcap'],
+  ['ds-overalls', 'Overalls'],
+  ['ds-chef', 'Chef'],
+  ['ds-wizard', 'Wizard'],
+  ['ds-astro', 'Astro'],
+  ['ds-detective', 'Detective'],
+  ['ds-painter', 'Painter'],
+  ['ds-gardener', 'Gardener'],
+  ['ds-barista', 'Barista'],
+  ['ds-skater', 'Skater'],
+  ['ds-raincoat', 'Raincoat'],
 ]
 
 const dataUrl = file => {
@@ -35,18 +43,15 @@ const dataUrl = file => {
 }
 
 const entries = SLOTS.map(([id, label]) => {
-  const open = dataUrl(`${id === 'anbot' ? 'anbot-160' : `${id}-160`}.webp`)
-  const closedFile = `${id}-160-closed.webp`
-  let closed = null
-  try { closed = dataUrl(closedFile) } catch { closed = null }
-  return [id, { label, open, closed }]
+  const open = dataUrl(`${id}-160.webp`)
+  return [id, { label, open, closed: null }]
 })
 
 const body = `// Generated from assets/marks by \`node dev/anbot-assets.mjs\`. Do not edit by hand.
-// Built-in bitmap marks: 160px open/closed webp frames inlined as data URLs.
-// \`closed\` is null when the slot ships no blink frame (the main mark).
+// Built-in bitmap marks: 160px open webp frames inlined as data URLs.
+// \`closed\` is null: these slots ship no blink frame.
 export const ANBOT_MARKS = {
-${entries.map(([id, slot]) => `  ${id}: { label: ${JSON.stringify(slot.label)}, open: ${JSON.stringify(slot.open)}, closed: ${slot.closed ? JSON.stringify(slot.closed) : 'null'} },`).join('\n')}
+${entries.map(([id, slot]) => `  ${JSON.stringify(id)}: { label: ${JSON.stringify(slot.label)}, open: ${JSON.stringify(slot.open)}, closed: null },`).join('\n')}
 }
 `
 

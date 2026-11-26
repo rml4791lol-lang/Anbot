@@ -172,7 +172,6 @@ export function CreateBot({ roster, actions, start, brief = '', onBack, canGoBac
       h(CharacterGrid, {
         look, hasPhoto: Boolean(image),
         onShape: (shape) => { setImage(null); setOwnLook(true); setLook(current => ({ ...current, shape })) },
-        onColor: (color) => { setImage(null); setOwnLook(true); setLook(current => ({ ...current, color })) },
       }),
       h('div', { className: 'bt-actions bt-create-lookbar' },
         h('button', { type: 'button', className: 'bt-soft bt-soft-sm', onClick: () => { setImage(null); setOwnLook(true); setLook(current => randomLook(current)) } }, t('Shuffle')),
