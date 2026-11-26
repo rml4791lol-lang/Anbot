@@ -106,14 +106,19 @@ test('a Bot retries the malformed stream and completes on the next response', as
   assert.equal(result.events.findLast(event => event.type === 'turn/end').data.reason.kind, 'completed')
 })
 
+// The provider library names a stop it does not map either "Unhandled stop reason: X" or
+// "Provider stopped with: X", depending on the build resolved for dev/harness, which has no
+// lockfile of its own. The test is about the retry, so both names are accepted.
 for (const [finishReason, message] of [
-  ['MALFORMED_FUNCTION_CALL', 'Provider stopped with: MALFORMED_FUNCTION_CALL'],
-  ['UNEXPECTED_TOOL_CALL', 'Provider stopped with: UNEXPECTED_TOOL_CALL'],
-  ['MALFORMED_RESPONSE', 'Unhandled stop reason: MALFORMED_RESPONSE'],
+  ['MALFORMED_FUNCTION_CALL', /^(?:Unhandled stop reason|Provider stopped with): MALFORMED_FUNCTION_CALL$/u],
+  ['UNEXPECTED_TOOL_CALL', /^(?:Unhandled stop reason|Provider stopped with): UNEXPECTED_TOOL_CALL$/u],
+  ['MALFORMED_RESPONSE', /^(?:Unhandled stop reason|Provider stopped with): MALFORMED_RESPONSE$/u],
 ]) {
   test(`a Bot retries a Gemini ${finishReason} stop and completes on the next response`, async t => {
     const unrecovered = await boot(t, false, gemini(finishReason))
-    assert.deepEqual(unrecovered.failures, [{ code: 'PI_AI_ERROR', message }])
+    assert.equal(unrecovered.failures.length, 1)
+    assert.equal(unrecovered.failures[0].code, 'PI_AI_ERROR')
+    assert.match(unrecovered.failures[0].message, message)
     const result = await boot(t, true, gemini(finishReason))
     assert.equal(result.attempts, 2)
     assert.equal(result.events.findLast(event => event.type === 'turn/end').data.reason.kind, 'completed')
