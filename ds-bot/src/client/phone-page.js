@@ -142,7 +142,7 @@ export function PhonePage({ roster, actions, Section, Row }) {
       h(Row, { label: t('Server'), hint: serverHost(phone.server), tour: 'phone-server' },
         h('button', { type: 'button', className: 'bt-soft bt-soft-sm', onClick: () => setEditingServer(open => !open) }, editingServer ? t('Hide') : t('Edit'))),
       editingServer ? h('div', { className: 'bt-set-row bt-phone-server' },
-        h('input', { className: 'bt-input', value: server, placeholder: 'wss://relay.dsbot.app/v1/link', spellCheck: false, 'aria-label': t('Server'), onChange: event => setServer(event.target.value), onKeyDown: event => { if (event.key === 'Enter') saveServer() } }),
+        h('input', { className: 'bt-input', value: server, placeholder: 'wss://relay.an520.fun/v1/link', spellCheck: false, 'aria-label': t('Server'), onChange: event => setServer(event.target.value), onKeyDown: event => { if (event.key === 'Enter') saveServer() } }),
         h('button', { type: 'button', className: 'bt-soft bt-soft-sm', disabled: busy || server.trim() === phone.server, onClick: saveServer }, t('Save'))) : null),
     error ? h('div', { className: 'bt-connector-error bt-phone-error', role: 'alert' }, error) : null,
     h(Section, { title: t('Pair a phone'), tour: 'phone-pair' }, phone.pairing
