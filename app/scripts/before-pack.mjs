@@ -45,6 +45,17 @@ export function officeRuntimeRequest(context) {
 }
 
 /**
+ * npm is npm.cmd on Windows, which a shell-less spawn cannot find. Prefer the entry script npm put
+ * in the environment and run it with the same Node; fall back to the plain command elsewhere.
+ * @returns {{ command: string, lead: string[] }}
+ */
+function npmInvocation() {
+  const cli = process.env.npm_execpath
+  if (cli !== undefined && cli.endsWith('.js')) return { command: process.execPath, lead: [cli] }
+  return { command: process.platform === 'win32' ? 'npm.cmd' : 'npm', lead: [] }
+}
+
+/**
  * Refresh the installed file dependency from the package's published file list. npm does not
  * recopy a `file:../ds-bot` dependency when only its source changes, which would silently ship
  * an older plugin than the one tested in this checkout.
@@ -55,8 +66,9 @@ export async function syncDsBotPackage({ appDir = process.cwd(), run = execFileS
   const source = join(appDir, '..', 'ds-bot')
   const destination = join(appDir, 'node_modules', 'ds-bot')
   const staging = mkdtempSync(join(tmpdir(), 'ds-bot-package-'))
+  const npm = npmInvocation()
   try {
-    const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', staging], {
+    const packed = JSON.parse(run(npm.command, [...npm.lead, 'pack', '--json', '--pack-destination', staging], {
       cwd: source,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'inherit'],
