@@ -3,10 +3,9 @@ name: Release
 # Builds Anbot releases from rml4791lol-lang/Anbot. The plugin tarball is attached
 # to GitHub Releases without publishing to npm. Desktop and Android keep their own checks.
 #
-# The repository is private. GitHub Release assets and the releases API cannot be used as an
-# anonymous update feed. This workflow stores no updater credential; installed apps report the
-# private channel as a failed check unless a verifiable feed is supplied through
-# ANBOT_UPDATE_URL (or the compatible DS_BOT_UPDATE_URL).
+# The repository is public. GitHub Release assets and the releases API can be read anonymously,
+# so in-app update checks read them directly. ANBOT_UPDATE_URL (or the compatible
+# DS_BOT_UPDATE_URL) is only used as a mirror or a self-hosted feed.
 #
 # The release tag must be v<version in app/package.json>, and app/package.json must match the
 # bundled ds-bot plugin version. Publish with "Set as latest release" off. The final job marks it
@@ -176,7 +175,35 @@ jobs:
         with:
           path: app/build/runtime-cache
           key: runtime-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/scripts/primary-runtime.lock.json') }}
+      # The installer is signed by electron-builder itself, before the .blockmap and latest.yml
+      # are written, so the update metadata hashes the signed bytes. The PFX comes from the
+      # WINDOWS_CERTIFICATE_BASE64 / WINDOWS_CERTIFICATE_PASSWORD secrets; neither the certificate
+      # nor the password is printed to the logs.
+      - name: Prepare the Windows signing certificate
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -n "$WINDOWS_CERTIFICATE_BASE64" ] && [ -n "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
+            printf '%s' "$WINDOWS_CERTIFICATE_BASE64" | base64 -d > "$RUNNER_TEMP/anbot-win-cert.pfx"
+            echo "WIN_CSC_LINK=$RUNNER_TEMP/anbot-win-cert.pfx" >> "$GITHUB_ENV"
+            echo "WIN_CSC_KEY_PASSWORD=$WINDOWS_CERTIFICATE_PASSWORD" >> "$GITHUB_ENV"
+            echo "SIGNING_EXPECTED=true" >> "$GITHUB_ENV"
+          elif [ "$GITHUB_EVENT_NAME" = release ]; then
+            if [ -z "$WINDOWS_CERTIFICATE_BASE64" ]; then
+              echo "::error::The WINDOWS_CERTIFICATE_BASE64 secret is missing, so the Windows installer cannot be signed for release."
+            fi
+            if [ -z "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
+              echo "::error::The WINDOWS_CERTIFICATE_PASSWORD secret is missing, so the PFX cannot be unlocked for release."
+            fi
+            exit 1
+          else
+            echo "::warning::No Windows signing certificate: this workflow_dispatch run produces an UNSIGNED installer; the signature check below is skipped."
+          fi
       - run: npm run dist
+      - name: Remove the decoded certificate
+        if: always()
+        run: rm -f "$RUNNER_TEMP/anbot-win-cert.pfx"
       - name: Save Electron and the build tools
         if: steps.downloads.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -187,6 +214,40 @@ jobs:
           key: ${{ steps.downloads.outputs.cache-primary-key }}
       - name: Check the packaged app
         run: node scripts/check-packed.mjs
+      # Get-AuthenticodeSignature reads the signature through PowerShell alone, no signtool path
+      # needed. A self-signed cert chains to no trusted CA on the runner, so Status=Valid is not
+      # required; but an unsigned installer, an empty signer, or a missing RFC 3161 timestamp fails.
+      - name: Verify the installer Authenticode signature
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path "dist-pack" -Filter "Anbot-*-win-x64.exe" | Select-Object -First 1
+          if ($null -eq $installer) {
+            Write-Error "No Windows installer (Anbot-*-win-x64.exe) found in dist-pack."
+            exit 1
+          }
+          $sig = Get-AuthenticodeSignature $installer.FullName
+          Write-Host "Installer: $($installer.Name)"
+          Write-Host "Signature Status: $($sig.Status)"
+          Write-Host "Signature StatusMessage: $($sig.StatusMessage)"
+          Write-Host "Signer Subject: $($sig.SignerCertificate.Subject)"
+          Write-Host "TimeStamperCertificate: $($sig.TimeStamperCertificate.Subject)"
+          if ("$env:SIGNING_EXPECTED" -ne "true") {
+            Write-Warning "Unsigned dry-run build; Authenticode signature and timestamp checks are skipped."
+            exit 0
+          }
+          if ($sig.Status.ToString() -eq "NotSigned") {
+            Write-Error "The installer has no Authenticode signature."
+            exit 1
+          }
+          if ($null -eq $sig.SignerCertificate -or [string]::IsNullOrWhiteSpace($sig.SignerCertificate.Subject)) {
+            Write-Error "The installer signature has an empty signer subject."
+            exit 1
+          }
+          if ($null -eq $sig.TimeStamperCertificate) {
+            Write-Error "The installer signature has no RFC 3161 timestamp."
+            exit 1
+          }
+          Write-Host "Note: a self-signed certificate is trusted only on the machine that issued it; elsewhere Windows still shows an unknown publisher. Status=Valid is not required here because the runner does not chain to the issuing CA (it may report UnknownError or NotTrusted)."
       # Upload as a workflow artifact so nothing lands on the public GitHub Release until
       # every platform build has succeeded (downloads attaches everything at once).
       - name: Upload installer artifact

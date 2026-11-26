@@ -4,6 +4,12 @@ All notable changes to DS Bot are listed here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-11-27
+
+### Changed
+
+- **Public release**: first public release; the version number restarts at 0.0.1. The earlier 0.2.x–0.3.x numbers were internal testing builds and are not part of the public version history.
+
 ## [0.3.10] - 2026-11-22
 
 ### Added

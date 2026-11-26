@@ -174,7 +174,7 @@ describe('watchReleases', () => {
 
   test('logs failed requests, invalid JSON, and non-HTTPS release pages without throwing', async (t) => {
     const cases = [
-      [async () => releaseResponse({}, 403), 'Anbot: update check failed: private release channel requires an explicit feed (HTTP 403)'],
+      [async () => releaseResponse({}, 403), 'Anbot: update check failed: release feed returned HTTP 403 (rate-limited or the address is unreachable)'],
       [async () => { throw new Error('offline') }, 'Anbot: update check failed: offline'],
       [async () => ({ ok: true, status: 200, json: async () => { throw new Error('bad JSON') } }), 'Anbot: update check failed: bad JSON'],
       [async () => releaseResponse([release('0.1.9', { page: 'http://github.com/rml4791lol-lang/Anbot' })]), 'Anbot: update check failed: release page URL is not HTTPS'],

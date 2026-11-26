@@ -101,10 +101,11 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
           headers: { accept: 'application/vnd.github+json', 'user-agent': `${PRODUCT_NAME}/${current}` },
         })
         if (!response.ok) {
-          const privateChannel = feed === RELEASES_URL && [401, 403, 404].includes(response.status)
-          const error = privateChannel
-            ? `private release channel requires an explicit feed (HTTP ${String(response.status)})`
-            : `HTTP ${String(response.status)}`
+          const status = String(response.status)
+          const detailed = feed === RELEASES_URL && [401, 403, 404].includes(response.status)
+          const error = detailed
+            ? `release feed returned HTTP ${status} (rate-limited or the address is unreachable)`
+            : `HTTP ${status}`
           log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
           set({ phase: 'failed', error })
           return null
