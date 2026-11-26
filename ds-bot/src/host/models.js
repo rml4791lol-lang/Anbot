@@ -13,17 +13,17 @@ const ACCOUNT_RECORD = 'deepseek-account-platform/default'
 const TRANSIENT_LLM_CODES = new Set(['TRANSPORT', 'TIMEOUT', 'MALFORMED_RESPONSE'])
 const MALFORMED_RETRIES = 2
 // pi-ai's Google adapters end a Gemini stream that stops on a malformed tool call or response
-// with exactly one of these errors, which dsh-llm-pi-ai classifies as PI_AI_ERROR. It is the
-// same transient failure.
-const GEMINI_MALFORMED = new Set([
-  'Provider stopped with: MALFORMED_FUNCTION_CALL',
-  'Provider stopped with: UNEXPECTED_TOOL_CALL',
-  'Unhandled stop reason: MALFORMED_RESPONSE',
-])
+// with one whole message naming the stop, which dsh-llm-pi-ai classifies as PI_AI_ERROR. The
+// build in use says either "Provider stopped with: X" or "Unhandled stop reason: X", so the
+// reason decides, and the message must be exactly one of those: a provider error that merely
+// quotes a stop in its own text is something else. It is the same transient failure.
+const GEMINI_STOPS = ['MALFORMED_FUNCTION_CALL', 'UNEXPECTED_TOOL_CALL', 'MALFORMED_RESPONSE']
+const GEMINI_MALFORMED = new RegExp(`^(?:Provider stopped with|Unhandled stop reason): (?:${GEMINI_STOPS.join('|')})$`, 'u')
 
 function failureCode(failure) {
   const code = failure?.code
-  return code === 'PI_AI_ERROR' && GEMINI_MALFORMED.has(failure?.message) ? 'MALFORMED_RESPONSE' : code
+  const message = failure?.message
+  return code === 'PI_AI_ERROR' && typeof message === 'string' && GEMINI_MALFORMED.test(message) ? 'MALFORMED_RESPONSE' : code
 }
 
 // dsh-llm-retry already spends the policy's budget on a failure under its own code.
