@@ -314,8 +314,18 @@ test('recovering token access restores plan-usage-off without granting inference
 
 for (const unavailable of [{ isEncryptionAvailable: () => false }, { getSelectedStorageBackend: () => 'basic_text' }]) {
   test('unsupported secure storage performs no filesystem writes or network calls', async () => {
-    const client = await createChatGPTSignIn({ userData: '/unused', safeStorage: { ...safeStorage, ...unavailable }, platform: 'linux',
+    const availability = []
+    const client = await createChatGPTSignIn({ userData: '/unused',
+      safeStorage: { ...safeStorage, ...unavailable,
+        isEncryptionAvailable: (...args) => { availability.push('isEncryptionAvailable'); return unavailable.isEncryptionAvailable?.() ?? true },
+        getSelectedStorageBackend: (...args) => { availability.push('getSelectedStorageBackend'); return unavailable.getSelectedStorageBackend?.() ?? 'gnome_libsecret' } },
+      platform: 'linux',
       fs: new Proxy({}, { get() { assert.fail('filesystem must not be accessed') } }), fetch: () => assert.fail('network must not be accessed') })
+    // Construction and a plain status query stay in memory: the store is not asked about the
+    // backend until an explicit action primes it.
+    assert.deepEqual(client.status(), { state: 'unknown' })
+    assert.deepEqual(availability, [])
+    await client.prime()
     assert.deepEqual(client.status(), { state: 'unsupported' })
     await assert.rejects(client.signIn({ openExternal: () => assert.fail('browser must not open') }), typed('unsupported'))
     await assert.rejects(client.getAccessToken(), typed('unsupported'))
@@ -418,9 +428,10 @@ test('boot construction never reads or decrypts the stored sign-in record', asyn
   await store.write(sampleRecord)
   const reads = []
   const decrypts = []
+  const availability = []
   const spyingStorage = {
-    isEncryptionAvailable: () => true,
-    getSelectedStorageBackend: () => 'gnome_libsecret',
+    isEncryptionAvailable: () => { availability.push('isEncryptionAvailable'); return true },
+    getSelectedStorageBackend: () => { availability.push('getSelectedStorageBackend'); return 'gnome_libsecret' },
     encryptString: text => safeStorage.encryptString(text),
     decryptString: buffer => { decrypts.push(buffer); return safeStorage.decryptString(buffer) },
   }
@@ -428,8 +439,9 @@ test('boot construction never reads or decrypts the stored sign-in record', asyn
 
   const client = await createChatGPTSignIn({ userData, safeStorage: spyingStorage, fs: spyingFs,
     platform: 'darwin', fetch: () => assert.fail('network must not be touched at boot') })
-  // Plain status queries at boot must stay pure in-memory: no read, no decrypt.
+  // Plain status queries at boot must stay pure in-memory: no backend probe, no read, no decrypt.
   for (let i = 0; i < 3; i++) assert.equal(client.status().state, 'unknown')
+  assert.deepEqual(availability, [], 'the storage backend is not probed at boot')
   assert.equal(reads.filter(file => file.endsWith('chatgpt-signin.enc')).length, 0, 'the record file is not read at boot')
   assert.equal(decrypts.length, 0, 'the record is not decrypted at boot')
 
@@ -437,15 +449,17 @@ test('boot construction never reads or decrypts the stored sign-in record', asyn
   await client.prime()
   assert.equal(client.status().state, 'connected')
   assert.equal(decrypts.length, 1, 'the record is decrypted once on first use')
+  assert.ok(availability.includes('isEncryptionAvailable'), 'the backend is probed once the record loads')
 })
 
 test('a denied or failing secure storage degrades without throwing at boot', async t => {
   const userData = await fs.mkdtemp(join(tmpdir(), 'ds-bot-lazy-denied-'))
   t.after(() => fs.rm(userData, { recursive: true, force: true }))
   await fs.writeFile(join(userData, 'chatgpt-signin.enc'), safeStorage.encryptString(JSON.stringify(sampleRecord)))
+  const availability = []
   const deniedStorage = {
-    isEncryptionAvailable: () => true,
-    getSelectedStorageBackend: () => 'gnome_libsecret',
+    isEncryptionAvailable: () => { availability.push('isEncryptionAvailable'); return true },
+    getSelectedStorageBackend: () => { availability.push('getSelectedStorageBackend'); return 'gnome_libsecret' },
     encryptString: () => { throw new Error('keychain denied') },
     decryptString: () => { throw new Error('keychain denied (-25293)') },
   }
@@ -453,6 +467,7 @@ test('a denied or failing secure storage degrades without throwing at boot', asy
     fetch: () => assert.fail('network must not be touched') })
   // Before the first explicit action the status stays a plain in-memory value, no throw.
   assert.deepEqual(client.status(), { state: 'unknown' })
+  assert.deepEqual(availability, [], 'the backend is not probed before the first explicit action')
   // Construction and the first prime must not reject; the degraded state exposes no account/token.
   await assert.doesNotReject(client.prime())
   assert.equal(client.status().state, 'temporarily-unavailable')
@@ -466,14 +481,16 @@ test('an absent record stays signed-out and touches no decryption key', async t 
   const userData = await fs.mkdtemp(join(tmpdir(), 'ds-bot-lazy-empty-'))
   t.after(() => fs.rm(userData, { recursive: true, force: true }))
   const decrypts = []
+  const availability = []
   const spyingStorage = {
-    isEncryptionAvailable: () => true,
-    getSelectedStorageBackend: () => 'gnome_libsecret',
+    isEncryptionAvailable: () => { availability.push('isEncryptionAvailable'); return true },
+    getSelectedStorageBackend: () => { availability.push('getSelectedStorageBackend'); return 'gnome_libsecret' },
     encryptString: text => safeStorage.encryptString(text),
     decryptString: buffer => { decrypts.push(buffer); return safeStorage.decryptString(buffer) },
   }
   const client = await createChatGPTSignIn({ userData, safeStorage: spyingStorage, platform: 'darwin',
     fetch: () => assert.fail('network must not be touched') })
+  assert.deepEqual(availability, [], 'the backend is not probed at boot')
   await client.prime()
   assert.equal(client.status().state, 'signed-out')
   assert.equal(decrypts.length, 0)

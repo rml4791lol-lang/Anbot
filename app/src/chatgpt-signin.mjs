@@ -25,7 +25,10 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
 }) {
   const store = createChatGPTStore({ userData, safeStorage, fs, platform })
   let record
-  let state = store.supported() ? 'signed-out' : 'unsupported'
+  // Before the first explicit action the state is a plain in-memory value: constructing the
+  // sign-in must not ask the store whether encryption is available, because that call unlocks
+  // the Keychain on macOS.
+  let state = 'unknown'
   let loaded = false
   let loadPromise
   let publish = () => {}
@@ -56,7 +59,8 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
       try { record = await store.read() }
       catch { loaded = true; state = 'temporarily-unavailable'; record = undefined; publish(); return }
       loaded = true
-      if (record) { state = connectionState(); publish() }
+      state = connectionState()
+      if (record) publish()
     })().catch(() => { loaded = true; state = 'temporarily-unavailable'; publish() })
     return loadPromise
   }
@@ -74,10 +78,11 @@ export async function createChatGPTSignIn({ userData, safeStorage, fs, platform,
     const { tokens: _tokens, ...mapping } = record
     await save({ ...mapping, needsSignIn })
   }
-  // Pure in-memory snapshot: reading this must never touch the Keychain. Before the first
-  // explicit action has loaded the record, the state is `unknown` ("not checked yet").
+  // Pure in-memory snapshot: reading this must never touch the Keychain, so it does not ask the
+  // store whether encryption is available. Before the first explicit action has loaded the
+  // record, the state is `unknown` ("not checked yet"); after loading, `state` already reflects
+  // an unsupported or degraded store.
   const status = () => {
-    if (!store.supported()) return { state: 'unsupported' }
     if (!loaded) return { state: 'unknown' }
     return {
       state,

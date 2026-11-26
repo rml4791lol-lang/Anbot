@@ -16,6 +16,7 @@ const port = () => {
 let gate
 let open
 let lastOptions
+let latest
 
 export const state = {
   starts: 0,
@@ -40,7 +41,7 @@ export class HostProcess {
   #options
   #messageListeners = new Set()
 
-  constructor(options) { this.#options = options; lastOptions = options }
+  constructor(options) { this.#options = options; lastOptions = options; latest = this }
 
   async start() {
     state.starts += 1
@@ -54,9 +55,15 @@ export class HostProcess {
 
   onMessage(listener) { this.#messageListeners.add(listener); return () => this.#messageListeners.delete(listener) }
 
+  // A test raises a Host message as if the engine had sent it, so the app's Host listeners run.
+  emit(message) { for (const listener of this.#messageListeners) listener(message) }
+
   send() {}
 
   async workActivity() { return state.activity }
 
   async stop() { state.stops += 1 }
 }
+
+/** The Host the app started most recently, or undefined before the first start. */
+export const host = () => latest

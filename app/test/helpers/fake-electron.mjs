@@ -6,7 +6,15 @@ import { mkdirSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-export const safeStorage = { isEncryptionAvailable: () => false }
+// Every safeStorage call is counted: the boot path must stay at zero, so a test fails as soon
+// as a startup code path asks the Keychain anything. Encrypt/decrypt throw if reached at boot.
+export const storageCalls = { isEncryptionAvailable: 0, getSelectedStorageBackend: 0, encryptString: 0, decryptString: 0 }
+export const safeStorage = {
+  isEncryptionAvailable: () => { storageCalls.isEncryptionAvailable += 1; return false },
+  getSelectedStorageBackend: () => { storageCalls.getSelectedStorageBackend += 1; return 'basic_text' },
+  encryptString: () => { storageCalls.encryptString += 1; throw new Error('encryptString must not run at boot') },
+  decryptString: () => { storageCalls.decryptString += 1; throw new Error('decryptString must not run at boot') },
+}
 
 // The data of the app in this process: a folder of its own, so that a test never writes
 // into the data of the user.
