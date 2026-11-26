@@ -8,7 +8,7 @@
 
 它有两种形态：Windows、macOS、Linux 的独立桌面应用，和 DSH 插件；也可以装在 Docker 里。团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
-> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip`、`Anbot-0.0.1-linux-x86_64.AppImage`、`Anbot-0.0.1-linux-amd64.deb` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml`、`latest-linux.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
+> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
 ## Anbot 在 DS Bot 之上加了什么
 
@@ -40,7 +40,7 @@ Anbot 基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 开发，保留了它�
 
 ### 桌面应用（Windows、macOS、Linux）
 
-v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）、Linux AppImage 与 deb，以及 Android APK。不发布 iOS 包。从源码构建：
+v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）与 Android APK。本次发布不含 Linux 安装包，可用下面的步骤从源码构建。不发布 iOS 包。从源码构建：
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -206,7 +206,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 - **协调层**：你对 Main Bot 说一个目标，它自己拆任务、选 Bot、准备工作区、跟踪依赖、汇总验收。派活目前仍要你自己安排。
 - **多 Bot 工作流视图**：一张图看到所有 Bot 的依赖、进度和审批。
 - **Bot 锻造器与自举工程器**：用对话组装新 Bot、让 Anbot 改自己的代码。
-- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证；Linux AppImage 与 deb 未签名。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml`、`latest-linux.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包与 Linux AppImage 走 electron-updater 自动下载安装；macOS 与 Linux deb 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
+- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 Linux 安装包，也不附 `latest-linux.yml`，Linux 目标只从源码构建。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包走 electron-updater 自动下载安装；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
 
 ## 文档与开发
 

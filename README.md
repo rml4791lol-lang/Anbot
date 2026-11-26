@@ -8,7 +8,7 @@ English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/visi
 
 It ships as a desktop app for Windows, macOS and Linux, and as a DSH plugin; it also runs in Docker. Your team, chats, memory, credentials and execution records stay on your own computer.
 
-> The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip`, `Anbot-0.0.1-linux-x86_64.AppImage`, `Anbot-0.0.1-linux-amd64.deb` and `Anbot-0.0.1-android.apk`, plus `latest.yml`, `latest-linux.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
+> The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
 ## What Anbot adds on top of DS Bot
 
@@ -40,7 +40,7 @@ Behind a proxy or registry mirror, set `npm_config_proxy` / `npm_config_https_pr
 
 ### Desktop app (Windows, macOS, Linux)
 
-Prebuilt packages for v0.0.1 are on the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest): a Windows installer, macOS zips (arm64 and x64), a Linux AppImage and a deb, and the Android APK. No iOS package is published. To build from source:
+Prebuilt packages for v0.0.1 are on the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest): a Windows installer, macOS zips (arm64 and x64), and the Android APK. This release has no Linux package; build it from source with the steps below. No iOS package is published. To build from source:
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -206,7 +206,7 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - **Coordination layer**: tell the Main Bot a goal and it splits the work, picks bots, prepares workspaces, tracks dependencies and reports acceptance by itself. For now you arrange the delegation.
 - **Multi-bot workflow view**: one picture of every bot's dependencies, progress and approvals.
 - **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
-- **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized; the Linux AppImage and deb are unsigned. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml`, `latest-linux.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer and the Linux AppImage update through electron-updater; macOS and the Linux deb do not update themselves—after finding a newer release they open the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
+- **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. No Linux package or `latest-linux.yml` is attached in this release, so the Linux targets build from source only. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer updates through electron-updater; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
 
 ## Documentation & development
 

@@ -325,72 +325,6 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-  app-linux:
-    name: Desktop app packages (Linux x64)
-    needs: app-contract
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    defaults:
-      run:
-        shell: bash
-        working-directory: app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - name: Name the download cache
-        id: downloads-key
-        run: echo "key=electron-downloads-${{ runner.os }}-${{ runner.arch }}-$(node -p "const d = require('./package.json').devDependencies; 'electron-' + d.electron + '-builder-' + d['electron-builder']")-${{ hashFiles('app/electron-builder.yml') }}" >> "$GITHUB_OUTPUT"
-      - name: Restore Electron and the build tools
-        id: downloads
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ steps.downloads-key.outputs.key }}
-      - run: npm ci --no-fund --no-audit
-      - run: node scripts/seed-electron-checksums.mjs
-      - name: Cache the locked runtime archives
-        uses: actions/cache@v4
-        with:
-          path: app/build/runtime-cache
-          key: runtime-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/scripts/primary-runtime.lock.json') }}
-      - run: npm run dist
-      - name: Save Electron and the build tools
-        if: steps.downloads.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ steps.downloads.outputs.cache-primary-key }}
-      - name: Check the packaged app
-        # Ubuntu 24.04's AppArmor blocks the unprivileged user namespaces that Chromium's
-        # sandbox needs; the release runner may lift that restriction (it is its own machine).
-        run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          xvfb-run -a node scripts/check-packed.mjs
-      - name: Check the files for the release
-        # Verify every Linux release asset exists before uploading the artifact.
-        run: |
-          version="$(node -p "require('./package.json').version")"
-          ls -l "dist-pack/Anbot-$version-linux-x86_64.AppImage" "dist-pack/Anbot-$version-linux-amd64.deb" dist-pack/latest-linux.yml
-      - name: Upload Linux packages artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Anbot-linux-x64
-          path: |
-            app/dist-pack/Anbot-*-linux-x86_64.AppImage
-            app/dist-pack/Anbot-*-linux-amd64.deb
-            app/dist-pack/latest-linux.yml
-          retention-days: 7
-          if-no-files-found: error
-          compression-level: 0
-
   # The phone app's APK, signed with the upload key in the ANDROID_KEYSTORE_BASE64,
   # ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS secrets. Every later APK must carry
   # the same key, or Android refuses it as an update. A dry run without the secrets
@@ -493,7 +427,7 @@ jobs:
 
   downloads:
     name: Download table, checksums and Latest
-    needs: [checks, app-windows, app-macos, app-linux, app-android]
+    needs: [checks, app-windows, app-macos, app-android]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
