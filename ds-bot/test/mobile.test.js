@@ -1015,7 +1015,10 @@ test('file attachment ranges read each byte once and locate history once', async
   history[sessionId] = [{ seq: 1, type: 'user/message', data: { content: [{ type: 'file', attachment: ref }] } }]
   let pages = 0
   const page = ctx.sessionController.page
-  ctx.sessionController.page = (...args) => { pages++; return page(...args) }
+  // Only the file-download path's own history read counts: a background reader (the
+  // no-op turn backfill, scheduled half a second after install) pages the same Session
+  // at HISTORY_PAGE and on a busy runner lands inside this test.
+  ctx.sessionController.page = (...args) => { if (args[0]?.maxMessages === 500) pages++; return page(...args) }
   const chunks = []
   for await (const part of fileChunks(async (endpoint, payload) => {
     const result = await call(endpoint, payload)
