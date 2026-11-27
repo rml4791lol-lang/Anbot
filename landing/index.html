@@ -1498,7 +1498,7 @@ body{font-size:16px}
         <button class="picker-arrow" id="pickerNext" type="button" aria-label="向后滚动角色">→</button>
         <div class="picker-progress"><i id="pickerProgress"></i></div>
       </div>
-      <div class="picker-foot"><span>WHEEL / ARROWS / TOUCH</span><span class="picker-count" id="pickerPos">01 / 21</span><span>ALL ROLES →</span></div>
+      <div class="picker-foot"><span>WHEEL / ARROWS / TOUCH</span><span class="picker-count" id="pickerPos">VIEW 01 / 21</span><span>ALL ROLES →</span></div>
     </div>
 
     <div class="presets">
@@ -1943,6 +1943,12 @@ body{font-size:16px}
     if(pickerProgress)pickerProgress.style.width=(p*100).toFixed(2)+'%';
     if(pickerPrev)pickerPrev.disabled=picker.scrollLeft<=2;
     if(pickerNext)pickerNext.disabled=picker.scrollLeft>=max-2;
+    var pr=picker.getBoundingClientRect(),first=1;
+    for(var i=0;i<faceBtns.length;i++){
+      var br=faceBtns[i].getBoundingClientRect();
+      if(br.right>=pr.left+8){first=i+1;break}
+    }
+    if(pickerPos)pickerPos.textContent='VIEW '+pad2(first)+' / '+pad2(faceBtns.length);
   }
   function selectBot(btn,fromUser){
     if(!btn||!blFace)return;
@@ -1968,7 +1974,6 @@ body{font-size:16px}
     });
     setState('idle');
     startBlink();
-    if(pickerPos){var idx=faceBtns.indexOf(btn)+1;pickerPos.textContent=pad2(idx)+' / '+pad2(faceBtns.length)}
     if(faceCount)faceCount.textContent=pad2(faceBtns.length);
     if(fromUser)centerPicker(btn);
     updatePickerChrome();
