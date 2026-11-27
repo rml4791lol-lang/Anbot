@@ -409,11 +409,14 @@ test('non-empty inflight: resumeAll protects resumed work while reconciling unre
   const host = startHost(t, { team, inflight, logs })
   await host.rt.load()
   t.mock.timers.tick(3000)
-  for (let i = 0; i < 200; i += 1) {
+  // Recovery writes its reservation to disk before it dispatches, and the orphan
+  // sweep runs after it. A fixed number of microtask turns is not a wait for that
+  // write: on a loaded runner the sweep had not finished when the loop ran out.
+  const deadline = Date.now() + 10_000
+  while (Date.now() < deadline) {
     await flushMicrotasks()
     if (host.rt.state.works['w-orphan'] === undefined && host.agentOf('dm-b').calls.length > 0) break
-    // Recovery writes its reservation to disk before it dispatches; let that write finish.
-    await new Promise(resolve => setImmediate(resolve))
+    await realDelay(10)
   }
 
   assert.ok(host.rt.state.works['w-resumed'] !== undefined, 'resumed in-flight work stays open')
