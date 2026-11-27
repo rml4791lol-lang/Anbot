@@ -10,6 +10,8 @@ It ships as a desktop app for Windows, macOS and Linux, a plugin, and a Docker s
 
 > The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
+> **Practical reference:** [30 task guides](https://rml4791lol-lang.github.io/Anbot/guides/) cover tasks, integrations, comparisons and FAQ; [3,000 scenario pages](https://rml4791lol-lang.github.io/Anbot/playbooks/) cover 100 tasks × 30 team, platform, data, tool and delivery constraints. [About Anbot](https://rml4791lol-lang.github.io/Anbot/about/)
+
 ## Key facts
 
 - **Open source:** Apache 2.0. The app and plugin code are open; presets, skills and the MCP/plugin index are readable and replaceable.
