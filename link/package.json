@@ -1,6 +1,6 @@
 {
   "name": "ds-bot-link",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "Anbot's encrypted link between the phone app and the computer, and its Relay Server.",
   "license": "Apache-2.0",
