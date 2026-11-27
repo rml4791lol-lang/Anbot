@@ -162,7 +162,7 @@ function withAndroidNativeFiles(config) {
       copyFileSync(join(srcDir, file), join(kotlinDest, file))
     }
     copyFileSync(join(srcDir, 'dsbot_update_paths.xml'), join(xmlDest, 'dsbot_update_paths.xml'))
-    copyFileSync(join(srcDir, 'ic_dsbot_notification.xml'), join(drawableDest, 'ic_dsbot_notification.xml'))
+    copyFileSync(join(srcDir, 'ic_dsbot_notification.png'), join(drawableDest, 'ic_dsbot_notification.png'))
     return mod
   }])
 }
