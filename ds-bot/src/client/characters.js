@@ -1,4 +1,5 @@
 import { INKS, GRADIENTS, isHex, inkFill } from './inks.js'
+import { legacyShape } from './legacy-shapes.js'
 import { lruGet, lruSet } from './lru.js'
 import { ANBOT_MARKS } from './marks/anbot-assets.js'
 
@@ -82,41 +83,13 @@ export function defaultShape(id) {
 // A stored shape or color wins; then the id. With no Bot it is the fallback bitmap.
 export const colorOf = bot => (isColor(bot?.color) ? bot.color : bot?.id ? defaultColor(String(bot.id)) : 'black')
 
-// Retired built-in slot → current preset. Old state strings are left on disk; the
-// remap is applied at lookup time only. The previous v1 slot ids (anbot-girl, ds-*)
-// and the older vendor bitmaps (gpt, qwen, kimi, claude, gemini, glm, anbot) plus the
-// vector slots that mapped to them all land on one of the fifteen current presets.
-const LEGACY_REMAP = {
-  'anbot-girl': 'anbot',
-  'ds-headphone': 'headphone',
-  'ds-glasses': 'glasses',
-  'ds-scarf': 'scarf',
-  'ds-nightcap': 'nightcap',
-  'ds-overalls': 'overalls',
-  'ds-chef': 'chef',
-  'ds-wizard': 'wizard',
-  'ds-astro': 'astro',
-  'ds-detective': 'detective',
-  'ds-painter': 'painter',
-  'ds-gardener': 'gardener',
-  'ds-barista': 'barista',
-  'ds-skater': 'skater',
-  'ds-raincoat': 'raincoat',
-  anbot: 'anbot', whale: 'anbot',
-  gpt: 'headphone', hex: 'headphone',
-  qwen: 'glasses', wave: 'glasses',
-  kimi: 'scarf', moon: 'scarf',
-  claude: 'nightcap', squircle: 'nightcap',
-  gemini: 'overalls', star: 'overalls',
-  glm: 'chef', zed: 'chef',
-}
-
-// Resolve a stored avatar.shape to a current slot. Retired legacy vectors are not
-// rendered: they fall back to a deterministic look from the Bot id, so old Bots stay
-// visually distinct instead of sharing one silhouette. Plugin-registered shapes pass
-// through untouched.
+// Resolve a stored avatar.shape to a current slot. Retired vectors are not rendered:
+// they fall back to a deterministic look from the Bot id, so old Bots stay visually
+// distinct instead of sharing one silhouette. Plugin-registered shapes pass through
+// untouched.
 export function resolveShape(stored, id) {
-  if (typeof stored === 'string' && Object.hasOwn(LEGACY_REMAP, stored)) return LEGACY_REMAP[stored]
+  const legacy = legacyShape(stored)
+  if (legacy !== undefined) return legacy
   if (typeof stored === 'string' && BITMAP_SHAPES.has(stored)) return stored
   if (typeof stored === 'string' && Object.hasOwn(SHAPES, stored) && !Object.hasOwn(CHARACTERS, stored)) return stored
   return id ? defaultShape(String(id)) : FALLBACK_SHAPE
