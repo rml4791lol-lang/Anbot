@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 设计一个最小 Bot 团队｜邮箱优先版</title>
+<meta name="description" content="按角色、交付、权限和群聊设计 2–3 个 Bot，不堆角色。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 设计一个最小 Bot 团队｜邮箱优先版">
+<meta property="og:description" content="按角色、交付、权限和群聊设计 2–3 个 Bot，不堆角色。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/","name":"Anbot · 设计一个最小 Bot 团队｜邮箱优先版","description":"按角色、交付、权限和群聊设计 2–3 个 Bot，不堆角色。 在邮箱优先场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#article","headline":"Anbot · 设计一个最小 Bot 团队｜邮箱优先版","description":"按角色、交付、权限和群聊设计 2–3 个 Bot，不堆角色。 在邮箱优先场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#faq","mainEntity":[{"@type":"Question","name":"先建几个 Bot？","acceptedAnswer":{"@type":"Answer","text":"先 1 Main + 1 专业，跑通再加。"}},{"@type":"Question","name":"需要群聊吗？","acceptedAnswer":{"@type":"Answer","text":"需要共享上下文时再开，不要所有事都群聊。"}},{"@type":"Question","name":"能自动回复吗？","acceptedAnswer":{"@type":"Answer","text":"只生成草稿；发送由人确认。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#howto","name":"Anbot · 设计一个最小 Bot 团队｜邮箱优先版","description":"按角色、交付、权限和群聊设计 2–3 个 Bot，不堆角色。 在邮箱优先场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"写清主目标、交付物和验收；确定谁做 Main Bot。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"按缺口设 1–2 个专业 Bot，每个有唯一交付和权限。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"定群聊/任务板规则；跑一个真实任务再扩。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"附件先落盘再引用；不要在草稿里放敏感链接。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"发送前核对收件人、引用范围和退订要求。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"设计一个最小 Bot 团队","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/"},{"@type":"ListItem","position":4,"name":"邮箱优先","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/team-design/email-first/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">设计一个最小 Bot 团队</a> / 邮箱优先</div>
+  <div class="eyebrow">产品与选型 · 邮箱优先</div>
+  <h1>Anbot · 设计一个最小 Bot 团队｜邮箱优先版</h1>
+  <p class="lead">Bot 团队设计先从交付倒推角色；不是先起名字。 邮箱优先时只做草稿；发送、转发、附件都要人工确认。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先定 Main Bot 和 1–2 个专业 Bot，再写交付/权限/群聊规则，最后跑真实任务。 在邮箱优先下，先先接一个邮箱只读，再生成回复草稿，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>刚开始用 Anbot 的人</li><li>要搭团队工作流的组织</li><li>多 Agent 项目负责人</li><li>以邮件为主要沟通渠道的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>写清主目标、交付物和验收；确定谁做 Main Bot。</li><li>按缺口设 1–2 个专业 Bot，每个有唯一交付和权限。</li><li>定群聊/任务板规则；跑一个真实任务再扩。</li><li>附件先落盘再引用；不要在草稿里放敏感链接。</li><li>发送前核对收件人、引用范围和退订要求。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>每个 Bot 有唯一职责</li><li>交付能验收</li><li>权限最小化</li><li>团队规模匹配任务</li><li>没有自动发送，草稿能回到原邮件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>角色太多会增加协调成本</li><li>权限扩散风险</li><li>需要持续维护指令</li><li>邮件服务商权限差异大，附件可能含恶意文件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>先建几个 Bot？</h3><p>先 1 Main + 1 专业，跑通再加。</p><h3>需要群聊吗？</h3><p>需要共享上下文时再开，不要所有事都群聊。</p><h3>能自动回复吗？</h3><p>只生成草稿；发送由人确认。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「设计一个最小 Bot 团队」的 30 个场景版本</a></p>
+    <div class="related"><a href="../figma-first/">Figma 优先版</a><a href="../mcp-first/">MCP 优先版</a><a href="../enterprise/">企业受控环境版</a></div>
+    <div class="related"><a href="../../../guides/start/">怎么开始用 Anbot？五步跑通第一个 Bot</a><a href="../../../guides/vs-single-agent-chat/">Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../guides/what-is-anbot/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

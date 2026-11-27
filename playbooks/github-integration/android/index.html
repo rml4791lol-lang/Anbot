@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版</title>
+<meta name="description" content="按只读、草稿、审批三层接 Issue/PR/代码，不让 Bot 直接合并。 在Android 远程场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版">
+<meta property="og:description" content="按只读、草稿、审批三层接 Issue/PR/代码，不让 Bot 直接合并。 在Android 远程场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/","name":"Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版","description":"按只读、草稿、审批三层接 Issue/PR/代码，不让 Bot 直接合并。 在Android 远程场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#article","headline":"Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版","description":"按只读、草稿、审批三层接 Issue/PR/代码，不让 Bot 直接合并。 在Android 远程场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#faq","mainEntity":[{"@type":"Question","name":"能自动合并 PR 吗？","acceptedAnswer":{"@type":"Answer","text":"不建议；合并和发布保留人工确认。"}},{"@type":"Question","name":"能接多个组织吗？","acceptedAnswer":{"@type":"Answer","text":"可以，但每个组织单独授权。"}},{"@type":"Question","name":"Android 能单独跑 Bot 吗？","acceptedAnswer":{"@type":"Answer","text":"它主要通过加密连接控制电脑端团队，不是完整运行时。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#howto","name":"Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版","description":"按只读、草稿、审批三层接 Issue/PR/代码，不让 Bot 直接合并。 在Android 远程场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"用最小权限接一个仓库，先只读 Issue、PR 和代码。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Bot 生成分诊、审查或发布草稿；写操作只写评论/草稿。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"设审批点：合并、发布、改权限必须由人确认。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"手机只做发起/查看；文件落到电脑端工作区。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"不要把完整运行时和大批文件搬到手机；断网先暂停任务。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"把 GitHub 接进 Bot 团队","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/"},{"@type":"ListItem","position":4,"name":"Android 远程","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/github-integration/android/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">把 GitHub 接进 Bot 团队</a> / Android 远程</div>
+  <div class="eyebrow">工具接入 · Android 远程</div>
+  <h1>Anbot · 把 GitHub 接进 Bot 团队｜Android 远程版</h1>
+  <p class="lead">接 GitHub 的第一原则是最小权限；先只读，再草稿，最后才谈写操作。 Android 是远程入口；实际执行在电脑端，先确认配对和在线。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先接一个仓库做只读，再让 Bot 生成 Issue/PR 草稿，合并和发布保留人工审批。 在Android 远程下，先先确认电脑端在线、配对成功和网络可达，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要让 Bot 处理 Issue/PR 的团队</li><li>担心 Agent 改坏仓库的人</li><li>需要把研发流程自动化的组织</li><li>用手机远程控制电脑端团队的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>用最小权限接一个仓库，先只读 Issue、PR 和代码。</li><li>让 Bot 生成分诊、审查或发布草稿；写操作只写评论/草稿。</li><li>设审批点：合并、发布、改权限必须由人确认。</li><li>手机只做发起/查看；文件落到电脑端工作区。</li><li>不要把完整运行时和大批文件搬到手机；断网先暂停任务。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>Bot 只能访问授权仓库</li><li>写操作有审批记录</li><li>草稿能回到具体 Issue/PR</li><li>没有直接推主分支</li><li>手机能发起并看到结果，执行仍在电脑端</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>GitHub API 限流会影响批量任务</li><li>私有仓库权限要单独配置</li><li>不能替代代码所有者审查</li><li>电脑端离线时 Android 不能独立跑完整团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能自动合并 PR 吗？</h3><p>不建议；合并和发布保留人工确认。</p><h3>能接多个组织吗？</h3><p>可以，但每个组织单独授权。</p><h3>Android 能单独跑 Bot 吗？</h3><p>它主要通过加密连接控制电脑端团队，不是完整运行时。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「把 GitHub 接进 Bot 团队」的 30 个场景版本</a></p>
+    <div class="related"><a href="../linux/">Linux版</a><a href="../mixed/">混合设备版</a><a href="../figma-first/">Figma 优先版</a></div>
+    <div class="related"><a href="../../../guides/github/">让 Anbot 接入 GitHub：Issue、PR 和 Actions 日志</a><a href="../../../guides/code-review/">Anbot 代码审查：用 Bot 团队做一次只读 diff 审查</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../guides/what-is-anbot/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

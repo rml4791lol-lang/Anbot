@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 给不同 Bot 配不同模型｜2–3 人小队版</title>
+<meta name="description" content="按任务难度、成本、延迟和数据敏感度路由，不全部用最贵模型。 在2–3 人小队场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 给不同 Bot 配不同模型｜2–3 人小队版">
+<meta property="og:description" content="按任务难度、成本、延迟和数据敏感度路由，不全部用最贵模型。 在2–3 人小队场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/","name":"Anbot · 给不同 Bot 配不同模型｜2–3 人小队版","description":"按任务难度、成本、延迟和数据敏感度路由，不全部用最贵模型。 在2–3 人小队场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#article","headline":"Anbot · 给不同 Bot 配不同模型｜2–3 人小队版","description":"按任务难度、成本、延迟和数据敏感度路由，不全部用最贵模型。 在2–3 人小队场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#faq","mainEntity":[{"@type":"Question","name":"便宜模型能替代吗？","acceptedAnswer":{"@type":"Answer","text":"看任务；高风险/长上下文不要盲降。"}},{"@type":"Question","name":"能自动路由吗？","acceptedAnswer":{"@type":"Answer","text":"可以按规则；先人工定层。"}},{"@type":"Question","name":"两个人怎么分 Bot？","acceptedAnswer":{"@type":"Answer","text":"一个人管 Main Bot 和验收，另一个人管专业 Bot 和领域判断。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#howto","name":"Anbot · 给不同 Bot 配不同模型｜2–3 人小队版","description":"按任务难度、成本、延迟和数据敏感度路由，不全部用最贵模型。 在2–3 人小队场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"把任务按难度、上下文、工具和敏感度分层。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"给每层配候选模型和预算；高风险任务保留强模型。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"用同一批任务测质量、延迟和成本；按结果调整。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"写清谁做 Main Bot、谁做专业 Bot，以及每个交付由谁最终确认。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"群聊只放共享上下文；私聊和草稿不要全量同步，避免噪声。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"给不同 Bot 配不同模型","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/"},{"@type":"ListItem","position":4,"name":"2–3 人小队","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/model-routing/duo/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">给不同 Bot 配不同模型</a> / 2–3 人小队</div>
+  <div class="eyebrow">产品与选型 · 2–3 人小队</div>
+  <h1>Anbot · 给不同 Bot 配不同模型｜2–3 人小队版</h1>
+  <p class="lead">模型路由不是省钱技巧；要让任务需求和模型能力匹配。 人少时最怕职责重叠；每个 Bot 和每个人都要有唯一交付。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先按任务分层，再给每层配模型和预算，最后用真实任务测质量/成本。 在2–3 人小队下，先先按交付分角色，不按聊天窗口分角色，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要控制模型成本的人</li><li>多 Bot 团队</li><li>对延迟/数据敏感的组织</li><li>两三个人分工协作的小队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>把任务按难度、上下文、工具和敏感度分层。</li><li>给每层配候选模型和预算；高风险任务保留强模型。</li><li>用同一批任务测质量、延迟和成本；按结果调整。</li><li>写清谁做 Main Bot、谁做专业 Bot，以及每个交付由谁最终确认。</li><li>群聊只放共享上下文；私聊和草稿不要全量同步，避免噪声。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>每层有选择理由</li><li>成本/质量有数据</li><li>敏感任务不降级</li><li>可回退</li><li>每个交付只有一个最终负责人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>模型能力/价格会变</li><li>路由增加配置复杂度</li><li>不能只看单价</li><li>人手少，跨领域复核仍然要外部支持</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>便宜模型能替代吗？</h3><p>看任务；高风险/长上下文不要盲降。</p><h3>能自动路由吗？</h3><p>可以按规则；先人工定层。</p><h3>两个人怎么分 Bot？</h3><p>一个人管 Main Bot 和验收，另一个人管专业 Bot 和领域判断。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「给不同 Bot 配不同模型」的 30 个场景版本</a></p>
+    <div class="related"><a href="../solo/">一人公司版</a><a href="../team5/">5–10 人团队版</a><a href="../windows/">Windows版</a></div>
+    <div class="related"><a href="../../../guides/models/">Anbot 用什么模型？模型怎么配置</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../guides/what-is-anbot/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

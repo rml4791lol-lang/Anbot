@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 用外部计划任务定时触发 Bot｜中英双语版</title>
+<meta name="description" content="用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在中英双语场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 用外部计划任务定时触发 Bot｜中英双语版">
+<meta property="og:description" content="用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在中英双语场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/","name":"Anbot · 用外部计划任务定时触发 Bot｜中英双语版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在中英双语场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#article","headline":"Anbot · 用外部计划任务定时触发 Bot｜中英双语版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在中英双语场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#faq","mainEntity":[{"@type":"Question","name":"Anbot 自带定时吗？","acceptedAnswer":{"@type":"Answer","text":"不假设；用系统计划任务更可控。"}},{"@type":"Question","name":"漏跑怎么补？","acceptedAnswer":{"@type":"Answer","text":"按幂等键补一次，不要盲目重跑。"}},{"@type":"Question","name":"能只维护中文吗？","acceptedAnswer":{"@type":"Answer","text":"不建议；对外双语版本要同步更新。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#howto","name":"Anbot · 用外部计划任务定时触发 Bot｜中英双语版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在中英双语场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"定义频率、时区、幂等键和失败通知。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"用系统 cron/任务计划程序触发；命令和路径写绝对路径。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"每次执行落日志和产物；失败按重试策略处理。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"数字、日期、链接只维护一份；两种语言都引用它。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"两版逐段对照，标出意译和不确定处。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"用外部计划任务定时触发 Bot","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/"},{"@type":"ListItem","position":4,"name":"中英双语","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/bilingual/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">用外部计划任务定时触发 Bot</a> / 中英双语</div>
+  <div class="eyebrow">长任务与自动化 · 中英双语</div>
+  <h1>Anbot · 用外部计划任务定时触发 Bot｜中英双语版</h1>
+  <p class="lead">定时任务要分清「谁触发」和「谁执行」；不要让 Bot 自己猜时间。 双语交付从同一份事实表生成，不要先写中文再逐句硬翻。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先写清触发频率和幂等，再用系统计划任务触发，执行结果落文件。 在中英双语下，先先做双语术语表和事实表，再分别成稿，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要每天跑报告的人</li><li>需要定时监控的团队</li><li>已有调度系统的组织</li><li>需要中英双版本交付的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>定义频率、时区、幂等键和失败通知。</li><li>用系统 cron/任务计划程序触发；命令和路径写绝对路径。</li><li>每次执行落日志和产物；失败按重试策略处理。</li><li>数字、日期、链接只维护一份；两种语言都引用它。</li><li>两版逐段对照，标出意译和不确定处。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>时区/频率明确</li><li>重复触发不产生重复副作用</li><li>失败有通知</li><li>日志可追溯</li><li>两版事实一致，术语一致，能逐段对照</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>电脑关机/休眠会漏跑</li><li>系统权限要单独配置</li><li>不能替代集中调度平台</li><li>双语维护成本高，更新要同步</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>Anbot 自带定时吗？</h3><p>不假设；用系统计划任务更可控。</p><h3>漏跑怎么补？</h3><p>按幂等键补一次，不要盲目重跑。</p><h3>能只维护中文吗？</h3><p>不建议；对外双语版本要同步更新。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「用外部计划任务定时触发 Bot」的 30 个场景版本</a></p>
+    <div class="related"><a href="../english/">英文交付版</a><a href="../compliance/">合规/审计版</a><a href="../research/">研究/分析版</a></div>
+    <div class="related"><a href="../../../guides/monitoring/">Anbot 守夜：日志、价格、接口越线才叫你</a><a href="../../../guides/local-agents/">Anbot 本地 Agent：把 Claude Code / Codex 接成团队 Bot</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../guides/what-is-anbot/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

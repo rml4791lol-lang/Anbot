@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 让多个 Bot 并行做任务｜运营/行政版</title>
+<meta name="description" content="按独立子任务拆分，设共享上下文和合并验收。 在运营/行政场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 让多个 Bot 并行做任务｜运营/行政版">
+<meta property="og:description" content="按独立子任务拆分，设共享上下文和合并验收。 在运营/行政场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/","name":"Anbot · 让多个 Bot 并行做任务｜运营/行政版","description":"按独立子任务拆分，设共享上下文和合并验收。 在运营/行政场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#article","headline":"Anbot · 让多个 Bot 并行做任务｜运营/行政版","description":"按独立子任务拆分，设共享上下文和合并验收。 在运营/行政场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#faq","mainEntity":[{"@type":"Question","name":"Bot 越多越快吗？","acceptedAnswer":{"@type":"Answer","text":"不一定；协调和返工会吃掉收益。"}},{"@type":"Question","name":"怎么避免冲突？","acceptedAnswer":{"@type":"Answer","text":"分目录/分文件，合并前先 diff。"}},{"@type":"Question","name":"能处理临时需求吗？","acceptedAnswer":{"@type":"Answer","text":"可以，但先标为例外，不要污染标准模板。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#howto","name":"Anbot · 让多个 Bot 并行做任务｜运营/行政版","description":"按独立子任务拆分，设共享上下文和合并验收。 在运营/行政场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"拆子任务，标出依赖和共享事实；不独立的不要并行。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"给每个 Bot 明确交付、边界和写入目录。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"合并产物，检查冲突和重复；统一验收后再交付。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"每类任务做一个模板；字段不齐的先补，不要靠猜。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"输出按日期/项目归档；每周抽查一次重复和漏项。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"让多个 Bot 并行做任务","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/"},{"@type":"ListItem","position":4,"name":"运营/行政","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/parallel/ops/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">让多个 Bot 并行做任务</a> / 运营/行政</div>
+  <div class="eyebrow">长任务与自动化 · 运营/行政</div>
+  <h1>Anbot · 让多个 Bot 并行做任务｜运营/行政版</h1>
+  <p class="lead">并行不是多开几个 Bot；要先保证子任务真的独立。 运营任务要固定输入模板和输出目录，减少口头变体。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先拆独立子任务和共享事实，再并行执行，最后合并验收和冲突。 在运营/行政下，先先固定输入模板、命名和归档目录，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要加速交付的团队</li><li>任务可拆成多角色的项目</li><li>需要多 Agent 协作的人</li><li>运营、行政、财务等流程岗位</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>拆子任务，标出依赖和共享事实；不独立的不要并行。</li><li>给每个 Bot 明确交付、边界和写入目录。</li><li>合并产物，检查冲突和重复；统一验收后再交付。</li><li>每类任务做一个模板；字段不齐的先补，不要靠猜。</li><li>输出按日期/项目归档；每周抽查一次重复和漏项。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>子任务独立可验收</li><li>共享事实一致</li><li>写入不冲突</li><li>合并后有总验收</li><li>同类任务输出结构一致，能批量复核</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>并行会增加协调成本</li><li>模型/API 限流</li><li>共享上下文可能不一致</li><li>例外流程多，模板不可能覆盖全部</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>Bot 越多越快吗？</h3><p>不一定；协调和返工会吃掉收益。</p><h3>怎么避免冲突？</h3><p>分目录/分文件，合并前先 diff。</p><h3>能处理临时需求吗？</h3><p>可以，但先标为例外，不要污染标准模板。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「让多个 Bot 并行做任务」的 30 个场景版本</a></p>
+    <div class="related"><a href="../product/">产品团队版</a><a href="../research/">研究/分析版</a><a href="../freetier/">免费额度版</a></div>
+    <div class="related"><a href="../../../guides/vs-single-agent-chat/">Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队</a><a href="../../../guides/long-running-task/">Anbot 长任务：能停、能续、能回滚</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../guides/what-is-anbot/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>
