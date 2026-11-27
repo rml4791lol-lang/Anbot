@@ -18,12 +18,15 @@ import { install as installRoster } from '../src/host/roster.js'
 function repository(t, relativeFolder = '') {
   const fixture = mkdtempSync(join(tmpdir(), 'anbot-project-workspace-'))
   t.after(() => rmSync(fixture, { recursive: true, force: true }))
-  const root = realpathSync(fixture)
+  const root = realpathSync.native(fixture)
   const source = join(root, 'repository', relativeFolder)
   mkdirSync(source, { recursive: true })
   const repositoryRoot = join(root, 'repository')
   const git = (...args) => execFileSync('git', ['-C', repositoryRoot, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
   git('init', '--quiet')
+  // The Windows runner's global config turns LF into CRLF in a checkout; the fixture
+  // compares the bytes it wrote.
+  git('config', 'core.autocrlf', 'false')
   writeFileSync(join(repositoryRoot, 'tracked.txt'), 'base\n')
   if (relativeFolder !== '') writeFileSync(join(source, 'nested.txt'), 'nested\n')
   git('add', '--all')

@@ -608,7 +608,10 @@ test('task detail reads bounded linked Session records and stays read-only on a 
   assert.equal(result.ok, true)
   assert.deepEqual(result.value.trace.sessionIds, ['room-s1'])
   assert.equal(result.value.trace.records.find(item => item.type === 'tool/result').trust, 'executed')
-  assert.deepEqual(pages.map(page => [page.address.sessionId, page.maxMessages]), [['room-s1', 60], ['group-session', 60]])
+  // Only the detail read pages at 60; a background reader (the no-op turn backfill,
+  // scheduled half a second after install) may page a Bot's own chat at HISTORY_PAGE
+  // on a slow runner, which says nothing about this read.
+  assert.deepEqual(pages.filter(page => page.maxMessages === 60).map(page => [page.address.sessionId, page.maxMessages]), [['room-s1', 60], ['group-session', 60]])
   assert.doesNotMatch(JSON.stringify(result.value), /goal-title-value|room-name-value|task-body-value|note-value|next-value|evidence-value|trace-value|trace-result-value|improvement-value|nested-value/)
 
   rt.readOnly = () => 'Another host owns this team'
