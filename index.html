@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="assets/mascot-face.webp">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="author" content="Anbot">
+<title>Anbot 配置市场 · 开源 Bot 团队的预设 / 技能 / MCP / 插件</title>
+<meta name="description" content="Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 27 条，读同一份 index.json；在本机安装，不经服务器。">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Anbot 配置市场">
+<meta property="og:title" content="Anbot 配置市场 · 开源 Bot 团队">
+<meta property="og:description" content="预设、技能、MCP、插件四类条目，共 27 条，一份索引；一支持久在线的开源 Bot 团队，在本机安装。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/">
+<meta property="og:updated_time" content="2026-11-27">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Anbot 配置市场 · 开源 Bot 团队">
+<meta name="twitter:description" content="预设、技能、MCP、插件四类条目，共 27 条，一份索引；一支持久在线的开源 Bot 团队，在本机安装。">
+<meta name="twitter:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta name="twitter:image:alt" content="Anbot 纸艺头像">
+<meta name="theme-color" content="#FFF9EE">
+<link rel="alternate" type="text/plain" href="https://rml4791lol-lang.github.io/Anbot/llms.txt" title="llms.txt">
+<link rel="alternate" type="text/plain" href="https://rml4791lol-lang.github.io/Anbot/llms-full.txt" title="llms-full.txt">
+<link rel="alternate" type="application/atom+xml" href="https://rml4791lol-lang.github.io/Anbot/feed.xml" title="Anbot 配置市场更新">
+<link rel="license" href="https://www.apache.org/licenses/LICENSE-2.0">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp","width":1024,"height":1024},"description":"Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.","sameAs":["https://github.com/rml4791lol-lang/Anbot"],"contactPoint":{"@type":"ContactPoint","contactType":"community","url":"https://github.com/rml4791lol-lang/Anbot/issues"}},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 配置市场","alternateName":"Anbot Market","description":"Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 27 条，读同一份 index.json；一支持久在线的多 Agent Bot 团队，在本机安装。","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://rml4791lol-lang.github.io/Anbot/?q={search_term_string}","query-input":"required name=search_term_string"}},"mainEntity":{"@id":"https://rml4791lol-lang.github.io/Anbot/#itemlist"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 配置市场 · 开源 Bot 团队的预设 / 技能 / MCP / 插件","description":"Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 27 条，读同一份 index.json；一支持久在线的多 Agent Bot 团队，在本机安装。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot.webp"},"dateModified":"2026-11-27T09:00:00+08:00","inLanguage":"zh-CN","author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","alternateName":["Anbot 配置市场","Anbot Market"],"description":"Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux","url":"https://github.com/rml4791lol-lang/Anbot","codeRepository":"https://github.com/rml4791lol-lang/Anbot","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/latest","license":"https://www.apache.org/licenses/LICENSE-2.0","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Open source under Apache 2.0","A team of persistent Bots, not one chat window","Multi-agent group chats and shared memory","X-Ray plan and evidence view","Checkpoints, takeover and return","Local-first workspace and data","Presets, skills, MCP and plugins in one index"],"screenshot":"https://rml4791lol-lang.github.io/Anbot/assets/mascot.webp","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot.webp","dateModified":"2026-11-27T09:00:00+08:00","inLanguage":"zh-CN","author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"ItemList","@id":"https://rml4791lol-lang.github.io/Anbot/#itemlist","numberOfItems":27,"itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"CreativeWork","name":"Anbot","description":"接住一句话目标，拆成能验收的清单，再派人。","identifier":"anbot","version":"1.0"}},{"@type":"ListItem","position":2,"item":{"@type":"CreativeWork","name":"侦探","description":"先找证据，再下结论；对不上的地方单独列。","identifier":"detective","version":"1.0"}},{"@type":"ListItem","position":3,"item":{"@type":"CreativeWork","name":"眼镜","description":"只读这次改动，只看可触发的问题。","identifier":"glasses","version":"1.0"}},{"@type":"ListItem","position":4,"item":{"@type":"CreativeWork","name":"耳机","description":"录音进，要点、待办、责任人出。","identifier":"headphone","version":"1.0"}},{"@type":"ListItem","position":5,"item":{"@type":"CreativeWork","name":"围巾","description":"按你的口径改，不动结构，不擅自加分点。","identifier":"scarf","version":"1.0"}},{"@type":"ListItem","position":6,"item":{"@type":"CreativeWork","name":"厨师","description":"把长任务切成能停、能续、能回滚的步骤。","identifier":"chef","version":"1.0"}},{"@type":"ListItem","position":7,"item":{"@type":"CreativeWork","name":"咖啡师","description":"早上把该看的收成一页，只留需要你决定的。","identifier":"barista","version":"1.0"}},{"@type":"ListItem","position":8,"item":{"@type":"CreativeWork","name":"园丁","description":"整理、去重、补链，把过期的单独标出来。","identifier":"gardener","version":"1.0"}},{"@type":"ListItem","position":9,"item":{"@type":"CreativeWork","name":"画家","description":"先给方向再出图，按渠道出比例，留可编辑源。","identifier":"painter","version":"1.0"}},{"@type":"ListItem","position":10,"item":{"@type":"CreativeWork","name":"雨衣","description":"盯着日志、价格、接口，越线才叫你。","identifier":"raincoat","version":"1.0"}},{"@type":"ListItem","position":11,"item":{"@type":"CreativeWork","name":"巫师","description":"两版提示词，同一批样本，跑完给结论。","identifier":"wizard","version":"1.0"}},{"@type":"ListItem","position":12,"item":{"@type":"CreativeWork","name":"宇航员","description":"几小时的活自己盯，卡住自己换路。","identifier":"astro","version":"1.0"}},{"@type":"ListItem","position":13,"item":{"@type":"CreativeWork","name":"滑板","description":"先跑通，再谈完整；一天内能演示。","identifier":"skater","version":"1.0"}},{"@type":"ListItem","position":14,"item":{"@type":"CreativeWork","name":"工装","description":"构建、发布、回滚，出事给回滚路径。","identifier":"overalls","version":"1.0"}},{"@type":"ListItem","position":15,"item":{"@type":"CreativeWork","name":"睡帽","description":"你睡了它干活，早上给清单。","identifier":"nightcap","version":"1.0"}},{"@type":"ListItem","position":16,"item":{"@type":"CreativeWork","name":"Issue 分诊","description":"每个 Issue 一个类型、一个优先级；每个关闭都留证据。","identifier":"issue-triage","version":"0.1"}},{"@type":"ListItem","position":17,"item":{"@type":"CreativeWork","name":"界面录制","description":"把浏览器操作录成优化过的 GIF，挂到 PR 当证据。","identifier":"record-browser-gif","version":"0.1"}},{"@type":"ListItem","position":18,"item":{"@type":"SoftwareApplication","name":"GitHub","description":"仓库、Issue、PR、Actions 日志，都在一句话里。","identifier":"github","url":"https://github.com","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":19,"item":{"@type":"SoftwareApplication","name":"Notion","description":"页面和数据库，读写都在行内完成。","identifier":"notion","url":"https://notion.so","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":20,"item":{"@type":"SoftwareApplication","name":"Linear","description":"Issue、项目、周期，不用切窗口。","identifier":"linear","url":"https://linear.app","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":21,"item":{"@type":"SoftwareApplication","name":"Figma","description":"读文件、导出切图，设计稿直接进上下文。","identifier":"figma","url":"https://figma.com","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":22,"item":{"@type":"SoftwareApplication","name":"邮箱","description":"QQ、163、Gmail、iCloud，IMAP 收发加规则。","identifier":"mail","url":"https://rml4791lol-lang.github.io/Anbot","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":23,"item":{"@type":"SoftwareApplication","name":"本机浏览器","description":"在你自己的浏览器里点、填、下载，账号状态照原样。","identifier":"playwright","url":"https://playwright.dev","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":24,"item":{"@type":"SoftwareApplication","name":"DS Bot","description":"一队长期在线的 Bot：主 Bot、群聊、互相消息。","identifier":"ds-bot","version":"0.3.6","url":"https://github.com/Fei2411/DS-Bot","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":25,"item":{"@type":"SoftwareApplication","name":"OpenViking 记忆","description":"给 Agent 接一套可检索、可积累的长期上下文。","identifier":"openviking-memory","url":"https://dshopen.org/zh/","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":26,"item":{"@type":"SoftwareApplication","name":"MCP 与技能管理","description":"跨支持的工具管理，技能和 MCP 配置能备份恢复。","identifier":"mcp-skill-manage","version":"0.5.5","url":"https://dshopen.org/zh/","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}},{"@type":"ListItem","position":27,"item":{"@type":"SoftwareApplication","name":"工作流地图","description":"把当前会话画成分步地图，标出进度和来源。","identifier":"workflow-map","version":"0.1.3","url":"https://dshopen.org/zh/","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux"}}]},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/#faq","mainEntity":[{"@type":"Question","name":"Anbot 是什么？","acceptedAnswer":{"@type":"Answer","text":"Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。"}},{"@type":"Question","name":"这个市场里有什么？","acceptedAnswer":{"@type":"Answer","text":"27 条配置，15 个预设、2 个技能、6 个MCP、4 个插件；都读同一份 index.json，在本机安装。"}},{"@type":"Question","name":"数据会上传吗？","acceptedAnswer":{"@type":"Answer","text":"不会。团队、聊天、记忆、凭据和执行记录留在本机；模型请求只发给你配置的模型服务商。"}},{"@type":"Question","name":"Anbot 开源吗？","acceptedAnswer":{"@type":"Answer","text":"是，Apache 2.0。应用和插件代码开源；预设、技能和 MCP/插件索引可读、可换。"}},{"@type":"Question","name":"和 Grok Bot、大厂 Agent 有什么区别？","acceptedAnswer":{"@type":"Answer","text":"Grok Bot 是付费云端的 Bot 团队；Anbot 开源、跑在你的真实工作区里，你可以接管。大厂 Agent 的运行时、模型和扩展面归厂商；Anbot 把代码、模型选择和扩展面保持开放。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/#how","name":"三步装进本机","description":"从索引到你的 Anbot：添加索引源、挑条目、装进本机。","step":[{"@type":"HowToStep","position":1,"name":"添加索引源","text":"运行 anbot market add \u003c索引地址>，把目录接到 Anbot 的「发现」页。"},{"@type":"HowToStep","position":2,"name":"挑条目","text":"按类型、用途或作者筛选；预设和技能只改配置。"},{"@type":"HowToStep","position":3,"name":"装进本机","text":"安装后配置和文件落在本地，不经过服务器；卸掉就是删掉那份配置。"}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   Anbot 市场
+   奶油纸、描边、硬投影、贴纸和看板娘。版式与配色自己写；
+   插画、图标也是自己画的，不搬第三方页面里的代码与素材。
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --cream:#FFF9EE;
+  --paper:#FFFFFF;
+  --ink:#14284B;
+  --slate:#4F6282;
+  --blue:#2F6BFF;
+  --blue-dark:#1B4FD6;
+  --sky:#DCEBFF;
+  --coral:#FF7A6B;
+  --peach:#FFE3D6;
+  --sun:#FFC94D;
+  --mint:#BFF0D8;
+  --lilac:#E6DCFF;
+  --soft:#D9E2F1;
+  --font:"Avenir Next Rounded","Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --pop:4px 4px 0 var(--ink);
+  --ease:cubic-bezier(.3,1.55,.45,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:var(--font);font-size:16px;line-height:1.6;color:var(--ink);
+  background-color:var(--cream);
+  background-image:radial-gradient(circle at 1px 1px,rgba(20,40,75,.13) 1.4px,transparent 1.6px);
+  background-size:26px 26px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{display:block;max-width:100%}
+a{color:var(--blue-dark);text-underline-offset:.2em;text-decoration-thickness:2px}
+a:hover{color:var(--coral)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+::selection{background:var(--sky)}
+.shell{width:min(1200px,calc(100% - 48px));margin-inline:auto}
+section[id]{scroll-margin-top:96px}
+
+/* ── 顶栏 ───────────────────────────────────────────────────── */
+.site-header{position:sticky;top:0;z-index:55;transition:transform .35s ease;will-change:transform}
+.site-header.is-hidden{transform:translateY(-115%)}
+.header-inner{min-height:84px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:inline-flex;align-items:center;gap:12px;font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand:hover{color:var(--ink)}
+.brand img{width:52px;height:52px;flex:none;object-fit:cover;object-position:50% 20%;background:var(--sky);border:2px solid var(--ink);border-radius:16px;box-shadow:3px 3px 0 var(--ink);transform:rotate(-3deg);transition:transform .25s var(--ease)}
+.brand:hover img{transform:rotate(4deg) scale(1.05)}
+.header-links{margin-left:auto;display:flex;align-items:center;gap:2px;padding:6px;background:var(--paper);border:2px solid var(--ink);border-radius:999px;box-shadow:3px 3px 0 var(--ink)}
+.header-links a{padding:6px 14px;border-radius:999px;font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap;transition:background .15s}
+.header-links a:hover{background:var(--sky);color:var(--ink)}
+.copy-chip{margin-left:4px;padding:7px 15px;border:2px solid var(--ink);border-radius:999px;background:var(--ink);color:#fff;font-size:13px;font-weight:800;white-space:nowrap;transition:background .15s,transform .15s var(--ease)}
+.copy-chip:hover{background:var(--blue-dark);transform:translateY(-1px)}
+
+/* ── 首屏 ───────────────────────────────────────────────────── */
+.hero{padding:18px 0 46px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(240px,.62fr);gap:36px;align-items:center}
+.eyebrow{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;font-weight:700;color:var(--slate)}
+.eyebrow .dot{width:9px;height:9px;flex:none;border-radius:50%;background:#3CCF8E;border:1.5px solid var(--ink)}
+h1{margin:12px 0 0;font-size:clamp(34px,3.9vw,46px);line-height:1.25;letter-spacing:-.02em;font-weight:900;text-wrap:balance}
+h1 .blue{color:var(--blue)}
+.lead{margin:14px 0 22px;max-width:640px;font-size:17px;line-height:1.7;font-weight:600;color:var(--slate)}
+.address-label{display:block;margin:2px 0 8px 6px;font-size:14px;font-weight:800}
+.address-bar{display:flex;align-items:center;gap:6px;padding:6px;background:var(--paper);border:2px solid var(--ink);border-radius:22px;box-shadow:var(--pop)}
+.link-ico{width:44px;height:44px;flex:none;display:grid;place-items:center;color:var(--blue)}
+.link-ico svg{width:23px;height:23px}
+.address-bar input{flex:1;min-width:0;height:50px;padding:0 4px;border:0;outline:none;background:none;font-family:var(--font);font-size:clamp(15px,1.7vw,21px);font-weight:800;letter-spacing:-.01em;color:var(--ink);text-overflow:ellipsis;cursor:pointer}
+.address-bar input:focus-visible{outline-offset:-2px}
+.copy-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex:none;min-width:132px;padding:12px 18px;border:2px solid var(--ink);border-radius:15px;background:var(--coral);color:var(--ink);font-size:16px;font-weight:900;box-shadow:0 4px 0 var(--ink);transition:transform .12s,box-shadow .12s,background .15s}
+.copy-button svg{width:19px;height:19px}
+.copy-button:hover{background:#FF9084;transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
+.copy-button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.copy-status{margin:10px 0 0 6px;min-height:21px;font-size:13px;font-weight:700;color:var(--slate);opacity:0;transition:opacity .2s}
+.copy-status.on{opacity:1;color:#1B7A55}
+.hero-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:8px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.stats li{padding:4px 13px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font-size:13px;font-weight:700;color:var(--slate);white-space:nowrap}
+.stats li:nth-child(1){background:var(--sky)}
+.stats li:nth-child(2){background:var(--mint)}
+.stats li:nth-child(3){background:var(--peach)}
+.stats strong{font-size:15px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:3px}
+.hero-note{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--slate);white-space:nowrap}
+
+/* 看板娘 */
+.hero-art{position:relative;width:100%;max-width:352px;aspect-ratio:1;justify-self:center;display:grid;place-items:end center}
+.art-blob{position:absolute;inset:7% 5% 1%;background:var(--sky);border:2px solid var(--ink);border-radius:46% 54% 52% 48% / 52% 44% 56% 48%;box-shadow:8px 8px 0 var(--ink);animation:blob 9s ease-in-out infinite alternate}
+.mascot{position:relative;z-index:1;width:auto;height:94%;filter:drop-shadow(0 8px 0 rgba(20,40,75,.12));animation:bob 4.6s ease-in-out infinite}
+.sticker{position:absolute;z-index:2;padding:5px 14px;border:2px solid var(--ink);border-radius:999px;box-shadow:3px 3px 0 var(--ink);font-size:13px;font-weight:800;white-space:nowrap;animation:pop .6s var(--ease) both}
+.s1{top:5%;right:-3%;background:var(--sun);transform:rotate(6deg);animation-delay:.3s}
+.s2{top:45%;left:-5%;background:var(--mint);transform:rotate(-6deg);animation-delay:.45s}
+.s3{bottom:22%;right:-4%;background:var(--lilac);transform:rotate(3deg);animation-delay:.6s}
+.s4{top:13%;left:-1%;background:var(--peach);transform:rotate(-5deg);animation-delay:.75s}
+@keyframes bob{50%{transform:translateY(-10px) rotate(1.2deg)}}
+@keyframes blob{to{border-radius:52% 48% 44% 56% / 46% 56% 44% 54%;transform:rotate(3deg)}}
+@keyframes pop{from{opacity:0;scale:.4}}
+
+/* 看板娘身前的索引卡堆：把半身像的下缘收进卡片里 */
+.stack{position:absolute;z-index:2;left:50%;bottom:-2%;width:66%;height:80px;transform:translateX(-50%);pointer-events:none}
+.stack span{position:absolute;left:4%;right:4%;bottom:0;height:52px;border:2px solid var(--ink);border-radius:15px;box-shadow:3px 3px 0 var(--ink)}
+.stack .sc3{background:var(--sun);transform:rotate(-8deg) translateY(-14px)}
+.stack .sc2{background:var(--mint);transform:rotate(5deg) translateY(-7px)}
+.stack .sc1{display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--paper);font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--slate)}
+.stack .sc1 b{font-family:var(--font);font-size:15px;font-weight:900;color:var(--ink);letter-spacing:0}
+
+/* ── 标题与小标签 ───────────────────────────────────────────── */
+.section-title{position:relative;z-index:0;display:inline-block;margin:0;font-size:clamp(26px,3vw,36px);font-weight:900;letter-spacing:-.02em;line-height:1.25}
+.section-title::after{content:"";position:absolute;z-index:-1;left:-6px;right:-6px;bottom:.05em;height:.42em;border-radius:6px;background:var(--sun);opacity:.82;transform:rotate(-1.2deg);transform-origin:left}
+.title-mint::after{background:var(--mint)}
+.title-sun::after{background:var(--sun)}
+.head-note{padding:5px 13px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);box-shadow:2px 2px 0 var(--ink);font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap}
+
+/* ── 三步 ───────────────────────────────────────────────────── */
+.steps-section{padding-bottom:54px}
+.steps-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+.step{display:flex;flex-direction:column;gap:10px;padding:11px 11px 13px;border:2px solid var(--ink);border-radius:22px;box-shadow:3px 3px 0 var(--ink);background:var(--paper)}
+.step.sky{background:var(--sky)}
+.step.peach{background:var(--peach)}
+.step.mint{background:var(--mint)}
+.step h3{display:flex;align-items:center;gap:9px;margin:0 4px;font-size:17px;font-weight:800;line-height:1.3}
+.step-num{display:grid;place-items:center;flex:none;width:28px;height:28px;border:2px solid var(--ink);border-radius:10px;background:var(--paper);font-size:14px;font-weight:900}
+.step-panel{display:flex;flex-direction:column;gap:8px;flex:1;padding:12px 13px;border:2px solid var(--ink);border-radius:15px;background:var(--paper)}
+.step-panel p{margin:0;font-size:13px;line-height:1.65;font-weight:600;color:var(--slate)}
+.step-code{display:block;padding:8px 10px;border:2px dashed var(--soft);border-radius:10px;background:var(--cream);font-family:var(--mono);font-size:11.5px;font-weight:400;line-height:1.6;color:var(--ink);word-break:break-all}
+
+/* ── 目录 ───────────────────────────────────────────────────── */
+.directory{position:relative;margin-top:6px;padding:54px 0 72px;background:var(--paper);border-bottom:2px solid var(--ink)}
+.directory::before{
+  content:"";position:absolute;left:0;right:0;top:-16px;height:24px;
+  background:
+    radial-gradient(circle at 14px 14px,var(--paper) 13px,transparent 14px) 0 0/28px 14px repeat-x,
+    linear-gradient(var(--paper),var(--paper)) 0 14px/100% 10px no-repeat;
+  filter:drop-shadow(0 -2px 0 var(--ink));
+  animation:wave 3s linear infinite;
+}
+@keyframes wave{to{background-position:28px 0,0 14px}}
+.directory-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.result-count{margin-left:auto;padding:4px 14px;border:2px solid var(--ink);border-radius:999px;background:var(--sun);font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:2px 2px 0 var(--ink)}
+.dir-stats{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0 0 16px;padding:0}
+.dir-stats li{padding:3px 12px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.dir-stats li:nth-child(1){background:var(--sky)}
+.dir-stats li:nth-child(2){background:var(--peach)}
+.dir-stats li:nth-child(3){background:var(--mint)}
+.dir-stats li:nth-child(4){background:var(--lilac)}
+.filters{display:flex;flex-direction:column;gap:14px;margin-bottom:26px;padding:16px;border:2px solid var(--ink);border-radius:24px;background:var(--cream)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-label{padding-left:6px;font-size:12.5px;font-weight:800;color:var(--ink)}
+.field input{height:48px;padding:9px 16px 9px 44px;border:2px solid var(--ink);border-radius:16px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%2314284b' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='5.5'/%3E%3Cpath d='m13 13 4 4'/%3E%3C/svg%3E") no-repeat 15px center;font-size:14px;font-weight:600;color:var(--ink)}
+.field input::placeholder{color:#70819F;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:4px 8px 4px 14px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font-size:13.5px;font-weight:800;color:var(--ink);transition:transform .15s var(--ease),background .15s}
+.chip small{min-width:25px;padding:0 7px;border-radius:999px;background:var(--cream);color:var(--slate);font-size:11.5px;font-weight:800;line-height:21px;text-align:center;font-variant-numeric:tabular-nums}
+.chip:hover{transform:translateY(-2px) rotate(-1deg);background:var(--sky)}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:2px 2px 0 var(--coral)}
+.chip[aria-pressed="true"] small{background:var(--sun);color:var(--ink)}
+.filters .sort-row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding-top:12px;border-top:2px dashed var(--soft)}
+.filters .sort-row .field-label{padding-left:0}
+.sort-chips{display:inline-flex;gap:2px;max-width:100%;padding:3px;border:2px solid var(--ink);border-radius:20px;background:var(--paper);box-shadow:2px 2px 0 var(--ink)}
+.sort-chips button{min-height:30px;padding:3px 13px;border-radius:999px;background:transparent;font-size:13px;font-weight:800;color:var(--slate);white-space:nowrap;transition:background .15s,color .15s}
+.sort-chips button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.picks{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.picks-label{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--slate)}
+.pick{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);box-shadow:2px 2px 0 var(--ink);font-size:13px;font-weight:800;color:var(--ink);transition:transform .15s var(--ease),background .15s}
+.pick em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--slate)}
+.pick:hover{transform:translateY(-2px) rotate(-1deg);background:var(--sun)}
+
+/* ── 卡片 ───────────────────────────────────────────────────── */
+.plugin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px 20px;align-items:stretch;margin:0}
+.card{
+  --tone:var(--sky);
+  display:flex;flex-direction:column;min-width:0;background:var(--paper);
+  border:2px solid var(--ink);border-radius:24px;box-shadow:var(--pop);
+  transition:transform .32s var(--ease),box-shadow .32s var(--ease),background-color .25s;
+}
+.card[data-kind="preset"]{--tone:var(--sky)}
+.card[data-kind="skill"]{--tone:var(--peach)}
+.card[data-kind="mcp"]{--tone:var(--mint)}
+.card[data-kind="plugin"]{--tone:var(--lilac)}
+.card:hover{transform:translate(-4px,-8px) rotate(-.5deg);box-shadow:9px 13px 0 var(--ink);background:color-mix(in srgb,var(--tone) 26%,var(--paper))}
+.card-main{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0;padding:16px 17px 10px;text-align:left}
+.card-head{display:flex;align-items:center;gap:12px}
+.avatar{display:grid;place-items:center;flex:none;width:52px;height:52px;overflow:hidden;border:2px solid var(--ink);border-radius:16px;background:var(--tone);transform:rotate(-4deg);transition:transform .32s var(--ease)}
+.avatar img{width:100%;height:100%;object-fit:contain;padding:4px}
+.avatar b{font-size:19px;font-weight:900;color:var(--ink)}
+.avatar svg{width:26px;height:26px;color:var(--ink)}
+.card:hover .avatar{transform:rotate(4deg) scale(1.08)}
+.name{display:flex;flex-direction:column;min-width:0}
+.name strong{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.28;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name .pkg{font-family:var(--mono);font-size:11px;font-weight:500;line-height:1.5;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:1px}
+.tag{padding:1px 10px;border:2px solid var(--ink);border-radius:999px;background:var(--tone);font-size:11.5px;font-weight:800;line-height:1.75;white-space:nowrap}
+.tag.sun{background:var(--sun)}
+.tag.sky{background:var(--sky)}
+.tag.mint{background:var(--mint)}
+.tag.peach{background:var(--peach)}
+.tag.lilac{background:var(--lilac)}
+.desc{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--slate);font-size:14px;line-height:1.6;font-weight:600}
+.detail{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.pill{display:inline-flex;align-items:center;padding:1px 9px;border:2px dashed var(--ink);border-radius:999px;background:var(--paper);font-size:11px;font-weight:800;color:var(--slate);font-variant-numeric:tabular-nums;white-space:nowrap}
+.card-foot{display:flex;align-items:center;gap:10px;padding:0 17px 14px}
+.author{min-width:0;font-size:11px;font-weight:700;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cta{flex:none;margin-left:auto;padding:6px 13px;border:2px solid var(--ink);border-radius:12px;background:var(--paper);box-shadow:0 3px 0 var(--ink);font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;transition:transform .12s,box-shadow .12s,background .15s}
+.cta:hover{background:var(--sun);transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
+.cta:active{transform:translateY(2px);box-shadow:none}
+.empty{display:none;margin:20px 0 0;padding:42px 24px;border:2px dashed var(--ink);border-radius:24px;background:var(--cream);text-align:center}
+.empty.on{display:block}
+.empty h3{margin:0 0 6px;font-size:21px;font-weight:900}
+.empty p{margin:0;font-size:14px;font-weight:600;color:var(--slate)}
+
+/* ── 页脚 ───────────────────────────────────────────────────── */
+.site-footer{position:relative;padding:52px 0 24px;background:var(--ink);color:#C9D6EE}
+.site-footer::before{content:"";position:absolute;left:0;right:0;top:-15px;height:16px;background:radial-gradient(circle at 14px 16px,var(--ink) 13px,transparent 14px) 0 0/28px 16px repeat-x}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}
+.footer-brand b{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.02em}
+.footer-brand p{margin:10px 0 0;max-width:34em;font-size:13.5px;line-height:1.85;font-weight:600}
+.footer-col h3{margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--sun);text-transform:uppercase}
+.footer-col a{display:block;font-size:13px;line-height:2;font-weight:600;color:#C9D6EE;text-decoration:none}
+.footer-col a:hover{color:var(--sun)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px 18px;flex-wrap:wrap;margin-top:32px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:600;letter-spacing:.02em}
+
+/* ── 详情抽屉 ───────────────────────────────────────────────── */
+.scrim{position:fixed;inset:0;z-index:90;background:rgba(20,40,75,.42);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;top:0;right:0;bottom:0;z-index:95;display:flex;flex-direction:column;
+  width:min(540px,100vw);background:var(--paper);border-left:2px solid var(--ink);border-radius:24px 0 0 24px;
+  box-shadow:-10px 0 0 rgba(20,40,75,.12);transform:translateX(103%);transition:transform .38s var(--ease);
+}
+.sheet.on{transform:none}
+.sheet-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:13px 20px;border-bottom:2px solid var(--ink);background:var(--cream)}
+.sheet-bar .tag{line-height:1.8}
+.close{margin-left:auto;display:grid;place-items:center;width:34px;height:34px;border:2px solid var(--ink);border-radius:10px;background:var(--paper);box-shadow:2px 2px 0 var(--ink);color:var(--ink);transition:transform .15s var(--ease)}
+.close:hover{transform:translateY(-1px) rotate(3deg)}
+.sheet-body{flex:1;padding:22px 22px 34px;overflow:auto}
+.sheet-body h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0;font-size:29px;font-weight:900;letter-spacing:-.02em;line-height:1.2}
+.sheet-body h2 span{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--slate)}
+.portrait{float:right;width:92px;height:92px;margin:0 0 8px 16px;padding:3px;border:2px solid var(--ink);border-radius:20px;background:var(--tone,var(--sky));box-shadow:3px 3px 0 var(--ink);transform:rotate(3deg);object-fit:contain}
+.sheet-mark{float:right;display:grid;place-items:center;width:76px;height:76px;color:var(--ink);margin:0 0 8px 16px;border:2px solid var(--ink);border-radius:18px;background:var(--tone,var(--sky));box-shadow:3px 3px 0 var(--ink);font-size:24px;font-weight:900;transform:rotate(3deg)}
+.sheet-mark svg{width:30px;height:30px}
+.lead{margin:9px 0 0;font-size:14px;line-height:1.75;font-weight:600;color:var(--slate)}
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px;border:2px solid var(--ink);border-radius:16px;overflow:hidden;background:var(--cream)}
+.meta-grid div{padding:9px 13px;border-bottom:1px solid var(--soft);border-right:1px solid var(--soft)}
+.meta-grid div:nth-child(2n){border-right:0}
+.meta-grid dt{font-size:9.5px;font-weight:800;letter-spacing:.12em;color:var(--slate);text-transform:uppercase}
+.meta-grid dd{margin:2px 0 0;font-size:12.5px;font-weight:700;color:var(--ink)}
+.meta-grid dd.warn{color:#C4496F}
+.block{margin-top:18px}
+.block h4{margin:0 0 7px;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--slate);text-transform:uppercase}
+.block ul{list-style:none;margin:0;padding:0}
+.block li{display:flex;gap:9px;padding:1px 0;font-size:13px;line-height:1.75;font-weight:600;color:var(--slate)}
+.block li::before{content:"";flex:none;width:7px;height:7px;margin-top:8px;border-radius:50%;background:var(--tone,var(--sky));border:1.5px solid var(--ink)}
+.block.neg li{color:#8EA1C4}
+.block.neg li::before{background:var(--soft);border-color:var(--soft)}
+.perm{display:flex;flex-wrap:wrap;gap:6px}
+.perm span{padding:2px 10px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font-size:11.5px;font-weight:700;color:var(--ink)}
+.install-box{margin-top:18px;padding:12px 14px;border:2px solid var(--ink);border-radius:16px;background:var(--cream);box-shadow:3px 3px 0 var(--ink)}
+.install-box .row{display:flex;align-items:center;gap:8px}
+.install-box code{flex:1;min-width:0;font-family:var(--mono);font-size:11.5px;font-weight:400;line-height:1.7;color:var(--ink);word-break:break-all}
+.icon-btn{display:grid;place-items:center;flex:none;width:31px;height:31px;border:2px solid var(--ink);border-radius:9px;background:var(--paper);box-shadow:0 2px 0 var(--ink);color:var(--ink)}
+.icon-btn:hover{background:var(--sun)}
+.icon-btn svg{width:13px;height:13px}
+.install-note{margin:8px 0 0;font-size:11.5px;line-height:1.7;font-weight:600;color:var(--slate)}
+.kin{display:flex;flex-wrap:wrap;gap:6px}
+.kin button{padding:4px 11px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);font-size:12px;font-weight:700;color:var(--ink)}
+.kin button:hover{background:var(--sky)}
+.sheet-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:13px;border-top:2px dashed var(--soft);font-size:10.5px;font-weight:700;color:var(--slate)}
+.sheet-foot a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.sheet-foot a:hover{color:var(--coral)}
+
+/* ── 提示 ───────────────────────────────────────────────────── */
+.toast{position:fixed;left:50%;bottom:24px;z-index:120;padding:9px 17px;border:2px solid var(--ink);border-radius:999px;background:var(--mint);box-shadow:3px 3px 0 var(--ink);font-size:13px;font-weight:800;color:var(--ink);opacity:0;transform:translate(-50%,12px);pointer-events:none;transition:opacity .2s,transform .25s var(--ease)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ── 响应 ───────────────────────────────────────────────────── */
+@media (max-width:1024px){
+  .hero-grid{grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);gap:24px}
+  .hero-art{max-width:300px}
+  .hero-note{margin-left:0}
+  .plugin-list{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+}
+@media (max-width:820px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+  .hero-art{order:-1;max-width:330px}
+  .header-inner{min-height:70px}
+  .header-links a:nth-child(2),.header-links a:nth-child(3){display:none}
+  .steps{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .footer-brand{grid-column:1/-1}
+  .plugin-list{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+}
+@media (max-width:640px){
+  .shell{width:calc(100% - 32px)}
+  .header-inner{gap:10px}
+  .brand{font-size:16px;gap:9px}
+  .brand img{width:42px;height:42px;border-radius:13px}
+  .header-links{padding:4px;gap:0;box-shadow:2px 2px 0 var(--ink)}
+  .header-links a{font-size:12.5px;padding:5px 10px}
+  .header-links a:first-child{display:none}
+  .copy-chip{font-size:12px;padding:6px 11px;margin-left:2px}
+  h1{font-size:clamp(30px,8.8vw,38px);line-height:1.28}
+  .lead{font-size:15.5px;margin:12px 0 18px}
+  .hero-art{max-width:236px}
+  .sticker{font-size:11.5px;padding:3px 10px;box-shadow:2px 2px 0 var(--ink)}
+  .address-bar{flex-wrap:wrap;padding:7px;gap:4px}
+  .address-bar input{height:44px;font-size:16px;order:1;flex:1 1 100%;padding:0 8px}
+  .link-ico{width:34px;height:36px;order:0}
+  .link-ico svg{width:19px;height:19px}
+  .copy-button{order:2;width:100%;min-width:0;padding:12px 16px;font-size:15px}
+  .hero-foot{gap:8px}
+  .stats li{font-size:12px;padding:3px 11px}
+  .steps-section{padding-bottom:40px}
+  .directory{padding:44px 0 56px}
+  .directory-heading{gap:8px}
+  .result-count{margin-left:0;font-size:12.5px}
+  .dir-stats li{font-size:11.5px}
+  .filters{padding:12px;border-radius:20px;gap:12px}
+  .chips{gap:6px}
+  .chip{min-height:34px;font-size:12.5px;padding:3px 7px 3px 11px}
+  .sort-chips{width:100%;justify-content:space-between}
+  .sort-chips button{flex:1;padding:3px 8px}
+  .picks{gap:6px}
+  .plugin-list{grid-template-columns:1fr;gap:16px}
+  .card{border-radius:20px}
+  .card-main{padding:14px 14px 9px}
+  .avatar{width:46px;height:46px;border-radius:13px}
+  .name strong{font-size:17.5px}
+  .card-foot{padding:0 14px 12px}
+  .sheet{width:100vw;border-left:0;border-radius:0}
+  .sheet-body{padding:18px 16px 30px}
+  .sheet-body h2{font-size:26px}
+  .portrait{width:78px;height:78px}
+  .sheet-body .lead{clear:both}
+  .footer-grid{grid-template-columns:1fr;gap:22px}
+  .footer-brand p{max-width:none}
+  .site-footer{padding-top:42px}
+  .footer-bottom{font-size:10.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+.meta-line{margin:10px 0 0;font-size:13px;line-height:1.5;font-weight:700;color:var(--slate)}
+.about-section,.faq-section{margin:64px auto}
+.about-card{border:2px solid var(--ink);border-radius:24px;background:var(--cream);box-shadow:0 8px 0 var(--ink);padding:26px 28px}
+.about-card p{margin:10px 0 0;max-width:820px;font-size:15px;line-height:1.8;font-weight:600;color:var(--slate)}
+.about-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;font-size:14px;font-weight:800}
+.faq-list{display:grid;gap:12px;max-width:920px}
+.faq-item{border:2px solid var(--ink);border-radius:18px;background:var(--cream);box-shadow:0 5px 0 var(--ink);overflow:hidden}
+.faq-item summary{cursor:pointer;list-style:none;padding:16px 20px;font-size:16px;font-weight:800;color:var(--ink);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"+";font-size:18px;line-height:1;color:var(--blue);flex:none}
+.faq-item[open] summary::after{content:"–"}
+.faq-item p{margin:0;padding:0 20px 18px;font-size:14px;line-height:1.8;font-weight:600;color:var(--slate)}
+@media(max-width:620px){.about-card{padding:18px}.about-section,.faq-section{margin:44px auto}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="#top">
+      <img src="assets/mascot-face.webp" alt="Anbot 纸艺头像">
+      <span>Anbot 市场</span>
+    </a>
+    <div class="header-links">
+      <a href="#catalog">目录</a>
+      <a href="#how">怎么装</a>
+      <a href="index.json">索引</a>
+      <button class="copy-chip" type="button" data-copy="https://rml4791lol-lang.github.io/Anbot/index.json">复制地址</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero shell">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="dot"></span>ANBOT · 开源 · 多 AGENT · 预设 / 技能 / MCP / 插件</p>
+        <h1>四类零件，<br><span class="blue">一份索引。</span></h1>
+        <p class="lead">预设、技能、MCP、插件。挑好，装进你自己电脑上的 Anbot——一支持久在线的开源 Bot 团队，干活的时候，你知道它装了什么。</p>
+        <p class="meta-line">更新于 2026-11-27 · Anbot 团队</p>
+        <label class="address-label" for="index-url">索引地址</label>
+        <div class="address-bar">
+          <span class="link-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+          </span>
+          <input id="index-url" type="text" readonly value="https://rml4791lol-lang.github.io/Anbot/index.json" aria-label="索引地址">
+          <button class="copy-button" type="button" data-copy="https://rml4791lol-lang.github.io/Anbot/index.json">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="8" height="8" rx="1.6"/><path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5.5A1.5 1.5 0 0 0 4 11h1"/></svg>
+            复制地址
+          </button>
+        </div>
+        <p class="copy-status" id="copy-status" role="status"></p>
+        <div class="hero-foot">
+          <ul class="stats">
+            <li><strong id="stat-items">27</strong> 个条目</li>
+            <li><strong>4</strong> 类零件</li>
+            <li><strong>0</strong> 个账号</li>
+          </ul>
+          <span class="hero-note"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:#3CCF8E;border:1.5px solid var(--ink);display:inline-block"></span>本机安装 · 不经服务器</span>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <span class="art-blob" aria-hidden="true"></span>
+        <img class="mascot" src="assets/mascot.webp" alt="Anbot 纸艺看板娘，抱着索引卡片">
+        <span class="sticker s1">预设 <b data-count="preset">15</b></span>
+        <span class="sticker s2">技能 <b data-count="skill">2</b></span>
+        <span class="sticker s3">MCP <b data-count="mcp">6</b></span>
+        <span class="sticker s4">插件 <b data-count="plugin">4</b></span>
+        <div class="stack" aria-hidden="true"><span class="sc3"></span><span class="sc2"></span><span class="sc1"><i>ANBOT · INDEX</i><b>27</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps-section shell" id="how">
+    <div class="steps-head">
+      <h2 class="section-title title-mint">三步装进本机</h2>
+      <span class="head-note">从索引到你的 Anbot</span>
+    </div>
+    <ol class="steps">
+      <li class="step sky">
+        <h3><span class="step-num">1</span>添加索引源</h3>
+        <div class="step-panel">
+          <p>一条命令接上目录，之后它出现在 Anbot 的「发现」页。</p>
+          <code class="step-code">anbot market add &lt;索引地址&gt;</code>
+        </div>
+      </li>
+      <li class="step peach">
+        <h3><span class="step-num">2</span>挑条目</h3>
+        <div class="step-panel">
+          <p>预设和技能只改配置；MCP 和插件会在本机跑代码，先看权限。</p>
+          <code class="step-code">anbot search &lt;关键词&gt;</code>
+        </div>
+      </li>
+      <li class="step mint">
+        <h3><span class="step-num">3</span>装进本机</h3>
+        <div class="step-panel">
+          <p>配置和文件落在本地，不经过服务器；卸掉就是删掉那份配置。</p>
+          <code class="step-code">anbot install &lt;id&gt;</code>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="directory" id="catalog">
+    <div class="shell">
+      <div class="directory-heading">
+        <h2 class="section-title title-sun">配置目录</h2>
+        <p class="result-count" id="result-count">27 个条目</p>
+      </div>
+      <ul class="dir-stats">
+        <li><span data-count="preset">15</span> 预设</li>
+        <li><span data-count="skill">2</span> 技能</li>
+        <li><span data-count="mcp">6</span> MCP</li>
+        <li><span data-count="plugin">4</span> 插件</li>
+      </ul>
+
+      <div class="filters">
+        <div class="field">
+          <label class="field-label" for="q">搜索</label>
+          <input id="q" type="search" placeholder="名字、用途、作者" autocomplete="off">
+        </div>
+        <div class="field">
+          <span class="field-label">类型</span>
+          <div class="chips" id="chips" role="group" aria-label="类型筛选"></div>
+        </div>
+        <div class="field sort-row">
+          <span class="field-label" style="padding-left:0;align-self:center">排序</span>
+          <div class="sort-chips" id="sort">
+            <button type="button" data-sort="pick" aria-pressed="true">推荐</button>
+            <button type="button" data-sort="new" aria-pressed="false">最近更新</button>
+            <button type="button" data-sort="name" aria-pressed="false">名称</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="picks" id="featured"></div>
+      <div class="plugin-list" id="grid"></div>
+      <div class="empty" id="empty">
+        <h3>没有匹配的条目</h3>
+        <p>换个词，或者切回「全部」。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="shell about-section" id="about">
+    <div class="about-card">
+      <h2 class="section-title title-mint">关于 Anbot</h2>
+      <p>Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。</p>
+      <p>这份目录有 27 条配置（15 个预设、2 个技能、6 个MCP、4 个插件），都读同一份 index.json；装进你自己的 Anbot，数据和执行留在本机。</p>
+      <div class="about-links"><a href="https://github.com/rml4791lol-lang/Anbot">GitHub ↗</a><a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 ↗</a><a href="#faq">常见问题 ↓</a></div>
+    </div>
+  </section>
+
+  <section class="shell faq-section" id="faq">
+    <div class="steps-head">
+      <h2 class="section-title title-sun">常见问题</h2>
+      <span class="head-note">给 AI 和人都能直接读</span>
+    </div>
+    <div class="faq-list"><details class="faq-item" open><summary>Anbot 是什么？</summary><p>Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。</p></details>
+<details class="faq-item"><summary>这个市场里有什么？</summary><p>27 条配置，15 个预设、2 个技能、6 个MCP、4 个插件；都读同一份 index.json，在本机安装。</p></details>
+<details class="faq-item"><summary>数据会上传吗？</summary><p>不会。团队、聊天、记忆、凭据和执行记录留在本机；模型请求只发给你配置的模型服务商。</p></details>
+<details class="faq-item"><summary>Anbot 开源吗？</summary><p>是，Apache 2.0。应用和插件代码开源；预设、技能和 MCP/插件索引可读、可换。</p></details>
+<details class="faq-item"><summary>和 Grok Bot、大厂 Agent 有什么区别？</summary><p>Grok Bot 是付费云端的 Bot 团队；Anbot 开源、跑在你的真实工作区里，你可以接管。大厂 Agent 的运行时、模型和扩展面归厂商；Anbot 把代码、模型选择和扩展面保持开放。</p></details></div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <b>ANBOT 市场</b>
+        <p>开源的多 Agent 工作台：一支持久在线的 Bot 团队。目录只负责把零件摆清楚，装不装由你。</p>
+      </div>
+      <div class="footer-col">
+        <h3>目录</h3>
+        <a href="#catalog">预设</a>
+        <a href="#catalog">技能</a>
+        <a href="#catalog">MCP</a>
+        <a href="#catalog">插件</a>
+      </div>
+      <div class="footer-col">
+        <h3>说明</h3>
+        <a href="index.json">索引规范</a>
+        <a href="#how">安装方式</a>
+        <a href="#about">关于 Anbot</a>
+        <a href="#faq">常见问题</a>
+        <a href="index.json" id="foot-source">DSH 开放市场 ↗</a>
+        <a href="#top">回到顶部</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>示例目录 · 预设为随仓库发布的种子配置 · 插件条目来自 DSH 开放市场</span>
+      <span>COMMUNITY PROJECT · NOT AFFILIATED WITH DEEPSEEK</span>
+    </div>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="条目详情">
+  <div class="sheet-bar" id="sheet-bar"></div>
+  <div class="sheet-body" id="sheet-body"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+window.ANBOT_INDEX = {"schema":"anbot.market/1","name":"Anbot 配置目录","about":"预设、技能、MCP、插件。四类零件，一份索引，装进你自己的 Anbot——一支持久在线的开源 Bot 团队。","updated":"2026-11-27T09:00:00+08:00","indexUrl":"https://rml4791lol-lang.github.io/Anbot/index.json","install":"anbot market add https://rml4791lol-lang.github.io/Anbot/index.json","kinds":[{"id":"preset","label":"预设","letter":"P","about":"一个 Bot 的角色、指令、模型与形象","risk":"config","riskLabel":"只改配置"},{"id":"skill","label":"技能","letter":"S","about":"一段可被调用的流程，可能带脚本","risk":"config","riskLabel":"可能带脚本"},{"id":"mcp","label":"MCP","letter":"M","about":"一个 MCP 服务器，把外部工具接进来","risk":"code","riskLabel":"会执行代码"},{"id":"plugin","label":"插件","letter":"X","about":"装进 Anbot 的界面与运行时扩展","risk":"code","riskLabel":"会执行代码"}],"trust":[{"id":"verified","label":"已审查","about":"维护者读过内容，校验和对得上"},{"id":"community","label":"社区","about":"来源可查，未逐行审查"},{"id":"local","label":"本机","about":"只在你自己的机器上存在"}],"sources":{"plugin":{"label":"DSH 开放市场","index":"https://dshopen.org/index.json","url":"https://dshopen.org/zh/","note":"插件不复制索引，直接读对方的；本站只显示入口和信任状态"}},"items":[{"id":"anbot","kind":"preset","name":"Anbot","role":"主控","summary":"接住一句话目标，拆成能验收的清单，再派人。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["主 Bot","拆任务","验收"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/anbot-160.webp","model":"跟随设置","does":["把目标拆成带验收标准的清单","派给合适的 Bot 或本机执行者","收尾时核对证据，不合格打回"],"doesNot":["不替你决定要不要做","不把猜测写成结论"],"install":"anbot preset add anbot","source":"market/seeds/presets/anbot.json","pick":true},{"id":"detective","kind":"preset","name":"侦探","role":"核查","summary":"先找证据，再下结论；对不上的地方单独列。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["核查","来源","引用"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/detective-160.webp","model":"跟随设置","does":["把一句话拆成可核对的点","逐条找一手来源，记下出处","列出对不上的地方，标出置信度"],"doesNot":["不为了让结论好看而补内容"],"install":"anbot preset add detective","source":"market/seeds/presets/detective.json","pick":true},{"id":"glasses","kind":"preset","name":"眼镜","role":"审阅","summary":"只读这次改动，只看可触发的问题。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["代码","diff","缺陷"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/glasses-160.webp","model":"跟随设置","does":["只读本次 diff，不读全仓库","只报新增且能触发的缺陷","给复现路径和最小修法"],"doesNot":["不改代码","不提风格偏好"],"install":"anbot preset add glasses","source":"market/seeds/presets/glasses.json"},{"id":"headphone","kind":"preset","name":"耳机","role":"纪要","summary":"录音进，要点、待办、责任人出。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["会议","逐字稿","待办"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/headphone-160.webp","model":"跟随设置","does":["逐字稿收成要点与待办","每个待办带责任人","标出讨论了但没结论的部分"],"doesNot":["不写没人说过的话"],"install":"anbot preset add headphone","source":"market/seeds/presets/headphone.json"},{"id":"scarf","kind":"preset","name":"围巾","role":"写作","summary":"按你的口径改，不动结构，不擅自加分点。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["改写","口吻","中英"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/scarf-160.webp","model":"跟随设置","does":["保持结构与字数，只换表达","长文给短版和稳版各一稿","中英对照时术语先对齐"],"doesNot":["不擅自加分点","不改体裁"],"install":"anbot preset add scarf","source":"market/seeds/presets/scarf.json"},{"id":"chef","kind":"preset","name":"厨师","role":"流程","summary":"把长任务切成能停、能续、能回滚的步骤。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["多步","检查点","回滚"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/chef-160.webp","model":"跟随设置","does":["每步留一个可检查的产物","在关键处设检查点","失败从断点重来，不从头再跑"],"doesNot":["不在没有检查点时连跑整条链"],"install":"anbot preset add chef","source":"market/seeds/presets/chef.json"},{"id":"barista","kind":"preset","name":"咖啡师","role":"简报","summary":"早上把该看的收成一页，只留需要你决定的。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["日报","订阅","筛选"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/barista-160.webp","model":"跟随设置","does":["扫订阅、邮件、Issue","只留需要你拍板的几条","每条都带来源链接"],"doesNot":["不写没有来源的总结"],"install":"anbot preset add barista","source":"market/seeds/presets/barista.json"},{"id":"gardener","kind":"preset","name":"园丁","role":"知识库","summary":"整理、去重、补链，把过期的单独标出来。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["归档","去重","交叉引用"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/gardener-160.webp","model":"跟随设置","does":["按主题归类，合并重复条目","给孤立条目补交叉引用","把过期内容标出来等你确认"],"doesNot":["不删你没确认的内容"],"install":"anbot preset add gardener","source":"market/seeds/presets/gardener.json"},{"id":"painter","kind":"preset","name":"画家","role":"视觉","summary":"先给方向再出图，按渠道出比例，留可编辑源。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["海报","封面","配图"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/painter-160.webp","model":"跟随设置","does":["先出两个方向让你选","按渠道给对应比例","留下可编辑的源文件"],"doesNot":["不用来源不明的素材"],"install":"anbot preset add painter","source":"market/seeds/presets/painter.json"},{"id":"raincoat","kind":"preset","name":"雨衣","role":"守夜","summary":"盯着日志、价格、接口，越线才叫你。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["监控","告警","巡检"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/raincoat-160.webp","model":"跟随设置","does":["定时巡检日志、价格、接口","只在越线时通知你","附上前后对比和发生时间"],"doesNot":["不擅自重启或改配置"],"install":"anbot preset add raincoat","source":"market/seeds/presets/raincoat.json"},{"id":"wizard","kind":"preset","name":"巫师","role":"实验","summary":"两版提示词，同一批样本，跑完给结论。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["提示词","A/B","评分"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/wizard-160.webp","model":"跟随设置","does":["写两版提示词，只差一个变量","同一批样本各跑一遍","给差异、代价和取舍"],"doesNot":["不拿单次结果当规律"],"install":"anbot preset add wizard","source":"market/seeds/presets/wizard.json"},{"id":"astro","kind":"preset","name":"宇航员","role":"长跑","summary":"几小时的活自己盯，卡住自己换路。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["长任务","进度","自愈"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/astro-160.webp","model":"跟随设置","does":["长任务分段，定期报进度","中途卡住自己换一条路","结束时给完整账：做了什么、花了多少"],"doesNot":["不静默失败"],"install":"anbot preset add astro","source":"market/seeds/presets/astro.json"},{"id":"skater","kind":"preset","name":"滑板","role":"原型","summary":"先跑通，再谈完整；一天内能演示。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["原型","演示","最小可用"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/skater-160.webp","model":"跟随设置","does":["先做最小可用版本","留好升级位","当天能演示给谁看"],"doesNot":["不为原型写完整测试"],"install":"anbot preset add skater","source":"market/seeds/presets/skater.json"},{"id":"overalls","kind":"preset","name":"工装","role":"运维","summary":"构建、发布、回滚，出事给回滚路径。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["构建","发布","回滚"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/overalls-160.webp","model":"跟随设置","does":["维护构建与发布脚本","发布前跑检查清单","出事时先给回滚路径"],"doesNot":["不在没有备份时动生产"],"install":"anbot preset add overalls","source":"market/seeds/presets/overalls.json"},{"id":"nightcap","kind":"preset","name":"睡帽","role":"批处理","summary":"你睡了它干活，早上给清单。","version":"1.0","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["夜间","批量","清单"],"author":"anbot","updated":"2026-11-27","character":"assets/anbot/nightcap-160.webp","model":"跟随设置","does":["夜间跑批量任务","早上给一张结果清单","失败的单独列在最前"],"doesNot":["不在无人值守时做不可逆操作"],"install":"anbot preset add nightcap","source":"market/seeds/presets/nightcap.json"},{"id":"issue-triage","kind":"skill","name":"Issue 分诊","summary":"每个 Issue 一个类型、一个优先级；每个关闭都留证据。","version":"0.1","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["GitHub","标签","分诊"],"author":"anbot","updated":"2026-11-27","trigger":"分诊、整理 Issue、打标签、这个该不该关","does":["取一次仓库快照，只读","给类型、优先级、领域各一个标签","结论和证据一起写回 GitHub"],"doesNot":["不改代码，不合 PR"],"entry":".agents/skills/issue-triage/SKILL.md","install":"anbot skill add issue-triage","source":".agents/skills/issue-triage"},{"id":"record-browser-gif","kind":"skill","name":"界面录制","summary":"把浏览器操作录成优化过的 GIF，挂到 PR 当证据。","version":"0.1","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["录屏","GIF","PR"],"author":"anbot","updated":"2026-11-27","trigger":"录 GIF、录屏、界面演示、PR 截图","does":["在真实服务上录一遍操作","裁剪、变速、收尾定格，压体积","需要时挂到 PR"],"doesNot":["不摆拍，不伪造界面状态"],"entry":".agents/skills/record-browser-gif/SKILL.md","install":"anbot skill add record-browser-gif","source":".agents/skills/record-browser-gif"},{"id":"github","kind":"mcp","name":"GitHub","summary":"仓库、Issue、PR、Actions 日志，都在一句话里。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["仓库","PR","CI"],"author":"anbot","updated":"2026-11-27","transport":"OAuth","permissions":["仓库读","仓库写","PR 写","Actions 日志读"],"install":"anbot mcp add github","homepage":"https://github.com"},{"id":"notion","kind":"mcp","name":"Notion","summary":"页面和数据库，读写都在行内完成。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["文档","数据库"],"author":"anbot","updated":"2026-11-27","transport":"OAuth","permissions":["页面读","页面写","数据库读写"],"install":"anbot mcp add notion","homepage":"https://notion.so"},{"id":"linear","kind":"mcp","name":"Linear","summary":"Issue、项目、周期，不用切窗口。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["Issue","项目"],"author":"anbot","updated":"2026-11-27","transport":"OAuth","permissions":["Issue 读写","项目读","评论写"],"install":"anbot mcp add linear","homepage":"https://linear.app"},{"id":"figma","kind":"mcp","name":"Figma","summary":"读文件、导出切图，设计稿直接进上下文。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["设计","切图"],"author":"anbot","updated":"2026-11-27","transport":"OAuth","permissions":["文件只读","切图导出"],"install":"anbot mcp add figma","homepage":"https://figma.com"},{"id":"mail","kind":"mcp","name":"邮箱","summary":"QQ、163、Gmail、iCloud，IMAP 收发加规则。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["邮件","收件规则"],"author":"anbot","updated":"2026-11-27","transport":"IMAP / SMTP","permissions":["收信","发信","规则读写"],"install":"anbot mcp add mail","homepage":"https://rml4791lol-lang.github.io/Anbot"},{"id":"playwright","kind":"mcp","name":"本机浏览器","summary":"在你自己的浏览器里点、填、下载，账号状态照原样。","version":"内置","requires":"Anbot ≥ 0.3.6","trust":"verified","tags":["浏览器","自动化","下载"],"author":"anbot","updated":"2026-11-27","transport":"本机","permissions":["浏览器控制","下载目录写","上传需逐次确认"],"install":"anbot mcp add playwright","homepage":"https://playwright.dev"},{"id":"ds-bot","kind":"plugin","name":"DS Bot","summary":"一队长期在线的 Bot：主 Bot、群聊、互相消息。","version":"0.3.6","requires":"DSH 0.2.x","trust":"verified","tags":["Bot 团队","群聊","交付"],"author":"anbot","updated":"2026-11-27","permissions":["本机文件读写","浏览器控制","子进程"],"install":"anbot plugin add ds-bot","source":"ds-bot","homepage":"https://github.com/Fei2411/DS-Bot"},{"id":"openviking-memory","kind":"plugin","name":"OpenViking 记忆","summary":"给 Agent 接一套可检索、可积累的长期上下文。","version":"—","requires":"见开放市场","trust":"community","tags":["记忆","上下文"],"author":"openviking","updated":"2026-11-27","exactVersion":false,"permissions":["本机文件","网络请求"],"install":"anbot plugin add @openviking/dsh-memory-plugin","external":true,"homepage":"https://dshopen.org/zh/"},{"id":"mcp-skill-manage","kind":"plugin","name":"MCP 与技能管理","summary":"跨支持的工具管理，技能和 MCP 配置能备份恢复。","version":"0.5.5","requires":"DSH 0.2.1 – 0.3.0","trust":"community","tags":["配置","备份"],"author":"community","updated":"2026-11-27","permissions":["配置读写","本机文件"],"install":"anbot plugin add dsh-mcp-skill-manage","external":true,"homepage":"https://dshopen.org/zh/"},{"id":"workflow-map","kind":"plugin","name":"工作流地图","summary":"把当前会话画成分步地图，标出进度和来源。","version":"0.1.3","requires":"见开放市场","trust":"community","tags":["会话","可视化"],"author":"community","updated":"2026-11-27","permissions":["会话读"],"install":"anbot plugin add dsh-workflow-map","external":true,"homepage":"https://dshopen.org/zh/"}]};
+(function () {
+  const IDX = window.ANBOT_INDEX
+  const KIND = Object.fromEntries(IDX.kinds.map(k => [k.id, k]))
+  const TRUST = Object.fromEntries(IDX.trust.map(t => [t.id, t]))
+  const ORDER = IDX.kinds.map(k => k.id)
+  const TONE = { preset: 'sky', skill: 'peach', mcp: 'mint', plugin: 'lilac' }
+  const TRUST_TONE = { verified: 'sun', community: 'sky', local: 'peach' }
+  const $ = s => document.querySelector(s)
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+  const initialQ = new URLSearchParams(location.search).get('q') || ''
+  const state = { kind: 'all', q: initialQ, sort: 'pick' }
+  const counts = { all: IDX.items.length }
+  for (const k of ORDER) counts[k] = IDX.items.filter(i => i.kind === k).length
+
+  $('#stat-items').textContent = IDX.items.length
+  document.querySelectorAll('[data-count]').forEach(el => { el.textContent = counts[el.dataset.count] })
+
+  $('#chips').innerHTML = [['all', '全部']].concat(IDX.kinds.map(k => [k.id, k.label])).map(([id, label]) =>
+    `<button class="chip" type="button" data-kind="${id}" aria-pressed="${id === 'all'}">${label}<small>${counts[id]}</small></button>`
+  ).join('')
+
+  const pickWeight = i => (i.pick ? 0 : 1)
+  const sorted = list => {
+    const out = list.slice()
+    if (state.sort === 'name') return out.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+    if (state.sort === 'new') return out.sort((a, b) => String(b.updated).localeCompare(String(a.updated)))
+    return out.sort((a, b) => pickWeight(a) - pickWeight(b) || ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || a.name.localeCompare(b.name, 'zh'))
+  }
+  const matches = i => {
+    if (state.kind !== 'all' && i.kind !== state.kind) return false
+    const q = state.q.trim().toLowerCase()
+    if (!q) return true
+    return [i.name, i.id, i.role, i.summary, i.author, i.trigger].concat(i.tags || []).filter(Boolean).join(' ').toLowerCase().includes(q)
+  }
+  const tag = (label, tone) => `<span class="tag ${tone}">${esc(label)}</span>`
+  const trustTag = t => tag((TRUST[t] || TRUST.community).label, TRUST_TONE[t] || 'sky')
+  const ICON = {
+    preset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="11" height="15" rx="2"/><rect x="4" y="6" width="11" height="15" rx="2"/><path d="M6.5 9.5h6"/></svg>',
+    skill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 5 14h6l-1 8 9-13h-6l1-7Z"/></svg>',
+    mcp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M7 8h10v3a5 5 0 0 1-10 0V8ZM12 16v5"/></svg>',
+    plugin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>'
+  }
+  const avatar = i => i.character
+    ? `<span class="avatar"><img src="${esc(i.character)}" alt="${esc(i.name)} 头像" loading="lazy"></span>`
+    : `<span class="avatar">${ICON[i.kind] || `<b>${esc(KIND[i.kind].letter)}</b>`}</span>`
+
+  const versionPill = v => {
+    const s = String(v == null ? '' : v).trim()
+    if (!s || s === '—') return '版本未标注'
+    return /^\d/.test(s) ? 'v' + s : s
+  }
+  function card(i) {
+    const k = KIND[i.kind]
+    return `<article class="card" data-kind="${esc(i.kind)}">
+      <button class="card-main" type="button" data-open="${esc(i.id)}" aria-label="查看 ${esc(i.name)} 详情">
+        <span class="card-head">${avatar(i)}<span class="name"><strong>${esc(i.name)}</strong><span class="pkg">${esc(i.id)}</span></span></span>
+        <span class="card-tags">${tag(k.label, TONE[i.kind])}${trustTag(i.trust)}${k.risk === 'code' ? tag('会跑代码', 'peach') : ''}</span>
+        <span class="desc">${esc(i.summary)}</span>
+        <span class="detail"><span class="pill">${versionPill(i.version)}</span><span class="pill">${esc(i.updated)}</span></span>
+      </button>
+      <div class="card-foot">
+        <span class="author">@${esc(i.author)}</span>
+        <button class="cta" type="button" data-install="${esc(i.id)}">安装 →</button>
+      </div>
+    </article>`
+  }
+  function picks(list) {
+    return `<span class="picks-label">✦ 今日推荐</span>` + list.map(i =>
+      `<button class="pick" type="button" data-open="${esc(i.id)}">${esc(i.name)}<em>${esc(KIND[i.kind].label)}</em></button>`
+    ).join('')
+  }
+
+  function render() {
+    const list = sorted(IDX.items.filter(matches))
+    $('#grid').innerHTML = list.map(card).join('')
+    const showPicks = state.kind === 'all' && !state.q.trim()
+    const pickList = showPicks ? sorted(IDX.items.filter(i => i.pick)).slice(0, 3) : []
+    $('#featured').innerHTML = pickList.length ? picks(pickList) : ''
+    $('#featured').style.display = pickList.length ? '' : 'none'
+    $('#result-count').textContent = state.q.trim() || state.kind !== 'all' ? `${list.length} / ${IDX.items.length} 个条目` : `${IDX.items.length} 个条目`
+    $('#empty').classList.toggle('on', list.length === 0)
+  }
+
+  const indexInput = $('#index-url')
+  if (indexInput) indexInput.addEventListener('click', () => copy(indexInput.value, () => {
+    status('已复制索引地址，粘到 Anbot 的「发现」页即可。')
+    toast('已复制索引地址')
+  }))
+  $('#q').value = state.q
+  function syncUrl() {
+    const url = new URL(location.href)
+    if (state.q.trim()) url.searchParams.set('q', state.q)
+    else url.searchParams.delete('q')
+    history.replaceState(null, '', url)
+  }
+  $('#q').addEventListener('input', e => { state.q = e.target.value; syncUrl(); render() })
+  $('#chips').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return
+    state.kind = b.dataset.kind
+    $('#chips').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.kind === state.kind)))
+    render()
+  })
+  $('#sort').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return
+    state.sort = b.dataset.sort
+    $('#sort').querySelectorAll('button').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.sort === state.sort)))
+    render()
+  })
+
+  function toast(text) {
+    const el = $('#toast'); el.textContent = text; el.classList.add('on')
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('on'), 1800)
+  }
+  function status(text) {
+    const el = $('#copy-status'); if (!el) return
+    el.textContent = text; el.classList.add('on')
+    clearTimeout(status.timer); status.timer = setTimeout(() => el.classList.remove('on'), 2200)
+  }
+  function copy(text, done) {
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'
+      document.body.appendChild(ta); ta.select()
+      try { document.execCommand('copy') } catch (e) {}
+      document.body.removeChild(ta); done()
+    }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback)
+    else fallback()
+  }
+  const itemOf = id => IDX.items.find(i => i.id === id)
+  const DANGER = '这个条目会在你的机器上执行代码。装前核对来源与权限。'
+
+  document.addEventListener('click', e => {
+    const cp = e.target.closest('[data-copy]')
+    if (cp) {
+      const isIndex = cp.dataset.copy === IDX.indexUrl
+      copy(cp.dataset.copy, () => {
+        if (isIndex) status('已复制索引地址，粘到 Anbot 的「发现」页即可。')
+        toast(isIndex ? '已复制索引地址' : '已复制安装命令')
+      })
+      return
+    }
+    const inst = e.target.closest('[data-install]')
+    if (inst) { const i = itemOf(inst.dataset.install); if (i) copy(i.install, () => toast('已复制安装命令')); return }
+    const open = e.target.closest('[data-open]')
+    if (open) show(open.dataset.open)
+  })
+
+  let lastFocus = null
+  function show(id) {
+    const i = itemOf(id); if (!i) return
+    const k = KIND[i.kind]
+    const tone = TONE[i.kind]
+    lastFocus = document.activeElement
+    $('#sheet-bar').innerHTML = `${tag(k.label, tone)}${trustTag(i.trust)}
+      <button class="close" type="button" aria-label="关闭">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3 11 11M11 3 3 11"/></svg>
+      </button>`
+    const riskRow = k.risk === 'code'
+      ? `<div><dt>风险</dt><dd class="warn">${esc(k.riskLabel)}</dd></div>`
+      : `<div><dt>风险</dt><dd>${esc(k.riskLabel)}</dd></div>`
+    $('#sheet-body').innerHTML = `<div style="--tone:var(--${tone})">
+      ${i.character ? `<img class="portrait" src="${esc(i.character)}" alt="${esc(i.name)} 头像">`
+        : `<span class="sheet-mark">${ICON[i.kind]}</span>`}
+      <h2>${esc(i.name)}<span>${esc(i.role || '')}</span></h2>
+      <p class="lead">${esc(i.summary)}</p>
+      <div class="meta-grid">
+        <div><dt>版本</dt><dd>${esc(i.version)}</dd></div>
+        <div><dt>适用</dt><dd>${esc(i.requires || '—')}</dd></div>
+        ${riskRow}
+        <div><dt>更新</dt><dd>${esc(i.updated || '—')}</dd></div>
+      </div>
+      ${i.does ? `<div class="block"><h4>它会做什么</h4><ul>${i.does.map(d => `<li>${esc(d)}</li>`).join('')}</ul></div>` : ''}
+      ${i.doesNot ? `<div class="block neg"><h4>它不做什么</h4><ul>${i.doesNot.map(d => `<li>${esc(d)}</li>`).join('')}</ul></div>` : ''}
+      ${i.trigger ? `<div class="block"><h4>什么时候触发</h4><p class="lead" style="margin:0">${esc(i.trigger)}</p></div>` : ''}
+      ${i.permissions ? `<div class="block"><h4>装完会碰到</h4><div class="perm">${i.permissions.map(p => `<span>${esc(p)}</span>`).join('')}</div></div>` : ''}
+      <div class="install-box">
+        <div class="row"><code>${esc(i.install)}</code>
+          <button class="icon-btn" type="button" data-copy="${esc(i.install)}" aria-label="复制安装命令">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="8" height="8" rx="1.6"/><path d="M11 5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5.5A1.5 1.5 0 0 0 4 11h1"/></svg>
+          </button>
+        </div>
+        <p class="install-note">${k.risk === 'code' ? esc(DANGER) : '只写配置和文件，不跑代码；卸掉就是删掉这份配置。'}</p>
+      </div>
+      <div class="block">
+        <h4>同类的其他条目</h4>
+        <div class="kin">${IDX.items.filter(x => x.kind === i.kind && x.id !== i.id).slice(0, 4).map(x =>
+          `<button type="button" data-open="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</div>
+      </div>
+      <div class="sheet-foot">
+        <span>${esc(i.source || (i.external ? '来自 ' + IDX.sources.plugin.label : '内置'))}</span>
+        ${i.homepage ? `<a href="${esc(i.homepage)}" target="_blank" rel="noopener">主页 ↗</a>` : ''}
+      </div>
+    </div>`
+    $('#sheet').classList.add('on'); $('#scrim').classList.add('on')
+    document.body.style.overflow = 'hidden'
+    $('#sheet').querySelector('.close').focus()
+  }
+  function hide() {
+    $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on')
+    document.body.style.overflow = ''
+    if (lastFocus && lastFocus.focus) lastFocus.focus()
+  }
+  $('#scrim').addEventListener('click', hide)
+  $('#sheet').addEventListener('click', e => { if (e.target.closest('.close')) hide() })
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet').classList.contains('on')) hide() })
+
+  const header = document.querySelector('.site-header')
+  let lastY = window.scrollY
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY
+    if (y < 80) header.classList.remove('is-hidden')
+    else if (y > lastY + 6) header.classList.add('is-hidden')
+    else if (y < lastY - 6) header.classList.remove('is-hidden')
+    lastY = y
+  }, { passive: true })
+
+  const footSource = document.querySelector('#foot-source')
+  if (footSource && IDX.sources && IDX.sources.plugin) {
+    footSource.href = IDX.sources.plugin.url
+    footSource.target = '_blank'
+    footSource.rel = 'noopener'
+  }
+
+  render()
+}())
+</script>
+</body>
+</html>

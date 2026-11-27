@@ -1,0 +1,40 @@
+{
+  "name": "Anbot 配置市场",
+  "url": "https://rml4791lol-lang.github.io/Anbot/",
+  "description": "Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 27 条，读同一份 index.json；一支持久在线的多 Agent Bot 团队，在本机安装。",
+  "updated": "2026-11-27T09:00:00+08:00",
+  "entity": {
+    "name": "Anbot",
+    "oneLiner": "Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.",
+    "description": "Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。",
+    "category": "AI agent workspace",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
+    "repo": "https://github.com/rml4791lol-lang/Anbot",
+    "website": "https://rml4791lol-lang.github.io/Anbot/",
+    "features": [
+      "Open source under Apache 2.0",
+      "A team of persistent Bots, not one chat window",
+      "Multi-agent group chats and shared memory",
+      "X-Ray plan and evidence view",
+      "Checkpoints, takeover and return",
+      "Local-first workspace and data",
+      "Presets, skills, MCP and plugins in one index"
+    ],
+    "sameAs": [
+      "https://github.com/rml4791lol-lang/Anbot"
+    ]
+  },
+  "market": {
+    "name": "Anbot 配置市场",
+    "indexUrl": "https://rml4791lol-lang.github.io/Anbot/index.json",
+    "install": "anbot market add https://rml4791lol-lang.github.io/Anbot/index.json",
+    "items": 27,
+    "counts": {
+      "preset": 15,
+      "skill": 2,
+      "mcp": 6,
+      "plugin": 4
+    }
+  }
+}

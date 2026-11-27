@@ -1,0 +1,16 @@
+{
+  "name": "Anbot Market",
+  "serviceType": "Agent configuration index",
+  "description": "Anbot 的预设、技能、MCP 和插件目录；一份 index.json，在本机安装。",
+  "url": "https://rml4791lol-lang.github.io/Anbot/",
+  "provider": {
+    "name": "Anbot",
+    "url": "https://github.com/rml4791lol-lang/Anbot"
+  },
+  "areaServed": "Worldwide",
+  "isAccessibleForFree": true,
+  "offers": {
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}

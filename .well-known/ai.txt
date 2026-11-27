@@ -1,0 +1,9 @@
+# ai.txt — Anbot 配置市场
+# https://rml4791lol-lang.github.io/Anbot/
+User-agent: *
+Allow: /
+
+Sitemap: https://rml4791lol-lang.github.io/Anbot/sitemap.xml
+# Summary: Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.
+# Facts: https://rml4791lol-lang.github.io/Anbot/facts.json
+# FAQ: https://rml4791lol-lang.github.io/Anbot/ai/faq.json

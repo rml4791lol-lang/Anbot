@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Anbot 配置市场更新</title>
+  <subtitle>Anbot 的开源配置市场：预设、技能、MCP、插件四类条目，共 27 条，读同一份 index.json；一支持久在线的多 Agent Bot 团队，在本机安装。</subtitle>
+  <link href="https://rml4791lol-lang.github.io/Anbot/" rel="alternate"/>
+  <link href="https://rml4791lol-lang.github.io/Anbot/feed.xml" rel="self"/>
+  <id>https://rml4791lol-lang.github.io/Anbot/</id>
+  <updated>2026-11-27T09:00:00+08:00</updated>
+  <author><name>Anbot</name><uri>https://github.com/rml4791lol-lang/Anbot</uri></author>
+  <entry>
+    <title>Anbot</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=Anbot</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=Anbot"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>接住一句话目标，拆成能验收的清单，再派人。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>侦探</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E4%BE%A6%E6%8E%A2</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E4%BE%A6%E6%8E%A2"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>先找证据，再下结论；对不上的地方单独列。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>眼镜</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E7%9C%BC%E9%95%9C</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E7%9C%BC%E9%95%9C"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>只读这次改动，只看可触发的问题。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>耳机</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E8%80%B3%E6%9C%BA</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E8%80%B3%E6%9C%BA"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>录音进，要点、待办、责任人出。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>围巾</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%9B%B4%E5%B7%BE</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%9B%B4%E5%B7%BE"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>按你的口径改，不动结构，不擅自加分点。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>厨师</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%8E%A8%E5%B8%88</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%8E%A8%E5%B8%88"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>把长任务切成能停、能续、能回滚的步骤。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>咖啡师</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%92%96%E5%95%A1%E5%B8%88</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%92%96%E5%95%A1%E5%B8%88"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>早上把该看的收成一页，只留需要你决定的。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>园丁</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%9B%AD%E4%B8%81</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%9B%AD%E4%B8%81"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>整理、去重、补链，把过期的单独标出来。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>画家</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E7%94%BB%E5%AE%B6</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E7%94%BB%E5%AE%B6"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>先给方向再出图，按渠道出比例，留可编辑源。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>雨衣</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E9%9B%A8%E8%A1%A3</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E9%9B%A8%E8%A1%A3"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>盯着日志、价格、接口，越线才叫你。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>巫师</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%AB%E5%B8%88</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%AB%E5%B8%88"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>两版提示词，同一批样本，跑完给结论。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>宇航员</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%AE%87%E8%88%AA%E5%91%98</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%AE%87%E8%88%AA%E5%91%98"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>几小时的活自己盯，卡住自己换路。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>滑板</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E6%BB%91%E6%9D%BF</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E6%BB%91%E6%9D%BF"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>先跑通，再谈完整；一天内能演示。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>工装</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%A5%E8%A3%85</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%A5%E8%A3%85"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>构建、发布、回滚，出事给回滚路径。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>睡帽</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E7%9D%A1%E5%B8%BD</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E7%9D%A1%E5%B8%BD"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>你睡了它干活，早上给清单。</summary>
+    <category term="预设"/>
+  </entry>
+  <entry>
+    <title>Issue 分诊</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=Issue%20%E5%88%86%E8%AF%8A</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=Issue%20%E5%88%86%E8%AF%8A"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>每个 Issue 一个类型、一个优先级；每个关闭都留证据。</summary>
+    <category term="技能"/>
+  </entry>
+  <entry>
+    <title>界面录制</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E7%95%8C%E9%9D%A2%E5%BD%95%E5%88%B6</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E7%95%8C%E9%9D%A2%E5%BD%95%E5%88%B6"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>把浏览器操作录成优化过的 GIF，挂到 PR 当证据。</summary>
+    <category term="技能"/>
+  </entry>
+  <entry>
+    <title>GitHub</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=GitHub</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=GitHub"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>仓库、Issue、PR、Actions 日志，都在一句话里。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>Notion</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=Notion</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=Notion"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>页面和数据库，读写都在行内完成。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>Linear</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=Linear</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=Linear"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>Issue、项目、周期，不用切窗口。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>Figma</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=Figma</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=Figma"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>读文件、导出切图，设计稿直接进上下文。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>邮箱</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E9%82%AE%E7%AE%B1</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E9%82%AE%E7%AE%B1"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>QQ、163、Gmail、iCloud，IMAP 收发加规则。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>本机浏览器</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E6%9C%AC%E6%9C%BA%E6%B5%8F%E8%A7%88%E5%99%A8</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E6%9C%AC%E6%9C%BA%E6%B5%8F%E8%A7%88%E5%99%A8"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>在你自己的浏览器里点、填、下载，账号状态照原样。</summary>
+    <category term="MCP"/>
+  </entry>
+  <entry>
+    <title>DS Bot</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=DS%20Bot</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=DS%20Bot"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>一队长期在线的 Bot：主 Bot、群聊、互相消息。</summary>
+    <category term="插件"/>
+  </entry>
+  <entry>
+    <title>OpenViking 记忆</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=OpenViking%20%E8%AE%B0%E5%BF%86</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=OpenViking%20%E8%AE%B0%E5%BF%86"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>给 Agent 接一套可检索、可积累的长期上下文。</summary>
+    <category term="插件"/>
+  </entry>
+  <entry>
+    <title>MCP 与技能管理</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=MCP%20%E4%B8%8E%E6%8A%80%E8%83%BD%E7%AE%A1%E7%90%86</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=MCP%20%E4%B8%8E%E6%8A%80%E8%83%BD%E7%AE%A1%E7%90%86"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>跨支持的工具管理，技能和 MCP 配置能备份恢复。</summary>
+    <category term="插件"/>
+  </entry>
+  <entry>
+    <title>工作流地图</title>
+    <id>https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%A5%E4%BD%9C%E6%B5%81%E5%9C%B0%E5%9B%BE</id>
+    <link href="https://rml4791lol-lang.github.io/Anbot/?q=%E5%B7%A5%E4%BD%9C%E6%B5%81%E5%9C%B0%E5%9B%BE"/>
+    <updated>2026-11-27T00:00:00+08:00</updated>
+    <summary>把当前会话画成分步地图，标出进度和来源。</summary>
+    <category term="插件"/>
+  </entry>
+</feed>
