@@ -382,10 +382,18 @@ test('secrets.js avoids rt.save in noteUsed via shellEnv.resolve, skips reload o
   assert.equal(envVars.DSH_SECRET_API_TOKEN, 'super-secret-value-12345')
   t.mock.timers.tick(5_500)
   t.mock.timers.reset()
-  await new Promise(resolve => setTimeout(resolve, 30))
+  // The deferred write is real fs work (mkdir, temp file, chmod, rename); on a loaded
+  // Windows runner it outlives a fixed 30 ms wait.
+  const secretsFile = join(home, 'secrets.json')
+  const deadline = Date.now() + 10_000
+  let persistedSecrets
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 20))
+    try { persistedSecrets = JSON.parse(readFileSync(secretsFile, 'utf8')) } catch { persistedSecrets = undefined }
+    if (typeof persistedSecrets?.secrets?.[0]?.lastUsedAt === 'number') break
+  }
   assert.equal(saveCalls, savesAfterSet, 'noteUsed timer firing must persist secrets.json without calling rt.save()')
-  const persistedSecrets = JSON.parse(readFileSync(join(home, 'secrets.json'), 'utf8'))
-  assert.equal(typeof persistedSecrets.secrets[0].lastUsedAt, 'number', 'noteUsed persisted lastUsedAt to secrets.json')
+  assert.equal(typeof persistedSecrets?.secrets?.[0]?.lastUsedAt, 'number', 'noteUsed persisted lastUsedAt to secrets.json')
 
   // Unchanged objects/arrays in redactDeep return identical reference (zero allocation).
   const redact = redactor([{ name: 'API_TOKEN', value: 'super-secret-value-12345' }])
