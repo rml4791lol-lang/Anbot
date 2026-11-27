@@ -1,6 +1,6 @@
 # Third-party components and source-review ledger
 
-Snapshot: 2026-11-16. This ledger records **candidate or adopted third-party technology**, not every transitive npm package. The root [`NOTICE`](NOTICE) remains the legal attribution file for code already shipped. This file records what was inspected, why it was accepted or rejected, and the exact source boundary for future work.
+Snapshot: 2026-11-16. This ledger records **candidate or adopted third-party technology**, not every transitive npm package. The root [`NOTICE`](NOTICE) remains the legal attribution file for code already shipped. This file records what was inspected, why it was accepted or rejected, and the exact source boundary for future work. Candidates recorded on 2026-11-27 sit in their own section at the end and have not passed the ten gates.
 
 > No source code from the new candidates below was copied into DS-Bot by this research change. References to source paths are evidence links, not vendored code.
 
@@ -253,6 +253,65 @@ Where a default-branch HEAD differs from the latest release, the source evidence
 - **Limitations:** DSH's OTel seam is opt-in and does not install a global provider; the current app lock contains `@deepseek-ai/dsh-otel` `0.2.2-rc.1`, but DS-Bot has no trace/metric consumer. Transport failure/overflow can lose records; no durable outbox.
 - **Reuse mode:** **B through DSH.**
 - **Decision:** Do not add the upstream SDK directly to DS-Bot and do not install a global `NodeSDK`/provider. Upgrades must be coordinated by DSH. If trace/metric export is needed, extend the DSH OTel service contract and register a DS-Bot consumer with consent, redaction and shutdown ownership.
+
+## Professional Bot candidates (recorded 2026-11-27, not reviewed)
+
+The review of these candidates is tracked in #3.
+
+The 2026-11-27 research for professional Bot presets produced these candidates. **None is adopted, and no code from them is in the tree.** Only metadata was read for each row: the repository, the `license` of the latest release, that release's version and date, and for a DSH plugin the DSH range the package declares. That covers part of gates 1, 4, 5, 6 and 10. Nothing was read of their documentation, source, tests or limitations (gates 2, 3, 7, 8, 9), and none has run against the pinned DSH `0.2.2-rc.5`. A declared range is not proof: the 2026-11-26 handover records `billion-context-dsh` 0.2.27 rejected by the pinned runtime.
+
+*Content* rows would supply skill text for a capability pack, not code. *Market entry* rows would be listed for users to install, not shipped. Every row still has to pass the checks at the end of this file before any of that happens.
+
+### DSH plugins from the open market
+
+License and version are the npm registry's values, read on 2026-11-27. `undeclared` means the package states no DSH range.
+
+| Package | Repository | License | Latest (published) | `engines.dsh` | What it offers | Proposed mode |
+|---|---|---|---|---|---|---|
+| `dsh-permission-rules` | PerryLink/dsh-permission-rules | Apache-2.0 | 0.8.8 (2026-11-25) | `>=0.2.0-0 <0.4.0-0` | allow / ask / deny rules by tool, argument, workspace path and network target, with a built-in high-risk baseline | B, after the permission decision |
+| `dsh-score` | PerryLink/dsh-score | Apache-2.0 | 0.2.31 (2026-11-22) | `>=0.2.1-0 <0.3.0` and later lines | scores DSH plugins from install, package, repository and maintenance signals | B, a tool for the market gate |
+| `brooks-lint` | hyhmrright/brooks-lint | MIT | 2.0.0 (2026-11-17) | undeclared | six Agent Skills: code review, architecture audit, technical debt, test quality, project health, fixes | Content |
+| `dsh-plugin-codegraph` | CC19990113/dsh-plugin-codegraph | MIT | 0.6.5 (2026-11-09) | undeclared | tree-sitter symbol index: definitions, callers, change impact | B |
+| `dsh-qa-skills` | fishzjp/qa-skills | MIT | 0.6.0 (2026-08-27) | undeclared | requirements, test strategy, cases, exploration and regression | Content |
+| `dsh-industry-research` | PerryLink/dsh-industry-research | Apache-2.0 | 0.3.29 (2026-11-23) | `>=0.2.1-0 <0.3.0` and later lines | industry and company evidence, industry chain, research report | Content |
+| `dsh-research-report` | PerryLink/dsh-research-report | Apache-2.0 | 0.4.6 (2026-11-24) | `>=0.2.0-0 <0.4.0-0` | conclusions bound to snapshots, versioned reports with verification records | D |
+| `@anionex/dsh-vision-toolkit` | Anionex/dsh-vision-toolkit | MIT | 0.1.53 (2026-11-21) | undeclared | image question answering, OCR, locating, pixel comparison | B |
+| `gongwen-skill` | linhut/gongwen-skill | MIT | 2.17.0 (2026-11-27) | `>=0.1.2-0 <0.4.0` | Chinese official-document format rules and template checks | Content |
+| `@v587d/capital-generation` | v587d/capital-generation | MIT | 2.31.4 (2026-11-25) | `>=0.2.2-rc.5 <0.2.3-0` | A-share quotes, financial data and announcements | B |
+| `dsh-notify-me` | chromoany/dsh-notify-me | MIT | 1.28.2 (2026-11-26) | `>=0.2.2-rc.1 <0.3.0-0` | desktop and webhook notices for finished tasks, questions and approvals | D |
+| `rsi-gear` | rsi-gear/gear | MIT | 0.2.4 (2026-11-18) | undeclared | improves instructions, tools and workflows from benchmark task feedback | D |
+| `@michengai/dsh-agency-agents` | MichengAI/dsh-agency-agents | Apache-2.0 | 1.4.0 (2026-11-26) | `>=0.2.2-rc.2 <0.3.0-0` | 331 domain experts in 22 divisions and five expert teams | D, definition format only: it spawns subagents, which Bots do not do |
+
+### Skill packs and benchmark sources
+
+License is the `LICENSE` file at the default branch, read on 2026-11-27.
+
+| Repository | License | What it offers | Proposed mode |
+|---|---|---|---|
+| anthropics/skills | no root `LICENSE`; per-skill license files are reported as Apache-2.0 and were not checked one by one | document skills for docx, pptx, xlsx and pdf | Content |
+| obra/superpowers | MIT | test-driven development, debugging, review | Content |
+| addyosmani/agent-skills | MIT | code review, ADR, CI/CD, security | Content |
+| langchain-ai/open_deep_research | MIT | the RACE benchmark for deep research | D |
+| Future-House/paper-qa | Apache-2.0 | the LitQA2 benchmark for scientific literature | D |
+
+### Market entries and evaluation tools
+
+The official `servers` repository states a transition from MIT to Apache-2.0, and its npm packages say `SEE LICENSE IN LICENSE` without shipping the file. Confirm the license of each package before listing it.
+
+| Candidate | Repository | License | Latest (published) | What it offers | Proposed mode |
+|---|---|---|---|---|---|
+| filesystem | modelcontextprotocol/servers | npm: `SEE LICENSE IN LICENSE` | npm 2.4.1 (2026-11-27) | local file access | Market entry |
+| fetch | modelcontextprotocol/servers | PyPI: MIT | PyPI 2026.11.27 | web page to Markdown | Market entry |
+| git | modelcontextprotocol/servers | PyPI: MIT | PyPI 2026.11.27 | local repository operations | Market entry |
+| context7 | upstash/context7 | MIT | npm 4.9.1 (2026-11-27) | library documentation lookup | Market entry |
+| excel | haris-musa/excel-mcp-server | MIT | PyPI 2.3.7 | xlsx read, write and calculate | Market entry |
+| MCP Registry | modelcontextprotocol/registry | `LICENSE` states the same transition | preview, API v0.1 | an index the discovery page can read | B |
+| snyk-agent-scan | snyk/agent-scan | Apache-2.0 | PyPI 0.7.1 | scans MCP tool descriptions, skills and agents for poisoning | B, a tool for the market gate |
+
+### Rejected in this pass
+
+- `hyperformula` 3.5.0: GPL-3.0-only.
+- `dsh-postiz` 0.1.0: AGPL-3.0.
 
 ## Dependency and license checks required on every future adoption
 
