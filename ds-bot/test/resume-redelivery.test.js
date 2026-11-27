@@ -241,8 +241,15 @@ test('a resumed handoff keeps its attempt and records the restart on the work', 
   const work = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
   assert.equal(work.attempt.id, 'w1:a1')
   run(second, 'b', 1, second.agentOf('b').calls[0])
-  await delay(20)
-  const resumedWork = JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  // The restart is recorded on the work as the turn's events are reconciled, and the
+  // write is a real file write. A fixed 20 ms wait lost that race on a loaded runner.
+  const readWork = () => JSON.parse(readFileSync(join(home, 'state.json'), 'utf8')).works.w1
+  const until = Date.now() + 10_000
+  while (Date.now() < until) {
+    await delay(20)
+    if ((readWork().recovery ?? []).length > 0) break
+  }
+  const resumedWork = readWork()
   assert.equal(resumedWork.recovery.length, 1)
   assert.equal(resumedWork.recovery[0].attemptId, 'w1:a1')
   assert.equal(resumedWork.recovery[0].kind, 'resumed')
