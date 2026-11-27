@@ -10,6 +10,8 @@
 
 > 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
+> **实用资料：** [30 篇任务指南](https://rml4791lol-lang.github.io/Anbot/guides/) 覆盖任务、集成、对比和常见问题；[3,000 个场景页](https://rml4791lol-lang.github.io/Anbot/playbooks/) 覆盖 100 个任务 × 30 种团队、平台、数据、工具和交付约束。[关于 Anbot](https://rml4791lol-lang.github.io/Anbot/about/)
+
 ## 关键事实
 
 - **开源：** Apache 2.0。应用和插件代码开源；预设、技能和 MCP/插件索引可读、可换。
