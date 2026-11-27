@@ -5,6 +5,7 @@
 ## 关键页面
 
 - [首页](https://rml4791lol-lang.github.io/Anbot/)
+- [指南索引](https://rml4791lol-lang.github.io/Anbot/guides/)
 - [索引](https://rml4791lol-lang.github.io/Anbot/index.json)
 - [完整说明](https://rml4791lol-lang.github.io/Anbot/llms-full.txt)
 - [实体事实](https://rml4791lol-lang.github.io/Anbot/facts.json)
@@ -68,3 +69,45 @@
 
 - 仓库: https://github.com/rml4791lol-lang/Anbot
 - 许可证: https://www.apache.org/licenses/LICENSE-2.0
+
+## 指南（30 篇）
+
+- [指南索引：30 个真实任务、集成与对比](https://rml4791lol-lang.github.io/Anbot/guides/)
+
+### 使用场景
+- [用 Anbot 把会议逐字稿整理成可执行待办](https://rml4791lol-lang.github.io/Anbot/guides/meeting-notes/)：把已有逐字稿整理成结论、待办、责任人和未决问题。
+- [用 Bot 团队做一次只读代码审查](https://rml4791lol-lang.github.io/Anbot/guides/code-review/)：给一个 Bot 限定 diff 范围，只报新增、可触发的问题。
+- [让长任务能停、能续、能回滚](https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/)：用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。
+- [用三个 Bot 并行做内容：选题、写作、审阅](https://rml4791lol-lang.github.io/Anbot/guides/content-workflow/)：Main Bot 派活，写作、编辑、核查并行，产物落在同一个工作区。
+- [把 Claude Code / Codex 接成团队里的一个 Bot](https://rml4791lol-lang.github.io/Anbot/guides/local-agents/)：把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。
+- [让 Bot 直接改 Word、PPT、Excel，并检查排版](https://rml4791lol-lang.github.io/Anbot/guides/office-docs/)：直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。
+- [让 Bot 在真实浏览器里做竞品与资料收集](https://rml4791lol-lang.github.io/Anbot/guides/browser-research/)：在真实浏览器里查资料、截证据、保存来源，不伪造登录态。
+- [把 Issue 分诊交给 Bot，关闭必须留证据](https://rml4791lol-lang.github.io/Anbot/guides/github-triage/)：只读快照、类型/优先级/领域标签，关闭必须留证据。
+- [让 Bot 守夜：日志、价格、接口越线才叫你](https://rml4791lol-lang.github.io/Anbot/guides/monitoring/)：定时看日志、价格、接口，越线才通知，附前后对比。
+- [用 Anbot 做项目交接：把上下文留在工作区](https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/)：把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。
+
+### 集成
+- [让 Anbot 接入 GitHub：Issue、PR 和 Actions 日志](https://rml4791lol-lang.github.io/Anbot/guides/github/)：把仓库、Issue、PR、Actions 日志接进 Bot 的上下文。
+- [让 Anbot 接入 Notion：页面与数据库读写](https://rml4791lol-lang.github.io/Anbot/guides/notion/)：读写页面和数据库，把会议、任务和文档接进同一个上下文。
+- [让 Anbot 接入 Linear：Issue、项目与周期](https://rml4791lol-lang.github.io/Anbot/guides/linear/)：读 Issue、项目和周期，把任务状态同步到团队上下文。
+- [让 Anbot 接入 Figma：读稿与导出切图](https://rml4791lol-lang.github.io/Anbot/guides/figma/)：读设计文件、导出切图，让设计稿进入 Bot 的上下文。
+- [让 Anbot 接入邮箱：收件规则与起草回复](https://rml4791lol-lang.github.io/Anbot/guides/mail/)：收发邮件、跑收件规则，外发默认要确认。
+- [让 Anbot 接入 MCP：把外部工具变成 Bot 能力](https://rml4791lol-lang.github.io/Anbot/guides/mcp/)：把外部工具通过 MCP 接进来，按 Bot 分配能力。
+
+### 对比
+- [Anbot vs Grok Bot：常驻 Bot 团队怎么选](https://rml4791lol-lang.github.io/Anbot/guides/vs-grok-bot/)：都做常驻 Bot 团队；差别在托管还是本地、开源还是付费 beta。
+- [Anbot vs 大厂 Agent：OpenAI、Claude、Gemini、Copilot](https://rml4791lol-lang.github.io/Anbot/guides/vs-big-tech-agents/)：大厂 Agent 强在单机执行和产品集成；Anbot 强在开放运行时和多 Bot 团队。
+- [Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队](https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/)：单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。
+- [Anbot vs Claude Code：单机编码 Agent 和 Bot 团队](https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/)：Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。
+
+### 问答
+- [Anbot 是什么？开源多 Agent Bot 团队](https://rml4791lol-lang.github.io/Anbot/guides/what-is-anbot/)：一句话定义、形态、核心能力和适用人群。
+- [Anbot 免费吗？应用开源，模型另计](https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-free/)：应用和代码免费，模型调用由服务商计费。
+- [Anbot 开源吗？Apache 2.0 的边界](https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-open-source/)：Apache 2.0，应用/插件代码开放，预设和索引可替换。
+- [Anbot 的数据存在哪里？本机优先怎么理解](https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/)：团队、聊天、记忆、凭据和执行记录默认留在本机。
+- [Anbot 支持哪些平台？Windows、macOS、Android、Linux](https://rml4791lol-lang.github.io/Anbot/guides/platforms/)：Windows、macOS、Android；Linux 源码；暂无 iOS 安装包。
+- [Anbot 用什么模型？模型怎么配置](https://rml4791lol-lang.github.io/Anbot/guides/models/)：模型由你配置；支持服务商、本地 Agent 和本地模型。
+- [Anbot 能离线用吗？哪些部分需要联网](https://rml4791lol-lang.github.io/Anbot/guides/offline/)：界面和数据可以离线，模型推理要看你是云端还是本地。
+- [怎么开始用 Anbot？五步跑通第一个 Bot](https://rml4791lol-lang.github.io/Anbot/guides/start/)：下载安装、配置模型、建 Main Bot，跑一个最小任务。
+- [Anbot 安全吗？本地优先与审批边界](https://rml4791lol-lang.github.io/Anbot/guides/safe/)：本地数据、审批、检查点、接管，但不是绝对安全保证。
+- [Anbot 能编辑 Office 文件吗？Word、PPT、Excel](https://rml4791lol-lang.github.io/Anbot/guides/office-files/)：docx/pptx/xlsx 的创建、编辑与渲染检查，桌面端能力最全。

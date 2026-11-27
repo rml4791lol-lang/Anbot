@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>让 Bot 直接改 Word、PPT、Excel，并检查排版 · Anbot 指南</title>
+<meta name="description" content="直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/office-docs/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="让 Bot 直接改 Word、PPT、Excel，并检查排版">
+<meta property="og:description" content="直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/office-docs/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/","name":"让 Bot 直接改 Word、PPT、Excel，并检查排版","description":"直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#article","headline":"让 Bot 直接改 Word、PPT、Excel，并检查排版","description":"直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#faq","mainEntity":[{"@type":"Question","name":"手机上能改 Word 吗？","acceptedAnswer":{"@type":"Answer","text":"可以查看和做部分编辑；从零创建和渲染检查页面需要桌面端。"}},{"@type":"Question","name":"会覆盖原文件吗？","acceptedAnswer":{"@type":"Answer","text":"默认让它在副本上改；是否覆盖由你决定，保留原文件更安全。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"让 Bot 直接改 Word、PPT、Excel，并检查排版","item":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/office-docs/#howto","name":"让 Bot 直接改 Word、PPT、Excel，并检查排版","description":"直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"把模板、旧版文件、图片和数据表放进工作区；先复制一份，保留原文件。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"写清目标：页数、章节、字体、字号、配色、表格列、必须保留的内容；让 Bot 先给结构再动手。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"让 Bot 修改副本；完成后渲染成图片，逐页检查文字溢出、图片裁切、表格跨页和页码。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"把成品路径、改动清单和未解决项一起交付；需要对外发送时由你确认。"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 使用场景</div>
+  <div class="eyebrow">使用场景</div>
+  <h1>让 Bot 直接改 Word、PPT、Excel，并检查排版</h1>
+  <p class="lead">很多 Agent 只能给你一段文字，最后还要你复制到 Office。Anbot 的桌面端可以直接创建、读取、修改 <code>.docx</code>、<code>.pptx</code>、<code>.xlsx</code>，再把页面渲染成图片检查有没有溢出和错位。</p>
+  <div class="answer"><strong>一句话答案：</strong>把模板和素材放进工作区，让 Bot 在副本上改；要求它渲染页面、检查页数/字号/表格/图片边界，再给你文件路径和变更说明。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要批量出方案、报告、汇报材料的人</li><li>需要 Bot 直接处理 Office 文件而不是给纯文本的人</li><li>对版式有要求、需要看到渲染结果的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>把模板、旧版文件、图片和数据表放进工作区；先复制一份，保留原文件。</li><li>写清目标：页数、章节、字体、字号、配色、表格列、必须保留的内容；让 Bot 先给结构再动手。</li><li>让 Bot 修改副本；完成后渲染成图片，逐页检查文字溢出、图片裁切、表格跨页和页码。</li><li>把成品路径、改动清单和未解决项一起交付；需要对外发送时由你确认。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>文件能正常打开，页数/章节符合要求</li><li>渲染图里没有文字溢出、遮挡、错位</li><li>原文件保留，改动在副本</li><li>交付包含路径、改动说明和未决项</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>创建新文档和渲染页面需要桌面端；Web 客户端主要做已有文档的查看和编辑</li><li>复杂宏、冷门字体、嵌入对象可能需要人工处理</li><li>不是完整 Office 替代品，最终排版仍建议人工过一遍</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>手机上能改 Word 吗？</h3><p>可以查看和做部分编辑；从零创建和渲染检查页面需要桌面端。</p><h3>会覆盖原文件吗？</h3><p>默认让它在副本上改；是否覆盖由你决定，保留原文件更安全。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../content-workflow/">用三个 Bot 并行做内容：选题、写作、审阅</a><a href="../meeting-notes/">用 Anbot 把会议逐字稿整理成可执行待办</a><a href="../mcp/">让 Anbot 接入 MCP：把外部工具变成 Bot 能力</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

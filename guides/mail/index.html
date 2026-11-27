@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>让 Anbot 接入邮箱：收件规则与起草回复 · Anbot 指南</title>
+<meta name="description" content="收发邮件、跑收件规则，外发默认要确认。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/mail/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="让 Anbot 接入邮箱：收件规则与起草回复">
+<meta property="og:description" content="收发邮件、跑收件规则，外发默认要确认。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/mail/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/mail/","name":"让 Anbot 接入邮箱：收件规则与起草回复","description":"收发邮件、跑收件规则，外发默认要确认。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#article","headline":"让 Anbot 接入邮箱：收件规则与起草回复","description":"收发邮件、跑收件规则，外发默认要确认。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#faq","mainEntity":[{"@type":"Question","name":"能自动回复客户吗？","acceptedAnswer":{"@type":"Answer","text":"建议只起草，人工确认后发送；自动回复要单独授权。"}},{"@type":"Question","name":"支持多个邮箱吗？","acceptedAnswer":{"@type":"Answer","text":"可以分别接入；不同邮箱的规则和权限分开设置。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"让 Anbot 接入邮箱：收件规则与起草回复","item":"https://rml4791lol-lang.github.io/Anbot/guides/mail/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/mail/#howto","name":"让 Anbot 接入邮箱：收件规则与起草回复","description":"收发邮件、跑收件规则，外发默认要确认。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"用 Gmail、QQ 邮箱、163 或其他 IMAP 邮箱的连接器授权；优先使用应用专用密码，不要用主密码。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"先让 Bot 只读最近邮件，按「客户/账单/供应商/垃圾」分类；核对规则，不要一上来自动移动。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"回复任务只生成草稿：收件人、主题、正文、引用原文；你确认后再发。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"需要自动发送时，单独设置白名单和审批规则；外发邮件默认保留确认。"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 集成</div>
+  <div class="eyebrow">集成</div>
+  <h1>让 Anbot 接入邮箱：收件规则与起草回复</h1>
+  <p class="lead">邮箱是很多团队的入口：客户问题、账单、供应商通知都从这里来。接入后，Bot 可以按规则收信、分类、起草回复；发信默认要你确认。</p>
+  <div class="answer"><strong>一句话答案：</strong>用 IMAP/SMTP 或连接器接入邮箱，先只读收件和分类；回复只起草，不自动发送；凭据放 Secrets，别写进指令。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要处理大量客户邮件的人</li><li>想让 Bot 先分拣再人工回复的团队</li><li>需要把账单/通知转成任务的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>用 Gmail、QQ 邮箱、163 或其他 IMAP 邮箱的连接器授权；优先使用应用专用密码，不要用主密码。</li><li>先让 Bot 只读最近邮件，按「客户/账单/供应商/垃圾」分类；核对规则，不要一上来自动移动。</li><li>回复任务只生成草稿：收件人、主题、正文、引用原文；你确认后再发。</li><li>需要自动发送时，单独设置白名单和审批规则；外发邮件默认保留确认。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>分类规则可解释，误分类能回退</li><li>回复是草稿，发信有人确认</li><li>凭据不在文档/日志里</li><li>附件和引用没有泄露无关信息</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>邮箱服务商的 IMAP/SMTP 规则和限额不同</li><li>自动发送有误发风险，默认不开启</li><li>垃圾邮件/钓鱼邮件仍需人工判断</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能自动回复客户吗？</h3><p>建议只起草，人工确认后发送；自动回复要单独授权。</p><h3>支持多个邮箱吗？</h3><p>可以分别接入；不同邮箱的规则和权限分开设置。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../monitoring/">让 Bot 守夜：日志、价格、接口越线才叫你</a><a href="../notion/">让 Anbot 接入 Notion：页面与数据库读写</a><a href="../mcp/">让 Anbot 接入 MCP：把外部工具变成 Bot 能力</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

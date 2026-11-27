@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用 Anbot 做项目交接：把上下文留在工作区 · Anbot 指南</title>
+<meta name="description" content="把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="用 Anbot 做项目交接：把上下文留在工作区">
+<meta property="og:description" content="把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/","name":"用 Anbot 做项目交接：把上下文留在工作区","description":"把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#article","headline":"用 Anbot 做项目交接：把上下文留在工作区","description":"把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#faq","mainEntity":[{"@type":"Question","name":"Bot 的记忆能直接给新人吗？","acceptedAnswer":{"@type":"Answer","text":"记忆可以帮助回忆，但关键上下文要落成文件；交接时以文件为准。"}},{"@type":"Question","name":"怎么防止新人看到不该看的？","acceptedAnswer":{"@type":"Answer","text":"按 Bot 和文件夹分开权限；私聊 Bot 默认不共享，凭据放 Secrets。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"用 Anbot 做项目交接：把上下文留在工作区","item":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/#howto","name":"用 Anbot 做项目交接：把上下文留在工作区","description":"把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"建项目 Bot，指定工作文件夹；把 README、架构说明、运行命令、已知问题放在固定位置。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"要求每次重要决定写一条决策记录：背景、选项、选择、理由、日期、负责人；未定的事放「开放问题」。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"把任务板、关键文件、外部链接和账号申请流程列成入口清单；新成员按清单逐项确认。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"交接时复核权限：移除离任者的 token/密钥，确认新成员只能看该看的 Bot 和文件夹。"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 使用场景</div>
+  <div class="eyebrow">使用场景</div>
+  <h1>用 Anbot 做项目交接：把上下文留在工作区</h1>
+  <p class="lead">新人接手项目，最耗时的不是读代码，而是弄明白「为什么这么做、谁定的、哪些坑已经踩过」。Anbot 把项目 Bot、记忆、文件、任务板和决策记录放在同一个工作区，交接时一起交。</p>
+  <div class="answer"><strong>一句话答案：</strong>给项目建一个常驻 Bot，固定工作文件夹和文档结构；把决策、开放问题、关键链接写进文件；交接时给新成员权限和一份可验证的入口清单。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>经常做项目交接的团队</li><li>要把上下文人手化的负责人</li><li>需要新成员快速上手历史项目的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>建项目 Bot，指定工作文件夹；把 README、架构说明、运行命令、已知问题放在固定位置。</li><li>要求每次重要决定写一条决策记录：背景、选项、选择、理由、日期、负责人；未定的事放「开放问题」。</li><li>把任务板、关键文件、外部链接和账号申请流程列成入口清单；新成员按清单逐项确认。</li><li>交接时复核权限：移除离任者的 token/密钥，确认新成员只能看该看的 Bot 和文件夹。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>新成员能按入口清单跑通最小任务</li><li>决策有背景、选项、理由和负责人</li><li>开放问题没有被写成已决结论</li><li>离任者权限已回收</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>记忆不是文档的替代品，关键决定仍要落文件</li><li>敏感凭据不应写进普通文档，使用 Secrets 管理</li><li>交接质量取决于平时的记录习惯</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>Bot 的记忆能直接给新人吗？</h3><p>记忆可以帮助回忆，但关键上下文要落成文件；交接时以文件为准。</p><h3>怎么防止新人看到不该看的？</h3><p>按 Bot 和文件夹分开权限；私聊 Bot 默认不共享，凭据放 Secrets。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../meeting-notes/">用 Anbot 把会议逐字稿整理成可执行待办</a><a href="../office-docs/">让 Bot 直接改 Word、PPT、Excel，并检查排版</a><a href="../content-workflow/">用三个 Bot 并行做内容：选题、写作、审阅</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

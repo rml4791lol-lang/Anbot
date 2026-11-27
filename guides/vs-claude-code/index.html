@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot vs Claude Code：单机编码 Agent 和 Bot 团队 · Anbot 指南</title>
+<meta name="description" content="Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="Anbot vs Claude Code：单机编码 Agent 和 Bot 团队">
+<meta property="og:description" content="Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/","name":"Anbot vs Claude Code：单机编码 Agent 和 Bot 团队","description":"Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/#article","headline":"Anbot vs Claude Code：单机编码 Agent 和 Bot 团队","description":"Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/#faq","mainEntity":[{"@type":"Question","name":"Anbot 会替代 Claude Code 吗？","acceptedAnswer":{"@type":"Answer","text":"不会。它是把 Claude Code 接进团队协作层；单机编码仍可直接用 Claude Code。"}},{"@type":"Question","name":"Claude Code 的费用算在 Anbot 吗？","acceptedAnswer":{"@type":"Answer","text":"不算。它使用自己的登录和套餐；Anbot 不代收。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"Anbot vs Claude Code：单机编码 Agent 和 Bot 团队","item":"https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 对比</div>
+  <div class="eyebrow">对比</div>
+  <h1>Anbot vs Claude Code：单机编码 Agent 和 Bot 团队</h1>
+  <p class="lead">Claude Code 是很强的单机编码 Agent：它有自己的登录、套餐、模型、工具和上下文。Anbot 不替代它，而是把它接成团队里的一个 Bot，让编码、审查、文档和交接在同一个群聊里发生。</p>
+  <div class="answer"><strong>一句话答案：</strong>一个人写代码、任务边界清楚，Claude Code 单独用更直接；需要多个 Agent 分工、群聊共享上下文、长任务接管和审批，就把 Claude Code 接进 Anbot。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>已经在用 Claude Code 的开发者</li><li>想让编码 Agent 和审查/文档 Bot 协作的人</li><li>需要保留 Claude Code 套餐和登录的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>先单独跑通 Claude Code 的一个任务，确认登录、模型和权限都正常。</li><li>在 Anbot 的本地 Agent 设置里接入 Claude Code，指定工作文件夹和权限；给它独立 worktree。</li><li>把它拉进群聊，和 Main Bot、审查 Bot 分工；明确它只负责哪一段、交付什么。</li><li>需要你接手时用接管；Claude Code 自己的工具和上下文不被 Anbot 的连接器替换。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>Claude Code 仍用自己的登录和套餐</li><li>任务在独立工作区，主分支不被覆盖</li><li>团队交接有明确产物和验收</li><li>运行时能确认 CLI 已安装/登录</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>本地 Agent 不会自动获得 Anbot 的共享连接器</li><li>模型/本地 Agent 切换会开新对话分段</li><li>Claude Code 的能力和计费由 Anthropic 决定</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>Anbot 会替代 Claude Code 吗？</h3><p>不会。它是把 Claude Code 接进团队协作层；单机编码仍可直接用 Claude Code。</p><h3>Claude Code 的费用算在 Anbot 吗？</h3><p>不算。它使用自己的登录和套餐；Anbot 不代收。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../local-agents/">把 Claude Code / Codex 接成团队里的一个 Bot</a><a href="../code-review/">用 Bot 团队做一次只读代码审查</a><a href="../vs-big-tech-agents/">Anbot vs 大厂 Agent：OpenAI、Claude、Gemini、Copilot</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>把 Claude Code / Codex 接成团队里的一个 Bot · Anbot 指南</title>
+<meta name="description" content="把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/local-agents/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="把 Claude Code / Codex 接成团队里的一个 Bot">
+<meta property="og:description" content="把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/local-agents/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/","name":"把 Claude Code / Codex 接成团队里的一个 Bot","description":"把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#article","headline":"把 Claude Code / Codex 接成团队里的一个 Bot","description":"把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#faq","mainEntity":[{"@type":"Question","name":"本地 Agent 的 token 算在 Anbot 里吗？","acceptedAnswer":{"@type":"Answer","text":"不算。它使用 CLI 自己的登录、套餐和计费；Anbot 不代收这部分费用。"}},{"@type":"Question","name":"能同时接多个 CLI 吗？","acceptedAnswer":{"@type":"Answer","text":"可以。每个 Bot 可以选择不同的 CLI 或模型；团队协作通过群聊和交接完成。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"把 Claude Code / Codex 接成团队里的一个 Bot","item":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/local-agents/#howto","name":"把 Claude Code / Codex 接成团队里的一个 Bot","description":"把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"先在终端安装并登录你要用的 CLI；确认它能独立跑通一个最小任务。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"在 Anbot 的模型/本地 Agent 设置里选择它，指定工作文件夹和权限预设；需要时给它单独的 worktree。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"把它拉进群聊，和 Main Bot、审阅 Bot 一起派活；说明它负责哪一段、交付什么文件、谁来验收。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"用运行时探针确认「已安装、已登录」；需要你接手时用接管，交回时确认还是同一个 Session 和文件夹。"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 使用场景</div>
+  <div class="eyebrow">使用场景</div>
+  <h1>把 Claude Code / Codex 接成团队里的一个 Bot</h1>
+  <p class="lead">你机器上可能已经装了 Claude Code、Codex CLI、Cursor CLI、Gemini CLI 或其他编码 Agent。Anbot 可以把它们直接接成一个 Bot：它们用自己的登录、套餐、模型、工具和上下文，同时加入私聊、群聊、交接和记忆。</p>
+  <div class="answer"><strong>一句话答案：</strong>在 Models / Local agents 里选择已安装并登录的 CLI，给它工作文件夹和权限；它仍然是那个 CLI 在跑，Anbot 负责团队协作、任务板和接管。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>已经在用 Claude Code、Codex 等 CLI 的开发者</li><li>想让多个编码 Agent 在一个群里协作的人</li><li>需要保留 CLI 自己的套餐和登录状态的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>先在终端安装并登录你要用的 CLI；确认它能独立跑通一个最小任务。</li><li>在 Anbot 的模型/本地 Agent 设置里选择它，指定工作文件夹和权限预设；需要时给它单独的 worktree。</li><li>把它拉进群聊，和 Main Bot、审阅 Bot 一起派活；说明它负责哪一段、交付什么文件、谁来验收。</li><li>用运行时探针确认「已安装、已登录」；需要你接手时用接管，交回时确认还是同一个 Session 和文件夹。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>运行时探针显示 CLI 已安装并登录</li><li>任务在独立工作区或 worktree 里，没覆盖主分支</li><li>交接有明确产物和验收人</li><li>没有把 Anbot 的连接器能力误当成 CLI 自带能力</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>本地 Agent 用的是 CLI 自己的工具和上下文，Anbot 的共享连接器不会自动传进去</li><li>在模型和本地 Agent 之间切换会开启新的对话分段</li><li>只拒绝 MCP 的 CLI 无法使用团队工具；Cursor CLI 会保存它自己的全局默认模型</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>本地 Agent 的 token 算在 Anbot 里吗？</h3><p>不算。它使用 CLI 自己的登录、套餐和计费；Anbot 不代收这部分费用。</p><h3>能同时接多个 CLI 吗？</h3><p>可以。每个 Bot 可以选择不同的 CLI 或模型；团队协作通过群聊和交接完成。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../code-review/">用 Bot 团队做一次只读代码审查</a><a href="../long-running-task/">让长任务能停、能续、能回滚</a><a href="../vs-claude-code/">Anbot vs Claude Code：单机编码 Agent 和 Bot 团队</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

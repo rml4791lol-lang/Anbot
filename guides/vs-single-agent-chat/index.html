@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队 · Anbot 指南</title>
+<meta name="description" content="单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队">
+<meta property="og:description" content="单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/","name":"Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队","description":"单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/#article","headline":"Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队","description":"单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/#faq","mainEntity":[{"@type":"Question","name":"一个 Bot 不够吗？","acceptedAnswer":{"@type":"Answer","text":"很多任务一个 Bot 就够。需要并行、角色分工或独立验收时，再拆团队。"}},{"@type":"Question","name":"Bot 越多越好吗？","acceptedAnswer":{"@type":"Answer","text":"不是。每个 Bot 都要有清晰职责和产物，否则只是多开几个窗口。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队","item":"https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 对比</div>
+  <div class="eyebrow">对比</div>
+  <h1>Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队</h1>
+  <p class="lead">ChatGPT、Claude 这类单 Agent 聊天很适合问答、起草和一次性任务。Anbot 不是把同一个聊天窗口换个皮：它把活拆给多个常驻 Bot，让它们在群聊、任务板和真实工作区里交接。</p>
+  <div class="answer"><strong>一句话答案：</strong>一次性问答用单 Agent 更轻；需要多角色并行、长任务、文件交付和接管时，用 Anbot 的 Bot 团队。不要为了「多 Agent」而多 Agent。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>在犹豫要不要上多 Agent 的人</li><li>任务经常卡在交接和验收的团队</li><li>需要把产物落到文件的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>先判断任务能否拆分：有没有明确的角色、并行段和验收标准。</li><li>如果只是一次问答/单文件修改，先用单 Agent；如果要做 3 个以上步骤、多人交接，再上团队。</li><li>用 Anbot 建 Main Bot + 1 个专业 Bot 做最小团队，跑一个真实任务；不要一开始建十个。</li><li>对比返工率、交接时间和可验收性，而不是只看首轮速度。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>团队规模对应真实角色，不堆 Bot</li><li>每个 Bot 有明确交付和验收</li><li>任务产物在文件里，不只在聊天里</li><li>返工/交接时间有改善</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>多 Bot 会增加配置、模型调用和协调成本</li><li>简单任务用团队反而更慢</li><li>单 Agent 的产品体验通常更成熟</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>一个 Bot 不够吗？</h3><p>很多任务一个 Bot 就够。需要并行、角色分工或独立验收时，再拆团队。</p><h3>Bot 越多越好吗？</h3><p>不是。每个 Bot 都要有清晰职责和产物，否则只是多开几个窗口。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../vs-big-tech-agents/">Anbot vs 大厂 Agent：OpenAI、Claude、Gemini、Copilot</a><a href="../long-running-task/">让长任务能停、能续、能回滚</a><a href="../team-onboarding/">用 Anbot 做项目交接：把上下文留在工作区</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

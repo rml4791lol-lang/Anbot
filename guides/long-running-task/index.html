@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>让长任务能停、能续、能回滚 · Anbot 指南</title>
+<meta name="description" content="用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="让长任务能停、能续、能回滚">
+<meta property="og:description" content="用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/","name":"让长任务能停、能续、能回滚","description":"用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#article","headline":"让长任务能停、能续、能回滚","description":"用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#faq","mainEntity":[{"@type":"Question","name":"检查点能恢复数据库吗？","acceptedAnswer":{"@type":"Answer","text":"不能。它保存会话和工作区文件；数据库、云服务需要自己的备份与回滚。"}},{"@type":"Question","name":"任务卡住时一定要重跑吗？","acceptedAnswer":{"@type":"Answer","text":"不一定。先看 X-Ray 的最后成功点，能续跑就续跑；不能续跑再从检查点恢复。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"让长任务能停、能续、能回滚","item":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/#howto","name":"让长任务能停、能续、能回滚","description":"用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"写下目标、验收标准、不能动的目录/分支/账号；把这些作为任务约束，而不是散落在聊天里。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Main Bot 拆成 3–6 个步骤，每步说明输入、产物、检查点位置；没有产物的步骤不算完成。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"在删除、推送、发布、改配置前要求检查点；失败时先看 X-Ray 的当前步骤和最后成功点，再从断点恢复。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"需要自己改时使用接管：确认执行者已停、工作区锁定；改完交回时核对还是同一个 Session 和文件夹。"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 使用场景</div>
+  <div class="eyebrow">使用场景</div>
+  <h1>让长任务能停、能续、能回滚</h1>
+  <p class="lead">长任务真正难的是一次跑几个小时以后，你还知不知道它在干什么、做到哪、失败了从哪接。Anbot 用 X-Ray、检查点、接管与恢复，把这些状态摆在台面上。</p>
+  <div class="answer"><strong>一句话答案：</strong>先把验收标准和禁止操作写清楚，让 Main Bot 拆成带产物的步骤；在破坏性操作前强制检查点；跑偏时暂停、接管、修完再交回。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要跑迁移、批量处理、长链研究的人</li><li>经常遇到「跑了一半不知道怎么办」的团队</li><li>需要把执行过程留证据的负责人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>写下目标、验收标准、不能动的目录/分支/账号；把这些作为任务约束，而不是散落在聊天里。</li><li>让 Main Bot 拆成 3–6 个步骤，每步说明输入、产物、检查点位置；没有产物的步骤不算完成。</li><li>在删除、推送、发布、改配置前要求检查点；失败时先看 X-Ray 的当前步骤和最后成功点，再从断点恢复。</li><li>需要自己改时使用接管：确认执行者已停、工作区锁定；改完交回时核对还是同一个 Session 和文件夹。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>每一步都有可检查的产物或日志</li><li>破坏性操作前有检查点</li><li>失败后能从断点继续，而不是从头重跑</li><li>接管和交回没有丢文件或串工作区</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>检查点保存的是会话位置和工作区文件，不是外部系统的全部状态</li><li>第三方 API、数据库、发布动作仍要单独回滚方案</li><li>长任务会消耗更多模型调用和时间</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>检查点能恢复数据库吗？</h3><p>不能。它保存会话和工作区文件；数据库、云服务需要自己的备份与回滚。</p><h3>任务卡住时一定要重跑吗？</h3><p>不一定。先看 X-Ray 的最后成功点，能续跑就续跑；不能续跑再从检查点恢复。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../code-review/">用 Bot 团队做一次只读代码审查</a><a href="../monitoring/">让 Bot 守夜：日志、价格、接口越线才叫你</a><a href="../local-agents/">把 Claude Code / Codex 接成团队里的一个 Bot</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot 能离线用吗？哪些部分需要联网 · Anbot 指南</title>
+<meta name="description" content="界面和数据可以离线，模型推理要看你是云端还是本地。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/offline/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="Anbot 能离线用吗？哪些部分需要联网">
+<meta property="og:description" content="界面和数据可以离线，模型推理要看你是云端还是本地。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/offline/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/offline/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/offline/","name":"Anbot 能离线用吗？哪些部分需要联网","description":"界面和数据可以离线，模型推理要看你是云端还是本地。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/offline/#article","headline":"Anbot 能离线用吗？哪些部分需要联网","description":"界面和数据可以离线，模型推理要看你是云端还是本地。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/offline/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/offline/#faq","mainEntity":[{"@type":"Question","name":"断网还能聊天吗？","acceptedAnswer":{"@type":"Answer","text":"界面和本地数据能打开；如果模型在云端，生成会失败。"}},{"@type":"Question","name":"能完全本地部署吗？","acceptedAnswer":{"@type":"Answer","text":"可以接近，但需要本地模型、本地工具和离线依赖；具体能力取决于你的配置。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/offline/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"Anbot 能离线用吗？哪些部分需要联网","item":"https://rml4791lol-lang.github.io/Anbot/guides/offline/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 问答</div>
+  <div class="eyebrow">问答</div>
+  <h1>Anbot 能离线用吗？哪些部分需要联网</h1>
+  <p class="lead">Anbot 的界面、团队数据、文件和工作区在本机，断网时仍能打开和整理；但模型推理、远程 MCP、网页浏览和在线连接器需要网络。</p>
+  <div class="answer"><strong>一句话答案：</strong>能不能完全离线，取决于你把模型放在哪里：用云端 API 就需要网；用本地模型/本地 Agent 且不访问外部工具，才可以接近离线。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>网络不稳定的人</li><li>要在内网/离线环境部署的团队</li><li>关心云端依赖的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>先分任务：哪些只需要读本地文件，哪些必须调模型/外部服务。</li><li>需要离线时，配置本地模型或本地 Agent，并关闭不需要的远程 MCP/连接器。</li><li>网页浏览、邮件、GitHub 等在线工具在断网时不可用；给任务加降级路径。</li><li>离线任务的产物仍落本地，恢复网络后再同步/发布。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>知道哪些步骤依赖网络</li><li>本地模型/Agent 已提前下载/登录</li><li>断网时任务能停在可恢复的位置</li><li>没有把「本地数据」误读成「完全离线」</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>云端模型 API 必须有网</li><li>远程 MCP/OAuth 需要网络</li><li>本地模型能力通常小于前沿云端模型</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>断网还能聊天吗？</h3><p>界面和本地数据能打开；如果模型在云端，生成会失败。</p><h3>能完全本地部署吗？</h3><p>可以接近，但需要本地模型、本地工具和离线依赖；具体能力取决于你的配置。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../models/">Anbot 用什么模型？模型怎么配置</a><a href="../where-data-lives/">Anbot 的数据存在哪里？本机优先怎么理解</a><a href="../platforms/">Anbot 支持哪些平台？Windows、macOS、Android、Linux</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>

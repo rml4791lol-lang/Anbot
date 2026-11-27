@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot 的数据存在哪里？本机优先怎么理解 · Anbot 指南</title>
+<meta name="description" content="团队、聊天、记忆、凭据和执行记录默认留在本机。 Anbot 指南，含步骤、验收标准和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 指南">
+<meta property="og:title" content="Anbot 的数据存在哪里？本机优先怎么理解">
+<meta property="og:description" content="团队、聊天、记忆、凭据和执行记录默认留在本机。 Anbot 指南，含步骤、验收标准和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/","name":"Anbot 的数据存在哪里？本机优先怎么理解","description":"团队、聊天、记忆、凭据和执行记录默认留在本机。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/#article","headline":"Anbot 的数据存在哪里？本机优先怎么理解","description":"团队、聊天、记忆、凭据和执行记录默认留在本机。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/#faq","mainEntity":[{"@type":"Question","name":"会上传到 Anbot 服务器吗？","acceptedAnswer":{"@type":"Answer","text":"Anbot 本身不把你的团队、聊天、记忆、凭据和执行记录上传到自己的服务器；模型请求会发给你配置的模型服务商。"}},{"@type":"Question","name":"换电脑怎么迁移？","acceptedAnswer":{"@type":"Answer","text":"迁移数据目录和密钥材料，再在新机器上验证登录/权限；不要只复制聊天数据库。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"Anbot 的数据存在哪里？本机优先怎么理解","item":"https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../"><img src="../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 指南</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../">配置市场</a>
+    <a href="../">全部指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1">Release</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 问答</div>
+  <div class="eyebrow">问答</div>
+  <h1>Anbot 的数据存在哪里？本机优先怎么理解</h1>
+  <p class="lead">Anbot 把团队、聊天、记忆、凭据和执行记录留在你选择的本地数据目录；模型请求会发给你配置的模型服务商。它不是「所有数据都上云」的 Agent。</p>
+  <div class="answer"><strong>一句话答案：</strong>默认数据在本机；桌面端用你选的数据文件夹，插件用插件 home。需要备份就备份那个目录，需要清理就按目录处理。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>关心数据隐私的人</li><li>要做出入网/合规判断的团队</li><li>需要备份/迁移的人</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>桌面端首次启动时确认数据目录；不要放在共享盘/公共云盘。</li><li>凭据放 Secrets，不要写进普通文档、指令或截图。</li><li>备份时同时备份数据目录和密钥材料；只备份聊天记录会丢凭据/配置。</li><li>模型请求会离开本机；在服务商侧的数据处理按其政策执行。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>能指出本机数据目录</li><li>知道模型请求不是本地处理</li><li>备份包含配置和凭据材料</li><li>敏感数据没有进公开仓库</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>本地优先不等于端到端加密</li><li>模型服务商可能记录请求</li><li>设备丢失/磁盘损坏仍需你自己备份</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>会上传到 Anbot 服务器吗？</h3><p>Anbot 本身不把你的团队、聊天、记忆、凭据和执行记录上传到自己的服务器；模型请求会发给你配置的模型服务商。</p><h3>换电脑怎么迁移？</h3><p>迁移数据目录和密钥材料，再在新机器上验证登录/权限；不要只复制聊天数据库。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <div class="related"><a href="../safe/">Anbot 安全吗？本地优先与审批边界</a><a href="../is-anbot-open-source/">Anbot 开源吗？Apache 2.0 的边界</a><a href="../platforms/">Anbot 支持哪些平台？Windows、macOS、Android、Linux</a></div>
+  </section>
+</main>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+</footer>
+</body>
+</html>
