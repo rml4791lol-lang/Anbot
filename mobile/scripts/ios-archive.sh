@@ -9,7 +9,7 @@
 #   APPLE_API_ISSUER       the key's issuer id (UUID)
 #   DS_BOT_IOS_BUILD_NUMBER optional build number; increase for a repeat upload
 #
-#   sh scripts/ios-archive.sh            archive and export build/export/DSBot.ipa
+#   sh scripts/ios-archive.sh            archive and export build/export/Anbot.ipa
 #   sh scripts/ios-archive.sh --upload   export, then upload the .ipa to App Store Connect
 #
 # What to prepare (account, App ID, App Store Connect record, API key) and the failure
@@ -63,9 +63,9 @@ cat > ios/build/ExportOptions.plist <<PLIST
 PLIST
 
 echo "ios-archive: archiving (automatic signing with the App Store Connect key)"
-xcodebuild -workspace ios/DSBot.xcworkspace -scheme DSBot -configuration Release \
+xcodebuild -workspace ios/Anbot.xcworkspace -scheme Anbot -configuration Release \
   -destination 'generic/platform=iOS' \
-  -archivePath ios/build/DSBot.xcarchive \
+  -archivePath ios/build/Anbot.xcarchive \
   -allowProvisioningUpdates \
   -authenticationKeyPath "$APPLE_API_KEY" \
   -authenticationKeyID "$APPLE_API_KEY_ID" \
@@ -75,7 +75,7 @@ xcodebuild -workspace ios/DSBot.xcworkspace -scheme DSBot -configuration Release
 echo "ios-archive: exporting the .ipa"
 rm -rf ios/build/export
 xcodebuild -exportArchive \
-  -archivePath ios/build/DSBot.xcarchive \
+  -archivePath ios/build/Anbot.xcarchive \
   -exportPath ios/build/export \
   -exportOptionsPlist ios/build/ExportOptions.plist \
   -allowProvisioningUpdates \

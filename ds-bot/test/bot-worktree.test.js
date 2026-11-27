@@ -23,13 +23,13 @@ test('Git and DSH independently prove worktree creation, attachment, and only th
   const primary = await gitRepository(source)
   assert.equal(primary.status, 'observed')
   assert.deepEqual(primary.value, {
-    root: realpathSync(source), gitDir: realpathSync(join(source, '.git')),
-    commonDir: realpathSync(join(source, '.git')), revision: git('rev-parse', 'HEAD'), linked: false,
+    root: realpathSync.native(source), gitDir: realpathSync.native(join(source, '.git')),
+    commonDir: realpathSync.native(join(source, '.git')), revision: git('rev-parse', 'HEAD'), linked: false,
   })
   const checkout = await gitRepository(worker)
   assert.equal(checkout.status, 'observed')
-  assert.equal(checkout.value.root, realpathSync(worker))
-  assert.equal(checkout.value.commonDir, realpathSync(join(source, '.git')))
+  assert.equal(checkout.value.root, realpathSync.native(worker))
+  assert.equal(checkout.value.commonDir, realpathSync.native(join(source, '.git')))
   assert.equal(checkout.value.linked, true)
   assert.match((await linkedWorktree(source)).reason, /primary checkout/u)
   assert.equal((await linkedWorktree(fixture)).status, 'unavailable')
@@ -45,7 +45,7 @@ test('Git and DSH independently prove worktree creation, attachment, and only th
       return directory
     },
   }
-  const expected = { root: realpathSync(worker), sessionId: 'current', revision: git('rev-parse', 'HEAD') }
+  const expected = { root: realpathSync.native(worker), sessionId: 'current', revision: git('rev-parse', 'HEAD') }
   assert.deepEqual((await probeBotWorktree(rt, 'bot')).value, { ...expected, state: 'created' })
   live = { status: 'running', session: { id: 'current', inheritedEventCount: 1, snapshotEvents: () => events } }
   assert.equal((await probeBotWorktree(rt, 'bot')).value.state, 'created')
@@ -96,6 +96,7 @@ test('a Git checkpoint captures working contents without moving HEAD or changing
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const git = (...args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
   git('init', '--quiet')
+  git('config', 'core.autocrlf', 'false')
   const tracked = join(root, 'tracked.txt')
   writeFileSync(tracked, 'original\n')
   git('add', 'tracked.txt')
@@ -118,7 +119,9 @@ test('a Git checkpoint captures working contents without moving HEAD or changing
 })
 
 test('local takeover keeps the worktree stopping until the original executor confirms the turn ended', async t => {
-  const root = mkdtempSync(join(tmpdir(), 'anbot-local-worktree-hold-'))
+  // The ownership check compares the Session folder with the worktree root by real path,
+  // so the fixture root must already be the path the system reports.
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'anbot-local-worktree-hold-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const folder = join(root, 'checkout')
   const worker = join(root, 'worker')
@@ -144,7 +147,7 @@ test('local takeover keeps the worktree stopping until the original executor con
   const rt = {
     ctx: { get: () => registry }, state: { bots: { b1: bot } },
     botOf: id => id === 'b1' ? bot : undefined, selfOf: () => 'b1', chatOf: () => agent.session.id,
-    sessionFolder: () => worker, real: async path => realpathSync(path), hasSubagents: () => hasSubagents,
+    sessionFolder: () => worker, real: async path => realpathSync.native(path), hasSubagents: () => hasSubagents,
     botWorkflowView: () => ({ status: workflowStatus }),
     engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode', localAgentCanConfirmStop: () => true,
     stopLocalAgentForTakeover: () => { called.resolve(); return proof },
@@ -213,7 +216,7 @@ test('local takeover keeps the worktree stopping until the original executor con
 })
 
 test('a hold whose process exits after startup can be taken over without a restart', async t => {
-  const root = mkdtempSync(join(tmpdir(), 'anbot-hold-late-'))
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'anbot-hold-late-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const folder = join(root, 'checkout')
   const worker = join(root, 'worker')
@@ -237,7 +240,7 @@ test('a hold whose process exits after startup can be taken over without a resta
   const rt = {
     ctx: { get: () => registry }, state: { bots: { b1: bot } },
     botOf: id => (id === 'b1' ? bot : undefined), selfOf: () => 'b1', chatOf: () => 's1',
-    sessionFolder: () => worker, real: async path => realpathSync(path), hasSubagents: () => false,
+    sessionFolder: () => worker, real: async path => realpathSync.native(path), hasSubagents: () => false,
     botWorkflowView: () => ({}), engineOfBot: () => 'local-opencode', isLocalAgentRoute: route => route === 'local-opencode',
     localAgentCanConfirmStop: () => true, stopLocalAgentForTakeover: () => Promise.resolve(true),
     localAgentHasUnsettledPrompt: () => false,
@@ -302,7 +305,7 @@ test('a stopping local worktree hold left by a previous host is reconciled at st
 test('restart cleans only the reserved unpublished restore and retains a dirty checkout for operator recovery', async t => {
   const fixture = mkdtempSync(join(tmpdir(), 'anbot-restore-reconcile-'))
   t.after(() => rmSync(fixture, { recursive: true, force: true }))
-  const root = realpathSync(fixture)
+  const root = realpathSync.native(fixture)
   const source = join(root, 'project')
   mkdirSync(source)
   const git = (...args) => execFileSync('git', ['-C', source, ...args], { stdio: ['ignore', 'pipe', 'pipe'] })

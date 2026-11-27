@@ -14,8 +14,7 @@ Pipeline (reproducible):
 Usage:
   python3 dev/anbot-render-mark.py [source.png]
 
-The default source is the cutout under the anbot-identity folder; pass a path
-or set ANBOT_WHALE_SRC to override. Requires Pillow (`pip install pillow`);
+Pass the cutout path, or set ANBOT_WHALE_SRC. Requires Pillow (`pip install pillow`);
 its WebP encoder must be available in the Pillow build.
 """
 
@@ -41,10 +40,9 @@ RETINA_SIZE = 320
 # bucket hat, spout and tail fin clear of the 50% corner rounding.
 INK_RATIO = 0.88
 
-DEFAULT_SOURCE = Path(
-    "/Users/an/Doubao/chats/2026-11-25/new-chat-2/anbot-identity/"
-    "cutout/anbot-whale.png"
-)
+# The identity cutout is artwork, not a build input: it lives outside the repository, so
+# the path comes from the command line or ANBOT_WHALE_SRC.
+DEFAULT_SOURCE = Path(os.environ.get("ANBOT_WHALE_SRC", "anbot-whale.png"))
 
 
 def render(source: Path, size: int, out: Path) -> None:

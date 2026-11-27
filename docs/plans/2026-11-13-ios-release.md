@@ -60,7 +60,7 @@ v0.3.5（历史版本号）已经有 Android 手机 App（Settings → Phone 扫
    export APPLE_API_KEY_ID=<Key ID>
    export APPLE_API_ISSUER=<Issuer ID>
    ```
-3. 出包：`cd mobile && sh scripts/ios-archive.sh`。脚本会 `expo prebuild` → `pod install` → 用 API key 自动签名 archive → 导出 `mobile/ios/build/export/DSBot.ipa`。
+3. 出包：`cd mobile && sh scripts/ios-archive.sh`。脚本会 `expo prebuild` → `pod install` → 用 API key 自动签名 archive → 导出 `mobile/ios/build/export/Anbot.ipa`。
 4. 上传：`sh scripts/ios-archive.sh --upload`，用 `xcrun altool --upload-app` 传到 App Store Connect。上传后等处理完，在 TestFlight 里加内部测试员（最多 100 人）。
 5. TestFlight 设置：App Store Connect → 该 App → TestFlight。内部测试不需要 App Review；外部测试要 Beta App Review。出口合规：App 的连接层用标准算法做端到端加密，Info.plist 声明了 `ITSAppUsesNonExemptEncryption=false`；如果审核问起，按标准算法（X25519 等）说明。
 6. 版本号：`CFBundleShortVersionString` 跟随 `ds-bot/package.json` 的 version；build number 默认相同。同一版本重传时，设 `DS_BOT_IOS_BUILD_NUMBER` 为比上一次大的构建号，再运行脚本，无需改产品版本。构建号采用 1–3 段纯数字，例如 `0.3.7`、`0.3.8`。参见 [Apple 的 CFBundleVersion 格式](https://developer.apple.com/documentation/BundleResources/Information-Property-List/CFBundleVersion)。

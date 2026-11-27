@@ -34,7 +34,7 @@ npx expo run:android --device <emulator>                    # native build when 
   and failure guide in
   [docs/plans/2026-11-13-ios-release.md](../docs/plans/2026-11-13-ios-release.md) are future
   preparation only: once the Apple account variables are set, `npm run ios:archive` can
-  archive and export the local script artifact `ios/build/export/DSBot.ipa` (a local build
+  archive and export the local script artifact `ios/build/export/Anbot.ipa` (a local build
   filename only; nothing iOS is published in v0.0.1), and `sh scripts/ios-archive.sh --upload`
   can send it to TestFlight. `mobile-ios` in `.github/workflows/test.yml` only builds the
   unsigned iOS project for the simulator for changes to `mobile/` or `ds-bot/package.json`,

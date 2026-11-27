@@ -531,6 +531,13 @@ test('usage.js journal() uses revision-keyed cache before scanning book.owners()
   }
   const msgs1 = rt.tagUsage([], { sessionId: 'a', kind: 'memory' })
   assert.equal(await drain(onStream({ sessionId: 'a', messages: msgs1, provider: 'deepseek', model: 'deepseek-chat' }, () => makeStream())), 1)
+  // The fast path starts once the ledger is open, which happens after the first
+  // journal's load. A fixed wait raced the SQLite import on a busy runner.
+  const deadline = Date.now() + 10_000
+  while (!existsSync(join(home, 'usage.sqlite'))) {
+    if (Date.now() > deadline) throw new Error('the usage ledger never opened')
+    await new Promise(resolve => setTimeout(resolve, 10))
+  }
   await new Promise(resolve => setTimeout(resolve, 20))
   const loadsAfterFirst = loadCalls
 

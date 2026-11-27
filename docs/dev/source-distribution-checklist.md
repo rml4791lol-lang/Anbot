@@ -115,9 +115,9 @@ node scripts/build-client.mjs --check
 - 无 tracked 的 `.env` / `.pem` / `.key` / `.p12` / `.keystore` / `.jks` / `.mobileprovision` / `.p8` / `.cer`；唯一模板是 `docker/.env.example`，密钥字段留空。
 - 历史文件：commit `7bcd047e`（仅存在于 `origin/feat/phase1a-e2e`，**不是 HEAD 祖先**）曾带入一个 `usage.sqlite` 测试数据文件；若该分支将来推到公开仓库，需要先清理历史。
 - `scan.mjs` 标为 must-fix 的现存命中：
-  - `docs/superpowers/plans/2026-11-24-ds-bot-harness.md:181`：计划文档里记录了本机绝对路径与 `/Users/an/.ds-bot/archive/…` 备份路径——公开仓库前应脱敏。
-  - `ds-bot/dev/anbot-render-mark.py:45`：开发脚本硬编码 `/Users/an/Doubao/chats/…/anbot-identity/…` 素材路径——应改为环境变量或命令行参数；该脚本不进 npm 包，但在 Git 历史里。
-  - `ds-bot/src/client/characters.js:87,107-111`：`LEGACY_REMAP` 里的旧厂商槽 id（kimi/qwen/glm/claude/gemini 等）是迁移兼容映射，不是位图表素材，扫描器按 look 文件规则报出；属有意保留。
+  - `docs/superpowers/plans/2026-11-24-ds-bot-harness.md:181`：计划文档里记录了本机绝对路径与 `<data home>/archive/…` 备份路径——已脱敏。
+  - `ds-bot/dev/anbot-render-mark.py:45`：开发脚本曾硬编码素材绝对路径——已改为命令行参数或 `ANBOT_WHALE_SRC`；该脚本不进 npm 包，但在 Git 历史里。
+  - `ds-bot/src/client/characters.js:87,107-111`：旧厂商槽 id 的迁移兼容映射曾放在 look 文件里、被扫描器报出；映射已移到 `ds-bot/src/client/legacy-shapes.js`，不再命中 look 文件规则。
 - can-stay 类：测试/文档邮箱占位、版本号形式的数字串、供应商名称词、遗留迁移名等，扫描器已归类为可接受。
 
 ## 5. 手机端打包前置条件
