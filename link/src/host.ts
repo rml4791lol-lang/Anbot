@@ -75,7 +75,9 @@ const RELAY_CAPABILITY = 'transport.relay'
 const PUSH_FCM_CAPABILITY = 'push.fcm'
 const MAX_CALLS_PER_TUNNEL = 32
 const MAX_EMIT_PENDING = 64
-const SERVER_SILENCE_MS = 75_000
+// The Server pings every 25 s; a host that hears nothing for this long is suspended
+// or half-open and must make a fresh connection instead of waiting for a close event.
+const SERVER_SILENCE_MS = 45_000
 const PUSH_TIMEOUT_MS = 10_000
 const HANDSHAKE_TIMEOUT_MS = 15_000
 
@@ -215,7 +217,7 @@ export class HostLink {
   }
 
   private async loop(): Promise<void> {
-    const [min, max] = this.options.retryMs ?? [1_000, 60_000]
+    const [min, max] = this.options.retryMs ?? [1_000, 20_000]
     let delay = min
     while (this.running) {
       this.setStatus('connecting')
@@ -247,9 +249,16 @@ export class HostLink {
       this.socket = socket
       this.limits = {}
       const watchdog = setInterval(() => {
-        if (Date.now() - lastHeard > SERVER_SILENCE_MS) socket.close()
-      }, 15_000)
+        if (Date.now() - lastHeard > SERVER_SILENCE_MS) {
+          this.lastError = 'The Server stopped answering.'
+          socket.close()
+          // A suspended or half-open socket may never report its close; end
+          // the attempt here so the loop can connect again.
+          end()
+        }
+      }, 10_000)
       socket.onopen = () => {
+        lastHeard = Date.now()
         this.sendControl('hello', {
           role: 'host',
           deviceId: this.options.identity.deviceId,

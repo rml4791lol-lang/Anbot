@@ -350,7 +350,7 @@ jobs:
       - name: Build for the simulator
         working-directory: mobile/ios
         run: |
-          xcodebuild -workspace DSBot.xcworkspace -scheme DSBot \
+          xcodebuild -workspace Anbot.xcworkspace -scheme Anbot \
             -configuration Debug -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
@@ -441,12 +441,12 @@ jobs:
           $ErrorActionPreference = 'Stop'
           function Find-Entry($root) {
             Get-ChildItem "$root\Software\Microsoft\Windows\CurrentVersion\Uninstall" |
-              Where-Object { (Get-ItemProperty $_.PSPath).DisplayName -like 'DS Bot*' }
+              Where-Object { (Get-ItemProperty $_.PSPath).DisplayName -like 'Anbot*' }
           }
-          $installer = Get-Item dist-pack/DS-Bot-*-win-x64.exe
+          $installer = Get-Item dist-pack/Anbot-*-win-x64.exe
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
           $dir = Join-Path $env:LOCALAPPDATA 'Programs\Anbot'
-          $exe = Join-Path $dir 'DS Bot.exe'
+          $exe = Join-Path $dir 'Anbot.exe'
           if (-not (Test-Path $exe)) { throw "The installer did not put the app in $dir" }
           $entry = Find-Entry 'HKCU:'
           if (-not $entry) { throw 'No uninstall entry for the current user' }
@@ -470,20 +470,20 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Anbot\DS Bot.exe'
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Anbot\Anbot.exe'
           node scripts/check-update.mjs $exe dist-next
           if ($LASTEXITCODE -ne 0) { throw 'The installed app did not take the update' }
           # The installer goes on after the app has quit.
           function Installed-Version {
             Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' |
               ForEach-Object { Get-ItemProperty $_.PSPath } |
-              Where-Object { $_.DisplayName -like 'DS Bot*' } |
+              Where-Object { $_.DisplayName -like 'Anbot*' } |
               Select-Object -ExpandProperty DisplayVersion
           }
           $deadline = (Get-Date).AddSeconds(240)
           while ((Installed-Version) -ne $env:NEXT_VERSION -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 3 }
           if ((Installed-Version) -ne $env:NEXT_VERSION) { throw "The installed version is $(Installed-Version), not $env:NEXT_VERSION" }
-          while ((Get-Process | Where-Object { $_.Path -like '*dsbot-updater*' }) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 2 }
+          while ((Get-Process | Where-Object { $_.Path -like '*anbot-updater*' }) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 2 }
           node scripts/check-packed.mjs $exe
           if ($LASTEXITCODE -ne 0) { throw 'The updated app failed its check' }
 
@@ -493,18 +493,18 @@ jobs:
           $ErrorActionPreference = 'Stop'
           function Find-Entry($root) {
             Get-ChildItem "$root\Software\Microsoft\Windows\CurrentVersion\Uninstall" |
-              Where-Object { (Get-ItemProperty $_.PSPath).DisplayName -like 'DS Bot*' }
+              Where-Object { (Get-ItemProperty $_.PSPath).DisplayName -like 'Anbot*' }
           }
           $dir = Join-Path $env:LOCALAPPDATA 'Programs\Anbot'
-          $exe = Join-Path $dir 'DS Bot.exe'
+          $exe = Join-Path $dir 'Anbot.exe'
           # The uninstaller removes the program only: the data location and the app's own data stay.
-          $kept = foreach ($folder in (Join-Path $HOME '.ds-bot'), (Join-Path $env:APPDATA 'DS Bot')) {
+          $kept = foreach ($folder in (Join-Path $HOME '.anbot'), (Join-Path $env:APPDATA 'Anbot')) {
             New-Item -ItemType Directory -Force $folder | Out-Null
             $file = Join-Path $folder 'kept.txt'
             Set-Content $file 'kept'
             $file
           }
-          $uninstaller = Join-Path $dir 'Uninstall DS Bot.exe'
+          $uninstaller = Join-Path $dir 'Uninstall Anbot.exe'
           Start-Process -FilePath $uninstaller -ArgumentList '/currentuser', '/S' -Wait
           # The uninstaller goes on from a copy in the temp folder, so wait for its result.
           $deadline = (Get-Date).AddSeconds(120)
@@ -582,7 +582,7 @@ jobs:
           test -f "$zip"
           ditto -x -k "$zip" /Applications
           app="/Applications/Anbot.app"
-          exe="$app/Contents/MacOS/DS Bot"
+          exe="$app/Contents/MacOS/Anbot"
           codesign --verify --deep --strict "$app"
           file "$exe"
           expected="${{ matrix.arch }}"
@@ -660,10 +660,10 @@ jobs:
           version="$(node -p "require('./package.json').version")"
           sudo apt-get install -y "./dist-pack/Anbot-$version-linux-amd64.deb"
           test -f /usr/share/applications/anbot.desktop
-          xvfb-run -a node scripts/check-packed.mjs "/opt/Anbot/dsbot"
+          xvfb-run -a node scripts/check-packed.mjs "/opt/Anbot/anbot"
       # A deb cannot update itself: it points at the release page, as on macOS.
       - name: The deb's app hears of a new version
-        run: xvfb-run -a node scripts/check-update.mjs "/opt/Anbot/dsbot" 99.0.0
+        run: xvfb-run -a node scripts/check-update.mjs "/opt/Anbot/anbot" 99.0.0
       # The update builds the app a second time, so it runs only for changes to the app or workflows
       # (and full runs). The AppImage downloads the new one and replaces itself as it quits.
       - name: Build the next version
@@ -675,16 +675,16 @@ jobs:
         if: needs.changes.outputs.app_update == 'true'
         run: |
           tmp="$(mktemp -d)"
-          cp dist-pack/DS-Bot-*-linux-x86_64.AppImage "$tmp/dsbot.AppImage"
-          chmod +x "$tmp/dsbot.AppImage"
-          xvfb-run -a node scripts/check-update.mjs "$tmp/dsbot.AppImage" dist-next
-          pkill -f "$tmp/dsbot" || true
-          next="$(ls dist-next/DS-Bot-*-linux-x86_64.AppImage)"
-          test "$(sha512sum "$tmp/dsbot.AppImage" | cut -d' ' -f1)" = "$(sha512sum "$next" | cut -d' ' -f1)"
+          cp dist-pack/Anbot-*-linux-x86_64.AppImage "$tmp/anbot.AppImage"
+          chmod +x "$tmp/anbot.AppImage"
+          xvfb-run -a node scripts/check-update.mjs "$tmp/anbot.AppImage" dist-next
+          pkill -f "$tmp/anbot" || true
+          next="$(ls dist-next/Anbot-*-linux-x86_64.AppImage)"
+          test "$(sha512sum "$tmp/anbot.AppImage" | cut -d' ' -f1)" = "$(sha512sum "$next" | cut -d' ' -f1)"
       - name: Uninstall
         run: |
-          sudo apt-get remove -y dsbot
-          test ! -e "/opt/Anbot/dsbot"
+          sudo apt-get remove -y anbot
+          test ! -e "/opt/Anbot/anbot"
 
   docker:
     name: Docker startup and data migration

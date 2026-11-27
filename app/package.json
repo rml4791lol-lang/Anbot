@@ -1,7 +1,7 @@
 {
   "name": "anbot",
   "productName": "Anbot",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "private": true,
   "description": "Anbot desktop app: the ds-bot team on its own pinned DeepSeek Harness.",
   "author": "rml4791lol-lang",

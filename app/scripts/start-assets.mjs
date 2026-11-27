@@ -141,8 +141,12 @@ const files = {
   '../page-card.css': async css => between(between(css, '/* tokens */', '/* /tokens */', tokens(CARD_SCOPE)), '/* springs */', '/* /springs */', await springs(CARD_SCOPE)),
 }
 // The PNG bytes depend on the encoder build: the libvips behind sharp writes the same pixels in
-// a different byte stream on macOS than on the Linux CI runner. Compare the decoded image instead
-// — same size, same pixels — so a raster is stale only when it actually differs.
+// a different byte stream on macOS than on the Linux CI runner, and it picks a different SIMD path
+// per CPU, so a resized raster can come out a hair apart on its edges (a few hundred channel
+// values at 3x). Compare the decoded image with that tolerance — a raster drawn from another
+// master differs across the whole picture, far past it.
+const STALE_SHARE = 0.002
+const STALE_MEAN = 2
 async function sameImage(file, buffer) {
   let current
   try { current = readFileSync(file) } catch { return false }
@@ -151,7 +155,15 @@ async function sameImage(file, buffer) {
     return { data, width: info.width, height: info.height }
   }
   const [before, after] = await Promise.all([decode(current), decode(buffer)])
-  return before.width === after.width && before.height === after.height && before.data.equals(after.data)
+  if (before.width !== after.width || before.height !== after.height) return false
+  let sum = 0
+  let differing = 0
+  for (let i = 0; i < before.data.length; i += 1) {
+    const delta = Math.abs(before.data[i] - after.data[i])
+    sum += delta
+    if (delta > 2) differing += 1
+  }
+  return differing / before.data.length <= STALE_SHARE && sum / before.data.length <= STALE_MEAN
 }
 
 const check = process.argv.includes('--check')

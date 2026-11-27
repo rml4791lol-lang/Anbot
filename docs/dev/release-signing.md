@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|
 | Windows（NSIS `.exe`，x64） | electron-builder 在打包时做 Authenticode 签名，SHA-256 摘要，加盖 RFC 3161 时间戳（`http://timestamp.digicert.com`） | 项目自签证书（CN=Anbot Release Signing），不是商业 CA 颁发的代码签名证书；PFX（含私钥）经 base64 注入 CI，secret `WINDOWS_CERTIFICATE_BASE64`、`WINDOWS_CERTIFICATE_PASSWORD` 已配置 | 不适用（secret 已配置） | 自签证书只在生成它的那台机器的受信根证书 / 受信发布者列表里；其他未导入该证书的机器上，SmartScreen 仍按「未知发布者」处理。签名不能消除这个提示 | 安装包经 electron-updater 自动下载安装（Windows 读 `latest.yml`） |
 | macOS（`target: zip`，arm64 / x64） | 沿用上游 DS Bot 做法：`target: zip` 出包，ad-hoc 签名（`identity: '-'`），只封牢 bundle；不做 Developer ID 签名，不做公证，不需要 Apple Developer 账号 | 无开发者证书；DSH 自带的 Computer Use helper 保留它自己的签名，其余由 ad-hoc 封口 | 无 | 不适用 | Gatekeeper 首次打开拦下，提示「无法验证开发者」，不是「已损坏」；到「系统设置 → 隐私与安全性」点「仍要打开」放行。不要关闭 Gatekeeper | 不自动安装。启动时和每 4 小时查 GitHub Releases，发现新版提示后打开 Releases 下载页，由用户手动下载替换 |
-| Linux（AppImage / deb，x64） | 未签名 | 无 | 无 | 不适用 | 包本身没有签名校验；AppImage 下载后需加可执行位再运行，deb 走 apt 安装 | AppImage 可自更新（读 `latest-linux.yml`）；deb 不自更新，提示后跳 Releases 下载页 |
+| Linux（AppImage / deb，x64） | 未签名（源码仍可自行构建：`npm run dist` 会产出 AppImage 与 deb） | 无 | 无 | 不适用 | v0.0.1 不发布 Linux 安装包；包本身没有签名校验，AppImage 下载后需加可执行位再运行，deb 走 apt 安装 | 日后发布 AppImage 时可自更新（读 `latest-linux.yml`）；deb 不自更新，提示后跳 Releases 下载页 |
 | Android（release APK） | 上传密钥签名，v1（JAR）+ v2 + v3 三种签名方案全开 | 上传密钥 keystore（`upload.jks`，alias `upload`），由维护者生成并离线备份；secret `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS` 已配置 | 不适用（secret 已配置） | 同一把上传密钥签出的 APK 才能覆盖安装；换密钥后 Android 拒绝覆盖。Android 14+ 的通知权限 `POST_NOTIFICATIONS` 已在 App 配置中声明 | APK 内检查 Releases，按 `Anbot-<版本>-android.apk` 资产名匹配并校验 `SHA256SUMS.txt` 摘要后下载更新 |
 | iOS | 需要 Apple Developer Program 账号、Team ID 和 App Store Connect API key 才能签名出包 | 当前无 Apple 账号；CI 只构建无签名的模拟器包（`CODE_SIGNING_ALLOWED=NO`），不产出可安装的 `.ipa` | 本地脚本环境变量：`DS_BOT_APPLE_TEAM_ID`、`APPLE_API_KEY`、`APPLE_API_KEY_ID`、`APPLE_API_ISSUER` | 脚本检测到缺项直接退出（退出码 2） | 无对外包。账号、App ID、API key 的准备步骤见 [`docs/plans/2026-11-13-ios-release.md`](../plans/2026-11-13-ios-release.md) | 不适用 |
 
@@ -20,6 +20,7 @@
 - macOS 发 zip 不发 dmg：macOS 26 会把下载来的未签名 dmg 判为损坏且打不开，ad-hoc 签名对 dmg 也没有帮助。
 - 仓库是公开仓库，匿名即可访问 Releases API；macOS、deb 和 App 内的更新检查在请求失败（网络不可达、接口报错等）时记为「检查失败」，而不是「已是最新」。需要指向其他更新源做无人值守更新时，通过 `ANBOT_UPDATE_URL`（兼容旧名 `DS_BOT_UPDATE_URL`）指向可访问的更新源。
 - v0.0.1 随附 Windows 安装包与 Android APK：Windows 用 CI 注入的项目自签 PFX 做 Authenticode 签名；Android 用上传 keystore（alias `upload`）签名。两者证书/密钥都不是商业 CA 背书：Windows 自签证书在其他机器上仍显示未知发布者。
+- v0.0.1 不发布 Linux 安装包：本轮免做 Linux 桌面构建，Release 只附 Mac zip、Android APK 与 `SHA256SUMS.txt`（以及 Windows 安装包）；Linux 目标保持源码构建可用，README 与 Release 说明都不承诺 Linux 安装包。
 - v0.0.1 本次发布不含 iOS 可安装包：没有 Apple Developer Program 账号、Team ID 与 App Store Connect API key，CI 只做无签名模拟器编译，不产出也不上传 `.ipa` / TestFlight 包；后续账号材料齐备前，不要把 iOS 写成已支持或即将放出的下载项。
 
 ### 1.1 Windows 证书入库

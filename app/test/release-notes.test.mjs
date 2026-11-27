@@ -22,16 +22,12 @@ test('the desktop packages carry Anbot names, and copies drop the version', () =
     'Anbot-0.2.3-win-x64.exe',
     'Anbot-0.2.3-mac-arm64.zip',
     'Anbot-0.2.3-mac-x64.zip',
-    'Anbot-0.2.3-linux-x86_64.AppImage',
-    'Anbot-0.2.3-linux-amd64.deb',
     'Anbot-0.2.3-android.apk',
   ])
   assert.deepEqual(PACKAGES.map(copyName), [
     'Anbot-win-x64.exe',
     'Anbot-mac-arm64.zip',
     'Anbot-mac-x64.zip',
-    'Anbot-linux-x86_64.AppImage',
-    'Anbot-linux-amd64.deb',
     'Anbot-android.apk',
   ])
 })
@@ -53,12 +49,11 @@ test('the table lists the desktop and phone packages', () => {
   const sizes = Object.fromEntries(names('0.2.3').map((name, index) => [name, (index + 1) * 100 * MB]))
   const block = downloadBlock({ version: '0.2.3', sizes })
   const rows = block.split('\n').filter(line => line.startsWith('| ') && !line.startsWith('| System'))
-  assert.equal(rows.length, 6)
+  assert.equal(rows.length, 4)
   assert.match(rows[0], /^\| \*\*Windows 10\/11 \(64-bit \/ 64 位\)\*\*<br>Double-click to install \/ 双击安装 \| \[Anbot-0\.2\.3-win-x64\.exe\]\(https:\/\/github\.com\/rml4791lol-lang\/Anbot\/releases\/download\/v0\.2\.3\/Anbot-0\.2\.3-win-x64\.exe\) \| 100 MB \|$/u)
   assert.match(rows[1], /^\| macOS, Apple chip .*mac-arm64\.zip.*\| 200 MB \|$/u)
   assert.match(rows[2], /^\| macOS, Intel .*mac-x64\.zip.*\| 300 MB \|$/u)
-  assert.match(rows[3], /^\| Linux, AppImage .*linux-x86_64\.AppImage.*\| 400 MB \|$/u)
-  assert.match(rows[4], /^\| Linux, deb .*linux-amd64\.deb.*\| 500 MB \|$/u)
+  assert.match(rows[3], /^\| Android .*android\.apk.*\| 400 MB \|$/u)
   assert.match(block, /^## Download \/ 下载$/mu)
   assert.match(block, /The `\.blockmap`, `latest\*\.yml` and source code archives are for updates and the repository/u)
   assert.match(block, /Android.*Anbot-0\.2\.3-android\.apk/u)
@@ -78,16 +73,16 @@ test('SHA256SUMS.txt lists each desktop package under both of its names', () => 
   const hashes = Object.fromEntries(names('0.2.3').map((name, index) => [name, String(index).repeat(64)]))
   const lines = checksums('0.2.3', hashes).split('\n')
   assert.equal(lines.pop(), '')
-  assert.equal(lines.length, 12)
+  assert.equal(lines.length, 8)
   assert.equal(lines[0], `${'0'.repeat(64)}  Anbot-0.2.3-win-x64.exe`)
   assert.equal(lines[1], `${'0'.repeat(64)}  Anbot-win-x64.exe`)
-  assert.equal(lines[8], `${'4'.repeat(64)}  Anbot-0.2.3-linux-amd64.deb`)
-  assert.equal(lines[9], `${'4'.repeat(64)}  Anbot-linux-amd64.deb`)
+  assert.equal(lines[6], `${'3'.repeat(64)}  Anbot-0.2.3-android.apk`)
+  assert.equal(lines[7], `${'3'.repeat(64)}  Anbot-android.apk`)
 })
 
 test('a missing desktop package is named; other files do not count', () => {
   const present = ['Anbot-0.2.3-win-x64.exe', 'Anbot-0.2.3-win-x64.exe.blockmap', 'Anbot-mac-arm64.zip', 'Anbot-0.2.2-mac-x64.zip',
-    'Anbot-0.2.3-linux-x86_64.AppImage', 'Anbot-0.2.3-linux-amd64.deb', 'Anbot-0.2.3-android.apk', 'latest.yml']
+    'Anbot-0.2.3-android.apk', 'latest.yml']
   assert.deepEqual(missingPackages('0.2.3', present), ['Anbot-0.2.3-mac-arm64.zip', 'Anbot-0.2.3-mac-x64.zip'])
   assert.deepEqual(missingPackages('0.2.3', names('0.2.3')), [])
 })
@@ -157,7 +152,7 @@ test('the Anbot workflow attaches its own packages and cannot publish to upstrea
   assert.match(text, /APP_REPOSITORY: rml4791lol-lang\/Anbot/u)
   assert.match(text, /name: Anbot-win-x64/u)
   assert.match(text, /name: Anbot-mac-\$\{\{ matrix\.arch \}\}/u)
-  assert.match(text, /name: Anbot-linux-x64/u)
+
 })
 
 // A releases/latest link must never reach a release whose files are still being attached,
@@ -178,7 +173,7 @@ test('the release becomes Latest last, after every build and publish job', () =>
     return /gh release upload/u.test(runs(workflow.jobs[other]))
       || steps.some(step => typeof step.uses === 'string' && step.uses.startsWith('actions/upload-artifact@'))
   })
-  assert.ok(producers.length >= 5, `expected the build and publish jobs before ${name}, found ${producers.join(', ')}`)
+  assert.ok(producers.length >= 4, `expected the build and publish jobs before ${name}, found ${producers.join(', ')}`)
   for (const producer of producers) assert.ok(before(name).has(producer), `${name} must come after ${producer}`)
   // No app build job may attach assets directly to the GitHub release before every build succeeds.
   for (const [other, cfg] of Object.entries(workflow.jobs)) {

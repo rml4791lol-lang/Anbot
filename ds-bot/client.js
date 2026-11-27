@@ -20656,6 +20656,40 @@ var inkFill = (color) => isHex(color) ? color : `var(--bt-ink-${inkName(color)})
 var inkText = (color) => color === "black" ? "var(--bt-ink-gray)" : inkFill(color);
 var paintCss = (color) => GRADIENTS[color] ? `linear-gradient(135deg,${GRADIENTS[color].map(([offset, value]) => `${value} ${offset * 100}%`).join(",")})` : inkFill(color);
 
+// src/client/legacy-shapes.js
+var LEGACY_REMAP = {
+  "anbot-girl": "anbot",
+  "ds-headphone": "headphone",
+  "ds-glasses": "glasses",
+  "ds-scarf": "scarf",
+  "ds-nightcap": "nightcap",
+  "ds-overalls": "overalls",
+  "ds-chef": "chef",
+  "ds-wizard": "wizard",
+  "ds-astro": "astro",
+  "ds-detective": "detective",
+  "ds-painter": "painter",
+  "ds-gardener": "gardener",
+  "ds-barista": "barista",
+  "ds-skater": "skater",
+  "ds-raincoat": "raincoat",
+  anbot: "anbot",
+  whale: "anbot",
+  gpt: "headphone",
+  hex: "headphone",
+  qwen: "glasses",
+  wave: "glasses",
+  kimi: "scarf",
+  moon: "scarf",
+  claude: "nightcap",
+  squircle: "nightcap",
+  gemini: "overalls",
+  star: "overalls",
+  glm: "chef",
+  zed: "chef"
+};
+var legacyShape = (stored) => typeof stored === "string" && Object.hasOwn(LEGACY_REMAP, stored) ? LEGACY_REMAP[stored] : void 0;
+
 // src/client/lru.js
 function lruGet(map, key) {
   if (!map.has(key)) return void 0;
@@ -20762,39 +20796,9 @@ function defaultShape(id) {
   return DEFAULT_SHAPES[((value ^ value >>> 16) >>> 0) % DEFAULT_SHAPES.length];
 }
 var colorOf = (bot) => isColor(bot?.color) ? bot.color : bot?.id ? defaultColor(String(bot.id)) : "black";
-var LEGACY_REMAP = {
-  "anbot-girl": "anbot",
-  "ds-headphone": "headphone",
-  "ds-glasses": "glasses",
-  "ds-scarf": "scarf",
-  "ds-nightcap": "nightcap",
-  "ds-overalls": "overalls",
-  "ds-chef": "chef",
-  "ds-wizard": "wizard",
-  "ds-astro": "astro",
-  "ds-detective": "detective",
-  "ds-painter": "painter",
-  "ds-gardener": "gardener",
-  "ds-barista": "barista",
-  "ds-skater": "skater",
-  "ds-raincoat": "raincoat",
-  anbot: "anbot",
-  whale: "anbot",
-  gpt: "headphone",
-  hex: "headphone",
-  qwen: "glasses",
-  wave: "glasses",
-  kimi: "scarf",
-  moon: "scarf",
-  claude: "nightcap",
-  squircle: "nightcap",
-  gemini: "overalls",
-  star: "overalls",
-  glm: "chef",
-  zed: "chef"
-};
 function resolveShape(stored, id) {
-  if (typeof stored === "string" && Object.hasOwn(LEGACY_REMAP, stored)) return LEGACY_REMAP[stored];
+  const legacy = legacyShape(stored);
+  if (legacy !== void 0) return legacy;
   if (typeof stored === "string" && BITMAP_SHAPES.has(stored)) return stored;
   if (typeof stored === "string" && Object.hasOwn(SHAPES, stored) && !Object.hasOwn(CHARACTERS, stored)) return stored;
   return id ? defaultShape(String(id)) : FALLBACK_SHAPE;
@@ -48761,7 +48765,7 @@ function PhonePage({ roster, actions, Section: Section2, Row: Row5 }) {
       editingServer ? (0, import_react51.createElement)(
         "div",
         { className: "bt-set-row bt-phone-server" },
-        (0, import_react51.createElement)("input", { className: "bt-input", value: server, placeholder: "wss://relay.dsbot.app/v1/link", spellCheck: false, "aria-label": t("Server"), onChange: (event) => setServer(event.target.value), onKeyDown: (event) => {
+        (0, import_react51.createElement)("input", { className: "bt-input", value: server, placeholder: "wss://relay.an520.fun/v1/link", spellCheck: false, "aria-label": t("Server"), onChange: (event) => setServer(event.target.value), onKeyDown: (event) => {
           if (event.key === "Enter") saveServer();
         } }),
         (0, import_react51.createElement)("button", { type: "button", className: "bt-soft bt-soft-sm", disabled: busy || server.trim() === phone.server, onClick: saveServer }, t("Save"))

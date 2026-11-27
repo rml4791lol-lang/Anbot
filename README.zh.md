@@ -2,30 +2,48 @@
 
 [English](README.md) | 中文 · [文档导航](docs/README.md) · [愿景](docs/vision.zh.md) · [已知问题](docs/known-issues.zh.md) · [参与开发](CONTRIBUTING.zh.md)
 
-![版本](https://img.shields.io/badge/版本-v0.0.1-green) ![DSH](https://img.shields.io/badge/DSH-0.2.2--rc.5-4D6BFE) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green)
+![版本](https://img.shields.io/badge/版本-v0.0.1-green) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green) ![Bot 团队](https://img.shields.io/badge/team-multi--agent-2F6BFF)
 
-**Anbot 是建在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）上的个人 Agent 工作台。** 你把一件事交给它，它在一个真实的工作区里做完，并且让你看得见：它怎么理解这件事、现在谁在做、改了哪些文件、凭什么算完成。你可以随时暂停、接管同一个工作区自己改，改完再交回去。
+**Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。** 主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。它让你看见理解了什么、谁在做、改了哪些文件、凭什么算完成；你可以随时暂停、接管这个工作区自己改，再交回去。
 
-它有两种形态：Windows、macOS、Linux 的独立桌面应用，和 DSH 插件；也可以装在 Docker 里。团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
+它有三种形态：Windows、macOS、Linux 桌面应用，插件，Docker；团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
-> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip`、`Anbot-0.0.1-linux-x86_64.AppImage`、`Anbot-0.0.1-linux-amd64.deb` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml`、`latest-linux.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
+> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
-## Anbot 在 DS Bot 之上加了什么
+> **实用资料：** [30 篇任务指南](https://rml4791lol-lang.github.io/Anbot/guides/) 覆盖任务、集成、对比和常见问题；[3,000 个场景页](https://rml4791lol-lang.github.io/Anbot/playbooks/) 覆盖 100 个任务 × 30 种团队、平台、数据、工具和交付约束。[关于 Anbot](https://rml4791lol-lang.github.io/Anbot/about/)
 
-Anbot 基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 开发，保留了它的 Bot 团队、群聊、浏览器、电脑操控、IM、连接器和 Office 能力，并在此基础上加强了执行是否可信、能否随时接管这两件事：
+## 关键事实
 
-| 能力 | 说明 |
+- **开源：** Apache 2.0。应用和插件代码开源；预设、技能和 MCP/插件索引可读、可换。
+- **形态：** 一支持久在线的 Bot 团队：主 Bot、专业 Bot、群聊、共享记忆。
+- **多 Agent：** Bot 之间互相发消息、共享上下文、并行干活；Git 团队工作区里的新 Bot 自动得到自己的 worktree。
+- **工作区：** 真实目录。X-Ray、检查点、接管和高危审批，让工作看得见、退得回。
+- **数据：** 本地优先。团队、聊天、记忆、凭据和执行记录留在你的电脑上；模型请求发给你配置的服务商。
+
+## 这支 Bot 团队实际能做什么
+
+Anbot 不是一个聊天窗口加一个助手，而是一支多 Agent 团队：主 Bot 拆任务，专业 Bot 接活，群聊共享上下文，工作落在真实目录里。下面这些是让团队跑得下去的部分：
+
+| 会卡住的地方 | Bot 团队怎么处理 |
 |---|---|
-| **X-Ray 工作台** | 默认是对话，需要时打开 X-Ray：任务目标与约束、子任务清单（可直接改）、实际执行者、当前生效的模型与权限、上下文预算、工作区状态、检查点 |
-| **工作区接管与交回** | 接管前先等执行器确认停止；接管期间新消息被拒绝；交回时核对还是同一个会话和同一个工作区。DSH 原生 Bot 和 Codex、Claude Code、OpenCode 等本地智能体都支持 |
-| **检查点与恢复** | 把某一刻的对话进度和工作区文件成对保存，可先只读预览，再恢复成一个新的可写工作区；原工作区和之后的修改都保留，检查点之后写入的记忆可以逐条撤销 |
-| **真实运行态探针** | 当前会话实际加载的技能、插件和 MCP，实际生效的沙箱权限，上次请求走的模型，本地智能体的安装和登录状态。探测不到时显示「未验证」，不猜 |
-| **上下文视图** | 当前压力、可用窗口、检查阈值，以及模型看到的每段内容来自哪些原始记录 |
-| **十套专业预设** | 新建 Bot 时直接选：开发与调试、代码审查、UI 与产品、前端、后端与数据库、测试与质量验收、项目编排、本地智能体协作、文档与知识整理、自我维护。每套填好角色、工作方法、推荐技能、工作区与权限策略、验收标准和交付格式，选完可以改 |
-| **自动工作区** | Git 项目里的新 Bot 自动得到自己的 worktree，多个 Bot 并行时互不踩文件 |
-| **高危命令审批** | 递归删除、破坏性 Git 操作、推送、磁盘操作、提权，执行前要你批准一次 |
-| **失败之后** | 一轮失败可以换模型重试这一轮；重启后自动续跑一次被打断的工作，再被打断就暂停等你在 X-Ray 里继续 |
-| **技能不再自动创建** | 普通对话和一次性经验不会生成或更新技能，也不弹审批；只有你明确提出时才走审批 |
+| 看不出 Bot 理解了什么 | **X-Ray** 展开任务目标与约束、可直接改的子任务清单、实际执行者、当前生效的模型与权限、上下文预算、工作区状态和检查点。默认仍是对答，需要时一键打开。 |
+| 需要自己动手改 | **接管与交回** 先等执行器确认停止；你持有工作区时新消息被拒绝；交回时核对还是同一个 Session、同一个工作区。Anbot 自己的 Bot 和 Codex、Claude Code、OpenCode 等本地智能体都支持。 |
+| 长任务失败或跑偏 | **检查点** 把某一刻的对话进度和工作区文件成对保存：可只读预览，可恢复成一个新的可写工作区，原工作区和之后的修改都保留；检查点之后的记忆写入可以逐条撤销。 |
+| 不知道实际加载了什么 | **运行态探针** 报告当前 Session 实际加载的技能、插件和 MCP，实际生效的沙箱权限，上次请求走的模型，本地智能体是否安装并登录。探测不到时显示「未验证」，不猜。 |
+| 看不见上下文压力 | **上下文视图** 显示当前压力、可用窗口、检查阈值，以及模型看到的每段内容来自哪些原始记录。 |
+| 新建专业 Bot 太慢 | **十套专业预设** 直接填好角色、工作方法、推荐技能、工作区与权限策略、验收标准和交付格式；每一项都可以改。 |
+| 多个 Bot 并行会踩文件 | **自动 worktree**：Git 团队工作区里的新 Bot 自动得到自己的 linked worktree。 |
+| 一条命令可能毁掉工作 | **高危审批** 覆盖递归删除、破坏性 Git 操作、推送、磁盘操作和提权；执行前让你批准一次。 |
+| 模型中途失败 | **失败处理** 换模型重试这一轮；重启后自动续跑一次被打断的工作，再被打断就暂停等你在 X-Ray 里继续。 |
+| 技能自己长出来 | **不自动建技能**：普通对话和一次性经验不会生成或更新技能，也不弹审批；只有你明确提出才走审批。 |
+
+## 三个实际工作流
+
+**在一个真实仓库里修失败测试。** 把仓库和失败的测试交给 Anbot。X-Ray 里有子任务清单、实际执行者和权限；跑之前先存一个检查点。它在真实目录里改文件，把 diff 和测试输出作为证据给你看。修错了，可以换模型重试这一轮，或者恢复检查点。
+
+**接管一份写了一半的文档。** 让 Anbot 暂停。执行器确认停止后，打开同一个工作区自己改；你持有期间新消息会被拒绝。改完交回，Anbot 核对还是同一个 Session、同一个工作区，再继续。
+
+**一步建一个代码审查 Bot。** 新建 Bot 时选「代码审查」预设。它填好角色、工作方法、推荐技能、工作区、权限、验收标准和交付格式；你可以改任何一项，然后直接跑。
 
 ## 安装
 
@@ -40,7 +58,7 @@ Anbot 基于 [DS Bot](https://github.com/Fei2411/DS-Bot) 开发，保留了它�
 
 ### 桌面应用（Windows、macOS、Linux）
 
-v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）、Linux AppImage 与 deb，以及 Android APK。不发布 iOS 包。从源码构建：
+v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）与 Android APK。本次发布不含 Linux 安装包，可用下面的步骤从源码构建。不发布 iOS 包。从源码构建：
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -206,7 +224,49 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 - **协调层**：你对 Main Bot 说一个目标，它自己拆任务、选 Bot、准备工作区、跟踪依赖、汇总验收。派活目前仍要你自己安排。
 - **多 Bot 工作流视图**：一张图看到所有 Bot 的依赖、进度和审批。
 - **Bot 锻造器与自举工程器**：用对话组装新 Bot、让 Anbot 改自己的代码。
-- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证；Linux AppImage 与 deb 未签名。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml`、`latest-linux.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包与 Linux AppImage 走 electron-updater 自动下载安装；macOS 与 Linux deb 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
+- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 Linux 安装包，也不附 `latest-linux.yml`，Linux 目标只从源码构建。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包走 electron-updater 自动下载安装；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
+
+## Anbot 和 Grok Bot、大厂 Agent 怎么比
+
+最接近的产品是 Grok Bot：两者都是长期在线的 Bot 团队，有记忆、群聊和审批。区别在归谁：Grok Bot 把团队跑在 SpaceXAI 云端的电脑上，是付费测试；Anbot 是 Apache 2.0，把团队跑在你的真实工作区里，你可以接管。
+
+| | Anbot | Grok Bot | 大厂 Agent |
+|---|---|---|---|
+| 来源 | Apache 2.0；代码和扩展索引开放 | 闭源 | 闭源 |
+| 形态 | 多 Agent 团队：主 Bot、专业 Bot、群聊 | 长期在线的 Bot 团队 | 单个 Agent 或厂商子 Agent |
+| 活在哪 | 你的真实工作区；桌面应用、DSH profile 或 Docker | 它自己的云端电脑，24/7 | 厂商云沙箱，或厂商 CLI |
+| 数据 | 本地优先 | 云端 | 多在厂商云或账号里 |
+| 模型 | 任何 DSH provider，包括本地模型 | Grok | 厂商模型 |
+| 控制 | X-Ray、检查点、接管与交回 | 审批；工作在它的云端电脑上 | 计划与审批，因产品而异 |
+| 扩展 | 开放的预设、技能、MCP、插件 | 厂商预设和例程 | 厂商市场或 SDK |
+| 可用性（2026-11） | 公开 v0.0.1 | 付费测试 | 付费订阅 |
+
+这里的大厂 Agent 指 OpenAI 的 Agent、Anthropic 的 Claude Code、Google 的 Gemini CLI、Microsoft 的 Copilot Agent。它们强在单 Agent 执行和产品集成；运行时、模型和扩展面归厂商。Anbot 把代码、模型选择和扩展面保持开放。
+
+以上是定位对比，不是逐项功能审计；各家当前能力以官方为准。
+
+## 常见问题
+
+**Anbot 是什么？**
+Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。它有桌面应用、插件和 Docker 三种形态。
+
+**Anbot 是 Grok Bot 的替代吗？**
+是，如果你想要一支持久在线的 Bot 团队，但不想把运行时和工作区交给厂商云。Grok Bot 是付费测试，跑在 SpaceXAI 云端的电脑上；Anbot 是 Apache 2.0，把团队跑在你的真实工作区里，你可以接管。见上面的对比。
+
+**和 OpenAI、Anthropic、Google、Microsoft 的 Agent 比呢？**
+它们强在单 Agent 执行和产品集成，但运行时、模型和扩展面都归厂商。Anbot 开源、多 Agent：模型服务商由你选，工作区留在本机，代码和扩展索引开放。见上面的对比。
+
+**数据会上传吗？**
+不会。团队、聊天、记忆、凭据和执行记录留在本机；模型请求只发给你配置的模型服务商，Anbot 不上传工作区。
+
+**能用哪些模型？**
+DSH 里配置的模型，包括通过 DSH provider 接入的本地模型。桌面应用还可以用 ChatGPT 套餐登录 OpenAI 模型，不需要 API key。
+
+**能装在哪些平台？**
+桌面应用支持 Windows、macOS、Linux；插件跑在 DSH Desktop 和 DSH Web；Docker 跑在 NAS 或 Linux 服务器。v0.0.1 另发 Android APK，没有 Linux 安装包和 iOS 包。
+
+**开源吗？**
+Apache 2.0。
 
 ## 文档与开发
 

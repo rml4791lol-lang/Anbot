@@ -180,7 +180,7 @@ APK 用上传密钥签名（alias `upload`，v1 JAR + v2 + v3），密钥放在�
 | # | 步骤 | 期望 | 结果 |
 |---|---|---|---|
 | 14.1 | 发布 Release，等工作流传完文件 | Release 里有 `Anbot-<版本>-android.apk`，下载表里有 Android 一行 | |
-| 14.2 | 在电脑的 Anbot 里打开 设置 → Connect → Phone，打开「手机访问」 | 服务器是 `wss://relay.dsbot.app/v1/link`，状态变成已开 | |
+| 14.2 | 在电脑的 Anbot 里打开 设置 → Connect → Phone，打开「手机访问」 | 服务器是 `wss://relay.an520.fun/v1/link`，状态变成已开 | |
 | 14.3 | 在一台没装过 Anbot 的 Android 手机上，从 Release 页下载 APK 并安装，打开后用相机扫电脑上的二维码 | 能装上；扫码后配对成功，进入团队 | |
 | 14.4 | 关掉 Wi-Fi，用移动数据给一个 Bot 发消息；打开一张聊天里的照片 | 收到回复；照片先显示预览，点开后显示原图 | |
 | 14.5 | 装着上一个发布版本的 APK 时，装这一版 | 直接覆盖安装，配对还在 | |

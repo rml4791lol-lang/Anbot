@@ -33,7 +33,7 @@ const PUSH_TIMEOUT_MS = 5_000
 const PUSH_TEXT_MAX_BYTES = 600
 const PUSH_NAME_MAX_BYTES = 120
 const PUSH_HOST_MAX_BYTES = 80
-export const DEFAULT_SERVER = `wss://relay.dsbot.app${LINK_PATH}`
+export const DEFAULT_SERVER = `wss://relay.an520.fun${LINK_PATH}`
 export { BROWSER_ALLOWED }
 
 function trimUtf8(value, maxBytes) {

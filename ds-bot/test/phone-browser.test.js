@@ -5,7 +5,7 @@ import { browserPairingUrl } from '../src/client/phone-browser.js'
 test('browser pairing uses the relay origin and preserves its path prefix', () => {
   const uri = 'dsbot://pair?code=one-time&name=My%20computer'
   for (const [server, base] of [
-    ['wss://relay.dsbot.app/v1/link', 'https://relay.dsbot.app/web/'],
+    ['wss://relay.an520.fun/v1/link', 'https://relay.an520.fun/web/'],
     ['ws://127.0.0.1:8787/v1/link', 'http://127.0.0.1:8787/web/'],
     ['wss://relay.test/prefix/nested/v1/link', 'https://relay.test/prefix/nested/web/'],
     ['wss://relay.test/prefix/v1/link/', 'https://relay.test/prefix/web/'],
