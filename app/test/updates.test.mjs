@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { describe, test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { isNewer, RELEASES_URL, watchReleases, watchUpdates } from '../src/updates.mjs'
+import { isNewer, RELEASE_PAGE, RELEASES_URL, watchReleases, watchUpdates } from '../src/updates.mjs'
 
 // electron-updater's AppUpdater, as far as the app uses it. `found` makes the answer of a
 // check that finds a version, with the download that autoDownload starts.
@@ -174,7 +174,7 @@ describe('watchReleases', () => {
 
   test('logs failed requests, invalid JSON, and non-HTTPS release pages without throwing', async (t) => {
     const cases = [
-      [async () => releaseResponse({}, 403), 'Anbot: update check failed: release feed returned HTTP 403 (rate-limited or the address is unreachable)'],
+      [async () => releaseResponse({}, 403), 'Anbot: update check failed: release feed returned HTTP 403 (rate-limited or the address is unreachable); fallback failed: release page returned HTTP 403'],
       [async () => { throw new Error('offline') }, 'Anbot: update check failed: offline'],
       [async () => ({ ok: true, status: 200, json: async () => { throw new Error('bad JSON') } }), 'Anbot: update check failed: bad JSON'],
       [async () => releaseResponse([release('0.1.9', { page: 'http://github.com/rml4791lol-lang/Anbot' })]), 'Anbot: update check failed: release page URL is not HTTPS'],
@@ -186,6 +186,27 @@ describe('watchReleases', () => {
       assert.equal(await updates.latest(), null)
       assert.deepEqual(log.lines, [message])
     }
+  })
+
+  test('falls back to the public release page when the API is rate-limited', async (t) => {
+    const page = 'https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.1.9'
+    const asset = 'https://github.com/rml4791lol-lang/Anbot/releases/download/v0.1.9/Anbot-0.1.9-mac-arm64.zip'
+    const calls = []
+    const fetch = async (url, options = {}) => {
+      calls.push({ url, options })
+      if (url === RELEASES_URL) return releaseResponse({}, 403)
+      if (url === RELEASE_PAGE) return { ok: true, status: 200, url: page }
+      if (url === asset) return { ok: true, status: 200 }
+      throw new Error(`unexpected ${url}`)
+    }
+    const log = quietLog()
+    const updates = watchReleases({ current: '0.1.7', arch: 'arm64', fetch, log })
+    t.after(updates.stop)
+    assert.deepEqual(await updates.latest(), { version: '0.1.9', page })
+    assert.deepEqual(log.lines, ['Anbot: update 0.1.9 available'])
+    assert.deepEqual(calls.map(call => call.url), [RELEASES_URL, RELEASE_PAGE, asset])
+    assert.equal(calls[2].options.method, 'HEAD')
+    assert.deepEqual(updates.state(), { phase: 'available', version: '0.1.9', page, autoUpdate: true })
   })
 
   test('logs a non-array release response once', async (t) => {

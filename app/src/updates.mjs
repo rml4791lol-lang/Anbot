@@ -9,6 +9,7 @@ export const RELEASES_URL = `https://api.github.com/repos/${RELEASES_REPOSITORY}
 // Where a user downloads the newest version by hand.
 export const RELEASE_PAGE = `https://github.com/${RELEASES_REPOSITORY}/releases/latest`
 const MB = 1024 * 1024
+const LATEST_RELEASE_PAGE = RELEASE_PAGE
 
 /** The public update override. The DS_BOT name remains for existing installations and scripts. */
 export const updateFeedFromEnv = (env = process.env) => env.ANBOT_UPDATE_URL || env.DS_BOT_UPDATE_URL || undefined
@@ -60,6 +61,36 @@ function isHttpsPage(page) {
   }
 }
 
+// GitHub's unauthenticated API allows 60 requests per hour per IP. A shared or office IP can
+// exhaust that, which makes the normal feed answer 403 even though the public release page is
+// reachable. The release page redirects to the newest tag without using the API; the asset HEAD
+// confirms the package for this machine is actually attached.
+async function releaseFromPage({ current, fetch, assetName, log }) {
+  const response = await fetch(LATEST_RELEASE_PAGE, {
+    redirect: 'follow',
+    headers: { 'user-agent': `${PRODUCT_NAME}/${current}` },
+  })
+  if (!response.ok) throw new Error(`release page returned HTTP ${response.status}`)
+  const page = response.url
+  if (!isHttpsPage(page)) throw new Error('release page URL is not HTTPS')
+  const match = String(page).match(/\/releases\/tag\/([^/?#]+)/u)
+  if (match === null) throw new Error('release page has no tag')
+  const version = decodeURIComponent(match[1]).replace(/^v/u, '')
+  if (!isNewer(version, current)) return undefined
+  const asset = assetName(version)
+  const assetUrl = String(page).replace('/tag/', '/download/') + `/${encodeURIComponent(asset)}`
+  const assetResponse = await fetch(assetUrl, {
+    method: 'HEAD',
+    redirect: 'follow',
+    headers: { 'user-agent': `${PRODUCT_NAME}/${current}` },
+  })
+  if (!assetResponse.ok) {
+    log?.info?.(`${PRODUCT_NAME}: update ${version} has no ${asset}`)
+    return undefined
+  }
+  return { version, page }
+}
+
 // The About row shows the checker's phase: idle | checking → current | downloading →
 // downloaded | available | failed. While a check, a download or a ready install is on, a
 // new check must not start, so `check()` is a no-op in those phases.
@@ -95,66 +126,91 @@ export function watchReleases({ current, arch, fetch = globalThis.fetch, ask, op
   const set = (next) => { holder.set({ ...next, autoUpdate: auto }) }
   const run = ({ manual = false } = {}) => {
     set({ phase: 'checking' })
-    latest = (async () => {
+    const finish = (found) => {
+      if (found === undefined) {
+        set({ phase: 'current' })
+        return null
+      }
+      log.info(`${PRODUCT_NAME}: update ${found.version} available`)
+      if (!manual && auto && ask !== undefined && asked !== found.version) {
+        const { version, page } = found
+        void Promise.resolve().then(() => {
+          if (!auto || asked === version) return false
+          asked = version
+          return ask(version)
+        })
+          .then(yes => (yes && auto ? open(page) : undefined))
+          .catch((error) => { log.error(`${PRODUCT_NAME}: update ${version} not opened: ${error instanceof Error ? error.message : String(error)}`) })
+      }
+      set({ phase: 'available', version: found.version, page: found.page })
+      return found
+    }
+    const fallback = async (reason) => {
       try {
-        const response = await fetch(feed, {
+        const found = await releaseFromPage({ current, fetch, assetName, log })
+        return found === undefined ? finish(undefined) : finish(found)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        const combined = `${reason}; fallback failed: ${message}`
+        log.error(`${PRODUCT_NAME}: update check failed: ${combined}`)
+        set({ phase: 'failed', error: combined })
+        return null
+      }
+    }
+    latest = (async () => {
+      let response
+      try {
+        response = await fetch(feed, {
           headers: { accept: 'application/vnd.github+json', 'user-agent': `${PRODUCT_NAME}/${current}` },
         })
-        if (!response.ok) {
-          const status = String(response.status)
-          const detailed = feed === RELEASES_URL && [401, 403, 404].includes(response.status)
-          const error = detailed
-            ? `release feed returned HTTP ${status} (rate-limited or the address is unreachable)`
-            : `HTTP ${status}`
-          log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
-          set({ phase: 'failed', error })
-          return null
-        }
-        const releases = await response.json()
-        if (!Array.isArray(releases)) {
-          const error = 'releases response is not an array'
-          log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
-          set({ phase: 'failed', error })
-          return null
-        }
-        const currentVersion = parseVersion(current)
-        const allowPrerelease = currentVersion !== null && currentVersion.pre !== null
-        let found
-        for (const release of releases) {
-          if (release === null || typeof release !== 'object' || release.draft === true
-            || (release.prerelease === true && !allowPrerelease)) continue
-          const version = typeof release.tag_name === 'string' ? release.tag_name.replace(/^v/u, '') : ''
-          if (!isNewer(version, current)) continue
-          if (!Array.isArray(release.assets) || !release.assets.some(entry => entry?.name === assetName(version))) continue
-          if (!isHttpsPage(release.html_url)) {
-            log.error(`${PRODUCT_NAME}: update check failed: release page URL is not HTTPS`)
-            continue
-          }
-          if (found === undefined || isNewer(version, found.version)) found = { version, page: release.html_url }
-        }
-        if (found === undefined) {
-          set({ phase: 'current' })
-          return null
-        }
-        log.info(`${PRODUCT_NAME}: update ${found.version} available`)
-        if (!manual && auto && ask !== undefined && asked !== found.version) {
-          const { version, page } = found
-          void Promise.resolve().then(() => {
-            if (!auto || asked === version) return false
-            asked = version
-            return ask(version)
-          })
-            .then(yes => (yes && auto ? open(page) : undefined))
-            .catch((error) => { log.error(`${PRODUCT_NAME}: update ${version} not opened: ${error instanceof Error ? error.message : String(error)}`) })
-        }
-        set({ phase: 'available', version: found.version, page: found.page })
-        return found
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         log.error(`${PRODUCT_NAME}: update check failed: ${message}`)
         set({ phase: 'failed', error: message })
         return null
       }
+      if (!response.ok) {
+        const status = String(response.status)
+        const detailed = feed === RELEASES_URL && [401, 403, 404].includes(response.status)
+        const error = detailed
+          ? `release feed returned HTTP ${status} (rate-limited or the address is unreachable)`
+          : `HTTP ${status}`
+        if (feed === RELEASES_URL && (response.status === 403 || response.status === 429)) return fallback(error)
+        log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
+        set({ phase: 'failed', error })
+        return null
+      }
+      let releases
+      try {
+        releases = await response.json()
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        log.error(`${PRODUCT_NAME}: update check failed: ${message}`)
+        set({ phase: 'failed', error: message })
+        return null
+      }
+      if (!Array.isArray(releases)) {
+        const error = 'releases response is not an array'
+        log.error(`${PRODUCT_NAME}: update check failed: ${error}`)
+        set({ phase: 'failed', error })
+        return null
+      }
+      const currentVersion = parseVersion(current)
+      const allowPrerelease = currentVersion !== null && currentVersion.pre !== null
+      let found
+      for (const release of releases) {
+        if (release === null || typeof release !== 'object' || release.draft === true
+          || (release.prerelease === true && !allowPrerelease)) continue
+        const version = typeof release.tag_name === 'string' ? release.tag_name.replace(/^v/u, '') : ''
+        if (!isNewer(version, current)) continue
+        if (!Array.isArray(release.assets) || !release.assets.some(entry => entry?.name === assetName(version))) continue
+        if (!isHttpsPage(release.html_url)) {
+          log.error(`${PRODUCT_NAME}: update check failed: release page URL is not HTTPS`)
+          continue
+        }
+        if (found === undefined || isNewer(version, found.version)) found = { version, page: release.html_url }
+      }
+      return finish(found)
     })()
   }
   const stopTimer = () => {
