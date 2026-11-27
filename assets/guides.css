@@ -104,3 +104,5 @@ footer a { color: var(--muted); }
 .hub-notes ul { margin: 12px 0 14px; }
 .hub-faq { margin-top: 38px; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+.about-link { width: min(900px, calc(100% - 40px)); margin: -44px auto 34px; font-size: 13px; }
