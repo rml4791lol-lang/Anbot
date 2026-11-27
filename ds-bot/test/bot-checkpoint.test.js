@@ -23,10 +23,12 @@ const git = (root, ...args) => execFileSync('git', ['-C', root, ...args], {
 function repository(t, { linked = false } = {}) {
   const temporary = mkdtempSync(join(tmpdir(), 'anbot-checkpoint-test-'))
   t.after(() => rmSync(temporary, { recursive: true, force: true }))
-  const fixture = realpathSync(temporary)
+  const fixture = realpathSync.native(temporary)
   const source = join(fixture, 'repo')
   mkdirSync(source)
   git(source, 'init', '--quiet')
+  // The Windows runner checks out with CRLF; the fixture compares bytes it wrote as LF.
+  git(source, 'config', 'core.autocrlf', 'false')
   writeFileSync(join(source, 'tracked.txt'), 'base\n')
   writeFileSync(join(source, '.gitignore'), 'ignored/\n')
   git(source, 'add', 'tracked.txt', '.gitignore')
