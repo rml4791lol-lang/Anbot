@@ -915,10 +915,14 @@ test('a deferred delivery that failed is sent again on retry in the same run', a
 test('a concurrent duplicate waits for the delivery already going and shares its failure', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] })
   const home = mkdtempSync(join(tmpdir(), 'ds-bot-dedup-concurrent-'))
-  t.after(() => rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 }))
   writeFileSync(join(home, 'state.json'), JSON.stringify(baseSeed()))
   const host = await createRestartHost(t, home, new Map())
-  t.after(() => host.stop())
+  // Stop the host before removing its folder: a background write that lands
+  // between the two leaves the directory non-empty and rmdir fails on a busy runner.
+  t.after(async () => {
+    await host.stop()
+    rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 })
+  })
   const agent = host.agentOf('b')
   const followup = agent.followup
   let follows = 0
