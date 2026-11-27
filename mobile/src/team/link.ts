@@ -54,6 +54,15 @@ export function reconnectDelayMs(hadLink: boolean, failStreak: number): number {
   return Math.min(RETRY_MS * 2 ** Math.max(0, failStreak - 1), RETRY_MAX_MS)
 }
 
+/** A failed call that means the socket is gone, not that the host answered with an error. */
+function transportFailure(error: unknown): boolean {
+  const code = (error as { code?: unknown })?.code
+  const message = error instanceof Error ? error.message : String(error)
+  return code === 'TRANSPORT_CLOSED'
+    || code === 'SERVER_UNREACHABLE'
+    || /relay transport is not connected|relay transport closed|the link closed/i.test(message)
+}
+
 // Keeps the link up and the team state fresh. `call` runs one /api/bot endpoint.
 export function useTeamLink(computer: SavedComputer, identity: PhoneIdentity, hooks?: TeamLinkHooks) {
   const hooksRef = useRef(hooks)
@@ -160,6 +169,7 @@ export function useTeamLink(computer: SavedComputer, identity: PhoneIdentity, ho
     let connecting = false
     let hadLink = false
     let failStreak = 0
+    let pausedInBackground = false
     let activeClient: RpcClient | undefined
     let timer: ReturnType<typeof setTimeout> | undefined
     revision.current = -1
@@ -178,6 +188,20 @@ export function useTeamLink(computer: SavedComputer, identity: PhoneIdentity, ho
       failStreak += 1
       later(() => void connect(), delay)
     }
+    // A socket that died while the app was suspended can leave a client whose
+    // transport is already gone; close it and make a fresh connection instead
+    // of polling it forever.
+    const dropAndReconnect = (client: RpcClient) => {
+      if (clientRef.current !== client) return
+      clientRef.current = undefined
+      activeClient = undefined
+      setOnline(false)
+      setLinked(false)
+      hooksRef.current?.onDisconnected?.()
+      clearTimeout(timer)
+      void client.close().catch(() => {})
+      scheduleReconnect()
+    }
     // One read at a time: a burst of feed events while a Bot works becomes one
     // read now and at most one more after it, not a pile of reads over a slow link.
     let reading = false
@@ -193,7 +217,10 @@ export function useTeamLink(computer: SavedComputer, identity: PhoneIdentity, ho
         apply(next)
         setError(null)
       } catch (failure) {
-        if (!stopped && clientRef.current === client) setError(errorText(failure))
+        if (!stopped && clientRef.current === client) {
+          setError(errorText(failure))
+          if (transportFailure(failure)) dropAndReconnect(client)
+        }
       } finally {
         reading = false
         if (!stopped && clientRef.current === client) {
@@ -317,10 +344,27 @@ export function useTeamLink(computer: SavedComputer, identity: PhoneIdentity, ho
     void connect()
     const foreground = AppState.addEventListener('change', status => {
       if (status !== 'active') {
-        if (hooksRef.current?.keepAliveInBackground?.() !== true) clearTimeout(timer)
+        if (hooksRef.current?.keepAliveInBackground?.() !== true) {
+          pausedInBackground = true
+          clearTimeout(timer)
+        }
         return
       }
       failStreak = 0
+      // Without the Android foreground service the socket was left alone while
+      // suspended. Reconnect from scratch: a half-open socket may never report
+      // close, and a client whose transport is gone would otherwise stay offline.
+      if (pausedInBackground) {
+        pausedInBackground = false
+        const client = clientRef.current
+        if (client !== undefined) {
+          dropAndReconnect(client)
+          return
+        }
+        clearTimeout(timer)
+        void connect()
+        return
+      }
       const client = clientRef.current
       if (client === undefined) { clearTimeout(timer); void connect(); return }
       // Waking is the common half-open case: probe quickly so a dead socket

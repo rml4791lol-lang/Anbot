@@ -414,6 +414,57 @@ test('useTeamLink keeps connection retry timer when initial handshake fails befo
   assert.equal(reconnected.team?.revision, 1)
 })
 
+test('useTeamLink reconnects from scratch after returning from background', async (t) => {
+  let opens = 0
+  const h = mountUseTeamLink({
+    async onOpen(attempt) {
+      opens = attempt
+    },
+    onProbe() {
+      throw new Error('a freshly suspended link must not be probed')
+    },
+    async onStateCall() {
+      return { revision: 1, liveKey: 'ok', bots: [{ id: 'b1', name: 'Chief', sessionId: 's1' }], questions: {} }
+    },
+  })
+  t.after(h.cleanup)
+  h.render()
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(opens, 1)
+  assert.equal(h.render().online, true)
+
+  h.appState('background')
+  h.appState('active')
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(opens, 2, 'returning from background opens a new link')
+  assert.equal(h.render().online, true)
+})
+
+test('useTeamLink drops a client whose poll finds the transport gone', async (t) => {
+  let opens = 0
+  let calls = 0
+  const h = mountUseTeamLink({
+    async onOpen(attempt) {
+      opens = attempt
+    },
+    async onStateCall() {
+      calls += 1
+      if (calls === 2) throw Object.assign(new Error('relay transport is not connected'), { code: 'TRANSPORT_CLOSED' })
+      return { revision: 1, liveKey: 'ok', bots: [{ id: 'b1', name: 'Chief', sessionId: 's1' }], questions: {} }
+    },
+  })
+  t.after(h.cleanup)
+  h.render()
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(opens, 1)
+  assert.equal(h.render().online, true)
+
+  h.render().refresh()
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(opens, 2, 'a dead transport is replaced instead of polled forever')
+  assert.equal(h.render().online, true)
+})
+
 test('reconnectDelayMs retries at once on first drop after a live link, then backs off', () => {
   assert.equal(reconnectDelayMsFn(false, 0), 2_000)
   assert.equal(reconnectDelayMsFn(true, 0), 0)

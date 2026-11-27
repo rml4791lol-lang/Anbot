@@ -7743,7 +7743,7 @@ var RELAY_CAPABILITY = "transport.relay";
 var PUSH_FCM_CAPABILITY = "push.fcm";
 var MAX_CALLS_PER_TUNNEL = 32;
 var MAX_EMIT_PENDING = 64;
-var SERVER_SILENCE_MS = 75e3;
+var SERVER_SILENCE_MS = 45e3;
 var PUSH_TIMEOUT_MS = 1e4;
 var HANDSHAKE_TIMEOUT_MS = 15e3;
 var TunnelError = class extends Error {
@@ -7896,9 +7896,14 @@ var HostLink = class {
       this.socket = socket;
       this.limits = {};
       const watchdog = setInterval(() => {
-        if (Date.now() - lastHeard > SERVER_SILENCE_MS) socket.close();
-      }, 15e3);
+        if (Date.now() - lastHeard > SERVER_SILENCE_MS) {
+          this.lastError = "The Server stopped answering.";
+          socket.close();
+          end();
+        }
+      }, 1e4);
       socket.onopen = () => {
+        lastHeard = Date.now();
         this.sendControl("hello", {
           role: "host",
           deviceId: this.options.identity.deviceId,
