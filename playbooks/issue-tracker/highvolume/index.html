@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版</title>
+<meta name="description" content="统一字段、去重、标来源，不让 Bot 直接改原系统。 在高并发/批量场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版">
+<meta property="og:description" content="统一字段、去重、标来源，不让 Bot 直接改原系统。 在高并发/批量场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/","name":"Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版","description":"统一字段、去重、标来源，不让 Bot 直接改原系统。 在高并发/批量场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#article","headline":"Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版","description":"统一字段、去重、标来源，不让 Bot 直接改原系统。 在高并发/批量场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#faq","mainEntity":[{"@type":"Question","name":"能统一改状态吗？","acceptedAnswer":{"@type":"Answer","text":"不建议；以各系统真源为准。"}},{"@type":"Question","name":"能做看板吗？","acceptedAnswer":{"@type":"Answer","text":"可以生成只读看板。"}},{"@type":"Question","name":"能一次跑 3000 个吗？","acceptedAnswer":{"@type":"Answer","text":"先分批；直接全量容易在中途限流。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#howto","name":"Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版","description":"统一字段、去重、标来源，不让 Bot 直接改原系统。 在高并发/批量场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"定义统一字段：标题、状态、优先级、负责人、来源。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"拉取各来源并去重；同一问题保留主链接和关联链接。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"生成汇总表和冲突清单；状态变更回到各自真源处理。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"按优先级/大小分批；每批有独立输出目录和失败清单。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"设并发上限和退避；失败只重跑失败项。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"把多个 Issue 来源合并成一张表","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/"},{"@type":"ListItem","position":4,"name":"高并发/批量","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/issue-tracker/highvolume/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">把多个 Issue 来源合并成一张表</a> / 高并发/批量</div>
+  <div class="eyebrow">工具接入 · 高并发/批量</div>
+  <h1>Anbot · 把多个 Issue 来源合并成一张表｜高并发/批量版</h1>
+  <p class="lead">多来源 Issue 最怕重复和状态冲突；先定真源和映射。 高批量先做清单、分批、限流和失败重试，不要一个 Bot 串行到底。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先统一字段和真源，再拉取去重，最后生成只读汇总表和冲突清单。 在高并发/批量下，先先做 5 个样本，测吞吐/失败率，再分批放量，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>同时用 GitHub/Linear 的团队</li><li>要跨项目看问题的人</li><li>需要给管理层汇总的人</li><li>要跑几百到几千个任务的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>定义统一字段：标题、状态、优先级、负责人、来源。</li><li>拉取各来源并去重；同一问题保留主链接和关联链接。</li><li>生成汇总表和冲突清单；状态变更回到各自真源处理。</li><li>按优先级/大小分批；每批有独立输出目录和失败清单。</li><li>设并发上限和退避；失败只重跑失败项。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>字段映射一致</li><li>重复项有主记录</li><li>来源链接可追溯</li><li>没有双写状态</li><li>样本通过、吞吐可测、失败可重跑、成本可控</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>各系统状态语义不同</li><li>API 限流影响同步</li><li>权限要分别配置</li><li>模型/API 限流和磁盘/内存会限制规模</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能统一改状态吗？</h3><p>不建议；以各系统真源为准。</p><h3>能做看板吗？</h3><p>可以生成只读看板。</p><h3>能一次跑 3000 个吗？</h3><p>先分批；直接全量容易在中途限流。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「把多个 Issue 来源合并成一张表」的 30 个场景版本</a></p>
+    <div class="related"><a href="../lowbudget/">低预算版</a><a href="../github-first/">GitHub 优先版</a><a href="../compliance/">合规/审计版</a></div>
+    <div class="related"><a href="../../../guides/github-triage/">Anbot Issue 分诊：关闭必须留证据</a><a href="../../../guides/linear/">让 Anbot 接入 Linear：Issue、项目与周期</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../about/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

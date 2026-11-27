@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 做一次只读代码审查｜邮箱优先版</title>
+<meta name="description" content="对 diff 找缺陷、风险和测试缺口，不直接改代码。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 做一次只读代码审查｜邮箱优先版">
+<meta property="og:description" content="对 diff 找缺陷、风险和测试缺口，不直接改代码。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/","name":"Anbot · 做一次只读代码审查｜邮箱优先版","description":"对 diff 找缺陷、风险和测试缺口，不直接改代码。 在邮箱优先场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#article","headline":"Anbot · 做一次只读代码审查｜邮箱优先版","description":"对 diff 找缺陷、风险和测试缺口，不直接改代码。 在邮箱优先场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#faq","mainEntity":[{"@type":"Question","name":"能自动改代码吗？","acceptedAnswer":{"@type":"Answer","text":"默认只读；需要修改时另开任务并让人审批。"}},{"@type":"Question","name":"能接 GitHub 吗？","acceptedAnswer":{"@type":"Answer","text":"可以按只读方式接，合并和发布保留人工确认。"}},{"@type":"Question","name":"能自动回复吗？","acceptedAnswer":{"@type":"Answer","text":"只生成草稿；发送由人确认。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#howto","name":"Anbot · 做一次只读代码审查｜邮箱优先版","description":"对 diff 找缺陷、风险和测试缺口，不直接改代码。 在邮箱优先场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"把 diff、相关文件和测试命令放进工作区，明确只读边界。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Bot 按「会坏什么、怎么复现、缺哪条测试」输出，不写风格意见。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"人工确认高风险项，把结论写成 PR 评论草稿；合并仍由人做。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"附件先落盘再引用；不要在草稿里放敏感链接。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"发送前核对收件人、引用范围和退订要求。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"做一次只读代码审查","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/"},{"@type":"ListItem","position":4,"name":"邮箱优先","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/code-review/email-first/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">做一次只读代码审查</a> / 邮箱优先</div>
+  <div class="eyebrow">协作与研发 · 邮箱优先</div>
+  <h1>Anbot · 做一次只读代码审查｜邮箱优先版</h1>
+  <p class="lead">代码审查最容易变成风格争论。先把审查范围锁在 diff 和行为变化，再让 Bot 给证据。 邮箱优先时只做草稿；发送、转发、附件都要人工确认。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先只读 diff 和测试，按缺陷/风险/测试缺口三类列证据，再由人决定改不改。 在邮箱优先下，先先接一个邮箱只读，再生成回复草稿，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要快速过 PR 的维护者</li><li>不想让 Agent 直接改仓库的人</li><li>需要把审查结论落成清单的团队</li><li>以邮件为主要沟通渠道的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>把 diff、相关文件和测试命令放进工作区，明确只读边界。</li><li>让 Bot 按「会坏什么、怎么复现、缺哪条测试」输出，不写风格意见。</li><li>人工确认高风险项，把结论写成 PR 评论草稿；合并仍由人做。</li><li>附件先落盘再引用；不要在草稿里放敏感链接。</li><li>发送前核对收件人、引用范围和退订要求。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>每条问题有文件/行号或复现路径</li><li>没有把猜测写成确定缺陷</li><li>测试缺口和代码缺陷分开</li><li>审查后仓库没有未授权改动</li><li>没有自动发送，草稿能回到原邮件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>Anbot 不是静态分析器的替代品</li><li>大 diff 需要分块，上下文可能不够</li><li>只读边界要靠权限和指令一起约束</li><li>邮件服务商权限差异大，附件可能含恶意文件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能自动改代码吗？</h3><p>默认只读；需要修改时另开任务并让人审批。</p><h3>能接 GitHub 吗？</h3><p>可以按只读方式接，合并和发布保留人工确认。</p><h3>能自动回复吗？</h3><p>只生成草稿；发送由人确认。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「做一次只读代码审查」的 30 个场景版本</a></p>
+    <div class="related"><a href="../figma-first/">Figma 优先版</a><a href="../mcp-first/">MCP 优先版</a><a href="../enterprise/">企业受控环境版</a></div>
+    <div class="related"><a href="../../../guides/code-review/">Anbot 代码审查：用 Bot 团队做一次只读 diff 审查</a><a href="../../../guides/github/">让 Anbot 接入 GitHub：Issue、PR 和 Actions 日志</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../about/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

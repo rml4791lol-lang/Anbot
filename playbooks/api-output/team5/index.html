@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版</title>
+<meta name="description" content="用文件/JSON 做契约，校验后再导入，不让 Bot 直连生产库。 在5–10 人团队场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版">
+<meta property="og:description" content="用文件/JSON 做契约，校验后再导入，不让 Bot 直连生产库。 在5–10 人团队场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/","name":"Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版","description":"用文件/JSON 做契约，校验后再导入，不让 Bot 直连生产库。 在5–10 人团队场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#article","headline":"Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版","description":"用文件/JSON 做契约，校验后再导入，不让 Bot 直连生产库。 在5–10 人团队场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#faq","mainEntity":[{"@type":"Question","name":"能让 Bot 直接写数据库吗？","acceptedAnswer":{"@type":"Answer","text":"不建议；走 staging + 校验。"}},{"@type":"Question","name":"输出格式会变吗？","acceptedAnswer":{"@type":"Answer","text":"用 schema 版本控制。"}},{"@type":"Question","name":"需要几个专业 Bot？","acceptedAnswer":{"@type":"Answer","text":"先 2–3 个高频角色；低频任务用同一个 Bot 切换。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#howto","name":"Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版","description":"用文件/JSON 做契约，校验后再导入，不让 Bot 直连生产库。 在5–10 人团队场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"定义 JSON schema、必填字段、枚举和错误格式。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Bot 输出到 staging 文件，不直连生产库。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"用现有服务做 schema 校验、幂等和导入；失败回到 staging。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"按角色建 Bot，不按人建；每个人知道哪个 Bot 给自己交付什么。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"每周清理一次 Bot 的失败任务和过期指令，避免越跑越乱。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"把 Anbot 的输出接进现有系统","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/"},{"@type":"ListItem","position":4,"name":"5–10 人团队","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/api-output/team5/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">把 Anbot 的输出接进现有系统</a> / 5–10 人团队</div>
+  <div class="eyebrow">产品与选型 · 5–10 人团队</div>
+  <h1>Anbot · 把 Anbot 的输出接进现有系统｜5–10 人团队版</h1>
+  <p class="lead">集成的关键是契约；先定 JSON schema，再让 Bot 产出。 团队开始有交接成本；先把任务板和共享事实统一，再谈自动化。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先定输出 schema 和校验，再让 Bot 写文件，最后由现有服务校验导入。 在5–10 人团队下，先先建一个共享任务板和一个只读事实区，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要把结果进系统的开发者</li><li>做自动化交付的团队</li><li>需要稳定接口的人</li><li>五到十人的项目团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>定义 JSON schema、必填字段、枚举和错误格式。</li><li>让 Bot 输出到 staging 文件，不直连生产库。</li><li>用现有服务做 schema 校验、幂等和导入；失败回到 staging。</li><li>按角色建 Bot，不按人建；每个人知道哪个 Bot 给自己交付什么。</li><li>每周清理一次 Bot 的失败任务和过期指令，避免越跑越乱。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>schema 有版本</li><li>输出可校验</li><li>导入幂等</li><li>失败不污染生产</li><li>交接不靠私聊，能从任务板和文件恢复</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>Anbot 不是 API 网关</li><li>模型输出可能不稳定</li><li>生产凭据不能给 Bot</li><li>角色多后协调成本上升，不是 Bot 越多越快</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能让 Bot 直接写数据库吗？</h3><p>不建议；走 staging + 校验。</p><h3>输出格式会变吗？</h3><p>用 schema 版本控制。</p><h3>需要几个专业 Bot？</h3><p>先 2–3 个高频角色；低频任务用同一个 Bot 切换。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「把 Anbot 的输出接进现有系统」的 30 个场景版本</a></p>
+    <div class="related"><a href="../duo/">2–3 人小队版</a><a href="../team10/">10–20 人团队版</a><a href="../linux/">Linux版</a></div>
+    <div class="related"><a href="../../../guides/local-agents/">Anbot 本地 Agent：把 Claude Code / Codex 接成团队 Bot</a><a href="../../../guides/safe/">Anbot 安全吗？本地优先与审批边界</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../about/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 用外部计划任务定时触发 Bot｜免费额度版</title>
+<meta name="description" content="用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在免费额度场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 用外部计划任务定时触发 Bot｜免费额度版">
+<meta property="og:description" content="用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在免费额度场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/","name":"Anbot · 用外部计划任务定时触发 Bot｜免费额度版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在免费额度场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#article","headline":"Anbot · 用外部计划任务定时触发 Bot｜免费额度版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在免费额度场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#faq","mainEntity":[{"@type":"Question","name":"Anbot 自带定时吗？","acceptedAnswer":{"@type":"Answer","text":"不假设；用系统计划任务更可控。"}},{"@type":"Question","name":"漏跑怎么补？","acceptedAnswer":{"@type":"Answer","text":"按幂等键补一次，不要盲目重跑。"}},{"@type":"Question","name":"免费额度能跑 3000 页吗？","acceptedAnswer":{"@type":"Answer","text":"不建议；先测单页成本，再分批。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#howto","name":"Anbot · 用外部计划任务定时触发 Bot｜免费额度版","description":"用系统 cron/Task Scheduler 触发，Anbot 负责执行和留痕。 在免费额度场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"定义频率、时区、幂等键和失败通知。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"用系统 cron/任务计划程序触发；命令和路径写绝对路径。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"每次执行落日志和产物；失败按重试策略处理。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"把重任务拆成小步；每步可缓存/重试。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"设额度告警和降级方案；超额时暂停而不是盲目重试。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"用外部计划任务定时触发 Bot","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/"},{"@type":"ListItem","position":4,"name":"免费额度","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/schedule/freetier/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">用外部计划任务定时触发 Bot</a> / 免费额度</div>
+  <div class="eyebrow">长任务与自动化 · 免费额度</div>
+  <h1>Anbot · 用外部计划任务定时触发 Bot｜免费额度版</h1>
+  <p class="lead">定时任务要分清「谁触发」和「谁执行」；不要让 Bot 自己猜时间。 免费额度先算限流和失败重试，不要把重任务押在免费层。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先写清触发频率和幂等，再用系统计划任务触发，执行结果落文件。 在免费额度下，先先测额度、限流和失败率，再定任务上限，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要每天跑报告的人</li><li>需要定时监控的团队</li><li>已有调度系统的组织</li><li>依赖免费额度/试用版的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>定义频率、时区、幂等键和失败通知。</li><li>用系统 cron/任务计划程序触发；命令和路径写绝对路径。</li><li>每次执行落日志和产物；失败按重试策略处理。</li><li>把重任务拆成小步；每步可缓存/重试。</li><li>设额度告警和降级方案；超额时暂停而不是盲目重试。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>时区/频率明确</li><li>重复触发不产生重复副作用</li><li>失败有通知</li><li>日志可追溯</li><li>额度/限流有实测数据，失败有降级</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>电脑关机/休眠会漏跑</li><li>系统权限要单独配置</li><li>不能替代集中调度平台</li><li>免费层通常有速率/功能限制，不能保证稳定</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>Anbot 自带定时吗？</h3><p>不假设；用系统计划任务更可控。</p><h3>漏跑怎么补？</h3><p>按幂等键补一次，不要盲目重跑。</p><h3>免费额度能跑 3000 页吗？</h3><p>不建议；先测单页成本，再分批。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「用外部计划任务定时触发 Bot」的 30 个场景版本</a></p>
+    <div class="related"><a href="../cloudmodel/">云模型版</a><a href="../lowbudget/">低预算版</a><a href="../english/">英文交付版</a></div>
+    <div class="related"><a href="../../../guides/monitoring/">Anbot 守夜：日志、价格、接口越线才叫你</a><a href="../../../guides/local-agents/">Anbot 本地 Agent：把 Claude Code / Codex 接成团队 Bot</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../about/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>

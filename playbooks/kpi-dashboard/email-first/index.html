@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbot · 搭一个 KPI 看板｜邮箱优先版</title>
+<meta name="description" content="选指标、定义口径、做趋势和阈值，不堆无关图表。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Anbot">
+<link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../../../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Anbot 场景库">
+<meta property="og:title" content="Anbot · 搭一个 KPI 看板｜邮箱优先版">
+<meta property="og:description" content="选指标、定义口径、做趋势和阈值，不堆无关图表。 在邮箱优先场景下，给出步骤、验收和限制。">
+<meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/">
+<meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<meta property="og:image:alt" content="Anbot 纸艺头像">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
+<link rel="stylesheet" href="../../../assets/guides.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"},"areaServed":"Worldwide"},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 场景库","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/","name":"Anbot · 搭一个 KPI 看板｜邮箱优先版","description":"选指标、定义口径、做趋势和阈值，不堆无关图表。 在邮箱优先场景下，给出步骤、验收和限制。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#article","headline":"Anbot · 搭一个 KPI 看板｜邮箱优先版","description":"选指标、定义口径、做趋势和阈值，不堆无关图表。 在邮箱优先场景下，给出步骤、验收和限制。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#faq","mainEntity":[{"@type":"Question","name":"能做实时看板吗？","acceptedAnswer":{"@type":"Answer","text":"取决于数据源刷新能力；先确认延迟。"}},{"@type":"Question","name":"能自动发周报吗？","acceptedAnswer":{"@type":"Answer","text":"可以生成摘要草稿；发送前人工确认。"}},{"@type":"Question","name":"能自动回复吗？","acceptedAnswer":{"@type":"Answer","text":"只生成草稿；发送由人确认。"}}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#howto","name":"Anbot · 搭一个 KPI 看板｜邮箱优先版","description":"选指标、定义口径、做趋势和阈值，不堆无关图表。 在邮箱优先场景下，给出步骤、验收和限制。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"列出业务目标、使用场景和每个指标对应的动作。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"定义口径、数据源、更新频率和阈值；删掉不驱动动作的图表。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"生成看板草稿和异常说明；用历史数据回测阈值是否合理。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"附件先落盘再引用；不要在草稿里放敏感链接。"},{"@type":"HowToStep","position":5,"name":"步骤 5","text":"发送前核对收件人、引用范围和退订要求。"}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"场景库","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/"},{"@type":"ListItem","position":3,"name":"搭一个 KPI 看板","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/"},{"@type":"ListItem","position":4,"name":"邮箱优先","item":"https://rml4791lol-lang.github.io/Anbot/playbooks/kpi-dashboard/email-first/"}]}]}</script>
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="../../../"><img src="../../../assets/mascot-face.webp" alt="Anbot 头像"><span>Anbot 场景库</span></a>
+  <nav class="site-nav" aria-label="站点导航">
+    <a href="../../../">配置市场</a>
+    <a href="../../">场景库</a>
+    <a href="../../../guides/">指南</a>
+    <a href="https://github.com/rml4791lol-lang/Anbot">GitHub</a>
+  </nav>
+</header>
+<main>
+  <div class="crumbs"><a href="../../../">Anbot</a> / <a href="../../">场景库</a> / <a href="../">搭一个 KPI 看板</a> / 邮箱优先</div>
+  <div class="eyebrow">数据与表格 · 邮箱优先</div>
+  <h1>Anbot · 搭一个 KPI 看板｜邮箱优先版</h1>
+  <p class="lead">看板不是图表越多越好；每个指标都要能驱动一个动作。 邮箱优先时只做草稿；发送、转发、附件都要人工确认。</p>
+  <p class="page-meta">本页是 3,000 个场景页中的 1 个，基于 Anbot 0.0.1；下面给出 5 个步骤、5 条验收标准、4 个限制。</p>
+  <div class="answer"><strong>一句话答案：</strong>先选 5–7 个能驱动动作的指标，再定义口径和阈值，最后做趋势与异常。 在邮箱优先下，先先接一个邮箱只读，再生成回复草稿，再按验收表逐项确认。</div>
+
+  <section class="section">
+    <h2>适合谁</h2>
+    <ul><li>要给团队做看板的人</li><li>每周开数据会的人</li><li>需要统一指标口径的人</li><li>以邮件为主要沟通渠道的团队</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>怎么做</h2>
+    <ol><li>列出业务目标、使用场景和每个指标对应的动作。</li><li>定义口径、数据源、更新频率和阈值；删掉不驱动动作的图表。</li><li>生成看板草稿和异常说明；用历史数据回测阈值是否合理。</li><li>附件先落盘再引用；不要在草稿里放敏感链接。</li><li>发送前核对收件人、引用范围和退订要求。</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>验收标准</h2>
+    <ul><li>每个指标有口径和负责人</li><li>图表能回答一个问题</li><li>阈值有依据</li><li>异常能追到数据源</li><li>没有自动发送，草稿能回到原邮件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>边界与限制</h2>
+    <ul><li>不能替代业务判断</li><li>数据延迟会影响决策</li><li>看板维护需要owner</li><li>邮件服务商权限差异大，附件可能含恶意文件</li></ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq"><h3>能做实时看板吗？</h3><p>取决于数据源刷新能力；先确认延迟。</p><h3>能自动发周报吗？</h3><p>可以生成摘要草稿；发送前人工确认。</p><h3>能自动回复吗？</h3><p>只生成草稿；发送由人确认。</p></div>
+  </section>
+
+  <section class="section">
+    <h2>继续看</h2>
+    <p><a href="../">回到「搭一个 KPI 看板」的 30 个场景版本</a></p>
+    <div class="related"><a href="../figma-first/">Figma 优先版</a><a href="../mcp-first/">MCP 优先版</a><a href="../enterprise/">企业受控环境版</a></div>
+    <div class="related"><a href="../../../guides/office-docs/">Anbot 办公文档：直接改 Word、PPT、Excel 并检查排版</a><a href="../../../guides/monitoring/">Anbot 守夜：日志、价格、接口越线才叫你</a></div>
+  </section>
+</main>
+<p class="about-link"><a href="../../../about/">关于 Anbot 团队与交接</a></p>
+<footer>
+  <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../../">配置市场</a></span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
+</footer>
+</body>
+</html>
