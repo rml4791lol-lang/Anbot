@@ -76,14 +76,14 @@
 
 ### 使用场景
 - [用 Anbot 把会议逐字稿整理成可执行待办](https://rml4791lol-lang.github.io/Anbot/guides/meeting-notes/)：把已有逐字稿整理成结论、待办、责任人和未决问题。
-- [用 Bot 团队做一次只读代码审查](https://rml4791lol-lang.github.io/Anbot/guides/code-review/)：给一个 Bot 限定 diff 范围，只报新增、可触发的问题。
-- [让长任务能停、能续、能回滚](https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/)：用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。
-- [用三个 Bot 并行做内容：选题、写作、审阅](https://rml4791lol-lang.github.io/Anbot/guides/content-workflow/)：Main Bot 派活，写作、编辑、核查并行，产物落在同一个工作区。
-- [把 Claude Code / Codex 接成团队里的一个 Bot](https://rml4791lol-lang.github.io/Anbot/guides/local-agents/)：把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。
-- [让 Bot 直接改 Word、PPT、Excel，并检查排版](https://rml4791lol-lang.github.io/Anbot/guides/office-docs/)：直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。
-- [让 Bot 在真实浏览器里做竞品与资料收集](https://rml4791lol-lang.github.io/Anbot/guides/browser-research/)：在真实浏览器里查资料、截证据、保存来源，不伪造登录态。
-- [把 Issue 分诊交给 Bot，关闭必须留证据](https://rml4791lol-lang.github.io/Anbot/guides/github-triage/)：只读快照、类型/优先级/领域标签，关闭必须留证据。
-- [让 Bot 守夜：日志、价格、接口越线才叫你](https://rml4791lol-lang.github.io/Anbot/guides/monitoring/)：定时看日志、价格、接口，越线才通知，附前后对比。
+- [Anbot 代码审查：用 Bot 团队做一次只读 diff 审查](https://rml4791lol-lang.github.io/Anbot/guides/code-review/)：给一个 Bot 限定 diff 范围，只报新增、可触发的问题。
+- [Anbot 长任务：能停、能续、能回滚](https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/)：用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。
+- [Anbot 内容工作流：三个 Bot 并行做选题、写作、审阅](https://rml4791lol-lang.github.io/Anbot/guides/content-workflow/)：Main Bot 派活，写作、编辑、核查并行，产物落在同一个工作区。
+- [Anbot 本地 Agent：把 Claude Code / Codex 接成团队 Bot](https://rml4791lol-lang.github.io/Anbot/guides/local-agents/)：把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。
+- [Anbot 办公文档：直接改 Word、PPT、Excel 并检查排版](https://rml4791lol-lang.github.io/Anbot/guides/office-docs/)：直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。
+- [Anbot 浏览器调研：在真实浏览器里查资料、留证据](https://rml4791lol-lang.github.io/Anbot/guides/browser-research/)：在真实浏览器里查资料、截证据、保存来源，不伪造登录态。
+- [Anbot Issue 分诊：关闭必须留证据](https://rml4791lol-lang.github.io/Anbot/guides/github-triage/)：只读快照、类型/优先级/领域标签，关闭必须留证据。
+- [Anbot 守夜：日志、价格、接口越线才叫你](https://rml4791lol-lang.github.io/Anbot/guides/monitoring/)：定时看日志、价格、接口，越线才通知，附前后对比。
 - [用 Anbot 做项目交接：把上下文留在工作区](https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/)：把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。
 
 ### 集成

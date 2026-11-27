@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Anbot 指南：30 个真实任务、集成与对比</title>
+    <link>https://rml4791lol-lang.github.io/Anbot/guides/</link>
+    <description>围绕 Anbot 的 30 个真实问题：任务场景、工具集成、产品对比和短问答。</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 27 Nov 2026 09:00:00 +0800</lastBuildDate>
+    <atom:link href="https://rml4791lol-lang.github.io/Anbot/guides/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>用 Anbot 把会议逐字稿整理成可执行待办</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/meeting-notes/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/meeting-notes/</guid>
+      <description>把已有逐字稿整理成结论、待办、责任人和未决问题。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 代码审查：用 Bot 团队做一次只读 diff 审查</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/code-review/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/code-review/</guid>
+      <description>给一个 Bot 限定 diff 范围，只报新增、可触发的问题。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 长任务：能停、能续、能回滚</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/long-running-task/</guid>
+      <description>用 X-Ray、检查点、接管和恢复，把几小时的活跑成可验收的流程。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 内容工作流：三个 Bot 并行做选题、写作、审阅</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/content-workflow/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/content-workflow/</guid>
+      <description>Main Bot 派活，写作、编辑、核查并行，产物落在同一个工作区。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 本地 Agent：把 Claude Code / Codex 接成团队 Bot</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/local-agents/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/local-agents/</guid>
+      <description>把 Claude Code、Codex、Cursor CLI 等接成 Bot，保留它们自己的登录和工具。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 办公文档：直接改 Word、PPT、Excel 并检查排版</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/office-docs/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/office-docs/</guid>
+      <description>直接创建、检查、修改 docx/pptx/xlsx，并把页面渲染成图检查排版。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 浏览器调研：在真实浏览器里查资料、留证据</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/browser-research/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/browser-research/</guid>
+      <description>在真实浏览器里查资料、截证据、保存来源，不伪造登录态。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot Issue 分诊：关闭必须留证据</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/github-triage/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/github-triage/</guid>
+      <description>只读快照、类型/优先级/领域标签，关闭必须留证据。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>Anbot 守夜：日志、价格、接口越线才叫你</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/monitoring/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/monitoring/</guid>
+      <description>定时看日志、价格、接口，越线才通知，附前后对比。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>用 Anbot 做项目交接：把上下文留在工作区</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/team-onboarding/</guid>
+      <description>把项目上下文、决策和交接留在工作区，而不是散在聊天记录里。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>使用场景</category>
+    </item>    <item>
+      <title>让 Anbot 接入 GitHub：Issue、PR 和 Actions 日志</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/github/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/github/</guid>
+      <description>把仓库、Issue、PR、Actions 日志接进 Bot 的上下文。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>让 Anbot 接入 Notion：页面与数据库读写</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/notion/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/notion/</guid>
+      <description>读写页面和数据库，把会议、任务和文档接进同一个上下文。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>让 Anbot 接入 Linear：Issue、项目与周期</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/linear/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/linear/</guid>
+      <description>读 Issue、项目和周期，把任务状态同步到团队上下文。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>让 Anbot 接入 Figma：读稿与导出切图</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/figma/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/figma/</guid>
+      <description>读设计文件、导出切图，让设计稿进入 Bot 的上下文。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>让 Anbot 接入邮箱：收件规则与起草回复</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/mail/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/mail/</guid>
+      <description>收发邮件、跑收件规则，外发默认要确认。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>让 Anbot 接入 MCP：把外部工具变成 Bot 能力</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/mcp/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/mcp/</guid>
+      <description>把外部工具通过 MCP 接进来，按 Bot 分配能力。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>集成</category>
+    </item>    <item>
+      <title>Anbot vs Grok Bot：常驻 Bot 团队怎么选</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/vs-grok-bot/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/vs-grok-bot/</guid>
+      <description>都做常驻 Bot 团队；差别在托管还是本地、开源还是付费 beta。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>对比</category>
+    </item>    <item>
+      <title>Anbot vs 大厂 Agent：OpenAI、Claude、Gemini、Copilot</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/vs-big-tech-agents/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/vs-big-tech-agents/</guid>
+      <description>大厂 Agent 强在单机执行和产品集成；Anbot 强在开放运行时和多 Bot 团队。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>对比</category>
+    </item>    <item>
+      <title>Anbot vs 单 Agent 聊天：什么时候需要 Bot 团队</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/vs-single-agent-chat/</guid>
+      <description>单 Agent 聊天适合问答；多 Bot 团队适合能拆分、能验收的活。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>对比</category>
+    </item>    <item>
+      <title>Anbot vs Claude Code：单机编码 Agent 和 Bot 团队</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/vs-claude-code/</guid>
+      <description>Claude Code 是强单机编码 CLI；接进 Anbot 后多了团队、群聊、接管和审批。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>对比</category>
+    </item>    <item>
+      <title>Anbot 是什么？开源多 Agent Bot 团队</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/what-is-anbot/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/what-is-anbot/</guid>
+      <description>一句话定义、形态、核心能力和适用人群。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 免费吗？应用开源，模型另计</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-free/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-free/</guid>
+      <description>应用和代码免费，模型调用由服务商计费。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 开源吗？Apache 2.0 的边界</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-open-source/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/is-anbot-open-source/</guid>
+      <description>Apache 2.0，应用/插件代码开放，预设和索引可替换。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 的数据存在哪里？本机优先怎么理解</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/where-data-lives/</guid>
+      <description>团队、聊天、记忆、凭据和执行记录默认留在本机。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 支持哪些平台？Windows、macOS、Android、Linux</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/platforms/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/platforms/</guid>
+      <description>Windows、macOS、Android；Linux 源码；暂无 iOS 安装包。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 用什么模型？模型怎么配置</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/models/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/models/</guid>
+      <description>模型由你配置；支持服务商、本地 Agent 和本地模型。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 能离线用吗？哪些部分需要联网</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/offline/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/offline/</guid>
+      <description>界面和数据可以离线，模型推理要看你是云端还是本地。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>怎么开始用 Anbot？五步跑通第一个 Bot</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/start/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/start/</guid>
+      <description>下载安装、配置模型、建 Main Bot，跑一个最小任务。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 安全吗？本地优先与审批边界</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/safe/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/safe/</guid>
+      <description>本地数据、审批、检查点、接管，但不是绝对安全保证。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>    <item>
+      <title>Anbot 能编辑 Office 文件吗？Word、PPT、Excel</title>
+      <link>https://rml4791lol-lang.github.io/Anbot/guides/office-files/</link>
+      <guid isPermaLink="true">https://rml4791lol-lang.github.io/Anbot/guides/office-files/</guid>
+      <description>docx/pptx/xlsx 的创建、编辑与渲染检查，桌面端能力最全。</description>
+      <pubDate>Fri, 27 Nov 2026 09:00:00 +0800</pubDate>
+      <category>问答</category>
+    </item>
+  </channel>
+</rss>

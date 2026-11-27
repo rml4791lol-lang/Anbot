@@ -97,3 +97,10 @@ footer a { color: var(--muted); }
   main { margin-top: 22px; }
   h1 { font-size: 34px; }
 }
+
+.page-meta { margin: -4px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.hub-notes { margin-top: 46px; padding: 24px 26px; background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; }
+.hub-notes h2 { margin-top: 0; }
+.hub-notes ul { margin: 12px 0 14px; }
+.hub-faq { margin-top: 38px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }

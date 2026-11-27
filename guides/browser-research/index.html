@@ -3,14 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>让 Bot 在真实浏览器里做竞品与资料收集 · Anbot 指南</title>
+<title>Anbot 浏览器调研：在真实浏览器里查资料、留证据 · Anbot 指南</title>
 <meta name="description" content="在真实浏览器里查资料、截证据、保存来源，不伪造登录态。 Anbot 指南，含步骤、验收标准和限制。">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta name="author" content="Anbot">
 <link rel="canonical" href="https://rml4791lol-lang.github.io/Anbot/guides/browser-research/">
+<link rel="sitemap" type="application/xml" href="https://rml4791lol-lang.github.io/Anbot/sitemap.xml">
+<link rel="alternate" hreflang="zh-CN" href="https://rml4791lol-lang.github.io/Anbot/guides/browser-research/">
+<link rel="alternate" hreflang="x-default" href="https://rml4791lol-lang.github.io/Anbot/guides/browser-research/">
+<link rel="alternate" type="application/rss+xml" title="Anbot 指南" href="../feed.xml">
+<meta property="article:published_time" content="2026-11-27">
+<meta property="article:modified_time" content="2026-11-27">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Anbot 指南">
-<meta property="og:title" content="让 Bot 在真实浏览器里做竞品与资料收集">
+<meta property="og:title" content="Anbot 浏览器调研：在真实浏览器里查资料、留证据">
 <meta property="og:description" content="在真实浏览器里查资料、截证据、保存来源，不伪造登录态。 Anbot 指南，含步骤、验收标准和限制。">
 <meta property="og:url" content="https://rml4791lol-lang.github.io/Anbot/guides/browser-research/">
 <meta property="og:image" content="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
@@ -18,7 +24,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp">
 <link rel="stylesheet" href="../../assets/guides.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot"]},{"@type":"SoftwareApplication","@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/","name":"让 Bot 在真实浏览器里做竞品与资料收集","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#article","headline":"让 Bot 在真实浏览器里做竞品与资料收集","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#faq","mainEntity":[{"@type":"Question","name":"Bot 能替我登录吗？","acceptedAnswer":{"@type":"Answer","text":"登录、验证码和支付会交回给你；不要让它保存或代填你的密码。"}},{"@type":"Question","name":"能下载付费内容吗？","acceptedAnswer":{"@type":"Answer","text":"只下载你有权访问的内容；付费墙和站点许可要先确认。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"让 Bot 在真实浏览器里做竞品与资料收集","item":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#howto","name":"让 Bot 在真实浏览器里做竞品与资料收集","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"列出要查的问题、允许的站点、需要的证据形式（原文/截图/PDF）；不要用「随便查一下」这种任务。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Bot 在独立浏览器里逐页打开；每条结论附 URL、抓取时间、原文片段和截图路径。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"遇到登录、CAPTCHA、支付、下载受限时停止并交回；不要尝试绕过网站限制。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"把资料落到工作区，按主题建索引；需要引用时回到原始 URL 核对。"}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://rml4791lol-lang.github.io/Anbot/#organization","name":"Anbot","url":"https://github.com/rml4791lol-lang/Anbot","logo":{"@type":"ImageObject","url":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},"sameAs":["https://github.com/rml4791lol-lang/Anbot","https://rml4791lol-lang.github.io/Anbot/"],"contactPoint":{"@type":"ContactPoint","contactType":"technical support","url":"https://github.com/rml4791lol-lang/Anbot/issues"}},{"@type":["SoftwareApplication","WebApplication"],"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot","name":"Anbot","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux, Android","softwareVersion":"0.0.1","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/rml4791lol-lang/Anbot/releases/tag/v0.0.1"},{"@type":"WebSite","@id":"https://rml4791lol-lang.github.io/Anbot/#website","url":"https://rml4791lol-lang.github.io/Anbot/","name":"Anbot 指南","inLanguage":"zh-CN","publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"}},{"@type":"WebPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#webpage","url":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/","name":"Anbot 浏览器调研：在真实浏览器里查资料、留证据","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","isPartOf":{"@id":"https://rml4791lol-lang.github.io/Anbot/#website"},"about":{"@id":"https://rml4791lol-lang.github.io/Anbot/#anbot"},"inLanguage":"zh-CN","dateModified":"2026-11-27"},{"@type":"Article","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#article","headline":"Anbot 浏览器调研：在真实浏览器里查资料、留证据","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","mainEntityOfPage":{"@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#webpage"},"author":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"publisher":{"@id":"https://rml4791lol-lang.github.io/Anbot/#organization"},"datePublished":"2026-11-27","dateModified":"2026-11-27","inLanguage":"zh-CN","image":"https://rml4791lol-lang.github.io/Anbot/assets/mascot-face.webp"},{"@type":"FAQPage","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#faq","mainEntity":[{"@type":"Question","name":"Bot 能替我登录吗？","acceptedAnswer":{"@type":"Answer","text":"登录、验证码和支付会交回给你；不要让它保存或代填你的密码。"}},{"@type":"Question","name":"能下载付费内容吗？","acceptedAnswer":{"@type":"Answer","text":"只下载你有权访问的内容；付费墙和站点许可要先确认。"}}]},{"@type":"BreadcrumbList","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#breadcrumbs","itemListElement":[{"@type":"ListItem","position":1,"name":"Anbot","item":"https://rml4791lol-lang.github.io/Anbot/"},{"@type":"ListItem","position":2,"name":"指南","item":"https://rml4791lol-lang.github.io/Anbot/guides/"},{"@type":"ListItem","position":3,"name":"Anbot 浏览器调研：在真实浏览器里查资料、留证据","item":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/"}]},{"@type":"HowTo","@id":"https://rml4791lol-lang.github.io/Anbot/guides/browser-research/#howto","name":"Anbot 浏览器调研：在真实浏览器里查资料、留证据","description":"在真实浏览器里查资料、截证据、保存来源，不伪造登录态。","step":[{"@type":"HowToStep","position":1,"name":"步骤 1","text":"列出要查的问题、允许的站点、需要的证据形式（原文/截图/PDF）；不要用「随便查一下」这种任务。"},{"@type":"HowToStep","position":2,"name":"步骤 2","text":"让 Bot 在独立浏览器里逐页打开；每条结论附 URL、抓取时间、原文片段和截图路径。"},{"@type":"HowToStep","position":3,"name":"步骤 3","text":"遇到登录、CAPTCHA、支付、下载受限时停止并交回；不要尝试绕过网站限制。"},{"@type":"HowToStep","position":4,"name":"步骤 4","text":"把资料落到工作区，按主题建索引；需要引用时回到原始 URL 核对。"}]}]}</script>
 </head>
 <body>
 <header class="site-head">
@@ -33,8 +39,9 @@
 <main>
   <div class="crumbs"><a href="../../">Anbot</a> / <a href="../">指南</a> / 使用场景</div>
   <div class="eyebrow">使用场景</div>
-  <h1>让 Bot 在真实浏览器里做竞品与资料收集</h1>
+  <h1>Anbot 浏览器调研：在真实浏览器里查资料、留证据</h1>
   <p class="lead">搜索摘要不够用时，Bot 需要一个真实浏览器：打开页面、点开链接、截图、下载公开资料。Anbot 给每个 Bot 独立浏览器和独立登录态，动作按站点授权，登录和支付仍然交回给你。</p>
+  <p class="page-meta">本页是 30 篇指南中的 1 篇，基于 Anbot 0.0.1；下面给出 4 个步骤、4 条验收标准、3 个限制。</p>
   <div class="answer"><strong>一句话答案：</strong>先列来源和问题，限定只访问公开页面；让 Bot 记录 URL、抓取时间、原文引用和截图；遇到登录、验证码、付费墙就停下来交回。</div>
 
   <section class="section">
@@ -64,12 +71,12 @@
 
   <section class="section">
     <h2>继续看</h2>
-    <div class="related"><a href="../content-workflow/">用三个 Bot 并行做内容：选题、写作、审阅</a><a href="../monitoring/">让 Bot 守夜：日志、价格、接口越线才叫你</a><a href="../mcp/">让 Anbot 接入 MCP：把外部工具变成 Bot 能力</a></div>
+    <div class="related"><a href="../content-workflow/">Anbot 内容工作流：三个 Bot 并行做选题、写作、审阅</a><a href="../monitoring/">Anbot 守夜：日志、价格、接口越线才叫你</a><a href="../mcp/">让 Anbot 接入 MCP：把外部工具变成 Bot 能力</a></div>
   </section>
 </main>
 <footer>
   <span>Anbot · 开源多 Agent Bot 团队 · <a href="../../">配置市场</a></span>
-  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 2026-11-27</span>
+  <span><a href="https://github.com/rml4791lol-lang/Anbot/blob/main/LICENSE">Apache 2.0</a> · 内容更新 <time datetime="2026-11-27">2026-11-27</time></span>
 </footer>
 </body>
 </html>
