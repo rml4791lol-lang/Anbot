@@ -4,7 +4,7 @@
 //   node scripts/sign-update.mjs sign <zip>        # writes <zip>.sig beside the zip
 //
 // The private key never goes into the repository or the app: it is read from ANBOT_UPDATE_KEY
-// (base64 of its PKCS#8 DER) when set, from build/update-key otherwise. The public key in
+// (base64 of its PKCS#8 DER) or ANBOT_UPDATE_KEY_FILE (a file holding that). The public key in
 // keys/update-key.pub is packaged as the app's resources/update-key.pub, and a build without it
 // keeps asking the user to download the release by hand.
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign } from 'node:crypto'
@@ -22,6 +22,13 @@ const privateFile = join(build, 'update-key')
 // Node's JWK import of an OKP private key needs the public half too, which a raw seed does not
 // carry, so the key file holds the PKCS#8 DER that does.
 const privateKeyObject = secret => createPrivateKey({ key: Buffer.from(secret, 'base64'), format: 'der', type: 'pkcs8' })
+
+/** The private key as base64, or undefined when neither variable names one. */
+function privateKeyText() {
+  if (process.env.ANBOT_UPDATE_KEY) return process.env.ANBOT_UPDATE_KEY.trim()
+  if (process.env.ANBOT_UPDATE_KEY_FILE) return readFileSync(process.env.ANBOT_UPDATE_KEY_FILE, 'utf8').trim()
+  return undefined
+}
 
 /** @param {string} file @returns {Promise<string>} the file's sha256, in hex */
 function digestOf(file) {
@@ -59,7 +66,11 @@ if (command === 'sign') {
     console.error('sign-update: usage: node scripts/sign-update.mjs sign <zip>')
     process.exit(2)
   }
-  const secret = process.env.ANBOT_UPDATE_KEY ?? readFileSync(privateFile, 'utf8').trim()
+  const secret = privateKeyText()
+  if (secret === undefined) {
+    console.error('sign-update: no key: set ANBOT_UPDATE_KEY or ANBOT_UPDATE_KEY_FILE')
+    process.exit(2)
+  }
   const key = privateKeyObject(secret)
   // The signature covers the digest, which is what the app verifies: it streams the zip to disk,
   // hashes it, and the swap checks the same digest again before moving anything.

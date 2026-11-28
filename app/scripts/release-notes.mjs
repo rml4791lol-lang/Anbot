@@ -5,7 +5,7 @@
 // that holds the same release assets under the same names.
 import { createHash } from 'node:crypto'
 import { copyFileSync, createReadStream, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const REPO = 'rml4791lol-lang/Anbot'
@@ -100,6 +100,13 @@ async function sha256(file) {
   return hash.digest('hex')
 }
 
+// sign-update.mjs is the one place that owns the key format; the release step calls it rather
+// than keeping a second copy of the signing rules.
+async function signZip(file) {
+  const { execFileSync } = await import('node:child_process')
+  execFileSync(process.execPath, [join(dirname(fileURLToPath(import.meta.url)), 'sign-update.mjs'), 'sign', file], { stdio: 'pipe' })
+}
+
 async function main([version, from, to, notesFile]) {
   if (!version || !from || !to) {
     console.error('release-notes: usage: node scripts/release-notes.mjs <version> <folder with the packages> <folder for the files to attach> [<current notes>]')
@@ -121,6 +128,24 @@ async function main([version, from, to, notesFile]) {
     copyFileSync(join(from, name), join(to, copyName(entry)))
   }
   writeFileSync(join(to, SUMS), checksums(version, hashes))
+  // The macOS zips carry a detached Ed25519 signature over their sha256, which is how an
+  // installed Anbot verifies a self-update (app/src/self-update.mjs). ANBOT_UPDATE_KEY or
+  // ANBOT_UPDATE_KEY_FILE holds the private key. A release sets ANBOT_REQUIRE_UPDATE_SIGNATURE
+  // so a missing key fails the run; a local run without a key skips the signature.
+  if (process.env.ANBOT_UPDATE_KEY || process.env.ANBOT_UPDATE_KEY_FILE || process.env.ANBOT_REQUIRE_UPDATE_SIGNATURE) {
+    for (const entry of PACKAGES.filter(candidate => candidate.file.startsWith('mac-'))) {
+      const name = packageName(version, entry)
+      const zip = join(from, name)
+      try {
+        await signZip(zip)
+        copyFileSync(`${zip}.sig`, join(to, `${name}.sig`))
+        console.error(`release-notes: signed ${name}`)
+      } catch (error) {
+        console.error(`release-notes: ${name} is not signed: ${error instanceof Error ? error.message : String(error)}`)
+        process.exitCode = 1
+      }
+    }
+  }
   const block = downloadBlock({ version, sizes, mirror: process.env.MIRROR_BASE || undefined })
   process.stdout.write(withDownloads(notesFile === undefined ? '' : readFileSync(notesFile, 'utf8'), block))
 }

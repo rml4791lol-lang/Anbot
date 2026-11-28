@@ -13,8 +13,11 @@ import { pipeline } from 'node:stream/promises'
 
 import { isNewer } from './updates.mjs'
 
-/** The release asset that carries a self-updating build for this architecture. */
-export const selfUpdateAsset = arch => version => `Anbot-${version}-mac-${arch}-selfupdate.zip`
+/**
+ * The release asset that carries a self-updating build for this architecture: the same zip the
+ * release page offers, so a release holds one copy of it. Its detached signature is `<zip>.sig`.
+ */
+export const selfUpdateAsset = arch => version => `Anbot-${version}-mac-${arch}.zip`
 
 /**
  * Check a feed for a newer self-updating build.
@@ -162,6 +165,7 @@ const shellQuote = value => `'${String(value).replaceAll("'", `'\\''`)}'`
  * @returns {Promise<{ script: string, plan: string }>}
  */
 export async function prepareSwap({ dir, target, zip, sha256 }) {
+  await mkdir(dir, { recursive: true })
   const stage = await mkdtemp(join(dirname(target), '.anbot-update-'))
   const plan = join(dir, 'plan.sh')
   await writeFile(plan, [
@@ -212,6 +216,8 @@ export function watchSelfUpdate(options) {
   const listeners = new Set()
   const set = (next) => {
     state = { ...next, autoUpdate: auto }
+    // A listener may unsubscribe while it runs, so the loop goes over a snapshot of the set.
+    // oxlint-disable-next-line unicorn/no-useless-spread -- the snapshot is the point
     for (const listener of [...listeners]) {
       try { listener(state) } catch (error) { log.error(`Anbot: an update state listener failed: ${error instanceof Error ? error.message : String(error)}`) }
     }

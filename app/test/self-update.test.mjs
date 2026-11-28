@@ -25,14 +25,11 @@ function keys() {
   return { publicKey, privateKey, base64: Buffer.from(raw, 'base64url').toString('base64') }
 }
 
-const release = (version, arch, url = `https://example.test/v${version}/Anbot-${version}-mac-${arch}-selfupdate.zip`) => ({
+const release = (version, arch, url = `https://example.test/v${version}/Anbot-${version}-mac-${arch}.zip`) => ({
   tag_name: `v${version}`,
   draft: false,
   prerelease: false,
-  assets: [
-    { name: `Anbot-${version}-mac-${arch}.zip`, browser_download_url: url.replace('-selfupdate.zip', '.zip') },
-    { name: selfUpdateAsset(arch)(version), browser_download_url: url },
-  ],
+  assets: [{ name: selfUpdateAsset(arch)(version), browser_download_url: url }],
 })
 
 const feedOf = releases => async () => new Response(JSON.stringify(releases), { status: 200, headers: { 'content-type': 'application/json' } })
@@ -48,7 +45,7 @@ describe('self-update', () => {
     ])
     const found = await findSelfUpdate({ current: '0.0.3', arch: 'arm64', fetch, feed: 'https://example.test/feed', log: quiet })
     assert.equal(found.version, '0.0.6')
-    assert.equal(found.asset, 'Anbot-0.0.6-mac-arm64-selfupdate.zip')
+    assert.equal(found.asset, 'Anbot-0.0.6-mac-arm64.zip')
     assert.equal(found.signatureUrl, `${found.url}.sig`)
   })
 
@@ -77,7 +74,7 @@ describe('self-update', () => {
       if (url.endsWith('.sig')) return new Response(signature, { status: 200 })
       return new Response(body, { status: 200 })
     }
-    const found = { version: '0.0.4', asset: 'Anbot-0.0.4-mac-arm64-selfupdate.zip', url: 'https://example.test/x.zip', signatureUrl: 'https://example.test/x.zip.sig' }
+    const found = { version: '0.0.4', asset: 'Anbot-0.0.4-mac-arm64.zip', url: 'https://example.test/x.zip', signatureUrl: 'https://example.test/x.zip.sig' }
     const result = await downloadSelfUpdate({ found, dir, publicKey: publicKeyFromBase64(base64), fetch, log: quiet })
     assert.equal(result.sha256, digest)
     assert.equal(readFileSync(result.zip).toString(), body.toString())
@@ -90,7 +87,7 @@ describe('self-update', () => {
     const digest = createHash('sha256').update('bytes').digest('hex')
     const signature = sign(null, Buffer.from(digest), other.privateKey).toString('base64')
     const fetch = async (url) => (url.endsWith('.sig') ? new Response(signature, { status: 200 }) : new Response('bytes', { status: 200 }))
-    const found = { version: '0.0.4', asset: 'Anbot-0.0.4-mac-arm64-selfupdate.zip', url: 'https://example.test/x.zip', signatureUrl: 'https://example.test/x.zip.sig' }
+    const found = { version: '0.0.4', asset: 'Anbot-0.0.4-mac-arm64.zip', url: 'https://example.test/x.zip', signatureUrl: 'https://example.test/x.zip.sig' }
     await assert.rejects(
       downloadSelfUpdate({ found, dir, publicKey: publicKeyFromBase64(base64), fetch, log: quiet }),
       /signature does not verify/u,
