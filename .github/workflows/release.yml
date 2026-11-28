@@ -438,6 +438,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ github.event.release.tag_name }}
+      # Every macOS zip carries a detached signature over its sha256, which is what an installed
+      # Anbot checks before it swaps its bundle (app/src/self-update.mjs). The key is the secret;
+      # the public half is committed in app/keys/update-key.pub. See app/README.md.
+      ANBOT_UPDATE_KEY: ${{ secrets.ANBOT_UPDATE_KEY }}
+      ANBOT_REQUIRE_UPDATE_SIGNATURE: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -95,6 +95,7 @@ let BotBrowserGuests, partitionOf, BotViews, isBotId, probeSource, importFromBro
 let downloadSaver, chooseLocations, defaultPlaces, lang, pickerLabels, pickRoot, programFolder, saveLocations, teamIn, teamsAt, tx, HostProcess
 let copySessions, findTeam, importTeam, restoreSessions, teamInUse, teamSizes, userDshHome, copyData, copyReason, moveProblem, BUNDLES, CHECK_PROFILE, PROFILE, ImportFlow
 let watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv, readAutoUpdate, writeAutoUpdate, getDshRuntimeVersion, electronUpdater
+let findSelfUpdate, downloadSelfUpdate, prepareSwap, readPublicKey, selfUpdateDir, clearSelfUpdate, watchSelfUpdate
 
 let mainWindow
 // Settles once the hidden team window exists.
@@ -339,11 +340,11 @@ async function prepare() {
 }
 
 async function loadModules() {
-  const [browser, views, sources, cookies, cookieFiles, downloads, firstRun, hostProcess, imports, flows, moves, profile, updatesModule, updatePrefsModule, boot, updater] = await Promise.all([
+  const [browser, views, sources, cookies, cookieFiles, downloads, firstRun, hostProcess, imports, flows, moves, profile, updatesModule, updatePrefsModule, boot, updater, selfUpdateModule] = await Promise.all([
     import('./bot-browser.mjs'), import('./bot-views.mjs'), import('./browser-sources.mjs'), import('./cookie-import.mjs'),
     import('./cookie-parse.mjs'), import('./downloads.mjs'), import('./first-run.mjs'), import('./host-process.mjs'),
     import('./import.mjs'), import('./import-flow.mjs'), import('./move-data.mjs'), import('./profile.mjs'), import('./updates.mjs'),
-    import('./update-prefs.mjs'), import('@deepseek-ai/dsh-app-boot'), import('electron-updater'),
+    import('./update-prefs.mjs'), import('@deepseek-ai/dsh-app-boot'), import('electron-updater'), import('./self-update.mjs'),
   ])
   ;({ BotBrowserGuests, partitionOf } = browser)
   ;({ BotViews, isBotId } = views)
@@ -358,6 +359,7 @@ async function loadModules() {
   ;({ copyData, copyReason, moveProblem } = moves)
   ;({ BUNDLES, CHECK_PROFILE, PROFILE } = profile)
   ;({ watchReleases, watchUpdates, RELEASE_PAGE, updateFeedFromEnv } = updatesModule)
+  ;({ findSelfUpdate, downloadSelfUpdate, prepareSwap, readPublicKey, selfUpdateDir, clearSelfUpdate, watchSelfUpdate } = selfUpdateModule)
   ;({ readAutoUpdate, writeAutoUpdate } = updatePrefsModule)
   ;({ getDshRuntimeVersion } = boot)
   electronUpdater = updater.default
@@ -1378,6 +1380,24 @@ async function runMove(to, workspace) {
 
 const updatePrefsFile = () => join(app.getPath('userData'), 'update-prefs.json')
 
+// The self-updater of a macOS install: the signed zip replaces the bundle at `target` after the
+// app quits. Undefined when this build ships no public key, so a build without one keeps the
+// release-page behaviour instead of failing every check.
+function startSelfUpdate({ feed, autoUpdate }) {
+  if (typeof process.resourcesPath !== 'string' || typeof process.execPath !== 'string') return undefined
+  const key = readPublicKeySync(join(process.resourcesPath, 'update-key.pub'))
+  if (key === undefined) return undefined
+  const target = resolve(dirname(process.execPath), '..', '..')
+  if (!target.endsWith('.app')) return undefined
+  return watchSelfUpdate({
+    current: app.getVersion(), arch: process.arch, feed, target, publicKey: key,
+    dir: selfUpdateDir(app.getPath('userData')), autoUpdate,
+    beforeInstall: async () => { shell.beginQuit(); await stopHost() },
+    quit: () => app.quit(),
+    ask: (version) => restartPrompt.prompt(version),
+  })
+}
+
 // Windows and a Linux AppImage update themselves; macOS and a Linux deb ask to download the new
 // version. Throwaway runs check only a given feed and never ask.
 function startUpdates() {
@@ -1385,6 +1405,14 @@ function startUpdates() {
   const throwaway = Boolean(homeFromEnv())
   if (!app.isPackaged || (throwaway && feed === undefined)) return undefined
   const autoUpdate = readAutoUpdate(updatePrefsFile())
+  // macOS installs its own updates: Squirrel.Mac rejects a newer ad-hoc bundle, so a signed zip
+  // downloaded from the feed is swapped in after the app quits (self-update.mjs). A build
+  // without the shipped public key, or a feed without a signed zip for this machine, falls back
+  // to the release page.
+  if (process.platform === 'darwin' && !throwaway) {
+    const selfUpdate = startSelfUpdate({ feed, autoUpdate })
+    if (selfUpdate !== undefined) return selfUpdate
+  }
   if (process.platform === 'darwin') {
     return watchReleases({
       current: app.getVersion(), arch: process.arch, feed, autoUpdate, ask: throwaway ? undefined : (version) => downloadPrompt.prompt(version), open: url => electronShell.openExternal(url),
