@@ -37,6 +37,10 @@ extraResources:
     to: primary-runtime
   - from: build/runtime/office-skills
     to: office-skills
+  # The public half of the key that signs macOS self-updates (scripts/sign-update.mjs). Without
+  # it a build keeps the release-page behaviour, since Squirrel.Mac rejects a newer ad-hoc bundle.
+  - from: keys/update-key.pub
+    to: update-key.pub
   # File previews start the LibreOffice engine, a program in the engine package that the kit
   # resolves. Electron cannot start a program by a path inside the asar, even an unpacked one
   # (#679). Out here the engine is plain files, and Node's lookup from the kit inside the asar
