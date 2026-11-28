@@ -2,13 +2,13 @@
 
 English | [中文](README.zh.md) · [Docs](docs/README.md) · [Vision](docs/vision.md) · [Known issues](docs/known-issues.md) · [Contributing](CONTRIBUTING.md)
 
-![Status](https://img.shields.io/badge/release-v0.0.1-green) ![License](https://img.shields.io/badge/license-Apache_2.0-green) ![Bot team](https://img.shields.io/badge/team-multi--agent-2F6BFF)
+![Status](https://img.shields.io/badge/release-v0.0.4-green) ![License](https://img.shields.io/badge/license-Apache_2.0-green) ![Bot team](https://img.shields.io/badge/team-multi--agent-2F6BFF)
 
 **Anbot is an open-source, multi-agent workspace: a team of persistent Bots that works in your real folder.** A Main Bot splits the job; specialist Bots pick it up; the team shares memory, group chats and the same workspace. It shows what it understood, who is working, which files changed, and why it counts as done. You can pause, take over the folder yourself, and hand it back.
 
 It ships as a desktop app for Windows, macOS and Linux, a plugin, and a Docker service. Your team, chats, memory, credentials and execution records stay on your own computer.
 
-> The first public release, v0.0.1, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.1-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.1-mac-arm64.zip`, `Anbot-0.0.1-mac-x64.zip` and `Anbot-0.0.1-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
+> The current public release, v0.0.4, is on the [Releases page](https://github.com/rml4791lol-lang/Anbot/releases/latest). This release ships `Anbot-0.0.4-win-x64.exe` (with its `.exe.blockmap`), `Anbot-0.0.4-mac-arm64.zip`, `Anbot-0.0.4-mac-x64.zip` and `Anbot-0.0.4-android.apk`, plus `latest.yml` and `SHA256SUMS.txt` (the checksums cover the APK and every desktop package). No Linux package is part of this release: Linux builds from source, see below. There is no installable iOS package in this release. You can also build Anbot from source or install it as a DSH plugin.
 
 > **Practical reference:** [30 task guides](https://rml4791lol-lang.github.io/Anbot/guides/) cover tasks, integrations, comparisons and FAQ; [3,000 scenario pages](https://rml4791lol-lang.github.io/Anbot/playbooks/) cover 100 tasks × 30 team, platform, data, tool and delivery constraints. [About Anbot](https://rml4791lol-lang.github.io/Anbot/about/)
 
@@ -58,7 +58,7 @@ Behind a proxy or registry mirror, set `npm_config_proxy` / `npm_config_https_pr
 
 ### Desktop app (Windows, macOS, Linux)
 
-Prebuilt packages for v0.0.1 are on the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest): a Windows installer, macOS zips (arm64 and x64), and the Android APK. This release has no Linux package; build it from source with the steps below. No iOS package is published. To build from source:
+Prebuilt packages for v0.0.4 are on the [latest release](https://github.com/rml4791lol-lang/Anbot/releases/latest): a Windows installer, macOS zips (arm64 and x64), and the Android APK. This release has no Linux package; build it from source with the steps below. No iOS package is published. To build from source:
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -224,7 +224,7 @@ All data stays on your computer: in the data folder chosen for the desktop app (
 - **Coordination layer**: tell the Main Bot a goal and it splits the work, picks bots, prepares workspaces, tracks dependencies and reports acceptance by itself. For now you arrange the delegation.
 - **Multi-bot workflow view**: one picture of every bot's dependencies, progress and approvals.
 - **Bot forge and self-builder**: assemble a new bot by conversation, and let Anbot change its own code.
-- **Code signing and distribution**: v0.0.1 attaches the Windows installer (`Anbot-0.0.1-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. No Linux package or `latest-linux.yml` is attached in this release, so the Linux targets build from source only. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer updates through electron-updater; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
+- **Code signing and distribution**: v0.0.4 attaches the Windows installer (`Anbot-0.0.4-win-x64.exe`), Authenticode-signed on CI with a project self-signed PFX (SHA-256 digest, RFC 3161 timestamp); the certificate is self-signed (CN=Anbot Release Signing), not issued by a commercial CA, so other machines still show an unknown publisher in SmartScreen. macOS zips are ad-hoc signed and not notarized. The Android APK is signed with the upload keystore (v1 JAR + v2 + v3). `latest.yml` and `SHA256SUMS.txt` are attached; the checksums cover the APK and every desktop package. No Linux package or `latest-linux.yml` is attached in this release, so the Linux targets build from source only. There is no installable iOS package in this release: there is no Apple Developer account yet, and no `.ipa` is built or uploaded. The Windows installer updates through electron-updater; macOS does not update itself—after finding a newer release it opens the Releases download page for a manual replace. Per-platform trust states, first-install approval steps and the Android upload key are documented in [Signing and trust](docs/dev/release-signing.md).
 
 ## How Anbot compares
 
@@ -239,7 +239,7 @@ Grok Bot is the closest product: both are teams of persistent Bots with memory, 
 | Models | Any DSH provider, including local models | Grok | Vendor models |
 | Control | X-Ray, checkpoints, takeover and return | Approvals; the work stays on its cloud computer | Plans and approvals; varies by product |
 | Extensions | Open presets, skills, MCP and plugins | Vendor presets and routines | Vendor marketplace or SDK |
-| Availability (Nov 2026) | Public v0.0.1 | Paid beta | Paid plans |
+| Availability (Nov 2026) | Public v0.0.4 | Paid beta | Paid plans |
 
 Big-tech agents here means OpenAI's agent, Anthropic's Claude Code, Google's Gemini CLI and Microsoft's Copilot agents. They are strong at single-agent execution and deep product integration; the runtime, model and extension surface are vendor-owned. Anbot keeps the code, the model choice and the extension surface open.
 
@@ -263,7 +263,7 @@ No. Teams, chats, memory, credentials and execution records stay local. Model re
 The models configured in DSH, including local models through DSH providers. The desktop app can also sign in with a ChatGPT plan for OpenAI models without an API key.
 
 **What can I run it on?**
-The desktop app runs on Windows, macOS and Linux; the plugin runs in DSH Desktop and DSH Web; Docker runs on a NAS or Linux server. v0.0.1 also ships an Android APK; it has no Linux installer or iOS package.
+The desktop app runs on Windows, macOS and Linux; the plugin runs in DSH Desktop and DSH Web; Docker runs on a NAS or Linux server. v0.0.4 also ships an Android APK; it has no Linux installer or iOS package.
 
 **Is Anbot open source?**
 Yes, under Apache 2.0.

@@ -4,7 +4,7 @@ CI 按改动范围运行单元测试、浏览器测试、桌面打包与更新�
 
 每一项记「通过 / 不通过 / 备注」。不通过的截图，抄下错误原文，开 Issue。结果贴在 Release PR 的评论里。
 
-> **v0.0.1 发布范围**：本版附 Windows 安装包（项目自签 PFX 做 Authenticode 签名；其他机器 SmartScreen 仍显示未知发布者）、macOS zip（arm64 / x64，ad-hoc 签名、未公证）、Linux AppImage 与 deb、Android APK（上传密钥签名），以及 `SHA256SUMS.txt`、`latest.yml`、`latest-linux.yml`。iOS 无可安装包（无 Apple Developer 账号），任何 iOS 检查本次不做。
+> **v0.0.4 发布范围**：本版附 Windows 安装包（项目自签 PFX 做 Authenticode 签名；其他机器 SmartScreen 仍显示未知发布者）、macOS zip（arm64 / x64，ad-hoc 签名、未公证）、Android APK（上传密钥签名），以及 `SHA256SUMS.txt`、`latest.yml`。本次不含 Linux 包（不构建 AppImage / deb，也不附 `latest-linux.yml`）：Linux 从源码构建。iOS 无可安装包（无 Apple Developer 账号），任何 iOS 检查本次不做。
 
 ## 准备
 

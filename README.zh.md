@@ -2,13 +2,13 @@
 
 [English](README.md) | 中文 · [文档导航](docs/README.md) · [愿景](docs/vision.zh.md) · [已知问题](docs/known-issues.zh.md) · [参与开发](CONTRIBUTING.zh.md)
 
-![版本](https://img.shields.io/badge/版本-v0.0.1-green) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green) ![Bot 团队](https://img.shields.io/badge/team-multi--agent-2F6BFF)
+![版本](https://img.shields.io/badge/版本-v0.0.4-green) ![许可](https://img.shields.io/badge/许可-Apache_2.0-green) ![Bot 团队](https://img.shields.io/badge/team-multi--agent-2F6BFF)
 
 **Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队，在你的真实工作区里干活。** 主 Bot 拆任务，专业 Bot 接活，团队共享记忆、群聊和同一个工作区。它让你看见理解了什么、谁在做、改了哪些文件、凭什么算完成；你可以随时暂停、接管这个工作区自己改，再交回去。
 
 它有三种形态：Windows、macOS、Linux 桌面应用，插件，Docker；团队、聊天、记忆、凭据和执行记录都留在你自己的电脑上。
 
-> 首个公开版本 v0.0.1 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.1-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.1-mac-arm64.zip`、`Anbot-0.0.1-mac-x64.zip` 与 `Anbot-0.0.1-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
+> 当前公开版本 v0.0.4 已发布，见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)。本版附带 `Anbot-0.0.4-win-x64.exe`（含 `.exe.blockmap`）、`Anbot-0.0.4-mac-arm64.zip`、`Anbot-0.0.4-mac-x64.zip` 与 `Anbot-0.0.4-android.apk`，以及 `latest.yml` 和 `SHA256SUMS.txt`（校验和覆盖 APK 与各桌面包）。本次发布不含 Linux 安装包：Linux 从源码构建，见下文。本次发布不含 iOS 可安装包。也可以从源码构建，或作为 DSH 插件安装。
 
 > **实用资料：** [30 篇任务指南](https://rml4791lol-lang.github.io/Anbot/guides/) 覆盖任务、集成、对比和常见问题；[3,000 个场景页](https://rml4791lol-lang.github.io/Anbot/playbooks/) 覆盖 100 个任务 × 30 种团队、平台、数据、工具和交付约束。[关于 Anbot](https://rml4791lol-lang.github.io/Anbot/about/)
 
@@ -58,7 +58,7 @@ Anbot 不是一个聊天窗口加一个助手，而是一支多 Agent 团队：�
 
 ### 桌面应用（Windows、macOS、Linux）
 
-v0.0.1 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）与 Android APK。本次发布不含 Linux 安装包，可用下面的步骤从源码构建。不发布 iOS 包。从源码构建：
+v0.0.4 的预编译包见[最新发布页](https://github.com/rml4791lol-lang/Anbot/releases/latest)：Windows 安装包、macOS zip（arm64 与 x64）与 Android APK。本次发布不含 Linux 安装包，可用下面的步骤从源码构建。不发布 iOS 包。从源码构建：
 
 ```sh
 git clone https://github.com/rml4791lol-lang/Anbot.git
@@ -224,7 +224,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 - **协调层**：你对 Main Bot 说一个目标，它自己拆任务、选 Bot、准备工作区、跟踪依赖、汇总验收。派活目前仍要你自己安排。
 - **多 Bot 工作流视图**：一张图看到所有 Bot 的依赖、进度和审批。
 - **Bot 锻造器与自举工程器**：用对话组装新 Bot、让 Anbot 改自己的代码。
-- **代码签名与分发**：v0.0.1 附带 Windows 安装包（`Anbot-0.0.1-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 Linux 安装包，也不附 `latest-linux.yml`，Linux 目标只从源码构建。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包走 electron-updater 自动下载安装；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
+- **代码签名与分发**：v0.0.4 附带 Windows 安装包（`Anbot-0.0.4-win-x64.exe`），在 CI 上用项目自签 PFX 做 Authenticode 签名（SHA-256 摘要 + RFC 3161 时间戳）；证书为项目自签（CN=Anbot Release Signing），非商业 CA 颁发，其他机器上 SmartScreen 仍显示未知发布者。macOS zip 为 ad-hoc 签名、未公证。Android APK 用上传密钥签名（v1 JAR + v2 + v3）。另附 `latest.yml` 与 `SHA256SUMS.txt`，校验和覆盖 APK 与各桌面包。本次发布不含 Linux 安装包，也不附 `latest-linux.yml`，Linux 目标只从源码构建。本次发布不含 iOS 可安装包：尚无 Apple Developer 账号，不构建也不上传 `.ipa`。Windows 安装包走 electron-updater 自动下载安装；macOS 不自动更新，发现新版后只打开 Releases 下载页手动替换。各平台信任状态、首次安装放行步骤与 Android 上传密钥见[签名与信任说明](docs/dev/release-signing.md)。
 
 ## Anbot 和 Grok Bot、大厂 Agent 怎么比
 
@@ -239,7 +239,7 @@ Bot 可直接创建、检查和编辑 Word（`.docx`）、PowerPoint（`.pptx`�
 | 模型 | 任何 DSH provider，包括本地模型 | Grok | 厂商模型 |
 | 控制 | X-Ray、检查点、接管与交回 | 审批；工作在它的云端电脑上 | 计划与审批，因产品而异 |
 | 扩展 | 开放的预设、技能、MCP、插件 | 厂商预设和例程 | 厂商市场或 SDK |
-| 可用性（2026-11） | 公开 v0.0.1 | 付费测试 | 付费订阅 |
+| 可用性（2026-11） | 公开 v0.0.4 | 付费测试 | 付费订阅 |
 
 这里的大厂 Agent 指 OpenAI 的 Agent、Anthropic 的 Claude Code、Google 的 Gemini CLI、Microsoft 的 Copilot Agent。它们强在单 Agent 执行和产品集成；运行时、模型和扩展面归厂商。Anbot 把代码、模型选择和扩展面保持开放。
 
@@ -263,7 +263,7 @@ Anbot 是一个开源的多 Agent 工作台：一支持久在线的 Bot 团队�
 DSH 里配置的模型，包括通过 DSH provider 接入的本地模型。桌面应用还可以用 ChatGPT 套餐登录 OpenAI 模型，不需要 API key。
 
 **能装在哪些平台？**
-桌面应用支持 Windows、macOS、Linux；插件跑在 DSH Desktop 和 DSH Web；Docker 跑在 NAS 或 Linux 服务器。v0.0.1 另发 Android APK，没有 Linux 安装包和 iOS 包。
+桌面应用支持 Windows、macOS、Linux；插件跑在 DSH Desktop 和 DSH Web；Docker 跑在 NAS 或 Linux 服务器。v0.0.4 另发 Android APK，没有 Linux 安装包和 iOS 包。
 
 **开源吗？**
 Apache 2.0。
