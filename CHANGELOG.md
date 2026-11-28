@@ -4,6 +4,12 @@ All notable changes to DS Bot are listed here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-11-28
+
+### Fixed
+
+- **Update check behind a shared address**: when the unauthenticated releases API answered `403` or `429` (60 requests per hour per IP), the check reported a failure even though the public release page loaded. It now reads the newest tag from that page and confirms this machine's package with a `HEAD` before offering the update. A mirror feed set through `ANBOT_UPDATE_URL` keeps its own behaviour. ([#19](https://github.com/rml4791lol-lang/Anbot/pull/19))
+
 ## [0.0.1] - 2026-11-27
 
 ### Changed
